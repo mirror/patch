@@ -1,13 +1,13 @@
 .\" -*- nroff -*-
 .rn '' }`
-'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.3 1993/07/07 17:23:22 djm Exp $
+'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.4 1993/07/29 20:11:38 eggert Exp $
 '\" 
 '\" $Log: patch.man,v $
-'\" Revision 1.3  1993/07/07 17:23:22  djm
-'\" entered into RCS
+'\" Revision 1.4  1993/07/29 20:11:38  eggert
+'\" Clarify wording about patch -f.
 '\"
-'\" Revision 1.3  1993/07/07 17:23:22  djm
-'\" entered into RCS
+'\" Revision 1.4  1993/07/29 20:11:38  eggert
+'\" Clarify wording about patch -f.
 '\"
 '\" Revision 2.0.1.2  88/06/22  20:47:18  lwall
 '\" patch12: now avoids Bell System Logo
@@ -295,8 +295,8 @@ to remove output files that are empty after the patches have been applied.
 forces
 .I patch
 to assume that the user knows exactly what he or she is doing, and to not
-ask any questions.  It assumes the following: skip patches for which a
-file to patch can't be found; patch files even though they have the
+ask any questions.  It assumes the following: skip patches whose headers
+do not say which file is to be patched; patch files even though they have the
 wrong version for the ``Prereq:'' line in the patch; and assume that
 patches are not reversed even if they look like they are.
 This option does not suppress commentary; use
@@ -307,7 +307,7 @@ for that.
 similar to
 .BR \-f ,
 in that it suppresses questions, but makes some different assumptions:
-skip patches for which a file to patch can't be found (the same as \fB\-f\fP);
+skip patches whose headers do not contain file names (the same as \fB\-f\fP);
 skip patches for which the file has the wrong version for the ``Prereq:'' line
 in the patch; and assume that patches are reversed if they look like
 they are.
