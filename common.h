@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.34 2003/05/19 06:57:36 eggert Exp $ */
+/* $Id: common.h,v 1.35 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
@@ -200,23 +200,8 @@ void fatal_exit (int) __attribute__ ((noreturn));
 extern int errno;
 #endif
 
-#if STDC_HEADERS || HAVE_STRING_H
-# include <string.h>
-#else
-# if !HAVE_MEMCHR
-#  define memcmp(s1, s2, n) bcmp (s1, s2, n)
-#  define memcpy(d, s, n) bcopy (s, d, n)
-void *memchr ();
-# endif
-#endif
-
-#if STDC_HEADERS
-# include <stdlib.h>
-#else
-char *getenv ();
-void *malloc ();
-void *realloc ();
-#endif
+#include <string.h>
+#include <stdlib.h>
 
 #if HAVE_UNISTD_H
 # include <unistd.h>
