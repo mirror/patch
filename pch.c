@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.31 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: pch.c,v 1.32 1999/10/02 09:35:56 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -105,7 +105,7 @@ open_patch_file (char const *filename)
     if (!filename || !*filename || strEQ (filename, "-"))
       {
 	file_offset stdin_pos;
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
 	if (binary_transput)
 	  {
 	    if (isatty (STDIN_FILENO))
