@@ -1,9 +1,10 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.22 1999/10/11 03:33:08 eggert Exp $ */
+/* $Id: inp.c,v 1.23 2002/05/28 07:12:03 eggert Exp $ */
 
-/* Copyright 1986, 1988 Larry Wall
-   Copyright 1991, 1992-1993, 1997-1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1986, 1988 Larry Wall
+   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,10 +48,10 @@ static LINENUM lines_per_buf;		/* how many lines per buffer */
 static size_t tireclen;			/* length of records in tmp file */
 static size_t last_line_size;		/* size of last input line */
 
-static bool plan_a PARAMS ((char const *));/* yield FALSE if memory runs out */
-static void plan_b PARAMS ((char const *));
-static void report_revision PARAMS ((int));
-static void too_many_lines PARAMS ((char const *)) __attribute__((noreturn));
+static bool plan_a (char const *);	/* yield FALSE if memory runs out */
+static void plan_b (char const *);
+static void report_revision (int);
+static void too_many_lines (char const *) __attribute__((noreturn));
 
 /* New patch--prepare to edit another file. */
 
