@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.20 2003/05/20 13:56:48 eggert Exp $ */
+/* $Id: util.h,v 1.21 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -46,12 +46,13 @@ int create_file (char const *, int, mode_t);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], LINENUM);
 void Fseek (FILE *, file_offset, int);
-void copy_file (char const *, char const *, int, mode_t);
+void copy_file (char const *, char const *, struct stat *, int, mode_t);
 void exit_with_signal (int) __attribute__ ((noreturn));
 void ignore_signals (void);
+void init_backup_hash_table (void);
 void init_time (void);
 void memory_fatal (void) __attribute__ ((noreturn));
-void move_file (char const *, int volatile *, char *, mode_t, bool);
+void move_file (char const *, int volatile *, struct stat const *, char *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char *);
