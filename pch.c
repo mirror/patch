@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.17 1997/06/01 10:44:17 eggert Exp $ */
+/* $Id: pch.c,v 1.18 1997/06/02 19:24:52 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -36,7 +36,8 @@ If not, write to the Free Software Foundation,
 /* Patch (diff listing) abstract type. */
 
 static FILE *pfp;			/* patch file pointer */
-static int p_says_nonexistent[2];	/* [0] for old file, [1] for new */
+static int p_says_nonexistent[2];	/* [0] for old file, [1] for new;
+		value is 0 for nonempty, 1 for empty, 2 for nonexistent */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
 static LINENUM p_newfirst;		/* 1st line number of replacement */
@@ -346,14 +347,14 @@ intuit_diff_type()
 	    t = name[OLD];
 	    name[OLD] = name[NEW];
 	    name[NEW] = t;
-	    if (head_says_nonexistent[NEW] && ! atol (s))
-	      p_says_nonexistent[OLD] = 1;
+	    if (! atol (s))
+	      p_says_nonexistent[OLD] = head_says_nonexistent[NEW] + 1;
 	    while (*s != ' ' && *s != '\n')
 	      s++;
 	    while (*s == ' ')
 	      s++;
-	    if (head_says_nonexistent[OLD] && ! atol (s))
-	      p_says_nonexistent[NEW] = 1;
+	    if (! atol (s))
+	      p_says_nonexistent[NEW] = head_says_nonexistent[OLD] + 1;
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
@@ -366,8 +367,8 @@ intuit_diff_type()
 	     || diff_type == NEW_CONTEXT_DIFF)
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
 	    s += 4;
-	    if (head_says_nonexistent[OLD] && ! atol (s))
-	      p_says_nonexistent[OLD] = 1;
+	    if (! atol (s))
+	      p_says_nonexistent[OLD] = head_says_nonexistent[OLD] + 1;
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -377,19 +378,18 @@ intuit_diff_type()
 	    p_sline = p_input_line - 1;
 	    retval = (*(s-1) == '*' ? NEW_CONTEXT_DIFF : CONTEXT_DIFF);
 
-	    if (head_says_nonexistent[NEW])
-	      {
-		/* Scan the first hunk to see whether the file appears to
-		   have been deleted.  */
-		file_offset saved_p_base = p_base;
-		LINENUM saved_p_bline = p_bline;
-		p_input_line = p_sline;
-		Fseek (pfp, previous_line, SEEK_SET);
-		if (another_hunk (retval, 0)
-		    && ! p_repl_lines && p_newfirst == 1)
-		  p_says_nonexistent[NEW] = 1;
-		next_intuit_at (saved_p_base, saved_p_bline);
-	      }
+	    {
+	      /* Scan the first hunk to see whether the file contents
+		 appear to have been deleted.  */
+	      file_offset saved_p_base = p_base;
+	      LINENUM saved_p_bline = p_bline;
+	      p_input_line = p_sline;
+	      Fseek (pfp, previous_line, SEEK_SET);
+	      if (another_hunk (retval, 0)
+		  && ! p_repl_lines && p_newfirst == 1)
+		p_says_nonexistent[NEW] = head_says_nonexistent[NEW] + 1;
+	      next_intuit_at (saved_p_base, saved_p_bline);
+	    }
 
 	    goto scan_exit;
 	}
@@ -452,15 +452,19 @@ intuit_diff_type()
 	  {
 	    i = best_name (name, stat_errno);
 
-	    if (p_says_nonexistent[reverse ^ (i == NONE)])
+	    if (p_says_nonexistent[reverse ^ (i == NONE || st[i].st_size == 0)])
 	      {
 		assert (i0 != NONE);
 		if (ok_to_reverse
 		    ("The next patch%s would %s the file `%s',\nwhich %s!",
 		     reverse ? ", when reversed," : "",
-		     i == NONE ? "delete" : "create",
-		     name[i == NONE ? i0 : i],
-		     i == NONE ? "does not exist" : "already exists"))
+		     (i == NONE ? "delete"
+		      : st[i].st_size == 0 ? "empty out"
+		      : "create"),
+		     name[i == NONE || st[i].st_size == 0 ? i0 : i],
+		     (i == NONE ? "does not exist"
+		      : st[i].st_size == 0 ? "is already empty"
+		      : "already exists")))
 		  reverse ^= 1;
 	      }
 
@@ -610,6 +614,10 @@ LINENUM file_line;
     assert(p_base <= file_pos);
     if ((verbosity == VERBOSE || !inname) && p_base < file_pos) {
 	Fseek (i, p_base, SEEK_SET);
+
+	if (!inname)
+	  say ("\ncan't intuit the name of file to be patched at input line %ld\n", file_line);
+
 	say ("The text leading up to this was:\n--------------------------\n");
 
 	while (file_tell (i) < file_pos)
@@ -1535,7 +1543,8 @@ pch_swap()
     return TRUE;
 }
 
-/* Return whether file WHICH (0 = old, 1 = new) appears to be nonexistent.  */
+/* Return whether file WHICH (0 = old, 1 = new) appears to nonexistent.
+   Return 1 for empty, 2 for nonexistent.  */
 
 bool
 pch_says_nonexistent (which)
