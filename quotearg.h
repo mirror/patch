@@ -46,20 +46,25 @@ struct quoting_options;
 # endif
 #endif
 
+/* The functions listed below set and use a hidden variable
+   that contains the default quoting style options.  */
+
 /* Allocate a new set of quoting options, with contents initially identical
-   to O if O is not null, or to a default value if O is null.
+   to O if O is not null, or to the default if O is null.
    It is the caller's responsibility to free the result.  */
 struct quoting_options *clone_quoting_options
    PARAMS ((struct quoting_options *o));
 
-/* Get the value of O's quoting style.  */
+/* Get the value of O's quoting style.  If O is null, use the default.  */
 enum quoting_style get_quoting_style PARAMS ((struct quoting_options *o));
 
-/* In O, set the value of the quoting style to S.  */
+/* In O (or in the default if O is null),
+   set the value of the quoting style to S.  */
 void set_quoting_style PARAMS ((struct quoting_options *o,
 				enum quoting_style s));
 
-/* In O, set the value of the quoting options for character C to I.
+/* In O (or in the default if O is null),
+   set the value of the quoting options for character C to I.
    Return the old value.  Currently, the only values defined for I are
    0 (the default) and 1 (which means to quote the character even if
    it would not otherwise be quoted).  */
@@ -67,6 +72,7 @@ int set_char_quoting PARAMS ((struct quoting_options *o, char c, int i));
    
 /* Place into buffer BUFFER (of size BUFFERSIZE) a quoted version of
    argument ARG (of size ARGSIZE), using O to control quoting.
+   If O is null, use the default.
    Terminate the output with a null character, and return the written
    size of the output, not counting the terminating null.
    If BUFFERSIZE is too small to store the output string, return the
@@ -76,12 +82,8 @@ size_t quotearg_buffer PARAMS ((char *buffer, size_t buffersize,
 				char const *arg, size_t argsize,
 				struct quoting_options const *o));
 
-/* The quoting options used by the convenience functions listed below.  */
-
-extern struct quoting_options quotearg_quoting_options;
-
 /* Use storage slot N to return a quoted version of the string ARG.
-   The variable quotearg_quoting_options specifies the quoting options.
+   Use the default quoting options.
    The returned value points to static storage that can be
    reused by the next call to this function with the same value of N.
    N must be nonnegative.  */
