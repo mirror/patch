@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.20 1997/06/13 06:28:37 eggert Exp $ */
+/* $Id: patch.c,v 1.21 1997/06/17 06:52:12 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -46,25 +46,34 @@ struct utimbuf
 };
 #endif
 
+/* Output stream state.  */
+struct outstate
+{
+  FILE *ofp;
+  int after_newline;
+  int zero_output;
+};
+
 /* procedures */
 
 static FILE *create_output_file PARAMS ((char const *));
 static LINENUM locate_hunk PARAMS ((LINENUM));
-static bool apply_hunk PARAMS ((bool *, LINENUM));
-static bool copy_till PARAMS ((bool *, LINENUM));
+static bool apply_hunk PARAMS ((struct outstate *, LINENUM));
+static bool copy_till PARAMS ((struct outstate *, LINENUM));
 static bool patch_match PARAMS ((LINENUM, LINENUM, LINENUM, LINENUM));
 static bool similar PARAMS ((char const *, size_t, char const *, size_t));
-static bool spew_output PARAMS ((bool *));
+static bool spew_output PARAMS ((struct outstate *));
 static char const *make_temp PARAMS ((int));
 static int numeric_string PARAMS ((char const *, int, char const *));
 static void abort_hunk PARAMS ((void));
 static void cleanup PARAMS ((void));
 static void get_some_switches PARAMS ((void));
-static void init_output PARAMS ((char const *));
+static void init_output PARAMS ((char const *, struct outstate *));
 static void init_reject PARAMS ((char const *));
 static void reinitialize_almost_everything PARAMS ((void));
 static void usage PARAMS ((FILE *, int)) __attribute__((noreturn));
 
+static int backup_if_mismatch;
 static int remove_empty_files;
 
 /* TRUE if -R was specified on command line.  */
@@ -82,7 +91,6 @@ static char const end_defined[] = "\n#endif /* %s */\n";
 static int Argc;
 static char * const *Argv;
 
-static FILE *ofp;  /* output file pointer */
 static FILE *rejfp;  /* reject file pointer */
 
 static char const *patchname;
@@ -107,6 +115,7 @@ char **argv;
 {
     char const *val;
     bool somefailed = FALSE;
+    struct outstate outstate;
 
     init_time ();
 
@@ -118,6 +127,7 @@ char **argv;
     strippath = INT_MAX;
 
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
+    backup_if_mismatch = ! posixly_correct;
     patch_get = ((val = getenv ("PATCH_GET"))
 		 ? numeric_string (val, 1, "PATCH_GET value")
 		 : posixly_correct - 1);
@@ -148,8 +158,7 @@ char **argv;
     Argv = argv;
     get_some_switches();
 
-    if (outfile)
-      init_output (outfile);
+    init_output (outfile, &outstate);
 
     /* Make sure we clean up in case of disaster.  */
     set_signals(0);
@@ -161,23 +170,32 @@ char **argv;
     ) {					/* for each patch in patch file */
       int hunk = 0;
       int failed = 0;
-      int imperfections = 0;
+      int mismatch = 0;
       char *outname = outfile ? outfile : inname;
 
       if (!skip_rest_of_patch)
 	get_input_file (inname, outname);
 
       if (diff_type == ED_DIFF) {
+	outstate.zero_output = 0;
 	if (! dry_run)
-	  do_ed_script (ofp);
+	  {
+	    do_ed_script (outstate.ofp);
+	    if (! outfile)
+	      {
+		struct stat statbuf;
+		if (stat (TMPOUTNAME, &statbuf) != 0)
+		  pfatal ("%s", TMPOUTNAME);
+		outstate.zero_output = statbuf.st_size == 0;
+	      }
+	  }
       } else {
 	int got_hunk;
 	int apply_anyway = 0;
-	bool after_newline = TRUE;
 
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
-	    init_output(TMPOUTNAME);
+	  init_output (TMPOUTNAME, &outstate);
 
 	/* initialize reject file */
 	init_reject(TMPREJNAME);
@@ -203,6 +221,8 @@ char **argv;
 	    if (!skip_rest_of_patch) {
 		do {
 		    where = locate_hunk(fuzz);
+		    if (! where || fuzz || last_offset)
+		      mismatch = 1;
 		    if (hunk == 1 && ! where && ! (force | apply_anyway)
 			&& reverse == reverse_flag_specified) {
 						/* dwim for reversed patch? */
@@ -237,10 +257,10 @@ char **argv;
 			 && ++fuzz <= mymaxfuzz);
 
 		if (skip_rest_of_patch) {		/* just got decided */
-		  if (ofp && ! outfile)
+		  if (outstate.ofp && ! outfile)
 		    {
-		      fclose (ofp);
-		      ofp = 0;
+		      fclose (outstate.ofp);
+		      outstate.ofp = 0;
 		    }
 		}
 	    }
@@ -262,14 +282,12 @@ char **argv;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    }
-	    else if (! apply_hunk (&after_newline, where)) {
+	    else if (! apply_hunk (&outstate, where)) {
 		abort_hunk ();
 		failed++;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    } else {
-		if (fuzz | last_offset)
-		    imperfections = 1;
 		if (verbosity == VERBOSE || (fuzz && verbosity != SILENT)) {
 		    say ("Hunk #%d succeeded at %ld", hunk, newwhere);
 		    if (fuzz)
@@ -286,10 +304,10 @@ char **argv;
 	    if (outfile)
 	      fatal ("out of memory using Plan A");
 	    say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
-	    if (ofp)
+	    if (outstate.ofp)
 	      {
-		fclose (ofp);
-		ofp = 0;
+		fclose (outstate.ofp);
+		outstate.ofp = 0;
 	      }
 	    fclose (rejfp);
 	    continue;
@@ -299,7 +317,7 @@ char **argv;
 	if (!skip_rest_of_patch)
 	  {
 	    assert (hunk);
-	    if (! spew_output (&after_newline))
+	    if (! spew_output (&outstate))
 	      {
 		say ("Skipping patch.\n");
 		skip_rest_of_patch = TRUE;
@@ -310,13 +328,10 @@ char **argv;
       /* and put the output where desired */
       ignore_signals ();
       if (! skip_rest_of_patch && ! outfile) {
-	  struct stat statbuf;
-
-	  if ((remove_empty_files
-	       || (pch_says_nonexistent (reverse ^ 1) == 2
-		   && ! posixly_correct))
-	      && stat (TMPOUTNAME, &statbuf) == 0
-	      && statbuf.st_size == 0)
+	  if (outstate.zero_output
+	      && (remove_empty_files
+		  || (pch_says_nonexistent (reverse ^ 1) == 2
+		      && ! posixly_correct)))
 	    {
 	      if (verbosity == VERBOSE)
 		say ("Removing file `%s'%s.\n", outname,
@@ -324,18 +339,29 @@ char **argv;
 	      if (! dry_run)
 		{
 		  move_file ((char *) 0, outname, (mode_t) 0,
-			     backup_type != none);
+			     (backup_type != none
+			      || (backup_if_mismatch && (mismatch | failed))));
 		  removedirs (outname);
 		}
 	    }
 	  else
 	    {
+	      if (! outstate.zero_output
+		  && pch_says_nonexistent (reverse ^ 1))
+		{
+		  mismatch = 1;
+		  if (verbosity != SILENT)
+		    say ("File `%s' is not empty after patch, as expected.\n",
+			 outname);
+		}
+
 	      if (! dry_run)
 		{
 		  time_t t;
 
 		  move_file (TMPOUTNAME, outname, instat.st_mode,
-			     backup_type != none);
+			     (backup_type != none
+			      || (backup_if_mismatch && (mismatch | failed))));
 
 		  if ((set_time | set_utc)
 		      && (t = pch_timestamp (reverse ^ 1)) != (time_t) -1)
@@ -349,7 +375,7 @@ char **argv;
 			  && t != instat.st_mtime)
 			say ("not setting time of file `%s' (time mismatch)\n",
 			     outname);
-		      else if (! force && (imperfections | failed))
+		      else if (! force && (mismatch | failed))
 			say ("not setting time of file `%s' (contents mismatch)\n",
 			     outname);
 		      else if (utime (outname, &utimbuf) != 0)
@@ -393,7 +419,7 @@ char **argv;
       }
       set_signals (1);
     }
-    if (ofp && (ferror (ofp) || fclose (ofp) != 0))
+    if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
     cleanup ();
     if (somefailed)
@@ -466,6 +492,8 @@ static struct option const longopts[] =
   {"verbose", no_argument, NULL, 130},
   {"binary", no_argument, NULL, 131},
   {"help", no_argument, NULL, 132},
+  {"backup-if-mismatch", no_argument, NULL, 133},
+  {"no-backup-if-mismatch", no_argument, NULL, 134},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -503,7 +531,9 @@ static char const *const option_help[] =
 "  -V STYLE  --version-control=STYLE  Use STYLE version control.",
 "	STYLE is either 'simple', 'numbered', or 'existing'.",
 "",
-"  -b  --backup  Save the original contents of each file F into F.orig.",
+"  -b  --backup  Back up the original contents of each file.",
+"  --backup-if-mismatch  Back up if the patch does not match exactly.",
+"  --no-backup-if-mismatch  Back up mismatches only if otherwise requested.",
 "  -B PREFIX  --prefix=PREFIX  Prepend PREFIX to backup file names.",
 "  -Y PREFIX  --basename-prefix=PREFIX  Prepend PREFIX to backup file basenames.",
 "  -z SUFFIX  --suffix=SUFFIX  Append SUFFIX to backup file names.",
@@ -592,7 +622,6 @@ get_some_switches()
 		if (!*optarg)
 		  fatal ("backup prefix is empty");
 		origprae = savestr (optarg);
-		backup_type = simple;
 		break;
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
@@ -674,14 +703,12 @@ get_some_switches()
 		if (!*optarg)
 		  fatal ("backup basename prefix is empty");
 		origbase = savestr (optarg);
-		backup_type = simple;
 		break;
 	    case 'z':
 	    case_z:
 		if (!*optarg)
 		  fatal ("backup suffix is empty");
 		simple_backup_suffix = savestr (optarg);
-		backup_type = simple;
 		break;
 	    case 'Z':
 		set_utc = 1;
@@ -699,6 +726,12 @@ get_some_switches()
 		break;
 	    case 132:
 		usage (stdout, 0);
+	    case 133:
+		backup_if_mismatch = 1;
+		break;
+	    case 134:
+		backup_if_mismatch = 0;
+		break;
 	    default:
 		usage (stderr, 2);
 	}
@@ -888,9 +921,9 @@ abort_hunk()
 /* We found where to apply it (we hope), so do it. */
 
 static bool
-apply_hunk (after_newline, where)
-bool *after_newline;
-LINENUM where;
+apply_hunk (outstate, where)
+     struct outstate *outstate;
+     LINENUM where;
 {
     register LINENUM old = 1;
     register LINENUM lastline = pch_ptrn_lines ();
@@ -898,7 +931,7 @@ LINENUM where;
     register enum {OUTSIDE, IN_IFNDEF, IN_IFDEF, IN_ELSE} def_state = OUTSIDE;
     register char const *R_do_defines = do_defines;
     register LINENUM pat_end = pch_end ();
-    register FILE *fp = ofp;
+    register FILE *fp = outstate->ofp;
 
     where--;
     while (pch_char(new) == '=' || pch_char(new) == '\n')
@@ -906,21 +939,23 @@ LINENUM where;
 
     while (old <= lastline) {
 	if (pch_char(old) == '-') {
-	    assert (*after_newline);
-	    if (! copy_till (after_newline, where + old - 1))
+	    assert (outstate->after_newline);
+	    if (! copy_till (outstate, where + old - 1))
 		return FALSE;
 	    if (R_do_defines) {
 		if (def_state == OUTSIDE) {
-		    fprintf (fp, *after_newline + if_defined, R_do_defines);
+		    fprintf (fp, outstate->after_newline + if_defined,
+			     R_do_defines);
 		    def_state = IN_IFNDEF;
 		}
 		else if (def_state == IN_IFDEF) {
-		    fprintf (fp, *after_newline + else_defined);
+		    fprintf (fp, outstate->after_newline + else_defined);
 		    def_state = IN_ELSE;
 		}
 		if (ferror (fp))
 		  write_fatal ();
-		*after_newline = pch_write_line (old, fp);
+		outstate->after_newline = pch_write_line (old, fp);
+		outstate->zero_output = 0;
 	    }
 	    last_frozen_line++;
 	    old++;
@@ -929,21 +964,23 @@ LINENUM where;
 	    break;
 	}
 	else if (pch_char(new) == '+') {
-	    if (! copy_till (after_newline, where + old - 1))
+	    if (! copy_till (outstate, where + old - 1))
 		return FALSE;
 	    if (R_do_defines) {
 		if (def_state == IN_IFNDEF) {
-		    fprintf (fp, *after_newline + else_defined);
+		    fprintf (fp, outstate->after_newline + else_defined);
 		    def_state = IN_ELSE;
 		}
 		else if (def_state == OUTSIDE) {
-		    fprintf (fp, *after_newline + if_defined, R_do_defines);
+		    fprintf (fp, outstate->after_newline + if_defined,
+			     R_do_defines);
 		    def_state = IN_IFDEF;
 		}
 		if (ferror (fp))
 		  write_fatal ();
 	    }
-	    *after_newline = pch_write_line (new, fp);
+	    outstate->after_newline = pch_write_line (new, fp);
+	    outstate->zero_output = 0;
 	    new++;
 	}
 	else if (pch_char(new) != pch_char(old)) {
@@ -955,10 +992,10 @@ LINENUM where;
 		pch_hunk_beg() + new);
 	}
 	else if (pch_char(new) == '!') {
-	    assert (*after_newline);
-	    if (! copy_till (after_newline, where + old - 1))
+	    assert (outstate->after_newline);
+	    if (! copy_till (outstate, where + old - 1))
 		return FALSE;
-	    assert (*after_newline);
+	    assert (outstate->after_newline);
 	    if (R_do_defines) {
 	       fprintf (fp, not_defined, R_do_defines);
 	       if (ferror (fp))
@@ -969,7 +1006,7 @@ LINENUM where;
 	    do
 	      {
 		if (R_do_defines) {
-		    *after_newline = pch_write_line (old, fp);
+		    outstate->after_newline = pch_write_line (old, fp);
 		}
 		last_frozen_line++;
 		old++;
@@ -977,7 +1014,7 @@ LINENUM where;
 	    while (pch_char (old) == '!');
 
 	    if (R_do_defines) {
-		fprintf (fp, *after_newline + else_defined);
+		fprintf (fp, outstate->after_newline + else_defined);
 		if (ferror (fp))
 		  write_fatal ();
 		def_state = IN_ELSE;
@@ -985,54 +1022,59 @@ LINENUM where;
 
 	    do
 	      {
-		*after_newline = pch_write_line (new, fp);
+		outstate->after_newline = pch_write_line (new, fp);
 		new++;
 	      }
 	    while (pch_char (new) == '!');
+	    outstate->zero_output = 0;
 	}
 	else {
 	    assert(pch_char(new) == ' ');
 	    old++;
 	    new++;
 	    if (R_do_defines && def_state != OUTSIDE) {
-		fprintf (fp, *after_newline + end_defined, R_do_defines);
+		fprintf (fp, outstate->after_newline + end_defined,
+			 R_do_defines);
 		if (ferror (fp))
 		  write_fatal ();
-		*after_newline = TRUE;
+		outstate->after_newline = 1;
 		def_state = OUTSIDE;
 	    }
 	}
     }
     if (new <= pat_end && pch_char(new) == '+') {
-	if (! copy_till (after_newline, where + old - 1))
+	if (! copy_till (outstate, where + old - 1))
 	    return FALSE;
 	if (R_do_defines) {
 	    if (def_state == OUTSIDE) {
-		fprintf (fp, *after_newline + if_defined, R_do_defines);
+		fprintf (fp, outstate->after_newline + if_defined,
+			 R_do_defines);
 		def_state = IN_IFDEF;
 	    }
 	    else if (def_state == IN_IFNDEF) {
-		fprintf (fp, *after_newline + else_defined);
+		fprintf (fp, outstate->after_newline + else_defined);
 		def_state = IN_ELSE;
 	    }
 	    if (ferror (fp))
 	      write_fatal ();
+	    outstate->zero_output = 0;
 	}
 
 	do
 	  {
-	    if (!*after_newline  &&  putc ('\n', fp) == EOF)
+	    if (! outstate->after_newline  &&  putc ('\n', fp) == EOF)
 	      write_fatal ();
-	    *after_newline = pch_write_line (new, fp);
+	    outstate->after_newline = pch_write_line (new, fp);
+	    outstate->zero_output = 0;
 	    new++;
 	  }
 	while (new <= pat_end && pch_char (new) == '+');
     }
     if (R_do_defines && def_state != OUTSIDE) {
-	fprintf (fp, *after_newline + end_defined, R_do_defines);
+	fprintf (fp, outstate->after_newline + end_defined, R_do_defines);
 	if (ferror (fp))
 	  write_fatal ();
-	*after_newline = TRUE;
+	outstate->after_newline = 1;
     }
     return TRUE;
 }
@@ -1053,10 +1095,13 @@ create_output_file (name)
 /* Open the new file. */
 
 static void
-init_output(name)
+init_output (name, outstate)
      char const *name;
+     struct outstate *outstate;
 {
-  ofp = create_output_file (name);
+  outstate->ofp = name ? create_output_file (name) : (FILE *) 0;
+  outstate->after_newline = 1;
+  outstate->zero_output = 1;
 }
 
 /* Open a file to put hunks we can't locate. */
@@ -1071,12 +1116,12 @@ init_reject(name)
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 static bool
-copy_till (after_newline, lastline)
-     register bool *after_newline;
+copy_till (outstate, lastline)
+     register struct outstate *outstate;
      register LINENUM lastline;
 {
     register LINENUM R_last_frozen_line = last_frozen_line;
-    register FILE *fp = ofp;
+    register FILE *fp = outstate->ofp;
     register char const *s;
     size_t size;
 
@@ -1090,10 +1135,11 @@ copy_till (after_newline, lastline)
 	s = ifetch (++R_last_frozen_line, 0, &size);
 	if (size)
 	  {
-	    if ((!*after_newline  &&  putc ('\n', fp) == EOF)
+	    if ((! outstate->after_newline  &&  putc ('\n', fp) == EOF)
 		|| ! fwrite (s, sizeof *s, size, fp))
 	      write_fatal ();
-	    *after_newline = s[size - 1] == '\n';
+	    outstate->after_newline = s[size - 1] == '\n';
+	    outstate->zero_output = 0;
 	  }
       }
     last_frozen_line = R_last_frozen_line;
@@ -1103,21 +1149,21 @@ copy_till (after_newline, lastline)
 /* Finish copying the input file to the output file. */
 
 static bool
-spew_output (after_newline)
-     bool *after_newline;
+spew_output (outstate)
+     struct outstate *outstate;
 {
     if (debug & 256)
       say ("il=%ld lfl=%ld\n", input_lines, last_frozen_line);
 
     if (last_frozen_line < input_lines)
-      if (! copy_till (after_newline, input_lines))
+      if (! copy_till (outstate, input_lines))
 	return FALSE;
 
-    if (ofp && ! outfile)
+    if (outstate->ofp && ! outfile)
       {
-	if (fclose (ofp) != 0)
+	if (fclose (outstate->ofp) != 0)
 	  write_fatal ();
-	ofp = 0;
+	outstate->ofp = 0;
       }
 
     return TRUE;
