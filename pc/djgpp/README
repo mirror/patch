@@ -1,3 +1,8 @@
+(This DJGPP port has not actually been tested under DJGPP,
+and it probably needs a bit of tweaking.  Please send
+any bug reports to <bug-gnu-utils@prep.ai.mit.edu>.)
+
+
 To configure `patch' for DJGPP, issue these commands from the
 `patch' source directory:
 
@@ -14,5 +19,6 @@ You MUST use forward slashes to specify the source directory.
 Running configure.bat requires a port of `sed'.
 You can find one on the usual DJGPP archive sites.
 
+
 Thanks to Eli Zaretskii <eliz@is.elta.co.il> for
-suggestions, ideas, and testing for this DJGPP port.
+suggestions and ideas for this DJGPP port.
