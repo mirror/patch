@@ -3,6 +3,10 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+* File names in context patches may now contain spaces, so long
+  as the context patch headers use a tab to separate the file name
+  from the time stamp.
+* Perforce is now supported.
 * Patch lines beginning with "#" are comments and are ignored.
 
 Changes in version 2.5.5:
