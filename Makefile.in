@@ -150,7 +150,7 @@ backupfile.o: argmatch.h backupfile.h
 basename.o: backupfile.h
 getopt.o getopt1.o: getopt.h
 maketime.o: maketime.h partime.h
-inp.o: backupfile.h common.h inp.h pch.h quotearg.h util.h
+inp.o: backupfile.h common.h inp.h pch.h util.h
 partime.o: partime.h
 patch.o: argmatch.h backupfile.h common.h getopt.h inp.h pch.h util.h version.h
 pch.o: common.h inp.h pch.h util.h
