@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.11 1997/05/05 07:31:21 eggert Exp $ */
+/* $Id: common.h,v 1.12 1997/05/06 12:27:15 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -33,6 +33,12 @@ If not, write to the Free Software Foundation,
 # define volatile
 # endif
 #endif
+
+/* Enable support for fseeko and ftello on hosts
+   where it is available but is turned off by default.
+   This must be defined before any system file is included.  */
+#define _LARGEFILE_SOURCE 1
+
 #include <config.h>
 
 #include <assert.h>
@@ -235,6 +241,15 @@ off_t lseek ();
 #endif
 #ifndef STDERR_FILENO
 #define STDERR_FILENO 2
+#endif
+#if _LFS_LARGEFILE
+  typedef off_t file_offset;
+# define file_seek fseeko
+# define file_tell ftello
+#else
+  typedef long file_offset;
+# define file_seek fseek
+# define file_tell ftell
 #endif
 
 #if HAVE_FCNTL_H
