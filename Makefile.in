@@ -46,9 +46,9 @@ manext = 1
 SHELL = /bin/sh
 
 SRCS = backupfile.c getopt.c getopt1.c inp.c patch.c pch.c util.c \
-	version.c rename.c alloca.c
+	version.c rename.c
 OBJS = backupfile.o getopt.o getopt1.o inp.o patch.o pch.o util.o \
-	version.o @LIBOBJS@ @ALLOCA@
+	version.o @LIBOBJS@
 HDRS = EXTERN.h INTERN.h backupfile.h common.h getopt.h \
 	inp.h patchlevel.h pch.h util.h version.h
 MISC = COPYING ChangeLog INSTALL Makefile.in README NEWS \
