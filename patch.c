@@ -1,5 +1,4 @@
-char rcsid[] =
-	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.7 1993/07/29 20:11:38 eggert Exp $";
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.8 1993/07/30 02:02:51 eggert Exp $ */
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,29 +8,11 @@ char rcsid[] =
  * money off of it, or pretend that you wrote it.
  *
  * $Log: patch.c,v $
- * Revision 1.7  1993/07/29 20:11:38  eggert
- * (abort_hunk, apply_hunk, patch_match, similar):
- * Lines may contain NUL and need not end in newline.
- * (copy_till, dump_line): Insert newline if appending after partial line.
- * All invokers changed.
- * (main, get_some_switches, apply_hunk): Allocate *_define[ds], filearg,
- * rejname dynamically.
- * (make_temp): New function.
- * (main): Use it.
- * (main, spew_output, dump_line) Check for I/O errors.
- * Add PARAMS to function declarations.
+ * Revision 1.8  1993/07/30 02:02:51  eggert
+ * Remove lint.
  *
- * Revision 1.7  1993/07/29 20:11:38  eggert
- * (abort_hunk, apply_hunk, patch_match, similar):
- * Lines may contain NUL and need not end in newline.
- * (copy_till, dump_line): Insert newline if appending after partial line.
- * All invokers changed.
- * (main, get_some_switches, apply_hunk): Allocate *_define[ds], filearg,
- * rejname dynamically.
- * (make_temp): New function.
- * (main): Use it.
- * (main, spew_output, dump_line) Check for I/O errors.
- * Add PARAMS to function declarations.
+ * Revision 1.8  1993/07/30 02:02:51  eggert
+ * Remove lint.
  *
  * Revision 2.0.2.0  90/05/01  22:17:50  davison
  * patch12u: unidiff support added
@@ -371,7 +352,7 @@ char **argv;
 		toutkeep = TRUE;
 		realout = TMPOUTNAME;
 	    }
-	    chmod(realout, filestat.st_mode);
+	    Chmod(realout, filestat.st_mode);
 
 	    if (remove_empty_files && stat(realout, &statbuf) == 0
 		&& statbuf.st_size == 0) {
@@ -741,7 +722,7 @@ LINENUM where;
 		    def_state = IN_IFNDEF;
 		}
 		else if (def_state == IN_IFDEF) {
-		    fputs(else_defined, ofp);
+		    fprintf(ofp, else_defined);
 		    def_state = IN_ELSE;
 		}
 		pch_write_line (old, ofp);
@@ -756,7 +737,7 @@ LINENUM where;
 	    copy_till(where + old - 1, TRUE);
 	    if (R_do_defines) {
 		if (def_state == IN_IFNDEF) {
-		    fputs(else_defined, ofp);
+		    fprintf(ofp, else_defined);
 		    def_state = IN_ELSE;
 		}
 		else if (def_state == OUTSIDE) {
@@ -791,7 +772,7 @@ LINENUM where;
 		old++;
 	    }
 	    if (R_do_defines) {
-		fputs(else_defined, ofp);
+		fprintf(ofp, else_defined);
 		def_state = IN_ELSE;
 	    }
 	    while (pch_char(new) == '!') {
@@ -817,7 +798,7 @@ LINENUM where;
 		def_state = IN_IFDEF;
 	    }
 	    else if (def_state == IN_IFNDEF) {
-		fputs(else_defined, ofp);
+		fprintf(ofp, else_defined);
 		def_state = IN_ELSE;
 	    }
 	}
@@ -905,7 +886,7 @@ LINENUM line;
 
 /* Does the patch pattern match at line base+offset? */
 
-bool
+static bool
 patch_match(base, offset, fuzz)
 LINENUM base;
 LINENUM offset;

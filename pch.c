@@ -1,33 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.c,v 1.4 1993/07/29 20:11:38 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.c,v 1.5 1993/07/30 02:02:51 eggert Exp $
  *
  * $Log: pch.c,v $
- * Revision 1.4  1993/07/29 20:11:38  eggert
- * (open_patch_file): Don't copy stdin to a temporary file if
- * it's a regular file, since we can seek on it directly.
- * (open_patch_file, skip_to, another_hunk): The patch file may contain
- * NULs.
- * (another_hunk): The patch file may contain lines starting with '\',
- * which means the preceding line lacked a trailing newline.
- * (pgetline): Rename to pget_line.
- * (get_line, incomplete_line, pch_write_line): New functions.
- * (pch_line_len): Return size_t, not short; lines may be very long.
- * (do_ed_script): Check for I/O errors.  Allow scripts to contain
- * 'i' and 's' commands, too.
- * Add PARAMS to function declarations.
+ * Revision 1.5  1993/07/30 02:02:51  eggert
+ * Remove lint.
  *
- * Revision 1.4  1993/07/29 20:11:38  eggert
- * (open_patch_file): Don't copy stdin to a temporary file if
- * it's a regular file, since we can seek on it directly.
- * (open_patch_file, skip_to, another_hunk): The patch file may contain
- * NULs.
- * (another_hunk): The patch file may contain lines starting with '\',
- * which means the preceding line lacked a trailing newline.
- * (pgetline): Rename to pget_line.
- * (get_line, incomplete_line, pch_write_line): New functions.
- * (pch_line_len): Return size_t, not short; lines may be very long.
- * (do_ed_script): Check for I/O errors.  Allow scripts to contain
- * 'i' and 's' commands, too.
- * Add PARAMS to function declarations.
+ * Revision 1.5  1993/07/30 02:02:51  eggert
+ * Remove lint.
  *
  * Revision 2.0.2.0  90/05/01  22:17:51  davison
  * patch12u: unidiff support added
@@ -169,9 +147,9 @@ void
 set_hunkmax()
 {
     if (!p_line)
-	p_line = malloc(hunkmax * sizeof(*p_line));
+	p_line = (char **) malloc(hunkmax * sizeof(*p_line));
     if (!p_len)
-	p_len = malloc(hunkmax * sizeof(*p_len));
+	p_len = (size_t *) malloc(hunkmax * sizeof(*p_len));
     if (!p_Char)
 	p_Char = malloc(hunkmax * sizeof(*p_Char));
 }
@@ -183,8 +161,8 @@ grow_hunkmax()
 {
     hunkmax *= 2;
     assert(p_line && p_len && p_Char);
-    if ((p_line = realloc(p_line, hunkmax * sizeof(*p_line)))
-	&& (p_len = realloc(p_len, hunkmax * sizeof(*p_len)))
+    if ((p_line = (char **) realloc(p_line, hunkmax * sizeof(*p_line)))
+	&& (p_len = (size_t *) realloc(p_len, hunkmax * sizeof(*p_len)))
         && (p_Char = realloc(p_Char, hunkmax * sizeof(*p_Char))))
 	return;
     if (!using_plan_a)
@@ -470,11 +448,11 @@ LINENUM file_line;
 	Fseek(pfp, p_base, SEEK_SET);
 	say1("The text leading up to this was:\n--------------------------\n");
 	while (ftell(pfp) < file_pos) {
-	    putc('|', o);
+	    Fputc('|', o);
 	    do {
 		if ((c = getc(i)) == EOF)
 		    read_fatal ();
-		putc(c, o);
+		Fputc(c, o);
 	    } while (c != '\n');
 	}
 	say1("--------------------------\n");
@@ -586,7 +564,7 @@ another_hunk()
 		if (!*s)
 		    malformed ();
 		if (strnEQ(s,"0,0",3))
-		    strcpy(s,s+2);
+		    Strcpy(s,s+2);
 		p_first = (LINENUM) atol(s);
 		while (isdigit(*s)) s++;
 		if (*s == ',') {
@@ -679,7 +657,7 @@ another_hunk()
 		repl_could_be_missing = FALSE;
 	      change_line:
 		if (buf[1] == '\n' && canonicalize) {
-		    strcpy(buf+1," \n");
+		    Strcpy(buf+1," \n");
 		    chars_read = 3;
 		}
 		if (!isspace(buf[1]) && buf[1] != '>' && buf[1] != '<' &&
@@ -1072,7 +1050,7 @@ another_hunk()
 	    say1("Not enough memory to swap next hunk!\n");
 #ifdef DEBUGGING
     if (debug & 2) {
-	int i;
+	LINENUM i;
 	char special;
 
 	for (i=0; i <= p_end; i++) {
@@ -1080,7 +1058,7 @@ another_hunk()
 		special = '^';
 	    else
 		special = ' ';
-	    fprintf(stderr, "%3d %c %c ", i, p_Char[i], special);
+	    fprintf(stderr, "%3ld %c %c ", i, p_Char[i], special);
 	    pch_write_line (i, stderr);
 	    Fflush(stderr);
 	}
@@ -1449,9 +1427,9 @@ do_ed_script()
     ignore_signals();
     if (move_file(TMPOUTNAME, outname) < 0) {
 	toutkeep = TRUE;
-	chmod(TMPOUTNAME, filestat.st_mode);
+	Chmod(TMPOUTNAME, filestat.st_mode);
     }
     else
-	chmod(outname, filestat.st_mode);
+	Chmod(outname, filestat.st_mode);
     set_signals(1);
 }
