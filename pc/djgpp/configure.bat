@@ -1,6 +1,6 @@
 @echo off
 Rem	Configure patch for DJGPP v2.
-Rem	$Id: configure.bat,v 1.2 1997/05/26 05:34:43 eggert Exp $
+Rem	$Id: configure.bat,v 1.3 1997/05/26 17:52:29 eggert Exp $
 
 Rem	The DOS shell has fixed-size environment storage.
 Rem	When the environment is full, the shell prints
@@ -15,7 +15,7 @@ if not "%1" == "" set srcdir=%1
 if not "%1" == "" if not "%srcdir%" == "%1" goto SmallEnv
 
 Rem	Create Makefile
-sed -f pc/djgpp/config.sed -e "s,@srcdir@,%srcdir%,g" %srcdir%/Makefile.in >Makefile
+sed -f %srcdir%/pc/djgpp/config.sed -e "s,@srcdir@,%srcdir%,g" %srcdir%/Makefile.in >Makefile
 sed -n -e "/^VERSION/p" %srcdir%/configure.in >>Makefile
 
 goto Exit
