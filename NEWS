@@ -5,11 +5,21 @@ Known problems:
 
 Change in version 2.4:
 
-* The manual page has a new COMPATIBILITY ISSUES section.
-
 * New options:
   -Z or --set-utc sets times of patched files, assuming diff uses UTC (GMT).
   -T or --set-time is similar, assuming local time (not recommended).
+  --backup-if-mismatch makes a backup if the patch does not match exactly
+  --no-backup-if-mismatch makes a backup only if otherwise requested
+
+* The default is now --backup-if-mismatch unless POSIXLY_CORRECT is set.
+
+* The -B or --prefix, -Y or --basename-prefix, and -z or --suffix options
+  no longer affect whether backups are made (as they did in patch 2.2 and 2.3);
+  they now merely specify the file names used when simple backups are made.
+
+* When patching a nonexistent file and making backups, an empty backup file
+  is now made (just as with traditional patch); but the backup file is
+  unreadable, as a way of indicating that it represents a nonexistent file.
 
 * -g or --get and PATCH_GET now have a numeric value that specifies
   whether `patch' is getting files.
@@ -31,9 +41,7 @@ Change in version 2.4:
 * `patch' now matches against empty and nonexistent files more generously.
   A patch against an empty file applies to a nonexistent file, and vice versa.
 
-* When patching a nonexistent file and making backups, an empty backup file
-  is now made (just as with traditional patch); but the backup file is
-  unreadable, as a way of indicating that it represents a nonexistent file.
+* The manual page has a new COMPATIBILITY ISSUES section.
 
 Changes in version 2.3:
 
@@ -89,8 +97,8 @@ Changes in version 2.2:
 * Patch now complies better with POSIX.2 if your host complies with POSIX.1.
 
   Therefore:
-  - By default, no backups are made.  Set the VERSION_CONTROL environment
-    variable to "existing" if you prefer patch's traditional behavior.
+  - By default, no backups are made.
+    (But this was changed again in patch 2.4; see above.)
   - The simple backup file name for F defaults to F.orig
     regardless of whether the file system supports long file names,
     and F~ is used only if F.orig is too long for that particular file.
@@ -105,6 +113,7 @@ Changes in version 2.2:
     consulted if none of the above files exist.  However, if the patch
     appears to create a file, the file does not have to exist: instead,
     the first name with the longest existing directory prefix is taken.
+    (These rules were changed again in patch 2.3 and 2.4; see above.)
   - Exit status 0 means success, 1 means hunks were rejected, 2 means trouble.
   - `-l' ignores changes only in spaces and tabs, not in other white space.
   - If no `-p' option is given, `-pINFINITY' is assumed, instead of trying
@@ -123,6 +132,7 @@ Changes in version 2.2:
 
 * RCS is used only if the version control method is `existing'
   and there is already an RCS file.  Similarly for SCCS.
+  (But this was changed again in patch 2.3 and 2.4; see above.)
 
 * Copyright notices have been clarified.  Every file in this version of `patch'
   can be distributed under the GNU General Public License.  See README for
