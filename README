@@ -1,5 +1,6 @@
 This version of patch contains modifications made by the Free Software
 Foundation, summarized in the file ChangeLog.  They add support for:
+ * handling arbitrary binary data
  * the unified context diff format that GNU diff can produce
  * making GNU Emacs-style backup files
  * improved interaction with RCS and SCCS
@@ -13,21 +14,6 @@ The FSF is distributing this version of patch independently because as
 of this writing, Larry Wall has not released a new version of patch
 since mid-1988.  I have heard that he has been too busy working on
 other things, like Perl.
-
-Here is a wish list of some projects to improve patch:
-
-1.  Correctly handle files and patchfiles that contain NUL characters.
-This is hard to do straightforwardly; it would be less work to
-adopt a kind of escape encoding internally.
-Let ESC be a "control prefix".  ESC @ stands for NUL.  ESC [ stands for ESC.
-You need to crunch this when reading input (replace fgets and getline),
-and when writing the output file (replace fputs),
-but otherwise everything can go along as it does now.
-Be careful to handle reject files correctly;
-I think they are currently created using `write', not `fputs'.
-
-2.  Correctly handle patches produced by GNU diff for files that do
-not end with a newline.
 
 Please send bug reports for this version of patch to
 bug-gnu-utils@prep.ai.mit.edu as well as to Larry Wall (lwall@netlabs.com).
