@@ -2,12 +2,13 @@
 # Copyright 1993, 1997 Free Software Foundation, Inc.
 dnl Process this file with autoconf to produce a configure script.
 
+AC_PREREQ(2.12)
 AC_INIT(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 
 PACKAGE=patch
-VERSION=2.2.7
+VERSION=2.2.8
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -15,7 +16,9 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AC_PATH_PROG(ED_PROGRAM, ed, ed)
+# Use ed_PROGRAM, not ED_PROGRAM,
+# because <errno.h> reserves symbols starting with `E'.
+AC_PATH_PROG(ed_PROGRAM, ed, ed)
 
 # If available, prefer support for large files unless the user specified
 # one of the CPPFLAGS, LDFLAGS, or LIBS variables.
