@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.43 2003/05/18 08:31:57 eggert Exp $ */
+/* $Id: pch.c,v 1.44 2003/05/20 14:03:17 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
@@ -59,8 +59,8 @@ static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
 static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
-static int p_strip_trailing_cr;		/* nonzero if stripping trailing \r */
-static int p_pass_comments_through;	/* nonzero if not ignoring # lines */
+static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
+static bool p_pass_comments_through;	/* true if not ignoring # lines */
 static file_offset p_base;		/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
 static file_offset p_start;		/* where intuit found a patch */
@@ -74,8 +74,8 @@ enum nametype { OLD, NEW, INDEX, NONE };
 static char *scan_linenum (char *, LINENUM *);
 static enum diff intuit_diff_type (void);
 static enum nametype best_name (char * const *, int const *);
-static int prefix_components (char *, int);
-static size_t pget_line (int, int, int, int);
+static int prefix_components (char *, bool);
+static size_t pget_line (int, int, bool, bool);
 static size_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
@@ -96,7 +96,7 @@ re_patch (void)
     p_end = -1;
     p_max = 0;
     p_indent = 0;
-    p_strip_trailing_cr = 0;
+    p_strip_trailing_cr = false;
 }
 
 /* Open the patch file at the beginning of time. */
@@ -185,14 +185,14 @@ grow_hunkmax (void)
     if ((p_line = (char **) realloc (p_line, hunkmax * sizeof (*p_line)))
 	&& (p_len = (size_t *) realloc (p_len, hunkmax * sizeof (*p_len)))
 	&& (p_Char = realloc (p_Char, hunkmax * sizeof (*p_Char))))
-      return TRUE;
+      return true;
     if (!using_plan_a)
       memory_fatal ();
     /* Don't free previous values of p_line etc.,
        since some broken implementations free them for us.
        Whatever is null will be allocated again from within plan_a (),
        of all places.  */
-    return FALSE;
+    return false;
 }
 
 /* True if the remainder of the patch file contains a diff of some sort. */
@@ -203,7 +203,7 @@ there_is_another_patch (void)
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
 	    say ("done\n");
-	return FALSE;
+	return false;
     }
     if (verbosity == VERBOSE)
 	say ("Hmm...");
@@ -215,13 +215,13 @@ there_is_another_patch (void)
 	       : "  I can't seem to find a patch in there anywhere.\n");
 	if (! p_base && p_filesize)
 	  fatal ("Only garbage was found in the patch input.");
-	return FALSE;
+	return false;
     }
     if (skip_rest_of_patch)
       {
 	Fseek (pfp, p_start, SEEK_SET);
 	p_input_line = p_sline - 1;
-	return TRUE;
+	return true;
       }
     if (verbosity == VERBOSE)
 	say ("  %sooks like %s to me...\n",
@@ -252,10 +252,10 @@ there_is_another_patch (void)
 
     skip_to(p_start,p_sline);
     while (!inname) {
-	if (force || batch) {
+	if (force | batch) {
 	    say ("No file to patch.  Skipping patch.\n");
-	    skip_rest_of_patch = TRUE;
-	    return TRUE;
+	    skip_rest_of_patch = true;
+	    return true;
 	}
 	ask ("File to patch: ");
 	inname = fetchname (buf, 0, (time_t *) 0);
@@ -279,12 +279,12 @@ there_is_another_patch (void)
 	    if (*buf != 'n') {
 		if (verbosity != SILENT)
 		    say ("Skipping patch.\n");
-		skip_rest_of_patch = TRUE;
-		return TRUE;
+		skip_rest_of_patch = true;
+		return true;
 	    }
 	}
     }
-    return TRUE;
+    return true;
 }
 
 /* Determine what kind of diff is in the remaining part of the patch file. */
@@ -296,8 +296,8 @@ intuit_diff_type (void)
     register file_offset first_command_line = -1;
     char first_ed_command_letter = 0;
     LINENUM fcl_line = 0; /* Pacify `gcc -W'.  */
-    register bool this_is_a_command = FALSE;
-    register bool stars_this_line = FALSE;
+    register bool this_is_a_command = false;
+    register bool stars_this_line = false;
     enum nametype i;
     char *name[3];
     struct stat st[3];
@@ -322,11 +322,11 @@ intuit_diff_type (void)
 	register bool stars_last_line = stars_this_line;
 	register int indent = 0;
 	char ed_command_letter;
-	int strip_trailing_cr;
+	bool strip_trailing_cr;
 	size_t chars_read;
 
 	this_line = file_tell (pfp);
-	chars_read = pget_line (0, 0, 0, 0);
+	chars_read = pget_line (0, 0, false, false);
 	if (chars_read == (size_t) -1)
 	  memory_fatal ();
 	if (! chars_read) {
@@ -478,7 +478,7 @@ intuit_diff_type (void)
 	      LINENUM saved_p_bline = p_bline;
 	      Fseek (pfp, previous_line, SEEK_SET);
 	      p_input_line -= 2;
-	      if (another_hunk (retval, 0)
+	      if (another_hunk (retval, false)
 		  && ! p_repl_lines && p_newfirst == 1)
 		p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
 	      next_intuit_at (saved_p_base, saved_p_bline);
@@ -564,7 +564,7 @@ intuit_diff_type (void)
 
 	if (! posixly_correct)
 	  {
-	    int is_empty;
+	    bool is_empty;
 
 	    i = best_name (name, stat_errno);
 
@@ -578,7 +578,8 @@ intuit_diff_type (void)
 		      char const *cs;
 		      char *getbuf;
 		      char *diffbuf;
-		      int readonly = outfile && strcmp (outfile, name[i]) != 0;
+		      bool readonly = (outfile
+				       && strcmp (outfile, name[i]) != 0);
 
 		      if (nope == NONE || strcmp (name[nope], name[i]) != 0)
 			{
@@ -588,7 +589,7 @@ intuit_diff_type (void)
 			  version_controlled[i] = !! cs;
 			  if (cs)
 			    {
-			      if (version_get (name[i], cs, 0, readonly,
+			      if (version_get (name[i], cs, false, readonly,
 					       getbuf, &st[i]))
 				stat_errno[i] = 0;
 			      else
@@ -611,7 +612,8 @@ intuit_diff_type (void)
 	    if ((! is_empty) < p_says_nonexistent[reverse ^ is_empty])
 	      {
 		assert (i0 != NONE);
-		if (ok_to_reverse
+		reverse ^=
+		  ok_to_reverse
 		    ("The next patch%s would %s the file %s,\nwhich %s!",
 		     reverse ? ", when reversed," : "",
 		     (i == NONE ? "delete"
@@ -620,8 +622,7 @@ intuit_diff_type (void)
 		     quotearg (name[i == NONE || st[i].st_size == 0 ? i0 : i]),
 		     (i == NONE ? "does not exist"
 		      : st[i].st_size == 0 ? "is already empty"
-		      : "already exists")))
-		  reverse ^= 1;
+		      : "already exists"));
 	      }
 
 	    if (i == NONE && p_says_nonexistent[reverse])
@@ -633,8 +634,8 @@ intuit_diff_type (void)
 		for (i = OLD;  i <= INDEX;  i++)
 		  if (name[i])
 		    {
-		      newdirs[i] = (prefix_components (name[i], 0)
-				    - prefix_components (name[i], 1));
+		      newdirs[i] = (prefix_components (name[i], false)
+				    - prefix_components (name[i], true));
 		      if (newdirs[i] < newdirs_min)
 			newdirs_min = newdirs[i];
 		    }
@@ -667,9 +668,9 @@ intuit_diff_type (void)
 }
 
 /* Count the path name components in FILENAME's prefix.
-   If CHECKDIRS is nonzero, count only existing directories.  */
+   If CHECKDIRS is true, count only existing directories.  */
 static int
-prefix_components (char *filename, int checkdirs)
+prefix_components (char *filename, bool checkdirs)
 {
   int count = 0;
   struct stat stat_buf;
@@ -713,7 +714,7 @@ best_name (char *const *name, int const *ignore)
     if (name[i] && !ignore[i])
       {
 	/* Take the names with the fewest prefix components.  */
-	components[i] = prefix_components (name[i], 0);
+	components[i] = prefix_components (name[i], false);
 	if (components_min < components[i])
 	  continue;
 	components_min = components[i];
@@ -801,7 +802,7 @@ scan_linenum (char *s0, LINENUM *linenum)
 {
   char *s;
   LINENUM n = 0;
-  int overflow = 0;
+  bool overflow = false;
   char numbuf[LINENUM_LENGTH_BOUND + 1];
 
   for (s = s0;  ISDIGIT (*s);  s++)
@@ -827,7 +828,7 @@ scan_linenum (char *s0, LINENUM *linenum)
    0 if not; -1 if ran out of memory. */
 
 int
-another_hunk (enum diff difftype, int rev)
+another_hunk (enum diff difftype, bool rev)
 {
     register char *s;
     register LINENUM context = 0;
@@ -855,11 +856,11 @@ another_hunk (enum diff difftype, int rev)
 	register LINENUM fillcnt = 0;	/* #lines of missing ptrn or repl */
 	register LINENUM fillsrc;	/* index of first line to copy */
 	register LINENUM filldst;	/* index of first missing line */
-	bool ptrn_spaces_eaten = FALSE;	/* ptrn was slightly misformed */
-	bool some_context = FALSE;	/* (perhaps internal) context seen */
-	register bool repl_could_be_missing = TRUE;
-	bool ptrn_missing = FALSE;	/* The pattern was missing.  */
-	bool repl_missing = FALSE;	/* Likewise for replacement.  */
+	bool ptrn_spaces_eaten = false;	/* ptrn was slightly misformed */
+	bool some_context = false;	/* (perhaps internal) context seen */
+	register bool repl_could_be_missing = true;
+	bool ptrn_missing = false;	/* The pattern was missing.  */
+	bool repl_missing = false;	/* Likewise for replacement.  */
 	file_offset repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	LINENUM repl_patch_line;	/* input line number for same */
@@ -887,7 +888,7 @@ another_hunk (enum diff difftype, int rev)
 	      return -1;
 	    if (!chars_read) {
 		if (repl_beginning && repl_could_be_missing) {
-		    repl_missing = TRUE;
+		    repl_missing = true;
 		    goto hunk_done;
 		}
 		if (p_max - p_end < 4) {
@@ -910,7 +911,7 @@ another_hunk (enum diff difftype, int rev)
 	    case '*':
 		if (strnEQ(buf, "********", 8)) {
 		    if (repl_beginning && repl_could_be_missing) {
-			repl_missing = TRUE;
+			repl_missing = true;
 			goto hunk_done;
 		    }
 		    else
@@ -919,7 +920,7 @@ another_hunk (enum diff difftype, int rev)
 		}
 		if (p_end != 0) {
 		    if (repl_beginning && repl_could_be_missing) {
-			repl_missing = TRUE;
+			repl_missing = true;
 			goto hunk_done;
 		    }
 		    fatal ("unexpected `***' at line %s: %s",
@@ -968,7 +969,7 @@ another_hunk (enum diff difftype, int rev)
 		      {
 			/* `Old' lines were omitted.  Set up to fill
 			   them in from `new' context lines.  */
-			ptrn_missing = TRUE;
+			ptrn_missing = true;
 			p_end = p_ptrn_lines + 1;
 			ptrn_prefix_context = ptrn_suffix_context = -1;
 			fillsrc = p_end + 1;
@@ -989,7 +990,7 @@ another_hunk (enum diff difftype, int rev)
 					     p_hunk_beg + repl_beginning));
 		    else
 		      {
-			repl_missing = TRUE;
+			repl_missing = true;
 			goto hunk_done;
 		      }
 		  }
@@ -1033,11 +1034,11 @@ another_hunk (enum diff difftype, int rev)
 		    && (p_prefix_context != 0
 			|| context != 0
 			|| p_repl_lines != 1))
-		  repl_could_be_missing = FALSE;
+		  repl_could_be_missing = false;
 		context = 0;
 		break;
 	    case '+':  case '!':
-		repl_could_be_missing = FALSE;
+		repl_could_be_missing = false;
 	      change_line:
 		s = buf + 1;
 		chars_read--;
@@ -1049,7 +1050,7 @@ another_hunk (enum diff difftype, int rev)
 		    s++;
 		    chars_read--;
 		} else if (repl_beginning && repl_could_be_missing) {
-		    repl_missing = TRUE;
+		    repl_missing = true;
 		    goto hunk_done;
 		}
 		if (! repl_beginning)
@@ -1081,7 +1082,7 @@ another_hunk (enum diff difftype, int rev)
 		}
 		if (repl_beginning && repl_could_be_missing &&
 		    (!ptrn_spaces_eaten || difftype == NEW_CONTEXT_DIFF) ) {
-		    repl_missing = TRUE;
+		    repl_missing = true;
 		    goto hunk_done;
 		}
 		chars_read -=
@@ -1095,7 +1096,7 @@ another_hunk (enum diff difftype, int rev)
 		}
 		if (p_end != p_ptrn_lines + 1) {
 		    ptrn_spaces_eaten |= (repl_beginning != 0);
-		    some_context = TRUE;
+		    some_context = true;
 		    context++;
 		    if (repl_beginning)
 			repl_copiable++;
@@ -1115,10 +1116,10 @@ another_hunk (enum diff difftype, int rev)
 		    s++;
 		    chars_read--;
 		} else if (repl_beginning && repl_could_be_missing) {
-		    repl_missing = TRUE;
+		    repl_missing = true;
 		    goto hunk_done;
 		}
-		some_context = TRUE;
+		some_context = true;
 		context++;
 		if (repl_beginning)
 		    repl_copiable++;
@@ -1136,7 +1137,7 @@ another_hunk (enum diff difftype, int rev)
 		break;
 	    default:
 		if (repl_beginning && repl_could_be_missing) {
-		    repl_missing = TRUE;
+		    repl_missing = true;
 		    goto hunk_done;
 		}
 		malformed ();
@@ -1537,8 +1538,8 @@ get_line (void)
 /* Input a line from the patch file, worrying about indentation.
    Strip up to INDENT characters' worth of leading indentation.
    Then remove up to RFC934_NESTING instances of leading "- ".
-   If STRIP_TRAILING_CR is nonzero, remove any trailing carriage-return.
-   Unless PASS_COMMENTS_THROUGH is nonzero, ignore any resulting lines
+   If STRIP_TRAILING_CR is true, remove any trailing carriage-return.
+   Unless PASS_COMMENTS_THROUGH is true, ignore any resulting lines
    that begin with '#'; they're comments.
    Ignore any partial lines at end of input, but warn about them.
    Succeed if a line was read; it is terminated by "\n\0" for convenience.
@@ -1546,8 +1547,8 @@ get_line (void)
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (int indent, int rfc934_nesting, int strip_trailing_cr,
-	   int pass_comments_through)
+pget_line (int indent, int rfc934_nesting, bool strip_trailing_cr,
+	   bool pass_comments_through)
 {
   register FILE *fp = pfp;
   register int c;
@@ -1648,13 +1649,13 @@ incomplete_line (void)
     {
       while ((c = getc (fp)) != '\n'  &&  c != EOF)
 	continue;
-      return TRUE;
+      return true;
     }
   else
     {
       /* We don't trust ungetc.  */
       Fseek (pfp, line_beginning, SEEK_SET);
-      return FALSE;
+      return false;
     }
 }
 
@@ -1668,7 +1669,7 @@ pch_swap (void)
     char *tp_char;		/* +, -, and ! */
     register LINENUM i;
     register LINENUM n;
-    bool blankline = FALSE;
+    bool blankline = false;
     register char *s;
 
     i = p_first;
@@ -1694,14 +1695,14 @@ pch_swap (void)
 	if (p_Char)
 	  free (p_Char);
 	p_Char = tp_char;
-	return FALSE;		/* not enough memory to swap hunk! */
+	return false;		/* not enough memory to swap hunk! */
     }
 
     /* now turn the new into the old */
 
     i = p_ptrn_lines + 1;
     if (tp_char[i] == '\n') {		/* account for possible blank line */
-	blankline = TRUE;
+	blankline = true;
 	i++;
     }
     if (p_efake >= 0) {			/* fix non-freeable ptr range */
@@ -1756,23 +1757,23 @@ pch_swap (void)
       free (tp_len);
     if (tp_char)
       free (tp_char);
-    return TRUE;
+    return true;
 }
 
-/* Return whether file WHICH (0 = old, 1 = new) appears to nonexistent.
+/* Return whether file WHICH (false = old, true = new) appears to nonexistent.
    Return 1 for empty, 2 for nonexistent.  */
 
-bool
-pch_says_nonexistent (int which)
+int
+pch_says_nonexistent (bool which)
 {
   return p_says_nonexistent[which];
 }
 
-/* Return timestamp of patch header for file WHICH (0 = old, 1 = new),
+/* Return timestamp of patch header for file WHICH (false = old, true = new),
    or -1 if there was no timestamp or an error in the timestamp.  */
 
 time_t
-pch_timestamp (int which)
+pch_timestamp (bool which)
 {
   return p_timestamp[which];
 }
@@ -1886,7 +1887,7 @@ get_ed_command_letter (char const *line)
 {
   char const *p = line;
   char letter;
-  bool pair = FALSE;
+  bool pair = false;
   if (! ISDIGIT (*p))
     return 0;
   while (ISDIGIT (*++p))
@@ -1897,7 +1898,7 @@ get_ed_command_letter (char const *line)
 	return 0;
       while (ISDIGIT (*++p))
 	continue;
-      pair = TRUE;
+      pair = true;
     }
   letter = *p++;
 
@@ -1967,7 +1968,7 @@ do_ed_script (FILE *ofp)
 		if (! fwrite (buf, sizeof *buf, chars_read, pipefp))
 		    write_fatal ();
 	    if (ed_command_letter != 'd' && ed_command_letter != 's') {
-	        p_pass_comments_through = 1;
+	        p_pass_comments_through = true;
 		while ((chars_read = get_line ()) != 0) {
 		    if (pipefp)
 			if (! fwrite (buf, sizeof *buf, chars_read, pipefp))
@@ -1975,7 +1976,7 @@ do_ed_script (FILE *ofp)
 		    if (chars_read == 2  &&  strEQ (buf, ".\n"))
 			break;
 		}
-		p_pass_comments_through = 0;
+		p_pass_comments_through = false;
 	    }
 	}
 	else {
