@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.9 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: patch.c,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -60,7 +60,7 @@ static int reverse_flag_specified;
 static bool backup;
 static bool noreverse;
 
-/* how many input lines have been irretractibly output */
+/* how many input lines have been irretractably output */
 static LINENUM last_frozen_line;
 
 static char const *do_defines; /* symbol to patch using ifdef, ifndef, etc. */
@@ -515,6 +515,21 @@ get_some_switches()
 	   != -1) {
 	switch (optc) {
 	    case 'b':
+		 /* Special hack for backward compatibility with CVS 1.9.
+		    If the last 4 args are `-b SUFFIX ORIGFILE PATCHFILE',
+		    treat `-b' as if it were `-z'.  */
+		if (Argc - optind == 3
+		    && strcmp (Argv[optind - 1], "-b") == 0
+		    && ! (Argv[optind + 0][0] == '-' && Argv[optind + 0][1])
+		    && ! (Argv[optind + 1][0] == '-' && Argv[optind + 1][1])
+		    && ! (Argv[optind + 2][0] == '-' && Argv[optind + 2][1]))
+		  {
+		    optarg = Argv[optind++];
+		    if (verbosity != SILENT)
+		      say ("warning: the `-b %s' option is obsolete; use `-z %s' instead\n",
+			   optarg, optarg);
+		    goto case_z;
+		  }
 		backup = TRUE;
 		backup_type = simple;
 		break;
@@ -523,6 +538,7 @@ get_some_switches()
 		  pfatal ("backup prefix is empty");
 		origprae = savestr (optarg);
 		backup = TRUE;
+		backup_type = simple;
 		break;
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
@@ -602,12 +618,15 @@ get_some_switches()
 		  pfatal ("backup basename prefix is empty");
 		origbase = savestr (optarg);
 		backup = TRUE;
+		backup_type = simple;
 		break;
 	    case 'z':
+	    case_z:
 		if (!*optarg)
 		  pfatal ("backup suffix is empty");
 		simple_backup_suffix = savestr (optarg);
 		backup = TRUE;
+		backup_type = simple;
 		break;
 	    case 129:
 		dry_run = TRUE;
