@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.20 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: common.h,v 1.21 1999/08/30 06:20:08 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
