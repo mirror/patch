@@ -9,3 +9,6 @@
 
 /* Define if memchr works.  */
 #undef HAVE_MEMCHR
+
+/* Define if `struct utimbuf' is declared -- usually in <utime.h>.  */
+#undef HAVE_STRUCT_UTIMBUF
