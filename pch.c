@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.19 1997/06/03 17:42:49 eggert Exp $ */
+/* $Id: pch.c,v 1.20 1997/06/04 18:32:14 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -198,7 +198,11 @@ there_is_another_patch()
 	return FALSE;
     }
     if (skip_rest_of_patch)
+      {
+	Fseek (pfp, p_start, SEEK_SET);
+	p_input_line = p_sline - 1;
 	return TRUE;
+      }
     if (verbosity == VERBOSE)
 	say ("  %sooks like %s to me...\n",
 	    (p_base == 0 ? "L" : "The next patch l"),
@@ -369,7 +373,7 @@ intuit_diff_type()
 	    retval = UNI_DIFF;
 	    if (! ((name[OLD] || head_says_nonexistent[OLD])
 		   && (name[NEW] || head_says_nonexistent[NEW])))
-	      fatal ("missing header for unified diff at input line %ld",
+	      fatal ("missing header for unified diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
 	}
@@ -395,8 +399,8 @@ intuit_diff_type()
 		 appear to have been deleted.  */
 	      file_offset saved_p_base = p_base;
 	      LINENUM saved_p_bline = p_bline;
-	      p_input_line = p_sline;
 	      Fseek (pfp, previous_line, SEEK_SET);
+	      p_input_line -= 2;
 	      if (another_hunk (retval, 0)
 		  && ! p_repl_lines && p_newfirst == 1)
 		p_says_nonexistent[NEW] = head_says_nonexistent[NEW] + 1;
@@ -405,7 +409,7 @@ intuit_diff_type()
 
 	    if (! ((name[OLD] || head_says_nonexistent[OLD])
 		   && (name[NEW] || head_says_nonexistent[NEW])))
-	      fatal ("missing header for context diff at input line %ld",
+	      fatal ("missing header for context diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
 	}
