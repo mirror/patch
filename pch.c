@@ -1895,18 +1895,21 @@ get_ed_command_letter (char const *line)
   char const *p = line;
   char letter;
   bool pair = false;
-  if (! ISDIGIT (*p))
-    return 0;
-  while (ISDIGIT (*++p))
-    continue;
-  if (*p == ',')
+
+  if (ISDIGIT (*p))
     {
-      if (! ISDIGIT (*++p))
-	return 0;
       while (ISDIGIT (*++p))
 	continue;
-      pair = true;
+      if (*p == ',')
+	{
+	  if (! ISDIGIT (*++p))
+	    return 0;
+	  while (ISDIGIT (*++p))
+	    continue;
+	  pair = true;
+	}
     }
+
   letter = *p++;
 
   switch (letter)

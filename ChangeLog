@@ -1,3 +1,7 @@
+2004-07-19  Stepan Kasal  <kasal@ucw.cz>
+
+	* pch.c (get_ed_command_letter): Allow commands without address.
+
 2003-11-10  Manu B  <manubee@users.sourceforge.net>
 
 	Trivial change to port to mingw, which declares mkdir in unistd.h.
