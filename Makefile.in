@@ -116,7 +116,7 @@ config.status: configure
 	$(SHELL) $(CONFIG_STATUS) --recheck
 configure: configure.in $(srcdir)/aclocal.m4
 	cd $(srcdir) && autoconf
-config.hin: configure.in
+config.hin: configure.in $(srcdir)/aclocal.m4
 	cd $(srcdir) && rm -f config.hin && autoheader
 
 M4DIR = $(srcdir)/m4
