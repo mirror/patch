@@ -1,8 +1,25 @@
+2003-07-02  Paul Eggert  <eggert@twinsun.com>
+
 	* pch.c (intuit_diff_type): If a unified-diff header line contains
 	trailing CR, strip CR from each body line.  This corrects a bug
 	introduced in the 2003-05-18 patch.  Bug reported by Andreas
 	Gruenbacher.
 
+	* mkdir.c, rmdir.c, m4/rmdir.m4: Remove; we no longer
+	need to worry about ancient hosts that lack these functions.
+
+	* addext.c, backupfile.c, backupfile.h, dirname.h, m4/backupfile.m4,
+	m4/onceonly.m4, m4/quote.m4, malloc.c, quote,c, quote.h, realloc.c,
+	strcasecmp.c, xalloc.h, xmalloc.c: Sync with gnulib.
+	* stdbool_.h: Renamed from stdbool.h.in; all uses changed.
+	This renaming is imported from gnulib.
+	* m4/strcase.m4: New file, imported from gnulib.
+
+	* Makefile.in (LIBSRCS): Remove mkdir.c and rmdir.c.
+	(stdbool.h): Put output into temporary file and then rename it;
+	this change is imported from gnulib.
+	(mostlyclean): Clean stdbool.h-t too.
+	(ACINCLUDE_INPUTS): Remove rmdir.m4.  Add strcase.m4.
 	* configure.ac (gl_FUNC_RMDIR): Remove.
 	(jm_PREREQ_ADDEXT): Remove; now down by gl_BACKUPFILE.
 	(gl_STRCASE, gl_XALLOC): Add.
@@ -169,15 +186,15 @@
 	* configure.ac (AC_PROG_CC_STDC): Add.
 	* util.c (vararg_start): Remove.  All uses changed to va_start.
 	Always include <stdarg.h>.
-	
+
 	* configure.ac (AC_CANONICAL_HOST): Remove.
 	(AC_REPLACE_FUNCS): Add strncasecmp.
 	(AC_CHECK_DECLS): Add mktemp.
-	
+
 	* patch.c (main): Remove useless prototype decl.
 	(mktemp): Don't declare if HAVE_DECL_MKTEMP || defined mktemp.
 	(make_temp): Now accepts char, not int.
-	
+
 2002-05-26  Paul Eggert  <eggert@twinsun.com>
 
 	* patch.c (not_defined): Prepend newline.  All uses changed.

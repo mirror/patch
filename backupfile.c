@@ -1,6 +1,7 @@
 /* backupfile.c -- make Emacs style backup file names
-   Copyright (C) 1990,91,92,93,94,95,96,97,98,99,2000, 2001, 2002 Free Software
-   Foundation, Inc.
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,13 +25,9 @@
 # include <config.h>
 #endif
 
+#include <stddef.h>
 #include <stdio.h>
-#include <sys/types.h>
-#if HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <string.h>
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
@@ -56,23 +53,7 @@
 # define CLOSEDIR(d) closedir (d)
 #endif
 
-#if HAVE_STDLIB_H
-# include <stdlib.h>
-#endif
-
-#ifndef HAVE_DECL_GETENV
-"this configure-time declaration test was not run"
-#endif
-#if !HAVE_DECL_GETENV
-char *getenv ();
-#endif
-
-#ifndef HAVE_DECL_MALLOC
-"this configure-time declaration test was not run"
-#endif
-#if !HAVE_DECL_MALLOC
-char *malloc ();
-#endif
+#include <stdlib.h>
 
 #if HAVE_DIRENT_H || HAVE_NDIR_H || HAVE_SYS_DIR_H || HAVE_SYS_NDIR_H
 # define HAVE_DIR 1
@@ -80,12 +61,8 @@ char *malloc ();
 # define HAVE_DIR 0
 #endif
 
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
-#ifndef CHAR_BIT
-# define CHAR_BIT 8
-#endif
+#include <limits.h>
+
 /* Upper bound on the string length of an integer converted to string.
    302 / 1000 is ceil (log10 (2.0)).  Subtract 1 for the sign bit;
    add 1 for integer division truncation; add 1 more for a minus sign.  */
@@ -114,8 +91,8 @@ char *malloc ();
    to numbered) backup file name. */
 const char *simple_backup_suffix = "~";
 
-static int max_backup_version PARAMS ((const char *, const char *));
-static int version_number PARAMS ((const char *, const char *, size_t));
+static int max_backup_version (const char *, const char *);
+static int version_number (const char *, const char *, size_t);
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.

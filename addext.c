@@ -31,19 +31,13 @@
 # define HAVE_LONG_FILE_NAMES 0
 #endif
 
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
+#include <limits.h>
 #ifndef _POSIX_NAME_MAX
 # define _POSIX_NAME_MAX 14
 #endif
 
-#include <sys/types.h>
-#if HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <stddef.h>
+#include <string.h>
 
 #if HAVE_UNISTD_H
 # include <unistd.h>

@@ -1,5 +1,7 @@
 /* xmalloc.c -- malloc with out of memory checking
-   Copyright (C) 1990-1999, 2000, 2002 Free Software Foundation, Inc.
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,6 +37,7 @@ void free ();
 #define N_(msgid) msgid
 
 #include "error.h"
+#include "exitfail.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
@@ -51,12 +54,8 @@ void free ();
 "you must run the autoconf test for a GNU libc compatible realloc"
 #endif
 
-/* Exit value when the requested amount of memory is not available.
-   The caller may set it to some other value.  */
-int xalloc_exit_failure = EXIT_FAILURE;
-
 /* If non NULL, call this function when memory is exhausted. */
-void (*xalloc_fail_func) PARAMS ((void)) = 0;
+void (*xalloc_fail_func) (void) = 0;
 
 /* If XALLOC_FAIL_FUNC is NULL, or does return, display this message
    before exiting when memory is exhausted.  Goes through gettext. */
@@ -67,7 +66,7 @@ xalloc_die (void)
 {
   if (xalloc_fail_func)
     (*xalloc_fail_func) ();
-  error (xalloc_exit_failure, 0, "%s", _(xalloc_msg_memory_exhausted));
+  error (exit_failure, 0, "%s", _(xalloc_msg_memory_exhausted));
   /* The `noreturn' cannot be given to error, since it may return if
      its first argument is 0.  To help compilers understand the
      xalloc_die does terminate, call exit. */
