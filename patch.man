@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.12 1997/05/15 17:59:15 eggert Exp $
+.Id $Id: patch.man,v 1.13 1997/05/19 06:52:03 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -442,7 +442,9 @@ Use
 .I method
 when creating
 backup file names.  The type of backups made can also be given in the
-.B VERSION_CONTROL
+.B PATCH_VERSION_CONTROL
+(or, if that's not set, the
+.BR VERSION_CONTROL )
 environment variable, which is overridden by this option.
 .Sp
 The value of
@@ -560,7 +562,7 @@ it is normally
 .B /tmp
 on Unix hosts.
 .TP
-.B VERSION_CONTROL
+\fPPATCH_VERSION_CONTROL\fP or \fBVERSION_CONTROL\fP
 Selects version control style; see the
 .B \-v
 or
@@ -707,7 +709,8 @@ exit status so you don't apply a later patch to a partially patched file.
 .SH CAVEATS
 Context diffs cannot reliably represent the creation or deletion of
 empty files, empty directories, or special files such as symbolic links.
-Nor can they represent changes to file metadata like ownership or permissions.
+Nor can they represent changes to file metadata like ownership, permissions,
+or whether one file is a hard link to another.
 If changes like these are also required, separate instructions
 (e.g. a shell script) to accomplish them should accompany the patch.
 .PP
