@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.15 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: patch.c,v 1.16 1997/05/21 18:29:20 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -105,14 +105,8 @@ char **argv;
 
     strippath = INT_MAX;
 
+    patch_get = getenv ("PATCH_GET") != 0;
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
-
-    /* Compile with -DDEFAULT_VERSION_CONTROL=numbered_existing for traditional
-       patch backups by default, despite what POSIX.2 says.  */
-#   ifdef DEFAULT_VERSION_CONTROL
-      if (!posixly_correct)
-	backup_type = DEFAULT_VERSION_CONTROL;
-#   endif
 
     {
       char const *v;
@@ -403,6 +397,8 @@ static struct option const longopts[] =
   {"remove-empty-files", no_argument, NULL, 'E'},
   {"force", no_argument, NULL, 'f'},
   {"fuzz", required_argument, NULL, 'F'},
+  {"get", no_argument, NULL, 'g'},
+  {"no-get", no_argument, NULL, 'G'},
   {"help", no_argument, NULL, 'h'},
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
@@ -427,7 +423,8 @@ static struct option const longopts[] =
   {NULL, no_argument, NULL, 0}
 };
 
-static char const * const option_help[] = {
+static char const *const option_help[] =
+{
 "Input options:",
 "",
 "  -p NUM  --strip=NUM  Strip NUM leading components from file names.",
@@ -452,7 +449,7 @@ static char const * const option_help[] = {
 "  -D NAME  --ifdef=NAME  Make merged if-then-else output using NAME.",
 "  -E  --remove-empty-files  Remove output files that are empty after patching.",
 "",
-"Backup file options:",
+"Backup and version control options:",
 "",
 "  -V STYLE  --version-control=STYLE  Use STYLE version control.",
 "	STYLE is either 'simple', 'numbered', or 'existing'.",
@@ -461,6 +458,9 @@ static char const * const option_help[] = {
 "  -B PREFIX  --prefix=PREFIX  Prepend PREFIX to backup file names.",
 "  -Y PREFIX  --basename-prefix=PREFIX  Prepend PREFIX to backup file basenames.",
 "  -z SUFFIX  --suffix=SUFFIX  Append SUFFIX to backup file names.",
+"",
+"  -g  --get  Get files from RCS or SCCS.",
+"  -G  --no-get  Do not get files.",
 "",
 "Miscellaneous options:",
 "",
@@ -479,6 +479,8 @@ static char const * const option_help[] = {
 "",
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
+"",
+"Report bugs to <bug-gnu-utils@prep.ai.mit.edu>.",
 0
 };
 
@@ -565,6 +567,12 @@ get_some_switches()
 		break;
 	    case 'F':
 		maxfuzz = numeric_optarg ("fuzz factor");
+		break;
+	    case 'g':
+		patch_get = 1;
+		break;
+	    case 'G':
+		patch_get = 0;
 		break;
 	    case 'h':
 		usage (stdout, 0);
