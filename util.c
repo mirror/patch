@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.17 1997/05/30 08:03:48 eggert Exp $ */
+/* $Id: util.c,v 1.18 1997/06/03 17:42:49 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -402,7 +402,7 @@ ask (format, va_alist)
     {
       /* No terminal at all -- default it.  */
       buf[0] = '\n';
-      r = 1;
+      buf[1] = '\0';
     }
   else
     {
@@ -424,9 +424,8 @@ ask (format, va_alist)
 	  ttyfd = -1;
 	  r = 0;
 	}
+      buf[s + r] = '\0';
     }
-
-  buf[r] = '\0';
 }
 
 /* Return nonzero if it OK to reverse a patch.  */
@@ -803,8 +802,6 @@ int *head_says_nonexistent;
     int sleading = strip_leading;
     int says_nonexistent = 0;
 
-    if (!at)
-	return 0;
     while (ISSPACE ((unsigned char) *at))
 	at++;
     if (debug & 128)
