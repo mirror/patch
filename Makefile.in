@@ -146,7 +146,7 @@ ACINCLUDE_INPUTS = $(M4DIR)/c-bs-a.m4 $(M4DIR)/d-ino.m4 $(M4DIR)/error.m4 \
 $(srcdir)/aclocal.m4: $(ACINCLUDE_INPUTS)
 	cat $(ACINCLUDE_INPUTS) >$(srcdir)/aclocal.m4
 
-patchlevel.h: configure.ac
+patchlevel.h: configure
 	echo '#define PATCH_VERSION "$(PACKAGE_VERSION)"' >patchlevel.h
 
 TAGS: $(HDRS) patchlevel.h $(SRCS)
