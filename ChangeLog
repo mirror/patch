@@ -1,3 +1,8 @@
+	* pch.c (intuit_diff_type): If a unified-diff header line contains
+	trailing CR, strip CR from each body line.  This corrects a bug
+	introduced in the 2003-05-18 patch.  Bug reported by Andreas
+	Gruenbacher.
+
 2003-05-20  Paul Eggert  <eggert@twinsun.com>
 
 	* NEWS, configure.ac (AC_INIT): Version 2.5.9 released.
