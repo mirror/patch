@@ -1,16 +1,21 @@
 @echo off
-Rem Configure patch for DJGPP v2.
-Rem $Id: configure.bat,v 1.1 1997/05/15 17:59:15 eggert Exp $
+Rem	Configure patch for DJGPP v2.
+Rem	$Id: configure.bat,v 1.2 1997/05/26 05:34:43 eggert Exp $
 
-Rem Where is our source directory?
-Rem ?? Need a comment here explaining this SmallEnv gorp.
+Rem	The DOS shell has fixed-size environment storage.
+Rem	When the environment is full, the shell prints
+Rem	"Out of environment space" and truncates the string at will.
+Rem	Since people often ignore these messages,
+Rem	test whether the environment variable got the correct value.
+
+Rem	Where is our source directory?
 set srcdir=.
 if not "%srcdir%" == "." goto SmallEnv
 if not "%1" == "" set srcdir=%1
 if not "%1" == "" if not "%srcdir%" == "%1" goto SmallEnv
 
-Rem Create Makefile
-sed -f pc/djgpp/config.sed -e "s|@srcdir@|%srcdir%|g" %srcdir%/Makefile.in >Makefile
+Rem	Create Makefile
+sed -f pc/djgpp/config.sed -e "s,@srcdir@,%srcdir%,g" %srcdir%/Makefile.in >Makefile
 sed -n -e "/^VERSION/p" %srcdir%/configure.in >>Makefile
 
 goto Exit
