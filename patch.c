@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.11 1997/04/14 05:32:30 eggert Exp $ */
+/* $Id: patch.c,v 1.12 1997/05/05 07:31:21 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -58,7 +58,6 @@ static int remove_empty_files;
 /* TRUE if -R was specified on command line.  */
 static int reverse_flag_specified;
 
-static bool backup;
 static bool noreverse;
 
 /* how many input lines have been irretractably output */
@@ -106,19 +105,20 @@ char **argv;
 
     strippath = INT_MAX;
 
+    posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
+    if (! posixly_correct)
+      backup_type = numbered_existing;
+
     {
       char const *v;
 
       v = getenv ("SIMPLE_BACKUP_SUFFIX");
       if (v && *v)
-	{
-	  simple_backup_suffix = v;
-	  backup = TRUE;
-	}
+	simple_backup_suffix = v;
+
       v = getenv ("VERSION_CONTROL");
       if (v && *v)
-	backup = TRUE;
-      backup_type = get_version (v); /* OK to pass NULL. */
+	backup_type = get_version (v);
     }
 
     /* parse switches */
@@ -325,7 +325,7 @@ char **argv;
 	    {
 	      if (! dry_run)
 		{
-		  move_file (TMPOUTNAME, outname, backup);
+		  move_file (TMPOUTNAME, outname, backup_type != none);
 		  chmod (outname, instat.st_mode);
 		}
 	    }
@@ -531,14 +531,12 @@ get_some_switches()
 			   optarg, optarg);
 		    goto case_z;
 		  }
-		backup = TRUE;
 		backup_type = simple;
 		break;
 	    case 'B':
 		if (!*optarg)
 		  pfatal ("backup prefix is empty");
 		origprae = savestr (optarg);
-		backup = TRUE;
 		backup_type = simple;
 		break;
 	    case 'c':
@@ -606,7 +604,6 @@ get_some_switches()
 		exit (0);
 		break;
 	    case 'V':
-		backup = TRUE;
 		backup_type = get_version (optarg);
 		break;
 #if DEBUGGING
@@ -618,7 +615,6 @@ get_some_switches()
 		if (!*optarg)
 		  pfatal ("backup basename prefix is empty");
 		origbase = savestr (optarg);
-		backup = TRUE;
 		backup_type = simple;
 		break;
 	    case 'z':
@@ -626,7 +622,6 @@ get_some_switches()
 		if (!*optarg)
 		  pfatal ("backup suffix is empty");
 		simple_backup_suffix = savestr (optarg);
-		backup = TRUE;
 		backup_type = simple;
 		break;
 	    case 129:
