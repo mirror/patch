@@ -49,8 +49,7 @@ man1dir = $(prefix)/man/man1
 # Extension (including `.') for the manual page filenames.
 man1ext = .1
 
-# Hooks for nonstandard builds.
-CONFIG_HDRS = config.h
+# Hook for nonstandard builds.
 CONFIG_STATUS = config.status
 
 #### End of system configuration section. ####
@@ -69,8 +68,8 @@ MISC = COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
 DISTFILES_PC = pc/chdirsaf.c
-DISTFILES_PC_DJGPP = pc/djgpp/README pc/djgpp/config.h \
-	pc/djgpp/config.sed pc/djgpp/configure.bat
+DISTFILES_PC_DJGPP = pc/djgpp/README pc/djgpp/config.sed \
+	pc/djgpp/configure.bat pc/djgpp/configure.sed
 
 patch_name = `echo patch | sed '$(transform)'`
 
@@ -143,7 +142,7 @@ dist:: $(DISTFILES) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	tar -chf - $(PV) | gzip -9 >$(PV).tar.gz
 	rm -rf $(PV)
 
-$(OBJS): $(CONFIG_HDRS)
+$(OBJS): config.h
 addext.o: backupfile.h
 argmatch.o: argmatch.h
 backupfile.o: argmatch.h backupfile.h
