@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.3 1993/05/31 04:52:39 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.4 1993/06/08 15:23:01 eggert Exp $
  *
  * $Log: inp.c,v $
- * Revision 1.3  1993/05/31 04:52:39  eggert
- * Formerly inp.c.~10~
+ * Revision 1.4  1993/06/08 15:23:01  eggert
+ * Formerly inp.c.~11~
  *
- * Revision 1.3  1993/05/31 04:52:39  eggert
- * Formerly inp.c.~10~
+ * Revision 1.4  1993/06/08 15:23:01  eggert
+ * Formerly inp.c.~11~
  *
  * Revision 2.0.1.1  88/06/03  15:06:13  lwall
  * patch10: made a little smarter about sccs files
@@ -118,9 +118,15 @@ char *filename;
 	strncpy(s, filename, pathlen);
 
 #define try(f,a1,a2) (Sprintf(s + pathlen, f, a1, a2), stat(s, &cstat) == 0)
-	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s"  , filebase,         0)
-	    || try(    "%s%s", filebase, RCSSUFFIX)) {
+	if ((   try("RCS/%s%s", filebase, RCSSUFFIX)
+	     || try("RCS/%s"  , filebase,         0)
+	     || try(    "%s%s", filebase, RCSSUFFIX))
+	    &&
+	    /* Check that RCS file is not working file.
+	       Some hosts don't report file name length errors.  */
+	    (statfailed
+	     || (  (filestat.st_dev ^ cstat.st_dev)
+		 | (filestat.st_ino ^ cstat.st_ino)))) {
 	    Sprintf(buf, output_elsewhere?CHECKOUT:CHECKOUT_LOCKED, filename);
 	    Sprintf(lbuf, RCSDIFF, filename);
 	    cs = "RCS";
