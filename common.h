@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.33 2003/05/18 08:24:13 eggert Exp $ */
+/* $Id: common.h,v 1.34 2003/05/19 06:57:36 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
@@ -29,6 +29,7 @@
 #include <config.h>
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
@@ -120,18 +121,6 @@
 #endif
 
 
-/* constants */
-
-/* AIX predefines these.  */
-#ifdef TRUE
-#undef TRUE
-#endif
-#ifdef FALSE
-#undef FALSE
-#endif
-#define TRUE 1
-#define FALSE 0
-
 /* handy definitions */
 
 #define strEQ(s1,s2) (!strcmp(s1, s2))
@@ -139,7 +128,6 @@
 
 /* typedefs */
 
-typedef int bool;			/* must promote to itself */
 typedef off_t LINENUM;			/* must be signed */
 
 /* globals */
@@ -178,14 +166,14 @@ XTERN int debug;
 XTERN bool force;
 XTERN bool batch;
 XTERN bool noreverse;
-XTERN int reverse;
+XTERN bool reverse;
 XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
 XTERN int strippath;
 XTERN bool canonicalize;
 XTERN int patch_get;
-XTERN int set_time;
-XTERN int set_utc;
+XTERN bool set_time;
+XTERN bool set_utc;
 
 enum diff
   {
