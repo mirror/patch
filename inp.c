@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.12 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: inp.c,v 1.13 1997/05/21 18:29:20 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -153,7 +153,7 @@ get_input_file (filename, outname)
       inerrno = stat (inname, &instat) == 0 ? 0 : errno;
 
     /* Perhaps look for RCS or SCCS versions.  */
-    if (backup_type == numbered_existing
+    if (patch_get
 	&& (inerrno
 	    || (! elsewhere
 		&& (/* No one can write to it.  */
@@ -263,10 +263,10 @@ get_input_file (filename, outname)
 		else
 		  {
 		    if (verbosity == VERBOSE)
-		      say ("Checking out file `%s' from %s...\n", filename, cs);
+		      say ("Getting file `%s' from %s...\n", filename, cs);
 		    if (systemic (getbuf) != 0
 			|| stat (filename, &instat) != 0)
-		      fatal ("can't check out file `%s' from %s", filename, cs);
+		      fatal ("can't get file `%s' from %s", filename, cs);
 		    inerrno = 0;
 		  }
 	      }
