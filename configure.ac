@@ -1,5 +1,7 @@
 # Configure `patch'.
-# Copyright (C) 1993, 1997, 1998, 1999, 2002 Free Software Foundation, Inc.
+
+# Copyright (C) 1993, 1997, 1998, 1999, 2002, 2003 Free Software
+# Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +18,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA.
 
-AC_PREREQ(2.53)
-AC_INIT(patch, 2.5.8, bug-patch@gnu.org)
+AC_PREREQ(2.57)
+AC_INIT(patch, 2.5.9, bug-patch@gnu.org)
 AC_CONFIG_SRCDIR(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
@@ -30,6 +32,7 @@ AC_PROG_MAKE_SET
 # because <errno.h> reserves symbols starting with `E'.
 AC_PATH_PROG(ed_PROGRAM, ed, ed)
 
+AC_GNU_SOURCE
 AC_AIX
 AC_MINIX
 AC_PROG_CC_STDC
@@ -51,17 +54,32 @@ AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 jm_CHECK_TYPE_STRUCT_UTIMBUF
 
+gl_BACKUPFILE
+gl_DIRNAME
+gl_ERROR
+gl_FUNC_MEMCHR
+gl_FUNC_RMDIR
+gl_GETOPT
+gl_PREREQ_XMALLOC
+gl_QUOTE
+gl_QUOTEARG
+
+dnl This should be in gnulib, but isn't for some reason.
+AC_DEFUN([jm_PREREQ_ADDEXT],
+[
+  dnl For addext.c.
+  AC_REQUIRE([AC_SYS_LONG_FILE_NAMES])
+  AC_CHECK_FUNCS(pathconf)
+  AC_CHECK_HEADERS(limits.h string.h unistd.h)
+])
 jm_PREREQ_ADDEXT
-jm_PREREQ_DIRNAME
-jm_PREREQ_ERROR
-jm_PREREQ_MEMCHR
-jm_PREREQ_QUOTEARG
 
 AC_CHECK_DECLS([free, getenv, malloc, mktemp])
 AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
   pathconf raise sigaction sigprocmask sigsetmask strerror)
-AC_REPLACE_FUNCS(memchr mkdir rename rmdir strncasecmp)
+AC_REPLACE_FUNCS(mkdir strncasecmp)
 AC_FUNC_FSEEKO
+jm_FUNC_GLIBC_UNLOCKED_IO
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 AC_FUNC_CLOSEDIR_VOID
@@ -69,7 +87,8 @@ AC_FUNC_SETMODE_DOS
 AC_FUNC_VPRINTF
 PATCH_FUNC_MKDIR_TAKES_ONE_ARG
 
+jm_AC_DOS
 AC_SYS_LONG_FILE_NAMES
-jm_CHECK_TYPE_STRUCT_DIRENT_D_INO
 
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
