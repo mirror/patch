@@ -3,6 +3,9 @@
    the patch configure.in can define.
    autoheader copies the comments into config.hin.  */
 
+/* Define if you have a working <inttypes.h> header file.  */
+#undef HAVE_INTTYPES_H
+
 /* Define if there is a member named d_ino in the struct describing
    directory headers.  */
 #undef D_INO_IN_DIRENT
@@ -12,3 +15,9 @@
 
 /* Define if `struct utimbuf' is declared -- usually in <utime.h>.  */
 #undef HAVE_STRUCT_UTIMBUF
+
+/* Define to rpl_malloc if the replacement function should be used.  */
+#undef malloc
+
+/* Define to rpl_realloc if the replacement function should be used.  */
+#undef realloc
