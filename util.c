@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.20 1997/06/09 05:36:28 eggert Exp $ */
+/* $Id: util.c,v 1.21 1997/06/09 06:55:54 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -390,17 +390,16 @@ ask (format, va_alist)
     {
       ttyfd = open ("/dev/tty", O_RDONLY);
       if (ttyfd < 0)
-	{
-	  close (ttyfd);
-	  for (ttyfd = STDERR_FILENO;  0 <= ttyfd;  ttyfd--)
-	    if (isatty (ttyfd))
-	      break;
-	}
+	for (ttyfd = STDERR_FILENO;  0 <= ttyfd;  ttyfd--)
+	  if (isatty (ttyfd))
+	    break;
     }
 
   if (ttyfd < 0)
     {
       /* No terminal at all -- default it.  */
+      printf ("\n");
+      fflush (stdout);
       buf[0] = '\n';
       buf[1] = '\0';
     }
@@ -417,9 +416,14 @@ ask (format, va_alist)
 	    memory_fatal ();
 	}
       if (r == 0)
-	printf ("EOF\n");
+	{
+	  printf ("EOF\n");
+	  fflush (stdout);
+	}
       else if (r < 0)
 	{
+	  perror ("tty read");
+	  fflush (stderr);
 	  close (ttyfd);
 	  ttyfd = -1;
 	  r = 0;
