@@ -1,5 +1,5 @@
 /* backupfile.c -- make Emacs style backup file names
-   Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1990,1991,1992,1993,1995,1997 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -12,62 +12,83 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Written by David MacKenzie <djm@gnu.ai.mit.edu>.
    Some algorithms adapted from GNU Emacs. */
 
-#include "config.h"
-#include "EXTERN.h"
+#if HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+#include <argmatch.h>
+#include <backupfile.h>
+
 #include <stdio.h>
-#include <ctype.h>
 #include <sys/types.h>
-#include "backupfile.h"
-#ifdef STDC_HEADERS
-#include <string.h>
-#include <stdlib.h>
+#if HAVE_STRING_H
+# include <string.h>
+#else
+# include <strings.h>
+#endif
+
+#if HAVE_DIRENT_H
+# include <dirent.h>
+# define NLENGTH(direct) strlen ((direct)->d_name)
+#else
+# define dirent direct
+# define NLENGTH(direct) ((size_t) (direct)->d_namlen)
+# if HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
+
+#if CLOSEDIR_VOID
+/* Fake a return value. */
+# define CLOSEDIR(d) (closedir (d), 0)
+#else
+# define CLOSEDIR(d) closedir (d)
+#endif
+
+#if STDC_HEADERS
+# include <stdlib.h>
 #else
 char *malloc ();
 #endif
 
-#if defined (HAVE_UNISTD_H)
-#include <unistd.h>
-#endif
-
-#if defined(DIRENT) || defined(_POSIX_VERSION)
-#include <dirent.h>
-#define NLENGTH(direct) (strlen((direct)->d_name))
-#else /* not (DIRENT or _POSIX_VERSION) */
-#define dirent direct
-#define NLENGTH(direct) ((direct)->d_namlen)
-#ifdef SYSNDIR
-#include <sys/ndir.h>
-#endif /* SYSNDIR */
-#ifdef SYSDIR
-#include <sys/dir.h>
-#endif /* SYSDIR */
-#ifdef NDIR
-#include <ndir.h>
-#endif /* NDIR */
-#endif /* DIRENT or _POSIX_VERSION */
-
-#ifndef isascii
-#define ISDIGIT(c) (isdigit ((unsigned char) (c)))
+#if HAVE_DIRENT_H || HAVE_NDIR_H || HAVE_SYS_DIR_H || HAVE_SYS_NDIR_H
+# define HAVE_DIR 1
 #else
-#define ISDIGIT(c) (isascii (c) && isdigit (c))
+# define HAVE_DIR 0
 #endif
 
-#if defined (_POSIX_VERSION)
+#if HAVE_LIMITS_H
+# include <limits.h>
+#endif
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
+/* Upper bound on the string length of an integer converted to string.
+   302 / 1000 is ceil (log10 (2.0)).  Subtract 1 for the sign bit;
+   add 1 for integer division truncation; add 1 more for a minus sign.  */
+#define INT_STRLEN_BOUND(t) ((sizeof (t) * CHAR_BIT - 1) * 302 / 1000 + 2)
+
+#define ISDIGIT(c) (((unsigned) (c) - '0') <= 9)
+
+#ifdef _POSIX_VERSION
 /* POSIX does not require that the d_ino field be present, and some
    systems do not provide it. */
-#define REAL_DIR_ENTRY(dp) 1
+# define REAL_DIR_ENTRY(dp) 1
 #else
-#define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
-#endif
-
-#if !HAVE_LONG_FILE_NAMES
-#define HAVE_LONG_FILE_NAMES 0
+# define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
 #endif
 
 /* Which type of backup file names are generated. */
@@ -75,31 +96,11 @@ enum backup_type backup_type = none;
 
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-char *simple_backup_suffix = ".orig";
+char const *simple_backup_suffix = ".orig";
 
-char *basename PARAMS ((char *));
-char *dirname PARAMS ((char *));
-static char *concat PARAMS ((char *, char *));
-char *find_backup_file_name PARAMS ((char *));
-static char *make_version_name PARAMS ((char *, int));
-static int max_backup_version PARAMS ((char *, char *));
-static int version_number PARAMS ((char *, char *, int));
+static int max_backup_version __P ((char const *, char const *));
+static int version_number __P ((char const *, char const *, size_t));
 
-/* Return NAME with any leading path stripped off.  */
-
-char *
-basename (name)
-     char *name;
-{
-  char *r = name, *p = name;
-
-  while (*p)
-    if (*p++ == '/')
-      r = p;
-  return r;
-}
-
-#ifndef NODIR
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.
    FILE must not end with a '/' unless it is the root directory.
@@ -107,232 +108,112 @@ basename (name)
 
 char *
 find_backup_file_name (file)
-     char *file;
+     char const *file;
 {
+  size_t backup_suffix_size_max;
   char *s;
 
-  if (backup_type != simple)
-    {
-      char *base_versions = concat (basename (file), ".~"), *dir;
-      int highest_backup;
+  /* Allow room for simple or `.~N~' backups.  */
+  backup_suffix_size_max = strlen (simple_backup_suffix) + 1;
+  if (HAVE_DIR && backup_suffix_size_max < INT_STRLEN_BOUND (int) + 4)
+    backup_suffix_size_max = INT_STRLEN_BOUND (int) + 4;
 
-      if (! base_versions)
-	return 0;
-      dir = dirname (file);
-      if (! dir)
-	{
-	  free (base_versions);
-	  return 0;
-	}
-      highest_backup = max_backup_version (base_versions, dir);
-      free (base_versions);
-      free (dir);
-      if (! (backup_type == numbered_existing && highest_backup == 0))
-	return make_version_name (file, highest_backup + 1);
-    }
-  s = malloc (strlen (file) + strlen (simple_backup_suffix) + 1);
+  s = malloc (strlen (file) + backup_suffix_size_max);
   if (s)
     {
       strcpy (s, file);
+
+#if HAVE_DIR
+      if (backup_type != simple)
+	{
+	  int highest_backup;
+	  size_t dir_len = base_name (s) - s;
+
+	  strcpy (s + dir_len, ".");
+	  highest_backup = max_backup_version (file + dir_len, s);
+	  if (! (backup_type == numbered_existing && highest_backup == 0))
+	    {
+	      sprintf (s, "%s.~%d~", file, highest_backup + 1);
+	      return s;
+	    }
+	  strcpy (s, file);
+	}
+#endif /* HAVE_DIR */
+
       addext (s, simple_backup_suffix, '~');
     }
   return s;
 }
 
+#if HAVE_DIR
+
 /* Return the number of the highest-numbered backup file for file
    FILE in directory DIR.  If there are no numbered backups
-   of FILE in DIR, or an error occurs reading DIR, return 0.
-   FILE should already have ".~" appended to it. */
+   of FILE in DIR, or an error occurs reading DIR, return 0.  */
 
 static int
 max_backup_version (file, dir)
-     char *file, *dir;
+     char const *file, *dir;
 {
   DIR *dirp;
   struct dirent *dp;
   int highest_version;
   int this_version;
-  int file_name_length;
-  
+  size_t file_name_length;
+
   dirp = opendir (dir);
   if (!dirp)
     return 0;
-  
+
   highest_version = 0;
   file_name_length = strlen (file);
 
   while ((dp = readdir (dirp)) != 0)
     {
-      if (!REAL_DIR_ENTRY (dp) || NLENGTH (dp) <= file_name_length)
+      if (!REAL_DIR_ENTRY (dp) || NLENGTH (dp) < file_name_length + 4)
 	continue;
-      
+
       this_version = version_number (file, dp->d_name, file_name_length);
       if (this_version > highest_version)
 	highest_version = this_version;
     }
-  closedir (dirp);
+  if (CLOSEDIR (dirp) != 0)
+    return 0;
   return highest_version;
 }
 
-/* Return a string, allocated with malloc, containing
-   "FILE.~VERSION~".  Return 0 if out of memory. */
-
-static char *
-make_version_name (file, version)
-     char *file;
-     int version;
-{
-  char *backup_name;
-
-  backup_name = malloc (strlen (file) + 16);
-  if (backup_name == 0)
-    return 0;
-  sprintf (backup_name, "%s.~%d~", file, version);
-  return backup_name;
-}
-
 /* If BACKUP is a numbered backup of BASE, return its version number;
-   otherwise return 0.  BASE_LENGTH is the length of BASE.
-   BASE should already have ".~" appended to it. */
+   otherwise return 0.  BASE_LENGTH is the length of BASE.  */
 
 static int
 version_number (base, backup, base_length)
-     char *base;
-     char *backup;
-     int base_length;
+     char const *base;
+     char const *backup;
+     size_t base_length;
 {
   int version;
-  char *p;
-  
+  char const *p;
+
   version = 0;
-  if (!strncmp (base, backup, base_length) && ISDIGIT (backup[base_length]))
+  if (strncmp (base, backup, base_length) == 0
+      && backup[base_length] == '.'
+      && backup[base_length + 1] == '~')
     {
-      for (p = &backup[base_length]; ISDIGIT (*p); ++p)
+      for (p = &backup[base_length + 2]; ISDIGIT (*p); ++p)
 	version = version * 10 + *p - '0';
       if (p[0] != '~' || p[1])
 	version = 0;
     }
   return version;
 }
+#endif /* HAVE_DIR */
 
-/* Return the newly-allocated concatenation of STR1 and STR2.
-   If out of memory, return 0. */
-
-static char *
-concat (str1, str2)
-     char *str1, *str2;
-{
-  char *newstr;
-  char str1_length = strlen (str1);
-
-  newstr = malloc (str1_length + strlen (str2) + 1);
-  if (newstr == 0)
-    return 0;
-  strcpy (newstr, str1);
-  strcpy (newstr + str1_length, str2);
-  return newstr;
-}
-
-/* Return the leading directories part of PATH,
-   allocated with malloc.  If out of memory, return 0.
-   Assumes that trailing slashes have already been
-   removed.  */
-
-char *
-dirname (path)
-     char *path;
-{
-  char *newpath;
-  char *slash;
-  int length;    /* Length of result, not including NUL. */
-
-  slash = basename (path);
-  if (slash == path)
-	{
-	  /* File is in the current directory.  */
-	  path = ".";
-	  length = 1;
-	}
-  else
-	{
-	  /* Remove any trailing slashes from result. */
-	  while (*--slash == '/' && slash > path)
-	    ;
-
-	  length = slash - path + 1;
-	}
-  newpath = malloc (length + 1);
-  if (newpath == 0)
-    return 0;
-  strncpy (newpath, path, length);
-  newpath[length] = 0;
-  return newpath;
-}
-
-/* If ARG is an unambiguous match for an element of the
-   null-terminated array OPTLIST, return the index in OPTLIST
-   of the matched element, else -1 if it does not match any element
-   or -2 if it is ambiguous (is a prefix of more than one element). */
-
-int
-argmatch (arg, optlist)
-     char *arg;
-     char **optlist;
-{
-  int i;			/* Temporary index in OPTLIST. */
-  int arglen;			/* Length of ARG. */
-  int matchind = -1;		/* Index of first nonexact match. */
-  int ambiguous = 0;		/* If nonzero, multiple nonexact match(es). */
-  
-  arglen = strlen (arg);
-  
-  /* Test all elements for either exact match or abbreviated matches.  */
-  for (i = 0; optlist[i]; i++)
-    {
-      if (!strncmp (optlist[i], arg, arglen))
-	{
-	  if (strlen (optlist[i]) == arglen)
-	    /* Exact match found.  */
-	    return i;
-	  else if (matchind == -1)
-	    /* First nonexact match found.  */
-	    matchind = i;
-	  else
-	    /* Second nonexact match found.  */
-	    ambiguous = 1;
-	}
-    }
-  if (ambiguous)
-    return -2;
-  else
-    return matchind;
-}
-
-/* Error reporting for argmatch.
-   KIND is a description of the type of entity that was being matched.
-   VALUE is the invalid value that was given.
-   PROBLEM is the return value from argmatch. */
-
-void
-invalid_arg (kind, value, problem)
-     char *kind;
-     char *value;
-     int problem;
-{
-  fprintf (stderr, "patch: ");
-  if (problem == -1)
-    fprintf (stderr, "invalid");
-  else				/* Assume -2. */
-    fprintf (stderr, "ambiguous");
-  fprintf (stderr, " %s `%s'\n", kind, value);
-}
-
-static char *backup_args[] =
+static char const * const backup_args[] =
 {
   "never", "simple", "nil", "existing", "t", "numbered", 0
 };
 
-static enum backup_type backup_types[] =
+static enum backup_type const backup_types[] =
 {
   simple, simple, numbered_existing, numbered_existing, numbered, numbered
 };
@@ -342,66 +223,17 @@ static enum backup_type backup_types[] =
 
 enum backup_type
 get_version (version)
-     char *version;
+     char const *version;
 {
   int i;
 
   if (version == 0 || *version == 0)
     return numbered_existing;
   i = argmatch (version, backup_args);
-  if (i >= 0)
-    return backup_types[i];
-  invalid_arg ("version control type", version, i);
-  exit (1);
-}
-#endif /* NODIR */
-
-/* Append to FILENAME the extension EXT, unless the result would be too long,
-   in which case just append the character E.  */
-
-void
-addext (filename, ext, e)
-     char *filename, *ext;
-     int e;
-{
-  char *s = basename (filename);
-  int slen = strlen (s), extlen = strlen (ext);
-  long slen_max = -1;
-
-#if HAVE_PATHCONF && defined (_PC_NAME_MAX)
-#ifndef _POSIX_NAME_MAX
-#define _POSIX_NAME_MAX 14
-#endif
-  if (slen + extlen <= _POSIX_NAME_MAX)
-    /* The file name is so short there's no need to call pathconf.  */
-    slen_max = _POSIX_NAME_MAX;
-  else if (s == filename)
-    slen_max = pathconf (".", _PC_NAME_MAX);
-  else
+  if (i < 0)
     {
-      char c = *s;
-      *s = 0;
-      slen_max = pathconf (filename, _PC_NAME_MAX);
-      *s = c;
+      invalid_arg ("version control type", version, i);
+      exit (2);
     }
-#endif
-  if (slen_max == -1)
-    slen_max = HAVE_LONG_FILE_NAMES ? 255 : 14;
-
-  /* Don't use ext if !HAVE_LONG_FILE_NAMES, even if it would fit.
-     This matches patch's historical behavior.  */
-  if (HAVE_LONG_FILE_NAMES && slen + extlen <= slen_max)
-    strcpy (s + slen, ext);
-  else
-    {
-      if (slen_max <= slen) {
-	/* Try to preserve difference between .h .c etc.  */
-	if (slen == slen_max && s[slen - 2] == '.')
-	  s[slen - 2] = s[slen - 1];
-
-	slen = slen_max - 1;
-      }
-      s[slen] = e;
-      s[slen + 1] = 0;
-    }
+  return backup_types[i];
 }
