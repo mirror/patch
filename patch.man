@@ -1,13 +1,13 @@
 .\" -*- nroff -*-
 .rn '' }`
-'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.1 1992/08/26 02:32:49 djm Exp $
+'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.2 1993/06/26 00:29:10 eggert Exp $
 '\" 
 '\" $Log: patch.man,v $
-'\" Revision 1.1  1992/08/26 02:32:49  djm
-'\" Initial revision
+'\" Revision 1.2  1993/06/26 00:29:10  eggert
+'\" Formerly patch.man.~7~
 '\"
-'\" Revision 1.1  1992/08/26 02:32:49  djm
-'\" Initial revision
+'\" Revision 1.2  1993/06/26 00:29:10  eggert
+'\" Formerly patch.man.~7~
 '\"
 '\" Revision 2.0.1.2  88/06/22  20:47:18  lwall
 '\" patch12: now avoids Bell System Logo
@@ -105,13 +105,13 @@ The extension used for making backup files may also be specified in the
 .B SIMPLE_BACKUP_SUFFIX
 environment variable, which is overridden by the above options.
 .PP
-If the backup file already exists,
+If the backup file is just another name for the original file,
 .B patch
 creates a new backup file name by changing the first lowercase letter
 in the last component of the file's name into uppercase.  If there are
 no more lowercase letters in the name, it removes the first character
 from the name.  It repeats this process until it comes up with a
-backup file that does not already exist.
+backup file that is not just another name for the original file.
 .PP
 You may also specify where you want the output to go with a
 \fB\-o\fP (\fB\-\-output\fP)
