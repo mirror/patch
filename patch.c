@@ -1,5 +1,5 @@
 char rcsid[] =
-	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.3 1993/07/07 17:20:58 djm Exp $";
+	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.4 1993/07/20 22:11:35 djm Exp $";
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,11 +9,11 @@ char rcsid[] =
  * money off of it, or pretend that you wrote it.
  *
  * $Log: patch.c,v $
- * Revision 1.3  1993/07/07 17:20:58  djm
- * Formerly patch.c.~15~
+ * Revision 1.4  1993/07/20 22:11:35  djm
+ * Formerly patch.c.~16~
  *
- * Revision 1.3  1993/07/07 17:20:58  djm
- * Formerly patch.c.~15~
+ * Revision 1.4  1993/07/20 22:11:35  djm
+ * Formerly patch.c.~16~
  *
  * Revision 2.0.2.0  90/05/01  22:17:50  davison
  * patch12u: unidiff support added
@@ -152,6 +152,8 @@ char **argv;
 
     myuid = getuid();
 
+    buf = (char *) xmalloc (MAXLINELEN);
+
     /* Cons up the names of the temporary files.  */
     {
       /* Directory for temporary files.  */
@@ -164,22 +166,22 @@ char **argv;
       }
       tmpname_len = strlen (tmpdir) + 20;
 
-      TMPOUTNAME = (char *) malloc (tmpname_len);
+      TMPOUTNAME = (char *) xmalloc (tmpname_len);
       strcpy (TMPOUTNAME, tmpdir);
       strcat (TMPOUTNAME, "/patchoXXXXXX");
       Mktemp(TMPOUTNAME);
 
-      TMPINNAME = (char *) malloc (tmpname_len);
+      TMPINNAME = (char *) xmalloc (tmpname_len);
       strcpy (TMPINNAME, tmpdir);
       strcat (TMPINNAME, "/patchiXXXXXX");
       Mktemp(TMPINNAME);
 
-      TMPREJNAME = (char *) malloc (tmpname_len);
+      TMPREJNAME = (char *) xmalloc (tmpname_len);
       strcpy (TMPREJNAME, tmpdir);
       strcat (TMPREJNAME, "/patchrXXXXXX");
       Mktemp(TMPREJNAME);
 
-      TMPPATNAME = (char *) malloc (tmpname_len);
+      TMPPATNAME = (char *) xmalloc (tmpname_len);
       strcpy (TMPPATNAME, tmpdir);
       strcat (TMPPATNAME, "/patchpXXXXXX");
       Mktemp(TMPPATNAME);
