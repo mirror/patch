@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.14 1997/05/15 17:59:15 eggert Exp $ */
+/* $Id: util.c,v 1.15 1997/05/19 06:52:03 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -54,23 +54,34 @@ If not, write to the Free Software Foundation,
 # endif
 #endif
 
-/* Rename a file, copying it if necessary. */
+static void makedirs PARAMS ((char *));
 
+/* Move a file FROM to TO, renaming it if possible and copying it if necessary.
+   If we must create TO, use MODE to create it.
+   If FROM is null, remove TO (ignoring FROMSTAT).
+   Back up TO if BACKUP is nonzero.  */
+
+#ifdef __STDC__
+/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
-move_file (from, fromstat, to, backup)
+move_file (char const *from, char *to, mode_t mode, int backup)
+#else
+void
+move_file (from, to, mode, backup)
      char const *from;
-     struct stat const *fromstat;
-     char const *to;
+     char *to;
+     mode_t mode;
      int backup;
+#endif
 {
-  register char *s;
-  register char *bakname;
-  struct stat tost, bakst;
-  int try_makedirs_errno = 0;
+  struct stat to_st;
+  int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
 
-  if (backup && stat (to, &tost) == 0)
+  if (! to_errno)
     {
-      char *simplename;
+      int try_makedirs_errno = 0;
+      char *bakname, *simplename;
+      struct stat bakst;
 
       if (origprae || origbase)
 	{
@@ -106,15 +117,16 @@ move_file (from, fromstat, to, backup)
       simplename = base_name (bakname);
       /* Find a backup name that is not the same file.
 	 Change the first lowercase char into uppercase;
-	 if that doesn't suffice, chop off the first char and try again.  */
+	 if that doesn't suffice, remove the first char and try again.  */
       while (stat (bakname, &bakst) == 0)
 	{
+	  register char *s;
 	  try_makedirs_errno = 0;
-	  if (tost.st_dev != bakst.st_dev
-	      || tost.st_ino != bakst.st_ino)
+	  if (to_st.st_dev != bakst.st_dev
+	      || to_st.st_ino != bakst.st_ino)
 	    break;
 	  /* Skip initial non-lowercase chars.  */
-	  for (s=simplename; *s && !ISLOWER ((unsigned char) *s); s++)
+	  for (s = simplename; *s && !ISLOWER ((unsigned char) *s); s++)
 	    continue;
 	  if (*s)
 	    *s = toupper ((unsigned char) *s);
@@ -122,7 +134,7 @@ move_file (from, fromstat, to, backup)
 	    remove_prefix (simplename, 1);
 	}
       if (debug & 4)
-	  say ("Moving %s to %s.\n", to, bakname);
+	say ("renaming `%s' to `%s'\n", to, bakname);
       while (rename (to, bakname) != 0)
 	{
 	  if (errno != try_makedirs_errno)
@@ -133,47 +145,89 @@ move_file (from, fromstat, to, backup)
       free (bakname);
     }
 
-  if (debug & 4)
-    say ("Moving %s to %s.\n", from, to);
-
-  if (rename (from, to) != 0)
+  if (from)
     {
-#ifdef EXDEV
-      if (errno == EXDEV)
+      if (debug & 4)
+	say ("renaming `%s' to `%s'\n", from, to);
+
+      if (rename (from, to) != 0)
 	{
-	  if (! backup && unlink (to) != 0
-	      && errno != ENOENT && errno != ENOTDIR)
-	    pfatal ("can't remove `%s'", to);
-	  copy_file (from, fromstat, to);
-	  if (unlink (from) != 0)
-	    pfatal ("can't remove `%s'", from);
-	  return;
-	}
+	  if (errno == ENOENT
+	      && (to_errno == -1 || to_errno == ENOENT))
+	    {
+	      makedirs (to);
+	      if (rename (from, to) == 0)
+		return;
+	    }
+
+#ifdef EXDEV
+	  if (errno == EXDEV)
+	    {
+	      if (! backup && unlink (to) != 0 && errno != ENOENT)
+		pfatal ("can't remove `%s'", to);
+	      copy_file (from, to, mode);
+	      return;
+	    }
 #endif
-      pfatal ("can't rename `%s' to `%s'", from, to);
+	  pfatal ("can't rename `%s' to `%s'", from, to);
+	}
     }
+  else if (! backup)
+    {
+      if (debug & 4)
+	say ("removing `%s'\n", to);
+      if (unlink (to) != 0)
+	pfatal ("can't remove `%s'", to);
+    }
+}
+
+/* Create FILE with OPEN_FLAGS, and with MODE adjusted so that
+   we can read and write the file and that the file is not executable.
+   Return the file descriptor.  */
+#ifdef __STDC__
+/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
+int
+create_file (char const *file, int open_flags, mode_t mode)
+#else
+int
+create_file (file, open_flags, mode)
+     char const *file;
+     int open_flags;
+     mode_t mode;
+#endif
+{
+  int fd;
+  mode |= S_IRUSR | S_IWUSR;
+  mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
+  if (! (O_CREAT && O_TRUNC))
+    close (creat (file, mode));
+  fd = open (file, O_CREAT | O_TRUNC | open_flags, mode);
+  if (fd < 0)
+    pfatal ("can't create `%s'", file);
+  return fd;
 }
 
 /* Copy a file. */
 
+#ifdef __STDC__
+/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
-copy_file (from, fromstat, to)
+copy_file (char const *from, char const *to, mode_t mode)
+#else
+void
+copy_file (from, to, mode)
      char const *from;
-     struct stat const *fromstat;
      char const *to;
+     mode_t mode;
+#endif
 {
   int tofd;
-  int fromfd = open (from, O_RDONLY|O_BINARY);
+  int fromfd;
   size_t i;
 
-  if (fromfd < 0)
+  if ((fromfd = open (from, O_RDONLY | O_BINARY)) < 0)
     pfatal ("can't reopen `%s'", from);
-  if (! (O_CREAT && O_TRUNC))
-    close (creat (to, fromstat->st_mode));
-  tofd = open (to, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY,
-	       S_IRUSR|S_IWUSR|fromstat->st_mode);
-  if (tofd < 0)
-    pfatal ("can't create `%s'", to);
+  tofd = create_file (to, O_WRONLY | O_BINARY, mode);
   while ((i = read (fromfd, buf, bufsize)) != 0)
     {
       if (i == -1)
@@ -398,6 +452,54 @@ ask (format, va_alist)
   buf[r] = '\0';
 }
 
+/* Return nonzero if it OK to reverse a patch.  */
+
+#ifdef __STDC__
+int
+ok_to_reverse (char const *format, ...)
+#else
+ok_to_reverse (format, va_alist)
+     char const *format;
+     va_dcl
+#endif
+{
+  int r = 0;
+
+  if (noreverse || ! batch || verbosity != SILENT)
+    {
+      va_list args;
+      vararg_start (args, format);
+      vfprintf (stdout, format, args);
+      va_end (args);
+    }
+
+  if (noreverse)
+    {
+      printf ("  Ignoring it.\n");
+      skip_rest_of_patch = TRUE;
+      r = 0;
+    }
+  else if (batch)
+    {
+      if (verbosity != SILENT)
+	say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
+      r = 1;
+    }
+  else
+    {
+      ask (reverse ? "  Ignore -R? [y] " : "  Assume -R? [y] ");
+      r = *buf != 'n';
+      if (! r)
+	{
+	  ask ("Apply anyway? [n] ");
+	  if (*buf != 'y')
+	    skip_rest_of_patch = TRUE;
+	}
+    }
+
+  return r;
+}
+
 /* How to handle certain events when not in a critical region. */
 
 #define NUM_SIGS (sizeof (sigs) / sizeof (*sigs))
@@ -556,7 +658,7 @@ systemic (command)
 
 #include <quotearg.h>
 static int doprogam PARAMS ((char const *, char const *));
-static int mkdir PARAMS ((char const *, int));
+static int mkdir PARAMS ((char const *, mode_t));
 static int rmdir PARAMS ((char const *));
 
 static int
@@ -580,10 +682,16 @@ doprogram (program, arg)
   return result;
 }
 
+#ifdef __STDC__
+/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
+static int
+mkdir (char const *path, mode_t mode)
+#else
 static int
 mkdir (path, mode)
      char const *path;
-     int mode; /* ignored */
+     mode_t mode; /* ignored */
+#endif
 {
   return doprogram ("mkdir", path);
 }
@@ -618,15 +726,24 @@ replace_slashes (filename)
   for (; *f; f++)
     if (ISSLASH (*f))
       {
-	/* "." and ".." need not be tested.  */
-	if (! (f - component_start <= 2
-	       && component_start[0] == '.' && f[-1] == '.'))
-	  {
-	    *f = '\0';
-	    last_location_replaced = f;
-	  }
+	char *slash = f;
+
+	/* Treat multiple slashes as if they were one slash.  */
 	while (ISSLASH (f[1]))
 	  f++;
+
+	/* Ignore slashes at the end of the path.  */
+	if (! f[1])
+	  break;
+
+	/* "." and ".." need not be tested.  */
+	if (! (slash - component_start <= 2
+	       && component_start[0] == '.' && slash[-1] == '.'))
+	  {
+	    *slash = '\0';
+	    last_location_replaced = slash;
+	  }
+
 	component_start = f + 1;
       }
 
@@ -636,7 +753,7 @@ replace_slashes (filename)
 /* Make sure we'll have the directories to create a file.
    Ignore the last element of `filename'.  */
 
-void
+static void
 makedirs (filename)
      register char *filename;
 {
