@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.17 1997/07/16 12:26:36 eggert Exp $ */
+/* $Id: inp.c,v 1.18 1997/07/21 17:59:46 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -266,7 +266,7 @@ plan_a(filename)
       too_many_lines (filename);
   if (! (iline == (size_t) iline
 	 && (size_t) iline * sizeof *ptr / sizeof *ptr == (size_t) iline
-	 && (ptr = malloc ((size_t) iline * sizeof *ptr))))
+	 && (ptr = (char const **) malloc ((size_t) iline * sizeof *ptr))))
     {
       free (buffer);
       return FALSE;
