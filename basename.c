@@ -19,6 +19,8 @@
 # include <config.h>
 #endif
 
+#include <basename.h>
+
 #ifndef FILESYSTEM_PREFIX_LEN
 # define FILESYSTEM_PREFIX_LEN(Filename) 0
 #endif
