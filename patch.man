@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.21 1997/07/05 10:32:23 eggert Exp $
+.Id $Id: patch.man,v 1.22 1997/07/10 08:16:12 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -539,7 +539,7 @@ The
 .B \-B
 or
 .BR \*=prefix ,
-.B \-y
+.B \-Y
 or
 .BR \*=basename\-prefix ,
 and
@@ -572,12 +572,12 @@ Set internal debugging flags of interest only to
 .B patch
 patchers.
 .TP
-\fB\-y\fP \fIpref\fP  or  \fB\*=basename\-prefix=\fP\fIpref\fP
+\fB\-Y\fP \fIpref\fP  or  \fB\*=basename\-prefix=\fP\fIpref\fP
 Prefix
 .I pref
 to the basename of a file name when generating its simple backup file name.
 For example, with
-.B "\-y\ .del/"
+.B "\-Y\ .del/"
 the simple backup file name for
 .B src/patch/util.c
 is
