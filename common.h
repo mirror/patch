@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.25 1999/09/28 19:14:56 eggert Exp $ */
+/* $Id: common.h,v 1.26 1999/09/28 19:28:11 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -72,6 +72,9 @@
 #endif
 #ifndef S_IRUSR
 #define S_IRUSR (S_IROTH << 6)
+#endif
+#if MKDIR_ONE_ARG
+# define mkdir(name, mode) ((mkdir) (name))
 #endif
 
 #if HAVE_LIMITS_H
