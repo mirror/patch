@@ -1,11 +1,11 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.42 2002/06/03 17:11:01 eggert Exp $ */
+/* $Id: pch.c,v 1.43 2003/05/18 08:31:57 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ static char *p_Char;			/* +, -, and ! */
 static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
 static int p_strip_trailing_cr;		/* nonzero if stripping trailing \r */
+static int p_pass_comments_through;	/* nonzero if not ignoring # lines */
 static file_offset p_base;		/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
 static file_offset p_start;		/* where intuit found a patch */
@@ -74,13 +75,14 @@ static char *scan_linenum (char *, LINENUM *);
 static enum diff intuit_diff_type (void);
 static enum nametype best_name (char * const *, int const *);
 static int prefix_components (char *, int);
-static size_t pget_line (int, int, int);
+static size_t pget_line (int, int, int, int);
 static size_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
 static void malformed (void) __attribute__ ((noreturn));
 static void next_intuit_at (file_offset, LINENUM);
 static void skip_to (file_offset, LINENUM);
+static char get_ed_command_letter (char const *);
 
 /* Prepare to look for the next patch in the patch file. */
 
@@ -241,9 +243,10 @@ there_is_another_patch (void)
 	    char numbuf[LINENUM_LENGTH_BOUND + 1];
 	    say ("can't find file to patch at input line %s\n",
 		 format_linenum (numbuf, p_sline));
-	    say (strippath == -1
-	         ? "Perhaps you should have used the -p or --strip option?\n"
-		 : "Perhaps you used the wrong -p or --strip option?\n");
+	    if (diff_type != ED_DIFF)
+	      say (strippath == -1
+		   ? "Perhaps you should have used the -p or --strip option?\n"
+		   : "Perhaps you used the wrong -p or --strip option?\n");
 	  }
       }
 
@@ -291,6 +294,7 @@ intuit_diff_type (void)
 {
     register file_offset this_line = 0;
     register file_offset first_command_line = -1;
+    char first_ed_command_letter = 0;
     LINENUM fcl_line = 0; /* Pacify `gcc -W'.  */
     register bool this_is_a_command = FALSE;
     register bool stars_this_line = FALSE;
@@ -317,15 +321,16 @@ intuit_diff_type (void)
 	register bool last_line_was_command = this_is_a_command;
 	register bool stars_last_line = stars_this_line;
 	register int indent = 0;
+	char ed_command_letter;
 	int strip_trailing_cr;
 	size_t chars_read;
 
 	this_line = file_tell (pfp);
-	chars_read = pget_line (0, 0, 0);
+	chars_read = pget_line (0, 0, 0, 0);
 	if (chars_read == (size_t) -1)
 	  memory_fatal ();
 	if (! chars_read) {
-	    if (first_command_line >= 0) {
+	    if (first_ed_command_letter) {
 					/* nothing but deletes!? */
 		p_start = first_command_line;
 		p_sline = fcl_line;
@@ -349,8 +354,11 @@ intuit_diff_type (void)
 	  continue;
 	this_is_a_command = (ISDIGIT (*s) &&
 	  (*t == 'd' || *t == 'c' || *t == 'a') );
-	if (first_command_line < 0 && this_is_a_command) {
+	if (first_command_line < 0
+	    && ((ed_command_letter = get_ed_command_letter (s))
+		|| this_is_a_command)) {
 	    first_command_line = this_line;
+	    first_ed_command_letter = ed_command_letter;
 	    fcl_line = p_input_line;
 	    p_indent = indent;		/* assume this for now */
 	    p_strip_trailing_cr = strip_trailing_cr;
@@ -432,7 +440,6 @@ intuit_diff_type (void)
 	    if (s[0] == '+' && s[1] == '0' && !ISDIGIT (s[2]))
 	      p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
 	    p_indent = indent;
-	    p_strip_trailing_cr = strip_trailing_cr;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
@@ -1523,21 +1530,24 @@ another_hunk (enum diff difftype, int rev)
 static size_t
 get_line (void)
 {
-   return pget_line (p_indent, p_rfc934_nesting, p_strip_trailing_cr);
+   return pget_line (p_indent, p_rfc934_nesting, p_strip_trailing_cr,
+		     p_pass_comments_through);
 }
 
 /* Input a line from the patch file, worrying about indentation.
    Strip up to INDENT characters' worth of leading indentation.
    Then remove up to RFC934_NESTING instances of leading "- ".
-   Ignore any resulting lines that begin with '#'; they're comments.
    If STRIP_TRAILING_CR is nonzero, remove any trailing carriage-return.
+   Unless PASS_COMMENTS_THROUGH is nonzero, ignore any resulting lines
+   that begin with '#'; they're comments.
    Ignore any partial lines at end of input, but warn about them.
    Succeed if a line was read; it is terminated by "\n\0" for convenience.
    Return the number of characters read, including '\n' but not '\0'.
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (int indent, int rfc934_nesting, int strip_trailing_cr)
+pget_line (int indent, int rfc934_nesting, int strip_trailing_cr,
+	   int pass_comments_through)
 {
   register FILE *fp = pfp;
   register int c;
@@ -1613,7 +1623,7 @@ pget_line (int indent, int rfc934_nesting, int strip_trailing_cr)
 
       p_input_line++;
     }
-  while (*b == '#');
+  while (*b == '#' && !pass_comments_through);
 
   if (strip_trailing_cr && 2 <= i && b[i - 2] == '\r')
     b[i-- - 2] = '\n';
@@ -1866,6 +1876,60 @@ pch_hunk_beg (void)
     return p_hunk_beg;
 }
 
+/* Is the newline-terminated line a valid `ed' command for patch
+   input?  If so, return the command character; if not, return 0.
+   This accepts accepts just a subset of the valid commands, but it's
+   good enough in practice.  */
+
+static char
+get_ed_command_letter (char const *line)
+{
+  char const *p = line;
+  char letter;
+  bool pair = FALSE;
+  if (! ISDIGIT (*p))
+    return 0;
+  while (ISDIGIT (*++p))
+    continue;
+  if (*p == ',')
+    {
+      if (! ISDIGIT (*++p))
+	return 0;
+      while (ISDIGIT (*++p))
+	continue;
+      pair = TRUE;
+    }
+  letter = *p++;
+
+  switch (letter)
+    {
+    case 'a':
+    case 'i':
+      if (pair)
+	return 0;
+      break;
+
+    case 'c':
+    case 'd':
+      break;
+
+    case 's':
+      if (strncmp (p, "/.//", 4) != 0)
+	return 0;
+      p += 4;
+      break;
+
+    default:
+      return 0;
+    }
+
+  while (*p == ' ' || *p == '\t')
+    p++;
+  if (*p == '\n')
+    return letter;
+  return 0;
+}
+
 /* Apply an ed script by feeding ed itself. */
 
 void
@@ -1873,9 +1937,7 @@ do_ed_script (FILE *ofp)
 {
     static char const ed_program[] = ed_PROGRAM;
 
-    register char *t;
     register file_offset beginning_of_this_line;
-    register bool this_line_is_command = FALSE;
     register FILE *pipefp = 0;
     register size_t chars_read;
 
@@ -1892,21 +1954,20 @@ do_ed_script (FILE *ofp)
 	  pfatal ("Can't open pipe to %s", quotearg (buf));
     }
     for (;;) {
+	char ed_command_letter;
 	beginning_of_this_line = file_tell (pfp);
 	chars_read = get_line ();
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);
 	    break;
 	}
-	for (t = buf;  ISDIGIT (*t) || *t == ',';  t++)
-	  continue;
-	this_line_is_command = (ISDIGIT (*buf) &&
-	  (*t == 'd' || *t == 'c' || *t == 'a' || *t == 'i' || *t == 's') );
-	if (this_line_is_command) {
+	ed_command_letter = get_ed_command_letter (buf);
+	if (ed_command_letter) {
 	    if (pipefp)
 		if (! fwrite (buf, sizeof *buf, chars_read, pipefp))
 		    write_fatal ();
-	    if (*t != 'd' && *t != 's') {
+	    if (ed_command_letter != 'd' && ed_command_letter != 's') {
+	        p_pass_comments_through = 1;
 		while ((chars_read = get_line ()) != 0) {
 		    if (pipefp)
 			if (! fwrite (buf, sizeof *buf, chars_read, pipefp))
@@ -1914,6 +1975,7 @@ do_ed_script (FILE *ofp)
 		    if (chars_read == 2  &&  strEQ (buf, ".\n"))
 			break;
 		}
+		p_pass_comments_through = 0;
 	    }
 	}
 	else {
