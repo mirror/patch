@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.34 1999/10/03 01:17:38 eggert Exp $ */
+/* $Id: patch.c,v 1.35 1999/10/11 03:54:25 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -107,6 +107,8 @@ static LINENUM maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
 
+char const program_name[] = "patch";
+
 /* Apply a set of diffs as appropriate. */
 
 int main PARAMS ((int, char **));
@@ -119,7 +121,6 @@ main (int argc, char **argv)
     struct outstate outstate;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
-    program_name = argv[0];
     init_time ();
 
     setbuf(stderr, serrbuf);
@@ -583,7 +584,7 @@ static char const *const option_help[] =
 "  --posix  Conform to the POSIX standard.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE
 "  --binary  Read and write data in binary mode.",
 #else
 "  --binary  Read and write data in binary mode (no effect on this platform).",
@@ -592,7 +593,7 @@ static char const *const option_help[] =
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
 "",
-"Report bugs to <bug-gnu-utils@gnu.org>.",
+"Report bugs to <bug-patch@gnu.org>.",
 0
 };
 
@@ -753,7 +754,7 @@ get_some_switches (void)
 		verbosity = VERBOSE;
 		break;
 	    case CHAR_MAX + 3:
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE
 		binary_transput = O_BINARY;
 #endif
 		break;
@@ -788,22 +789,7 @@ get_some_switches (void)
     /* Process any filename args.  */
     if (optind < Argc)
       {
-	struct stat outstat;
-
 	inname = savestr (Argv[optind++]);
-
-	/* Handle `patch -o F F' as if it were `patch F'.  */
-	if (outfile
-	    && (strcmp (outfile, inname) == 0
-		|| (stat (outfile, &outstat) == 0
-		    && stat (inname, &instat) == 0
-		    && outstat.st_dev == instat.st_dev
-		    && outstat.st_ino == instat.st_ino)))
-	  {
-	    free (outfile);
-	    outfile = 0;
-	  }
-
 	invc = -1;
 	if (optind < Argc)
 	  {
