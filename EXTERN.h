@@ -19,3 +19,11 @@
 #ifdef DOINIT
 #undef DOINIT
 #endif
+
+#ifndef PARAMS
+#if __STDC__
+#define PARAMS(args) args
+#else
+#define PARAMS(args) ()
+#endif
+#endif

@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.5 1993/07/21 17:23:28 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.6 1993/07/22 19:15:44 djm Exp $
  *
  * $Log: common.h,v $
- * Revision 1.5  1993/07/21 17:23:28  djm
- * Formerly common.h.~13~
+ * Revision 1.6  1993/07/22 19:15:44  djm
+ * entered into RCS
  *
- * Revision 1.5  1993/07/21 17:23:28  djm
- * Formerly common.h.~13~
+ * Revision 1.6  1993/07/22 19:15:44  djm
+ * entered into RCS
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -164,7 +164,7 @@ EXT char end_defined[128];		/* #endif xyzzy */
 
 EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
 
-char *xmalloc();
+char *xmalloc PARAMS((size_t));
 
 #include <errno.h>
 #ifdef STDC_HEADERS

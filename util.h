@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.2 1992/07/20 18:27:08 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.3 1993/07/22 19:23:24 djm Exp $
  *
  * $Log: util.h,v $
- * Revision 1.2  1992/07/20 18:27:08  djm
- * Formerly util.h.~4~
+ * Revision 1.3  1993/07/22 19:23:24  djm
+ * entered into RCS
  *
- * Revision 1.2  1992/07/20 18:27:08  djm
- * Formerly util.h.~4~
+ * Revision 1.3  1993/07/22 19:23:24  djm
+ * entered into RCS
  *
  * Revision 2.0  86/09/17  15:40:06  lwall
  * Baseline for netwide release.
@@ -80,15 +80,15 @@
 
 EXT char serrbuf[BUFSIZ];		/* buffer for stderr */
 
-char *fetchname();
-int move_file();
-void copy_file();
+char *fetchname PARAMS((char *, int, int));
+int move_file PARAMS((char *, char *));
+void copy_file PARAMS((char *, char *));
 void say();
 void fatal();
 void pfatal();
 void ask();
-char *savestr();
-void set_signals();
-void ignore_signals();
-void makedirs();
-char *basename();
+char *savestr PARAMS((char *));
+void set_signals PARAMS((int));
+void ignore_signals PARAMS((void));
+void makedirs PARAMS((char *, bool));
+char *basename PARAMS((char *));
