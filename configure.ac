@@ -45,7 +45,7 @@ jm_STRUCT_UTIMBUF
 
 AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1\$U.o getopt\$U.o"])
 AC_SUBST(LIBOBJS)
-AC_CHECK_FUNCS(_doprintf isascii fseeko memcmp mktemp \
+AC_CHECK_FUNCS(_doprintf isascii fseeko geteuid getuid memcmp mktemp \
   pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
 AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
 jm_FUNC_MALLOC
