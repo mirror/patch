@@ -1,17 +1,27 @@
 # Configure `patch'.
-# Copyright 1993, 1997-1998, 1999 Free Software Foundation, Inc.
-dnl Process this file with autoconf to produce a configure script.
+# Copyright (C) 1993, 1997, 1998, 1999, 2002 Free Software Foundation, Inc.
 
-AC_PREREQ(2.50)
-AC_INIT(patch.c)
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+AC_PREREQ(2.53)
+AC_INIT(patch, 2.5.6, bug-patch@gnu.org)
+AC_CONFIG_SRCDIR(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 AC_CANONICAL_HOST
-
-PACKAGE=patch
-VERSION=2.5.5
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
 
 AC_PROG_CC
 AC_PROG_CPP
@@ -27,35 +37,39 @@ AC_ISC_POSIX
 AC_SYS_LARGEFILE
 AC_EXEEXT
 
-AM_C_PROTOTYPES
+AC_C_PROTOTYPES
 AC_C_CONST
 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h string.h unistd.h utime.h varargs.h)
-jm_AC_HEADER_INTTYPES_H
 
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
-jm_STRUCT_UTIMBUF
+jm_CHECK_TYPE_STRUCT_UTIMBUF
 
-AC_CHECK_FUNC(getopt_long, ,
-  [LIBOBJS="$LIBOBJS getopt1\$U.$ac_objext getopt\$U.$ac_objext"])
-AC_SUBST(LIBOBJS)
+jm_PREREQ_ADDEXT
+jm_PREREQ_DIRNAME
+jm_PREREQ_ERROR
+jm_PREREQ_MEMCHR
+jm_PREREQ_QUOTEARG
+
+AC_CHECK_DECLS([free, getenv, malloc])
 AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
-  pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
+  pathconf raise sigaction sigprocmask sigsetmask strerror)
 AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
 AC_FUNC_FSEEKO
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_SETMODE_DOS
 AC_FUNC_VPRINTF
 PATCH_FUNC_MKDIR_TAKES_ONE_ARG
 
 AC_SYS_LONG_FILE_NAMES
-jm_STRUCT_DIRENT_D_INO
+jm_CHECK_TYPE_STRUCT_DIRENT_D_INO
 
 AC_OUTPUT(Makefile)
