@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.30 2001/02/08 21:50:59 eggert Exp $
+.Id $Id: patch.man,v 1.31 2002/05/25 10:36:44 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -1124,13 +1124,15 @@ thinks it is a reversed patch, and offers to un-apply the patch.
 This could be construed as a feature.
 .SH COPYING
 Copyright
-.if t \(co
+.ie t \(co
+.el (C)
 1984, 1985, 1986, 1988 Larry Wall.
 .br
 Copyright
-.if t \(co
-1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
-Free Software Foundation, Inc.
+.ie t \(co
+.el (C)
+1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
 .PP
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
