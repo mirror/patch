@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.29 1999/10/13 06:20:29 eggert Exp $ */
+/* $Id: util.c,v 1.30 2001/02/08 01:28:34 eggert Exp $ */
 
 /* Copyright 1986 Larry Wall
    Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -255,9 +255,13 @@ static char const SCCSDIFF2[] = "|diff - %s";
 
 static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
 
+static char const PERFORCE_CO[] = "p4 edit ";
+
 /* Return "RCS" if FILENAME is controlled by RCS,
    "SCCS" if it is controlled by SCCS,
-   "ClearCase" if it is controlled by Clearcase, and 0 otherwise.
+   "ClearCase" if it is controlled by Clearcase,
+   "Perforce" if it is controlled by Perforce,
+   and 0 otherwise.
    READONLY is nonzero if we desire only readonly access to FILENAME.
    FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
    If successful and if GETBUF is nonzero, set *GETBUF to a command
@@ -362,6 +366,23 @@ version_controller (char const *filename, int readonly,
 	*diffbuf = 0;
 
       r = "ClearCase";
+     }
+  else if (!readonly && filestat &&
+           (getenv("P4PORT") || getenv("P4USER") || getenv("P4CONFIG")))
+    {
+      if (getbuf)
+	{
+	  char *p = *getbuf = xmalloc (maxgetsize);
+	  strcpy (p, PERFORCE_CO);
+	  p += sizeof PERFORCE_CO - 1;
+	  p += quote_system_arg (p, filename);
+	  *p = '\0';
+	}
+
+      if (diffbuf)
+	*diffbuf = 0;
+
+      r = "Perforce";
     }
 
   free (trybuf);
