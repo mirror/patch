@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.28 1999/10/11 03:54:25 eggert Exp $
+.Id $Id: patch.man,v 1.29 2000/07/01 01:55:28 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -70,6 +70,10 @@ or if a context diff contains lines ending in \s-1CRLF\s0
 or is encapsulated one or more times by prepending
 "\fB\- \fP" to lines starting with "\fB\-\fP" as specified by Internet RFC 934,
 this is taken into account.
+After removing indenting or encapsulation,
+lines beginning with
+.B #
+are ignored, as they are considered to be comments.
 .PP
 With context diffs, and to a lesser extent with normal diffs,
 .B patch
