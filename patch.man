@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.9 1997/05/05 07:31:21 eggert Exp $
+.Id $Id: patch.man,v 1.10 1997/05/06 01:39:20 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -151,7 +151,13 @@ If no named files exist, some names are given,
 .B POSIXLY_CORRECT
 is not set, and the patch appears to create a file,
 .B patch
-uses the best of the names given.
+uses the best name whose existing directory prefix
+contains the most nontrivial path name components.
+(\c
+.B .\&
+and
+.B ..\&
+are trivial.)
 If no file name results from the above heuristics, you are asked
 for the name of the file to patch.
 To determine the best of a nonempty list of file names,
@@ -554,20 +560,31 @@ option.
 There are several things you should bear in mind if you are going to
 be sending out patches.
 .PP
-Tell your recipients how to apply the patches.
-This should include which directory to
+Create your patches systematically.
+A good method is the command
+.BI "diff\ -rNU2\ " "old\ new"
+where
+.I old
+and
+.I new
+identify the old and new directories.
+The names
+.I old
+and
+.I new
+should not contain any slashes.
+Here is an example:
+.Sp
+	\fBdiff \-rNU2 version\-2.2 version\-2.3\fP
+.PP
+Tell your recipients how to apply the patches
+by telling them which directory to
 .B cd
 to, and which
 .B patch
-options to use.  Normally you should specify the
-.BI \-p N
-option with the proper value of
-.IR N .
-The
-.B \-E
-and
-.B \-N
-options are also common.
+options to use.  The options
+.B "\-ENp1"
+are recommended.
 Test your procedure by pretending to be a recipient and applying
 your patches to a copy of the original files.
 .PP
