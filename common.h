@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.14 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: common.h,v 1.15 1997/05/21 18:29:20 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -176,6 +176,7 @@ XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
 XTERN int strippath;
 XTERN bool canonicalize;
+XTERN int patch_get;
 
 enum diff
   {
