@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.8 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: inp.c,v 1.9 1997/04/17 16:15:48 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -170,13 +170,14 @@ get_input_file (filename, outname)
     }
 
     /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
-    if (inerrno
-	|| (! elsewhere
-	    && (/* No one can write to it.  */
-		(instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) == 0
-		/* I can't write to it.  */
-		|| ((instat.st_mode & (S_IWGRP|S_IWOTH)) == 0
-		    && instat.st_uid != getuid ())))) {
+    if (backup_type == numbered_existing
+	&& (inerrno
+	    || (! elsewhere
+		&& (/* No one can write to it.  */
+		    (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) == 0
+		    /* I can't write to it.  */
+		    || ((instat.st_mode & (S_IWGRP|S_IWOTH)) == 0
+			&& instat.st_uid != getuid ()))))) {
 	register char *s;
 	struct stat cstat;
 	char const *cs = 0;
