@@ -1,10 +1,11 @@
-This version of `patch' has many changes made by the Free Software Foundation
+This version of `patch' has many changes made by the Free Software Foundation.
 They add support for:
  * handling arbitrary binary data and large files
  * the unified context diff format that GNU diff can produce
  * making GNU Emacs-style backup files
  * improved interaction with RCS and SCCS
  * the GNU conventions for option parsing and configuring and compilation.
+ * better POSIX.2 compliance
 They also fix some bugs.  See the NEWS and ChangeLog files for details.
 
 Tutorial-style documentation for patch is included in the GNU
