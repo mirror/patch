@@ -70,7 +70,7 @@ HDRS = argmatch.h backupfile.h basename.h common.h error.h getopt.h \
 	inp.h maketime.h partime.h patchlevel.h pch.h quotearg.h quotesys.h \
 	util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
-	acconfig.h aclocal.m4 ansi2knr.1 ansi2knr.c \
+	aclocal.m4 ansi2knr.1 ansi2knr.c \
 	config.guess config.hin config.sub configure configure.in \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
@@ -116,7 +116,7 @@ config.status: configure
 	$(SHELL) $(CONFIG_STATUS) --recheck
 configure: configure.in $(srcdir)/aclocal.m4
 	cd $(srcdir) && autoconf
-config.hin: configure.in acconfig.h
+config.hin: configure.in
 	cd $(srcdir) && rm -f config.hin && autoheader
 
 M4DIR = $(srcdir)/m4
