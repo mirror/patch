@@ -15,6 +15,11 @@ Changes since version 2.2:
   - Files that ``become nonexistent'' after patching are now removed.
     When a file is removed, any empty ancestor directories are also removed.
 
+* Files are now automatically gotten from RCS and SCCS
+  if the -g or --get option is specified,
+  or if the PATCH_GET environment variable is set
+  and the -G or --no-get option is not specified.
+
 * If the PATCH_VERSION_CONTROL environment variable is set,
   it overrides the VERSION_CONTROL environment variable.
 
