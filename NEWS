@@ -16,8 +16,9 @@ Changes since version 2.2:
   - If some named files exist, use the first one if POSIXLY_CORRECT is set,
     the best one otherwise.
   - If no named files exist, some names are given, POSIXLY_CORRECT is not set,
-    and the patch appears to create a file, then use the best of the names
-    given.
+    and the patch appears to create a file, then use the best name
+    whose existing directory prefix contains the most nontrivial
+    path name components.  ("." and ".." are trivial.)
   - Otherwise, ask the user for a file name.
 
   The ``best'' of a nonempty list of file names is defined as follows:
