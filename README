@@ -15,6 +15,8 @@ In the mean time, see `patch --help', or consult the man page
 in this distribution.
 
 For GNU and Unix build and installation instructions, see the file INSTALL.
+Use `configure --disable-largefile' to disable large file support;
+this is reportedly necessary on Red Hat GNU/Linux 6.0 to avoid a C library bug.
 For MS-DOS using DJGPP tools, see the file pc/djgpp/README.
 For other systems, copy config.hin to config.h and change
 #undef statements in it to #define as appropriate for your system,
@@ -22,7 +24,7 @@ and copy Makefile.in to Makefile and set the variables that are
 enclosed in @ signs as appropriate for your system.
 
 Please send bug reports for this version of patch to
-bug-gnu-utils@prep.ai.mit.edu.
+<bug-patch@gnu.org>.
 
 The Free Software Foundation is distributing this version of patch
 independently because as of this writing, Larry Wall has not released a
@@ -34,7 +36,7 @@ Public License.
 ------
 
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
-Copyright 1989, 1990, 1991, 1992, 1993, 1997 Free Software Foundation, Inc.
+Copyright 1989, 1990-1993, 1997, 1999 Free Software Foundation, Inc.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
