@@ -19,7 +19,7 @@ AC_HAVE_HEADERS(fcntl.h limits.h)
 AC_OFF_T
 AC_SIZE_T
 AC_REPLACE_FUNCS(rename)
-AC_HAVE_FUNCS(memcmp pathconf strerror)
+AC_HAVE_FUNCS(memcmp mkdir pathconf strerror)
 AC_LONG_FILE_NAMES
 AC_XENIX_DIR
 AC_OUTPUT(Makefile)
