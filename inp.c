@@ -1,10 +1,10 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.19 1997/09/03 17:15:05 eggert Exp $ */
+/* $Id: inp.c,v 1.20 1998/03/15 14:44:47 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
-Copyright 1991, 1992, 1993, 1997 Free Software Foundation, Inc.
+Copyright 1991, 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,7 +26,9 @@ If not, write to the Free Software Foundation,
 #include <common.h>
 #include <backupfile.h>
 #include <pch.h>
+#include <quotearg.h>
 #include <util.h>
+#include <xalloc.h>
 #undef XTERN
 #define XTERN
 #include <inp.h>
@@ -87,19 +89,16 @@ char *filename;
     using_plan_a = ! (debug & 16) && plan_a (filename);
     if (!using_plan_a)
 	plan_b(filename);
-    switch (verbosity)
+
+    if (verbosity != SILENT)
       {
-      case SILENT:
-	break;
+	filename = quotearg (filename);
 
-      case VERBOSE:
-	say ("Patching file `%s' using Plan %s...\n",
-	     filename, using_plan_a ? "A" : "B");
-	break;
-
-      case DEFAULT_VERBOSITY:
-	say ("patching file `%s'\n", filename);
-	break;
+	if (verbosity == VERBOSE)
+	  say ("Patching file %s using Plan %s...\n",
+	       filename, using_plan_a ? "A" : "B");
+	else
+	  say ("patching file %s\n", filename);
       }
 }
 
@@ -109,6 +108,8 @@ static void
 report_revision (found_revision)
      int found_revision;
 {
+  revision = quotearg (revision);
+
   if (found_revision)
     {
       if (verbosity == VERBOSE)
@@ -121,10 +122,8 @@ report_revision (found_revision)
 	     revision);
     }
   else if (batch)
-    {
-      fatal ("This file doesn't appear to be the %s version -- aborting.",
-	     revision);
-    }
+    fatal ("This file doesn't appear to be the %s version -- aborting.",
+	   revision);
   else
     {
       ask ("This file doesn't appear to be the %s version -- patch anyway? [n] ",
@@ -139,7 +138,7 @@ static void
 too_many_lines (filename)
      char const *filename;
 {
-  fatal ("File `%s' has too many lines.", filename);
+  fatal ("File %s has too many lines", quotearg (filename));
 }
 
 
@@ -175,18 +174,23 @@ get_input_file (filename, outname)
 		if (!elsewhere
 		    && (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) != 0)
 		    /* Somebody can write to it.  */
-		    fatal ("file `%s' seems to be locked by somebody else under %s",
-			   filename, cs);
-		/* It might be checked out unlocked.  See if it's safe to
-		   check out the default version locked.  */
-		if (verbosity == VERBOSE)
-		    say ("Comparing file `%s' to default %s version...\n",
-			 filename, cs);
-		if (systemic (diffbuf) != 0)
+		  fatal ("File %s seems to be locked by somebody else under %s",
+			 quotearg (filename), cs);
+		if (diffbuf)
 		  {
-		    say ("warning: patching file `%s', which does not match default %s version\n",
-			 filename, cs);
-		    cs = 0;
+		    /* It might be checked out unlocked.  See if it's safe to
+		       check out the default version locked.  */
+
+		    if (verbosity == VERBOSE)
+		      say ("Comparing file %s to default %s version...\n",
+			   quotearg (filename), cs);
+
+		    if (systemic (diffbuf) != 0)
+		      {
+			say ("warning: Patching file %s, which does not match default %s version\n",
+			     quotearg (filename), cs);
+			cs = 0;
+		      }
 		  }
 	    }
 
@@ -195,12 +199,13 @@ get_input_file (filename, outname)
 	      inerrno = 0;
 
 	    free (getbuf);
-	    free (diffbuf);
+	    if (diffbuf)
+	      free (diffbuf);
 
     } else if (inerrno && !pch_says_nonexistent (reverse))
       {
 	errno = inerrno;
-	pfatal ("can't find file `%s'", filename);
+	pfatal ("Can't find file %s", quotearg (filename));
       }
 
     if (inerrno)
@@ -209,7 +214,8 @@ get_input_file (filename, outname)
 	instat.st_size = 0;
       }
     else if (! S_ISREG (instat.st_mode))
-      fatal ("`%s' is not a regular file -- can't patch", filename);
+      fatal ("File %s is not a regular file -- can't patch",
+	     quotearg (filename));
 }
 
 
@@ -239,7 +245,7 @@ plan_a(filename)
       int ifd = open (filename, O_RDONLY|binary_transput);
       size_t buffered = 0, n;
       if (ifd < 0)
-	pfatal ("can't open file `%s'", filename);
+	pfatal ("can't open file %s", quotearg (filename));
 
       while (size - buffered != 0)
 	{
@@ -334,12 +340,15 @@ plan_b(filename)
   register char const *rev;
   register size_t revlen;
   register LINENUM line = 1;
+  int exclusive;
 
   if (instat.st_size == 0)
     filename = NULL_DEVICE;
   if (! (ifp = fopen (filename, binary_transput ? "rb" : "r")))
-    pfatal ("can't open file `%s'", filename);
-  tifd = create_file (TMPINNAME, O_RDWR | O_BINARY, (mode_t) 0);
+    pfatal ("Can't open file %s", quotearg (filename));
+  exclusive = TMPINNAME_needs_removal ? 0 : O_EXCL;
+  TMPINNAME_needs_removal = 1;
+  tifd = create_file (TMPINNAME, O_RDWR | O_BINARY | exclusive, (mode_t) 0);
   i = 0;
   len = 0;
   maxlen = 1;
