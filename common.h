@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.1 1993/05/30 08:23:48 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.2 1993/06/10 05:02:48 eggert Exp $
  *
  * $Log: common.h,v $
- * Revision 1.1  1993/05/30 08:23:48  eggert
- * Initial revision
+ * Revision 1.2  1993/06/10 05:02:48  eggert
+ * Formerly common.h.~10~
  *
- * Revision 1.1  1993/05/30 08:23:48  eggert
- * Initial revision
+ * Revision 1.2  1993/06/10 05:02:48  eggert
+ * Formerly common.h.~10~
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -177,8 +177,6 @@ long atol();
 char *getenv();
 char *strcpy();
 char *strcat();
-char *index();
-char *rindex();
 #endif
 char *mktemp();
 #ifdef HAVE_UNISTD_H
