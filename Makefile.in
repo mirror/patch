@@ -80,7 +80,7 @@ OBJS = $(LIBOBJS) \
 	quote.$(OBJEXT) quotearg.$(OBJEXT) quotesys.$(OBJEXT) \
 	util.$(OBJEXT) version.$(OBJEXT) xmalloc.$(OBJEXT)
 HDRS = argmatch.h backupfile.h common.h dirname.h \
-	error.h getopt.h \
+	error.h getopt.h gettext.h \
 	inp.h maketime.h partime.h pch.h \
 	quote.h quotearg.h quotesys.h \
 	unlocked-io.h util.h version.h xalloc.h
