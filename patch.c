@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.12 1997/05/05 07:31:21 eggert Exp $ */
+/* $Id: patch.c,v 1.13 1997/05/06 12:30:13 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -52,7 +52,6 @@ static void init_reject PARAMS ((char const *));
 static void reinitialize_almost_everything PARAMS ((void));
 static void usage PARAMS ((FILE *, int)) __attribute__((noreturn));
 
-/* TRUE if -E was specified on command line.  */
 static int remove_empty_files;
 
 /* TRUE if -R was specified on command line.  */
@@ -107,7 +106,10 @@ char **argv;
 
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
     if (! posixly_correct)
-      backup_type = numbered_existing;
+      {
+	backup_type = numbered_existing;
+	remove_empty_files = TRUE;
+      }
 
     {
       char const *v;
