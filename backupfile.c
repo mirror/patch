@@ -108,32 +108,31 @@ char *
 find_backup_file_name (file)
      char *file;
 {
-  char *dir;
-  char *base_versions;
-  int highest_backup;
+  char *s;
 
-  if (backup_type == simple)
+  if (backup_type != simple)
     {
-      char *s = malloc (strlen (file) + strlen (simple_backup_suffix) + 1);
-      strcpy (s, file);
-      addext (s, simple_backup_suffix, '~');
-      return s;
-    }
-  base_versions = concat (basename (file), ".~");
-  if (base_versions == 0)
-    return 0;
-  dir = dirname (file);
-  if (dir == 0)
-    {
+      char *base_versions = concat (basename (file), ".~"), *dir;
+      int highest_backup;
+
+      if (! base_versions)
+	return 0;
+      dir = dirname (file);
+      if (! dir)
+	{
+	  free (base_versions);
+	  return 0;
+	}
+      highest_backup = max_backup_version (base_versions, dir);
       free (base_versions);
-      return 0;
+      free (dir);
+      if (! (backup_type == numbered_existing && highest_backup == 0))
+	return make_version_name (file, highest_backup + 1);
     }
-  highest_backup = max_backup_version (base_versions, dir);
-  free (base_versions);
-  free (dir);
-  if (backup_type == numbered_existing && highest_backup == 0)
-    return concat (file, simple_backup_suffix);
-  return make_version_name (file, highest_backup + 1);
+  s = malloc (strlen (file) + strlen (simple_backup_suffix) + 1);
+  strcpy (s, file);
+  addext (s, simple_backup_suffix, '~');
+  return s;
 }
 
 /* Return the number of the highest-numbered backup file for file
