@@ -27,3 +27,9 @@
 #define PARAMS(args) ()
 #endif
 #endif
+
+#if __GNUC__ && !__STRICT_ANSI__
+#define EXITING volatile
+#else
+#define EXITING
+#endif
