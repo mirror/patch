@@ -53,6 +53,10 @@
 /* Define if you have the ANSI C header files.  */
 /* #undef STDC_HEADERS */
 
+/* Define if there is a member named d_ino in the struct describing
+   directory headers.  */
+/* #undef D_INO_IN_DIRENT */
+
 /* Define if memchr works.  */
 /* #undef HAVE_MEMCHR */
 
