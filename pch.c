@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.10 1997/05/06 12:30:13 eggert Exp $ */
+/* $Id: pch.c,v 1.11 1997/05/15 17:59:15 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -36,6 +36,7 @@ If not, write to the Free Software Foundation,
 /* Patch (diff listing) abstract type. */
 
 static FILE *pfp;			/* patch file pointer */
+static int p_says_nonexistent[2];	/* [0] for old file, [1] for new */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
 static LINENUM p_newfirst;		/* 1st line number of replacement */
@@ -101,31 +102,31 @@ open_patch_file(filename)
 	  {
 	    pfp = stdin;
 	    file_pos = file_tell (stdin);
-	    filename = 0;
 	  }
 	else
 	  {
 	    size_t charsread;
-	    pfp = fopen (TMPPATNAME, "w");
+	    pfp = fopen (TMPPATNAME, "w+b");
 	    if (!pfp)
-	      pfatal ("can't create %s", TMPPATNAME);
+	      pfatal ("can't create `%s'", TMPPATNAME);
 	    while ((charsread = fread (buf, 1, bufsize, stdin)) != 0)
 	      if (fwrite (buf, 1, charsread, pfp) != charsread)
 		write_fatal ();
 	    if (ferror (stdin) || fclose (stdin) != 0)
 	      read_fatal ();
-	    if (fclose (pfp) != 0)
+	    if (fflush (pfp) != 0
+		|| file_seek (pfp, (file_offset) 0, SEEK_SET) != 0)
 	      write_fatal ();
-	    filename = TMPPATNAME;
 	  }
       }
-    if (filename) {
-	pfp = fopen (filename, "r");
+    else
+      {
+	pfp = fopen (filename, binary_transput ? "rb" : "r");
 	if (!pfp)
-	  pfatal ("patch file %s not found", filename);
+	  pfatal ("can't open patch file `%s'", filename);
 	if (fstat (fileno (pfp), &st) != 0)
 	  pfatal ("fstat");
-    }
+      }
     p_filesize = st.st_size;
     next_intuit_at (file_pos, (LINENUM) 1);
     set_hunkmax();
@@ -202,16 +203,26 @@ there_is_another_patch()
 	    return TRUE;
 	}
 	ask ("File to patch: ");
-	inname = fetchname (buf, 0);
+	inname = fetchname (buf, 0, (int *) 0);
+	if (inname)
+	  {
+	    if (stat (inname, &instat) == 0)
+	      inerrno = 0;
+	    else
+	      {
+		perror (inname);
+		free (inname);
+		inname = 0;
+	      }
+	  }
 	if (!inname) {
 	    ask ("Skip this patch? [y] ");
-	    if (*buf == 'n') {
-		continue;
+	    if (*buf != 'n') {
+		if (verbosity != SILENT)
+		    say ("Skipping patch...\n");
+		skip_rest_of_patch = TRUE;
+		return TRUE;
 	    }
-	    if (verbosity != SILENT)
-		say ("Skipping patch...\n");
-	    skip_rest_of_patch = TRUE;
-	    return TRUE;
 	}
     }
     return TRUE;
@@ -238,9 +249,11 @@ intuit_diff_type()
     struct stat st[3];
     int stat_errno[3];
     register enum diff retval;
+    int head_says_nonexistent[2];
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
-    ok_to_create_file = FALSE;
+    head_says_nonexistent[OLD] = head_says_nonexistent[NEW] = 0;
+    p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
     for (;;) {
@@ -280,13 +293,14 @@ intuit_diff_type()
 	    p_indent = indent;		/* assume this for now */
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    name[OLD] = fetchname (s+4, strippath);
+	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
 	else if (strnEQ(s, "--- ", 4))
-	    name[NEW] = fetchname (s+4, strippath);
+	    name[NEW] = fetchname (s+4, strippath, &head_says_nonexistent[NEW]);
 	else if (strnEQ(s, "+++ ", 4))
-	    name[OLD] = fetchname (s+4, strippath); /* Swap with NEW below.  */
+	    /* Swap with NEW below.  */
+	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
 	else if (strnEQ(s, "Index:", 6))
-	    name[INDEX] = fetchname (s+6, strippath);
+	    name[INDEX] = fetchname (s+6, strippath, (int *) 0);
 	else if (strnEQ(s, "Prereq:", 7)) {
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
 	      continue;
@@ -313,23 +327,24 @@ intuit_diff_type()
 	}
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
-	    s += 3;
-	    if (reverse)
-	      {
-		while (*s != ' ' && *s != '\n')
-		  s++;
-		while (*s == ' ')
-		  s++;
-	      }
-	    if (!atol(s))
-		ok_to_create_file = TRUE;
+	    s += 4;
+	    /* `name' and `head_says_nonexistent' are backwards.
+	       Swap the former, and interpret the latter backwards.  */
+	    t = name[OLD];
+	    name[OLD] = name[NEW];
+	    name[NEW] = t;
+	    if (head_says_nonexistent[NEW] && ! atol (s))
+	      p_says_nonexistent[OLD] = 1;
+	    while (*s != ' ' && *s != '\n')
+	      s++;
+	    while (*s == ' ')
+	      s++;
+	    if (head_says_nonexistent[OLD] && ! atol (s))
+	      p_says_nonexistent[NEW] = 1;
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    t = name[OLD];
-	    name[OLD] = name[NEW];
-	    name[NEW] = t;
 	    goto scan_exit;
 	}
 	stars_this_line = strnEQ(s, "********", 8);
@@ -337,9 +352,9 @@ intuit_diff_type()
 	     || diff_type == CONTEXT_DIFF
 	     || diff_type == NEW_CONTEXT_DIFF)
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
-	    if (! reverse)
-	      if (! atol (s + 4))
-		ok_to_create_file = TRUE;
+	    s += 4;
+	    if (head_says_nonexistent[OLD] && ! atol (s))
+	      p_says_nonexistent[OLD] = 1;
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -348,19 +363,20 @@ intuit_diff_type()
 	    p_start = previous_line;
 	    p_sline = p_input_line - 1;
 	    retval = (*(s-1) == '*' ? NEW_CONTEXT_DIFF : CONTEXT_DIFF);
-	    if (reverse)
+
+	    if (head_says_nonexistent[NEW])
 	      {
-		/* If the patch is a reversed context diff,
-		   scan the entire first hunk to see whether
-		   it's OK to create the file.  */
+		/* Scan the first hunk to see whether the file appears to
+		   have been deleted.  */
 		file_offset saved_p_base = p_base;
 		LINENUM saved_p_bline = p_bline;
 		p_input_line = p_sline;
 		Fseek (pfp, previous_line, SEEK_SET);
 		if (another_hunk (retval) && ! p_ptrn_lines && p_first == 1)
-		  ok_to_create_file = TRUE;
+		  p_says_nonexistent[NEW] = 1;
 		next_intuit_at (saved_p_base, saved_p_bline);
 	      }
+
 	    goto scan_exit;
 	}
 	if ((diff_type == NO_DIFF || diff_type == NORMAL_DIFF) &&
@@ -386,9 +402,8 @@ intuit_diff_type()
        - If some named files exist, use the first one if posixly_correct
 	 is nonzero, the best one otherwise.
        - If no named files exist, some names are given, posixly_correct is
-	 zero, and the patch appears to create a file,
-	 then use the best name requiring the creation of the fewest
-	 nontrivial directories.  ("." and ".." are trivial.)
+	 zero, and the patch appears to create a file, then use the best name
+	 requiring the creation of the fewest directories.
        - Otherwise, report failure by setting `inname' to 0;
 	 this causes our invoker to ask the user for a file name.  */
 
@@ -396,10 +411,19 @@ intuit_diff_type()
 
     if (!inname)
       {
+	enum nametype i0 = NONE;
+
 	for (i = OLD;  i <= INDEX;  i++)
 	  if (name[i])
 	    {
-	      if (stat (name[i], &st[i]) != 0)
+	      if (i0 != NONE && strcmp (name[i0], name[i]) == 0)
+		{
+		  /* It's the same name as before; reuse stat results.  */
+		  stat_errno[i] = stat_errno[i0];
+		  if (! stat_errno[i])
+		    st[i] = st[i0];
+		}
+	      else if (stat (name[i], &st[i]) != 0)
 		stat_errno[i] = errno;
 	      else
 		{
@@ -407,12 +431,13 @@ intuit_diff_type()
 		  if (posixly_correct)
 		    break;
 		}
+	      i0 = i;
 	    }
 
 	if (i == NONE)
 	  {
 	    i = best_name (name, stat_errno);
-	    if (i == NONE && !posixly_correct && ok_to_create_file)
+	    if (i == NONE && !posixly_correct && p_says_nonexistent[reverse])
 	      {
 		int newdirs[3];
 		int newdirs_min = INT_MAX;
@@ -453,7 +478,7 @@ intuit_diff_type()
     return retval;
 }
 
-/* Count the nontrivial path name components in FILENAME's prefix.
+/* Count the path name components in FILENAME's prefix.
    If CHECKDIRS is nonzero, count only existing directories.  */
 static int
 prefix_components (filename, checkdirs)
@@ -461,26 +486,24 @@ prefix_components (filename, checkdirs)
      int checkdirs;
 {
   int count = 0;
-  struct stat st;
+  struct stat stat_buf;
+  int stat_result;
   char *f;
-  char *flim = replace_slashes (filename);
 
-  if (flim)
-    {
-      for (f = filename;  f <= flim;  f++)
-	if (!*f)
+  for (f = filename;  *f;  f++)
+    if (ISSLASH (f[0]) && filename < f && ISSLASH (f[-1]))
+      {
+	if (checkdirs)
 	  {
-	    if (checkdirs
-		&& ! (stat (filename, &st) == 0 && S_ISDIR (st.st_mode)))
-	      break;
-	    count++;
+	    *f = '\0';
+	    stat_result = stat (filename, &stat_buf);
 	    *f = '/';
+	    if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
+	      break;
 	  }
 
-      for (;  f <= flim;  f++)
-	if (!*f)
-	  *f = '/';
-    }
+	count++;
+      }
 
   return count;
 }
@@ -504,7 +527,7 @@ best_name (name, ignore)
   for (i = OLD;  i <= INDEX;  i++)
     if (name[i] && !ignore[i])
       {
-	/* Take the names with the fewest nontrivial prefix components.  */
+	/* Take the names with the fewest prefix components.  */
 	components[i] = prefix_components (name[i], 0);
 	if (components_min < components[i])
 	  continue;
@@ -739,12 +762,12 @@ another_hunk (difftype)
 				    goto hunk_done;
 				}
 				fatal (
-"duplicate \"---\" at line %ld--check line numbers at line %ld",
+"duplicate `---' at line %ld -- check line numbers at line %ld",
 				    p_input_line, p_hunk_beg + repl_beginning);
 			    }
 			    else {
 				fatal (
-"%s \"---\" at line %ld--check line numbers at line %ld",
+"%s `---' at line %ld -- check line numbers at line %ld",
 				    (p_end <= p_ptrn_lines
 					? "Premature"
 					: "Overdue" ),
@@ -894,7 +917,7 @@ another_hunk (difftype)
 
     hunk_done:
 	if (p_end >=0 && !repl_beginning)
-	    fatal ("no --- found in patch at line %ld", pch_hunk_beg ());
+	    fatal ("no `---' found in patch at line %ld", pch_hunk_beg ());
 
 	if (repl_missing) {
 
@@ -938,7 +961,7 @@ another_hunk (difftype)
 		    && p_prefix_context + p_suffix_context < ptrn_copiable))) {
 	    if (verbosity == VERBOSE)
 		say ("%s\n%s\n%s\n",
-"(Fascinating--this is really a new-style context diff but without",
+"(Fascinating -- this is really a new-style context diff but without",
 "the telltale extra asterisks on the *** line that usually indicate",
 "the new style...)");
 	    diff_type = difftype = NEW_CONTEXT_DIFF;
@@ -1463,6 +1486,15 @@ pch_swap()
     return TRUE;
 }
 
+/* Return whether file WHICH (0 = old, 1 = new) appears to be nonexistent.  */
+
+bool
+pch_says_nonexistent (which)
+     int which;
+{
+  return p_says_nonexistent[which];
+}
+
 /* Return the specified line position in the old file of the old context. */
 
 LINENUM
@@ -1573,7 +1605,7 @@ void
 do_ed_script (ofp)
      FILE *ofp;
 {
-    static char const ed_program[] = ED_PROGRAM;
+    static char const ed_program[] = ed_PROGRAM;
 
     register char *t;
     register file_offset beginning_of_this_line;
@@ -1582,12 +1614,12 @@ do_ed_script (ofp)
     register size_t chars_read;
 
     if (!skip_rest_of_patch) {
-	copy_file (inname, TMPOUTNAME);
+	copy_file (inname, &instat, TMPOUTNAME);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
-	pipefp = popen(buf, "w");
+	pipefp = popen(buf, binary_transput ? "wb" : "w");
 	if (!pipefp)
-	  pfatal (buf);
+	  pfatal ("can't open pipe to `%s'", buf);
     }
     for (;;) {
 	beginning_of_this_line = file_tell (pfp);
@@ -1629,10 +1661,10 @@ do_ed_script (ofp)
 
     if (ofp)
       {
-	FILE *ifp = fopen (TMPOUTNAME, "r");
+	FILE *ifp = fopen (TMPOUTNAME, binary_transput ? "rb" : "r");
 	int c;
 	if (!ifp)
-	  pfatal (TMPOUTNAME);
+	  pfatal ("can't open `%s'", TMPOUTNAME);
 	while ((c = getc (ifp)) != EOF)
 	  if (putc (c, ofp) == EOF)
 	    write_fatal ();
