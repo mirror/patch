@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.14 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: inp.c,v 1.15 1997/06/09 05:36:28 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -252,6 +252,15 @@ get_input_file (filename, outname)
 		    cs = 0;
 		  }
 	    }
+
+	    if (cs && patch_get < 0)
+	      {
+		ask ("Get file `%s' from %s%s? [y] ", filename,
+		     cs, elsewhere ? "" : " with lock");
+		if (*buf == 'n')
+		  cs = 0;
+	      }
+
 	    if (cs)
 	      {
 		if (dry_run)
@@ -263,7 +272,8 @@ get_input_file (filename, outname)
 		else
 		  {
 		    if (verbosity == VERBOSE)
-		      say ("Getting file `%s' from %s...\n", filename, cs);
+		      say ("Getting file `%s' from %s%s...\n", filename,
+			   cs, elsewhere ? "" : " with lock");
 		    if (systemic (getbuf) != 0
 			|| stat (filename, &instat) != 0)
 		      fatal ("can't get file `%s' from %s", filename, cs);
