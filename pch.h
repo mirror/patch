@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.h,v 1.1 1990/08/15 05:13:39 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.h,v 1.2 1993/07/21 18:19:46 djm Exp $
  *
  * $Log: pch.h,v $
- * Revision 1.1  1990/08/15 05:13:39  djm
- * Initial revision
+ * Revision 1.2  1993/07/21 18:19:46  djm
+ * Formerly pch.h.~2~
  *
- * Revision 1.1  1990/08/15 05:13:39  djm
- * Initial revision
+ * Revision 1.2  1993/07/21 18:19:46  djm
+ * Formerly pch.h.~2~
  *
  * Revision 2.0.1.1  87/01/30  22:47:16  lwall
  * Added do_ed_script().
@@ -38,5 +38,5 @@ LINENUM pch_context();
 LINENUM pch_hunk_beg();
 char pch_char();
 char *pfetch();
-char *pgets();
+int pgetline();
 void do_ed_script();
