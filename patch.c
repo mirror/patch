@@ -1,5 +1,5 @@
 char rcsid[] =
-	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.5 1993/07/21 03:26:36 eggert Exp $";
+	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.6 1993/07/21 17:11:05 djm Exp $";
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,11 +9,11 @@ char rcsid[] =
  * money off of it, or pretend that you wrote it.
  *
  * $Log: patch.c,v $
- * Revision 1.5  1993/07/21 03:26:36  eggert
- * Formerly patch.c.~17~
+ * Revision 1.6  1993/07/21 17:11:05  djm
+ * entered into RCS
  *
- * Revision 1.5  1993/07/21 03:26:36  eggert
- * Formerly patch.c.~17~
+ * Revision 1.6  1993/07/21 17:11:05  djm
+ * entered into RCS
  *
  * Revision 2.0.2.0  90/05/01  22:17:50  davison
  * patch12u: unidiff support added
@@ -151,6 +151,8 @@ char **argv;
 	filearg[i] = Nullch;
 
     myuid = getuid();
+
+    buf = (char *) xmalloc (bufsize);
 
     /* Cons up the names of the temporary files.  */
     {
