@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.16 1997/05/21 18:29:20 eggert Exp $ */
+/* $Id: patch.c,v 1.17 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -385,7 +385,7 @@ reinitialize_almost_everything()
     skip_rest_of_patch = FALSE;
 }
 
-static char const shortopts[] = "bB:cd:D:eEfF:i:lnNo:p:r:RstuvV:x:Y:z:";
+static char const shortopts[] = "bB:cd:D:eEfF:gGi:lnNo:p:r:RstuvV:x:Y:z:";
 static struct option const longopts[] =
 {
   {"backup", no_argument, NULL, 'b'},
@@ -399,7 +399,6 @@ static struct option const longopts[] =
   {"fuzz", required_argument, NULL, 'F'},
   {"get", no_argument, NULL, 'g'},
   {"no-get", no_argument, NULL, 'G'},
-  {"help", no_argument, NULL, 'h'},
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
   {"normal", no_argument, NULL, 'n'},
@@ -420,6 +419,7 @@ static struct option const longopts[] =
   {"dry-run", no_argument, NULL, 129},
   {"verbose", no_argument, NULL, 130},
   {"binary", no_argument, NULL, 131},
+  {"help", no_argument, NULL, 132},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -574,8 +574,6 @@ get_some_switches()
 	    case 'G':
 		patch_get = 0;
 		break;
-	    case 'h':
-		usage (stdout, 0);
 	    case 'i':
 		patchname = savestr (optarg);
 		break;
@@ -646,10 +644,10 @@ get_some_switches()
 	    case 131:
 #if HAVE_SETMODE
 		binary_transput = O_BINARY;
-		setmode (STDIN_FILENO, O_BINARY);
-		setmode (STDOUT_FILENO, O_BINARY);
 #endif
 		break;
+	    case 132:
+		usage (stdout, 0);
 	    default:
 		usage (stderr, 2);
 	}
