@@ -1,8 +1,5 @@
-Known problems:
+Changes in version 2.5.6:
 
-* The diffutils 2.7 documentation for `patch' is obsolete; this should be
-  fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
-
 * File names in context patches may now contain spaces, so long
   as the context patch headers use a tab to separate the file name
   from the time stamp.
@@ -209,3 +206,25 @@ Changes in version 2.0.12g8:
   being patched.
 * Print the system error message when system calls fail.
 * Fixed various bugs and portability problems.
+
+
+
+Copyright (C) 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002 Free
+Software Foundation, Inc.
+
+This file is part of GNU Patch.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+This program is distributed in the hope that they will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
