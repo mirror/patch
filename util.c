@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.19 1997/06/04 18:32:14 eggert Exp $ */
+/* $Id: util.c,v 1.20 1997/06/09 05:36:28 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -30,8 +30,8 @@ If not, write to the Free Software Foundation,
 #define XTERN
 #include <util.h>
 
-#include <time.h>
 #include <maketime.h>
+#include <partime.h>
 
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
@@ -441,7 +441,7 @@ ok_to_reverse (format, va_alist)
 {
   int r = 0;
 
-  if (! (verbosity == SILENT && (noreverse || force || batch)))
+  if (noreverse || ! (force && verbosity == SILENT))
     {
       va_list args;
       vararg_start (args, format);
@@ -451,8 +451,7 @@ ok_to_reverse (format, va_alist)
 
   if (noreverse)
     {
-      if (verbosity != SILENT)
-	printf ("  Ignoring it.\n");
+      printf ("  Ignoring it.\n");
       skip_rest_of_patch = TRUE;
       r = 0;
     }
@@ -464,8 +463,7 @@ ok_to_reverse (format, va_alist)
     }
   else if (batch)
     {
-      if (verbosity != SILENT)
-	say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
+      say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
       r = 1;
     }
   else
@@ -799,15 +797,15 @@ init_time ()
 /* Make filenames more reasonable. */
 
 char *
-fetchname (at, strip_leading, head_says_nonexistent)
+fetchname (at, strip_leading, pstamp)
 char *at;
 int strip_leading;
-int *head_says_nonexistent;
+time_t *pstamp;
 {
     char *name;
     register char *t;
     int sleading = strip_leading;
-    int says_nonexistent = 0;
+    time_t stamp = (time_t) -1;
 
     while (ISSPACE ((unsigned char) *at))
 	at++;
@@ -827,15 +825,21 @@ int *head_says_nonexistent;
 	  }
 	else if (ISSPACE ((unsigned char) *t))
 	  {
-	    /* The head says the file is nonexistent if the timestamp
-	       is the epoch; but the listed time is local time, not UTC,
-	       and POSIX.1 allows local time to be 24 hours away from UTC.
-	       So match any time within 24 hours of the epoch.
-	       Use a default time zone 24 hours behind UTC so that any
-	       non-zoned time within 24 hours of the epoch is valid.  */
-	    time_t stamp = str2time (t, initial_time, -24L * 60 * 60);
-	    if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
-	      says_nonexistent = 1;
+	    if (set_time | set_utc)
+	      stamp = str2time (t, initial_time, set_utc ? 0L : TM_LOCAL_ZONE);
+	    else
+	      {
+		/* The head says the file is nonexistent if the timestamp
+		   is the epoch; but the listed time is local time, not UTC,
+		   and POSIX.1 allows local time to be 24 hours away from UTC.
+		   So match any time within 24 hours of the epoch.
+		   Use a default time zone 24 hours behind UTC so that any
+		   non-zoned time within 24 hours of the epoch is valid.  */
+		stamp = str2time (t, initial_time, -24L * 60 * 60);
+		if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
+		  stamp = 0;
+	      }
+
 	    *t = '\0';
 	    break;
 	  }
@@ -847,13 +851,13 @@ int *head_says_nonexistent;
     /* Allow files to be created by diffing against /dev/null.  */
     if (strcmp (at, "/dev/null") == 0)
       {
-	if (head_says_nonexistent)
-	  *head_says_nonexistent = 1;
+	if (pstamp)
+	  *pstamp = 0;
 	return 0;
       }
 
-    if (head_says_nonexistent)
-      *head_says_nonexistent = says_nonexistent;
+    if (pstamp)
+      *pstamp = stamp;
 
     return savestr (name);
 }
