@@ -3,6 +3,11 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+Change in version 2.4:
+
+* `patch' now matches against empty and nonexistent files more generously.
+  A patch against an empty file applies to a nonexistent file, and vice versa.
+
 Changes in version 2.3:
 
 * Unless the POSIXLY_CORRECT environment variable is set:
