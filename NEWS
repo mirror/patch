@@ -21,6 +21,9 @@ Change in version 2.4:
   is now made (just as with traditional patch); but the backup file is
   unreadable, as a way of indicating that it represents a nonexistent file.
 
+* `patch' now matches against empty and nonexistent files more generously.
+  A patch against an empty file applies to a nonexistent file, and vice versa.
+
 * -g or --get and PATCH_GET now have a numeric value that specifies
   whether `patch' is getting files.
   If the value is positive, working files are gotten from RCS or SCCS files;
@@ -36,10 +39,7 @@ Change in version 2.4:
   and RCS and SCCS files are normally looked for when files do not exist.
   The complete new method is described in the man page.
 
-* By default, `patch' is now more verbose when fuzz is required.
-
-* `patch' now matches against empty and nonexistent files more generously.
-  A patch against an empty file applies to a nonexistent file, and vice versa.
+* By default, `patch' is now more verbose when patches do not match exactly.
 
 * The manual page has a new COMPATIBILITY ISSUES section.
 
