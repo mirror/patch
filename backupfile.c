@@ -91,12 +91,10 @@ char *malloc ();
    host does not conform to Posix.  */
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
 
-#ifdef _POSIX_VERSION
-/* POSIX does not require that the d_ino field be present, and some
-   systems do not provide it. */
-# define REAL_DIR_ENTRY(dp) 1
-#else
+#if D_INO_IN_DIRENT
 # define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
+#else
+# define REAL_DIR_ENTRY(dp) 1
 #endif
 
 /* Which type of backup file names are generated. */
