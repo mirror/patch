@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.45 2003/07/02 22:19:21 eggert Exp $ */
+/* $Id: pch.c,v 1.46 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
@@ -1953,7 +1953,7 @@ do_ed_script (FILE *ofp)
 	int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
 	assert (! inerrno);
 	TMPOUTNAME_needs_removal = 1;
-	copy_file (inname, TMPOUTNAME, exclusive, instat.st_mode);
+	copy_file (inname, TMPOUTNAME, 0, exclusive, instat.st_mode);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
 	fflush (stdout);
