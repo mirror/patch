@@ -77,13 +77,13 @@ enum backup_type backup_type = none;
    to numbered) backup file name. */
 char *simple_backup_suffix = ".orig";
 
-char *basename ();
-char *dirname ();
-static char *concat ();
-char *find_backup_file_name ();
-static char *make_version_name ();
-static int max_backup_version ();
-static int version_number ();
+char *basename PARAMS ((char *));
+char *dirname PARAMS ((char *));
+static char *concat PARAMS ((char *, char *));
+char *find_backup_file_name PARAMS ((char *));
+static char *make_version_name PARAMS ((char *, int));
+static int max_backup_version PARAMS ((char *, char *));
+static int version_number PARAMS ((char *, char *, int));
 
 /* Return NAME with any leading path stripped off.  */
 
@@ -131,8 +131,11 @@ find_backup_file_name (file)
 	return make_version_name (file, highest_backup + 1);
     }
   s = malloc (strlen (file) + strlen (simple_backup_suffix) + 1);
-  strcpy (s, file);
-  addext (s, simple_backup_suffix, '~');
+  if (s)
+    {
+      strcpy (s, file);
+      addext (s, simple_backup_suffix, '~');
+    }
   return s;
 }
 
