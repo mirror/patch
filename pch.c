@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.18 1997/06/02 19:24:52 eggert Exp $ */
+/* $Id: pch.c,v 1.19 1997/06/03 17:42:49 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -207,8 +207,16 @@ there_is_another_patch()
 	    diff_type == NEW_CONTEXT_DIFF ? "a new-style context diff" :
 	    diff_type == NORMAL_DIFF ? "a normal diff" :
 	    "an ed script" );
-    if (p_indent && verbosity != SILENT)
-	say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
+
+    if (verbosity != SILENT)
+      {
+	if (p_indent)
+	  say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
+	if (! inname)
+	  say ("can't intuit the name of file to be patched at input line %ld\n",
+	       p_sline);
+      }
+
     skip_to(p_start,p_sline);
     while (!inname) {
 	if (force || batch) {
@@ -359,6 +367,10 @@ intuit_diff_type()
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
+	    if (! ((name[OLD] || head_says_nonexistent[OLD])
+		   && (name[NEW] || head_says_nonexistent[NEW])))
+	      fatal ("missing header for unified diff at input line %ld",
+		     p_sline);
 	    goto scan_exit;
 	}
 	stars_this_line = strnEQ(s, "********", 8);
@@ -391,6 +403,10 @@ intuit_diff_type()
 	      next_intuit_at (saved_p_base, saved_p_bline);
 	    }
 
+	    if (! ((name[OLD] || head_says_nonexistent[OLD])
+		   && (name[NEW] || head_says_nonexistent[NEW])))
+	      fatal ("missing header for context diff at input line %ld",
+		     p_sline);
 	    goto scan_exit;
 	}
 	if ((diff_type == NO_DIFF || diff_type == NORMAL_DIFF) &&
@@ -614,10 +630,6 @@ LINENUM file_line;
     assert(p_base <= file_pos);
     if ((verbosity == VERBOSE || !inname) && p_base < file_pos) {
 	Fseek (i, p_base, SEEK_SET);
-
-	if (!inname)
-	  say ("\ncan't intuit the name of file to be patched at input line %ld\n", file_line);
-
 	say ("The text leading up to this was:\n--------------------------\n");
 
 	while (file_tell (i) < file_pos)
