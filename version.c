@@ -1,6 +1,6 @@
 /* Print the version number.  */
 
-/* $Id: version.c,v 1.9 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: version.c,v 1.10 1999/09/03 08:35:57 eggert Exp $ */
 
 #define XTERN extern
 #include <common.h>
@@ -25,6 +25,6 @@ written by Larry Wall and Paul Eggert";
 void
 version (void)
 {
-  printf ("%s %s\n%s\n\n%s\n\n%s\n", program_name, PATCH_VERSION,
+  printf ("%s %s\n%s\n\n%s\n\n%s\n", PROGRAM_NAME, PATCH_VERSION,
 	  copyright_string, free_software_msgid, authorship_msgid);
 }
