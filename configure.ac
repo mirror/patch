@@ -9,7 +9,7 @@ AC_ARG_PROGRAM
 AC_CANONICAL_HOST
 
 PACKAGE=patch
-VERSION=2.5.4
+VERSION=2.5.5
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -45,7 +45,7 @@ jm_STRUCT_UTIMBUF
 
 AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1\$U.o getopt\$U.o"])
 AC_SUBST(LIBOBJS)
-AC_CHECK_FUNCS(_doprintf isascii fseeko geteuid getuid memcmp mktemp \
+AC_CHECK_FUNCS(_doprintf isascii fseeko memcmp mktemp \
   pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
 AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
 jm_FUNC_MALLOC
