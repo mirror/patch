@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.31 1999/09/02 00:01:24 eggert Exp $ */
+/* $Id: patch.c,v 1.32 1999/09/03 08:35:57 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -107,8 +107,6 @@ static LINENUM maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
 
-char const program_name[] = "patch";
-
 /* Apply a set of diffs as appropriate. */
 
 int main PARAMS ((int, char **));
@@ -121,6 +119,7 @@ main (int argc, char **argv)
     struct outstate outstate;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
+    program_name = argv[0];
     init_time ();
 
     setbuf(stderr, serrbuf);
