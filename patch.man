@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.26 1998/03/21 15:48:43 eggert Exp $
+.Id $Id: patch.man,v 1.27 1999/10/11 03:54:25 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -411,6 +411,9 @@ See also
 Send output to
 .I outfile
 instead of patching files in place.
+Do not use this option if
+.I outfile
+is one of the files to be patched.
 .TP
 \fB\-p\fP\fInum\fP  or  \fB\*=strip\fP\fB=\fP\fInum\fP
 Strip the smallest prefix containing
@@ -1097,7 +1100,7 @@ Spaces are significant in the following list, and operands are required.
 .fi
 .SH BUGS
 Please report bugs via email to
-.BR <bug-gnu-utils@gnu.org> .
+.BR <bug-patch@gnu.org> .
 .PP
 .B patch
 could be smarter about partial matches, excessively deviant offsets and
