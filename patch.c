@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.30 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: patch.c,v 1.31 1999/09/02 00:01:24 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -145,8 +145,7 @@ main (int argc, char **argv)
 		 : posixly_correct - 1);
 
     val = getenv ("SIMPLE_BACKUP_SUFFIX");
-    if (val && *val)
-      simple_backup_suffix = val;
+    simple_backup_suffix = val && *val ? val : ".orig";
 
     if ((version_control = getenv ("PATCH_VERSION_CONTROL")))
       version_control_context = "$PATCH_VERSION_CONTROL";
