@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.27 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: pch.c,v 1.28 1998/03/21 15:48:43 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -240,7 +240,7 @@ there_is_another_patch()
 	    say ("can't find file to patch at input line %s\n",
 		 format_linenum (numbuf, p_sline));
 	    say (strippath == -1
-	         ? "Perhaps you should have used the -p or --strip option?\n"
+		 ? "Perhaps you should have used the -p or --strip option?\n"
 		 : "Perhaps you used the wrong -p or --strip option?\n");
 	  }
       }
@@ -559,7 +559,7 @@ intuit_diff_type()
 		      if (nope == NONE || strcmp (name[nope], name[i]) != 0)
 			{
 			  cs = (version_controller
-			        (name[i], readonly, (struct stat *) 0,
+				(name[i], readonly, (struct stat *) 0,
 				 &getbuf, &diffbuf));
 			  version_controlled[i] = !! cs;
 			  if (cs)
@@ -795,11 +795,11 @@ scan_linenum (s0, linenum)
       overflow |= new_n / 10 != n;
       n = new_n;
     }
-  
+
   if (s == s0)
     fatal ("missing line number at line %s: %s",
 	   format_linenum (numbuf, p_input_line), buf);
-  
+
   if (overflow)
     fatal ("line number %.*s is too large at line %s: %s",
 	   (int) (s - s0), s0, format_linenum (numbuf, p_input_line), buf);

@@ -61,7 +61,7 @@ struct quoting_options
 {
   /* Basic quoting style.  */
   enum quoting_style style;
-  
+
   /* Quote the chararacters indicated by this bit vector even if the
      quoting style would not normally require them to be quoted.  */
   int quote_these_too[((UCHAR_MAX + 1) / INT_BITS
@@ -119,7 +119,7 @@ set_char_quoting (struct quoting_options *o, char c, int i)
   *p ^= ((i & 1) ^ r) << shift;
   return r;
 }
-   
+
 /* Place into buffer BUFFER (of size BUFFERSIZE) a quoted version of
    argument ARG (of size ARGSIZE), using O to control quoting.
    If O is null, use the default.
@@ -130,7 +130,7 @@ set_char_quoting (struct quoting_options *o, char c, int i)
    If ARGSIZE is -1, use the string length of the argument for ARGSIZE.  */
 size_t
 quotearg_buffer (char *buffer, size_t buffersize,
-		 char const *arg, size_t argsize, 
+		 char const *arg, size_t argsize,
 		 struct quoting_options const *o)
 {
   unsigned char c;
@@ -157,7 +157,7 @@ quotearg_buffer (char *buffer, size_t buffersize,
 	    {
 	    case '#': case '~':
 	      break;
-	      
+
 	    default:
 	      len = 0;
 	      for (i = 0; ; i++)
@@ -242,17 +242,17 @@ quotearg_buffer (char *buffer, size_t buffersize,
 	    case '\r': c = 'r'; goto store_escape;
 	    case '\t': c = 't'; goto store_escape;
 	    case '\v': c = 'v'; goto store_escape;
-	      
+
 	    case ' ':
 	      if (quoting_style == escape_quoting_style)
 		goto store_escape;
 	      break;
-	      
+
 	    case '"':
 	      if (quoting_style == c_quoting_style)
 		goto store_escape;
 	      break;
-	      
+
 	    default:
 	      if (!ISGRAPH (c))
 		{
@@ -264,14 +264,14 @@ quotearg_buffer (char *buffer, size_t buffersize,
 		}
 	      break;
 	    }
-	  
+
 	  if (! (p->quote_these_too[c / INT_BITS] & (1 << (c % INT_BITS))))
 	    goto store_c;
-	  
+
 	store_escape:
 	  STORE ('\\');
 	}
-      
+
     store_c:
       STORE (c);
     }

@@ -69,7 +69,7 @@ void set_quoting_style PARAMS ((struct quoting_options *o,
    0 (the default) and 1 (which means to quote the character even if
    it would not otherwise be quoted).  */
 int set_char_quoting PARAMS ((struct quoting_options *o, char c, int i));
-   
+
 /* Place into buffer BUFFER (of size BUFFERSIZE) a quoted version of
    argument ARG (of size ARGSIZE), using O to control quoting.
    If O is null, use the default.

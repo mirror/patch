@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.25 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: util.c,v 1.26 1998/03/21 15:48:43 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -507,7 +507,7 @@ format_linenum (numbuf, n)
 	*--p = '0' + (int) (n % 10);
       while ((n /= 10) != 0);
     }
-	   
+
   return p;
 }
 
