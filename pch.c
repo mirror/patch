@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.37 2000/07/03 18:52:49 eggert Exp $ */
+/* $Id: pch.c,v 1.38 2001/07/29 04:35:03 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -363,8 +363,14 @@ intuit_diff_type (void)
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
 	      continue;
 	    revision = t;
-	    for (t = revision;  *t && !ISSPACE ((unsigned char) *t);  t++)
-	      continue;
+	    for (t = revision;  *t;  t++)
+	      if (ISSPACE ((unsigned char) *t))
+		{
+		  char numbuf[LINENUM_LENGTH_BOUND + 1];
+		  say ("Prereq: with multiple words at line %s of patch\n",
+		       format_linenum (numbuf, this_line));
+		  break;
+		}
 	    if (t == revision)
 		revision = 0;
 	    else {
