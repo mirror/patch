@@ -2,8 +2,8 @@ Known problems:
 
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
-
-Changes since version 2.1:
+
+Changes in version 2.2:
 
 * Arbitrary limits removed (e.g. line length, file name length).
 
@@ -15,8 +15,6 @@ Changes since version 2.1:
   --help
   --verbose
   -i FILE or --input=FILE
-  -V rcs or --version-control=rcs
-  -V sccs or --version-control=sccs
   -y PREF or --basename-prefix=PREF
 
 * patch is now quieter by default; use --verbose for the old chatty behavior.
@@ -56,7 +54,7 @@ Changes since version 2.1:
 * When the patch is creating a file, but a nonempty file of that name already
   exists, `patch' now asks for confirmation before patching.
 
-* RCS is used only if the version control method is `rcs', or is `existing'
+* RCS is used only if the version control method is `existing'
   and there is already an RCS file.  Similarly for SCCS.
 
 * Copyright notices have been clarified.  Every file in this version of `patch'
