@@ -58,7 +58,7 @@ SRCS = addext.c argmatch.c backupfile.c basename.c inp.c \
 OBJS = addext.o argmatch.o backupfile.o basename.o inp.o \
 	patch.o pch.o util.o version.o $(LIBOBJS)
 HDRS = argmatch.h backupfile.h common.h getopt.h \
-	inp.h patchlevel.h pch.h util.h version.h
+	inp.h pch.h util.h version.h
 MISC = COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	acconfig.h config.hin configure configure.in \
 	install-sh mkinstalldirs patch.man
@@ -100,10 +100,10 @@ config.hin: configure.in acconfig.h
 	cd $(srcdir) && autoheader
 
 patchlevel.h: Makefile
-	echo '#define PATCH_VERSION "$(VERSION)"' >$@
+	echo '#define PATCH_VERSION "$(VERSION)"' >patchlevel.h
 
-TAGS: $(HDRS) $(SRCS)
-	etags $(HDRS) $(SRCS)
+TAGS: $(HDRS) patchlevel.h $(SRCS)
+	etags $(HDRS) patchlevel.h $(SRCS)
 
 clean::
 	rm -f patch *.o core
@@ -112,12 +112,13 @@ mostlyclean:: clean
 
 distclean:: clean
 	rm -f Makefile config.cache config.log config.status config.h
+	rm -f patchlevel.h 
 
 maintainer-clean::
 	@echo "This command is intended for maintainers to use;"
 	@echo "rebuilding the deleted files requires special tools."
 	$(MAKE) distclean
-	rm -f patchlevel.h TAGS
+	rm -f TAGS
 
 dist:: $(DISTFILES)
 	rm -rf $(PACKAGE)-$(VERSION)
