@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.39 2002/05/25 10:43:26 eggert Exp $ */
+/* $Id: pch.c,v 1.40 2002/05/28 07:12:03 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
@@ -70,17 +70,17 @@ static LINENUM p_bfake = -1;		/* beg of faked up lines */
 
 enum nametype { OLD, NEW, INDEX, NONE };
 
-static char *scan_linenum PARAMS ((char *, LINENUM *));
-static enum diff intuit_diff_type PARAMS ((void));
-static enum nametype best_name PARAMS ((char * const *, int const *));
-static int prefix_components PARAMS ((char *, int));
-static size_t pget_line PARAMS ((int, int, int));
-static size_t get_line PARAMS ((void));
-static bool incomplete_line PARAMS ((void));
-static bool grow_hunkmax PARAMS ((void));
-static void malformed PARAMS ((void)) __attribute__ ((noreturn));
-static void next_intuit_at PARAMS ((file_offset, LINENUM));
-static void skip_to PARAMS ((file_offset, LINENUM));
+static char *scan_linenum (char *, LINENUM *);
+static enum diff intuit_diff_type (void);
+static enum nametype best_name (char * const *, int const *);
+static int prefix_components (char *, int);
+static size_t pget_line (int, int, int);
+static size_t get_line (void);
+static bool incomplete_line (void);
+static bool grow_hunkmax (void);
+static void malformed (void) __attribute__ ((noreturn));
+static void next_intuit_at (file_offset, LINENUM);
+static void skip_to (file_offset, LINENUM);
 
 /* Prepare to look for the next patch in the patch file. */
 
@@ -399,8 +399,6 @@ intuit_diff_type (void)
 	if ((diff_type == NO_DIFF || diff_type == ED_DIFF) &&
 	  first_command_line >= 0 &&
 	  strEQ(s, ".\n") ) {
-	    p_indent = indent;
-	    p_strip_trailing_cr = strip_trailing_cr;
 	    p_start = first_command_line;
 	    p_sline = fcl_line;
 	    retval = ED_DIFF;
@@ -432,7 +430,8 @@ intuit_diff_type (void)
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
 	    if (! ((name[OLD] || ! p_timestamp[OLD])
-		   && (name[NEW] || ! p_timestamp[NEW])))
+		   && (name[NEW] || ! p_timestamp[NEW]))
+		&& ! name[INDEX])
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
 		say ("missing header for unified diff at line %s of patch\n",
@@ -472,7 +471,8 @@ intuit_diff_type (void)
 	    }
 
 	    if (! ((name[OLD] || ! p_timestamp[OLD])
-		   && (name[NEW] || ! p_timestamp[NEW])))
+		   && (name[NEW] || ! p_timestamp[NEW]))
+		&& ! name[INDEX])
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
 		say ("missing header for context diff at line %s of patch\n",
