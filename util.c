@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.35 2003/05/18 08:26:55 eggert Exp $ */
+/* $Id: util.c,v 1.36 2003/05/20 14:04:53 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -55,11 +55,11 @@ static void makedirs (char *);
    If we must create TO, use MODE to create it.
    If FROM is null, remove TO (ignoring FROMSTAT).
    FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
-   Back up TO if BACKUP is nonzero.  */
+   Back up TO if BACKUP is true.  */
 
 void
 move_file (char const *from, int volatile *from_needs_removal,
-	   char *to, mode_t mode, int backup)
+	   char *to, mode_t mode, bool backup)
 {
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
@@ -142,7 +142,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 
       if (rename (from, to) != 0)
 	{
-	  int to_dir_known_to_exist = 0;
+	  bool to_dir_known_to_exist = false;
 
 	  if (errno == ENOENT
 	      && (to_errno == -1 || to_errno == ENOENT))
@@ -158,7 +158,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	      if (! backup)
 		{
 		  if (unlink (to) == 0)
-		    to_dir_known_to_exist = 1;
+		    to_dir_known_to_exist = true;
 		  else if (errno != ENOENT)
 		    pfatal ("Can't remove file %s", quotearg (to));
 		}
@@ -253,14 +253,14 @@ static char const PERFORCE_CO[] = "p4 edit ";
    "ClearCase" if it is controlled by Clearcase,
    "Perforce" if it is controlled by Perforce,
    and 0 otherwise.
-   READONLY is nonzero if we desire only readonly access to FILENAME.
+   READONLY is true if we desire only readonly access to FILENAME.
    FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
    If successful and if GETBUF is nonzero, set *GETBUF to a command
    that gets the file; similarly for DIFFBUF and a command to diff the file
    (but set *DIFFBUF to 0 if the diff operation is meaningless).
    *GETBUF and *DIFFBUF must be freed by the caller.  */
 char const *
-version_controller (char const *filename, int readonly,
+version_controller (char const *filename, bool readonly,
 		    struct stat const *filestat, char **getbuf, char **diffbuf)
 {
   struct stat cstat;
@@ -381,12 +381,12 @@ version_controller (char const *filename, int readonly,
 }
 
 /* Get FILENAME from version control system CS.  The file already exists if
-   EXISTS is nonzero.  Only readonly access is needed if READONLY is nonzero.
+   EXISTS.  Only readonly access is needed if READONLY.
    Use the command GETBUF to actually get the named file.
    Store the resulting file status into *FILESTAT.
-   Return nonzero if successful.  */
-int
-version_get (char const *filename, char const *cs, int exists, int readonly,
+   Return true if successful.  */
+bool
+version_get (char const *filename, char const *cs, bool exists, bool readonly,
 	     char const *getbuf, struct stat *filestat)
 {
   if (patch_get < 0)
@@ -620,10 +620,10 @@ ask (char const *format, ...)
 
 /* Return nonzero if it OK to reverse a patch.  */
 
-int
+bool
 ok_to_reverse (char const *format, ...)
 {
-  int r = 0;
+  bool r = false;
 
   if (noreverse || ! (force && verbosity == SILENT))
     {
@@ -636,19 +636,17 @@ ok_to_reverse (char const *format, ...)
   if (noreverse)
     {
       printf ("  Skipping patch.\n");
-      skip_rest_of_patch = TRUE;
-      r = 0;
+      skip_rest_of_patch = true;
     }
   else if (force)
     {
       if (verbosity != SILENT)
 	printf ("  Applying it anyway.\n");
-      r = 0;
     }
   else if (batch)
     {
       say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
-      r = 1;
+      r = true;
     }
   else
     {
@@ -661,7 +659,7 @@ ok_to_reverse (char const *format, ...)
 	    {
 	      if (verbosity != SILENT)
 		say ("Skipping patch.\n");
-	      skip_rest_of_patch = TRUE;
+	      skip_rest_of_patch = true;
 	    }
 	}
     }
@@ -734,7 +732,7 @@ fatal_exit_handler (int sig)
 #endif
 
 void
-set_signals (int reset)
+set_signals (bool reset)
 {
   int i;
 #if HAVE_SIGACTION
@@ -756,7 +754,7 @@ set_signals (int reset)
       sigemptyset (&signals_to_block);
       for (i = 0;  i < NUM_SIGS;  i++)
 	{
-	  int ignoring_signal;
+	  bool ignoring_signal;
 #if HAVE_SIGACTION
 	  if (sigaction (sigs[i], (struct sigaction *) 0, &initial_act) != 0)
 	    continue;
