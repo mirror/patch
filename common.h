@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.2 1993/06/10 05:02:48 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.3 1993/07/21 00:08:00 djm Exp $
  *
  * $Log: common.h,v $
- * Revision 1.2  1993/06/10 05:02:48  eggert
- * Formerly common.h.~10~
+ * Revision 1.3  1993/07/21 00:08:00  djm
+ * Formerly common.h.~11~
  *
- * Revision 1.2  1993/06/10 05:02:48  eggert
- * Formerly common.h.~10~
+ * Revision 1.3  1993/07/21 00:08:00  djm
+ * Formerly common.h.~11~
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -66,8 +66,8 @@
 
 #define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
-#define MAXLINELEN 1024
-#define BUFFERSIZE 1024
+#define MAXLINELEN (8 * 1024)		/* FIXME this is evil */
+#define BUFFERSIZE 1024			/* for copying input in plan_b  */
 
 #define SCCSPREFIX "s."
 #define GET "get %s"
@@ -108,7 +108,7 @@ EXT int optind_last;			/* for restarting plan_b */
 EXT struct stat filestat;		/* file statistics area */
 EXT int filemode INIT(0644);
 
-EXT char buf[MAXLINELEN];		/* general purpose buffer */
+EXT char *buf;				/* general purpose buffer */
 EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
 EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
 
@@ -164,6 +164,8 @@ EXT char end_defined[128];		/* #endif xyzzy */
 
 EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
 
+char *xmalloc();
+
 #include <errno.h>
 #ifdef STDC_HEADERS
 #include <stdlib.h>
@@ -194,3 +196,39 @@ long lseek();
 #if !defined(S_ISREG) && defined(S_IFREG)
 #define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
+
+/* Define if the system lets you pass fewer arguments to a function
+   than the function actually accepts (in the absence of a prototype).
+   Defining it makes I/O calls slightly more efficient.
+
+   You need not bother defining it unless your C preprocessor chokes on
+   multi-line arguments to macros.  */
+#undef CANVARARG
+
+/* Define Reg* as either `register' or nothing, depending on whether
+   the C compiler pays attention to this many register declarations.
+   The intent is that you don't have to order your register declarations
+   in the order of importance, so you can freely declare register variables
+   in sub-blocks of code and as function parameters.
+   Do not use Reg<n> more than once per routine.
+
+   These don't really matter a lot, since most modern C compilers ignore
+   register declarations and often do a better job of allocating
+   registers than people do.  */
+
+#define Reg1 register
+#define Reg2 register
+#define Reg3 register
+#define Reg4 register
+#define Reg5 register
+#define Reg6 register
+#define Reg7
+#define Reg8
+#define Reg9
+#define Reg10
+#define Reg11
+#define Reg12
+#define Reg13
+#define Reg14
+#define Reg15
+#define Reg16
