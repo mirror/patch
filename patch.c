@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.39 2002/05/25 10:36:44 eggert Exp $ */
+/* $Id: patch.c,v 1.40 2002/05/28 07:12:03 eggert Exp $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
@@ -59,23 +59,23 @@ struct outstate
 
 /* procedures */
 
-static FILE *create_output_file PARAMS ((char const *, int));
-static LINENUM locate_hunk PARAMS ((LINENUM));
-static bool apply_hunk PARAMS ((struct outstate *, LINENUM));
-static bool copy_till PARAMS ((struct outstate *, LINENUM));
-static bool patch_match PARAMS ((LINENUM, LINENUM, LINENUM, LINENUM));
-static bool similar PARAMS ((char const *, size_t, char const *, size_t));
-static bool spew_output PARAMS ((struct outstate *));
-static char const *make_temp PARAMS ((int));
-static int numeric_string PARAMS ((char const *, int, char const *));
-static void abort_hunk PARAMS ((void));
-static void cleanup PARAMS ((void));
-static void get_some_switches PARAMS ((void));
-static void init_output PARAMS ((char const *, int, struct outstate *));
-static void init_reject PARAMS ((void));
-static void reinitialize_almost_everything PARAMS ((void));
-static void remove_if_needed PARAMS ((char const *, int volatile *));
-static void usage PARAMS ((FILE *, int)) __attribute__((noreturn));
+static FILE *create_output_file (char const *, int);
+static LINENUM locate_hunk (LINENUM);
+static bool apply_hunk (struct outstate *, LINENUM);
+static bool copy_till (struct outstate *, LINENUM);
+static bool patch_match (LINENUM, LINENUM, LINENUM, LINENUM);
+static bool similar (char const *, size_t, char const *, size_t);
+static bool spew_output (struct outstate *);
+static char const *make_temp (char);
+static int numeric_string (char const *, int, char const *);
+static void abort_hunk (void);
+static void cleanup (void);
+static void get_some_switches (void);
+static void init_output (char const *, int, struct outstate *);
+static void init_reject (void);
+static void reinitialize_almost_everything (void);
+static void remove_if_needed (char const *, int volatile *);
+static void usage (FILE *, int) __attribute__((noreturn));
 
 static int make_backups;
 static int backup_if_mismatch;
@@ -91,7 +91,7 @@ static LINENUM last_frozen_line;
 
 static char const *do_defines; /* symbol to patch using ifdef, ifndef, etc. */
 static char const if_defined[] = "\n#ifdef %s\n";
-static char const not_defined[] = "#ifndef %s\n";
+static char const not_defined[] = "\n#ifndef %s\n";
 static char const else_defined[] = "\n#else\n";
 static char const end_defined[] = "\n#endif /* %s */\n";
 
@@ -111,8 +111,6 @@ static LINENUM maxfuzz = 2;
 static char serrbuf[BUFSIZ];
 
 /* Apply a set of diffs as appropriate. */
-
-int main PARAMS ((int, char **));
 
 int
 main (int argc, char **argv)
@@ -884,7 +882,7 @@ locate_hunk (LINENUM fuzz)
 	    && offset <= max_pos_offset
 	    && patch_match (first_guess, offset, (LINENUM) 0, suffix_fuzz))
 	  {
-	    last_offset = offset;
+	    last_offset += offset;
 	    return first_guess + offset;
 	  }
 	else
@@ -898,7 +896,7 @@ locate_hunk (LINENUM fuzz)
 	if (offset <= max_neg_offset
 	    && patch_match (first_guess, -offset, prefix_fuzz, (LINENUM) 0))
 	  {
-	    last_offset = - offset;
+	    last_offset -= offset;
 	    return first_guess - offset;
 	  }
 	else
@@ -913,8 +911,8 @@ locate_hunk (LINENUM fuzz)
 	    if (debug & 1)
 	      say ("Offset changing from %s to %s\n",
 		   format_linenum (numbuf0, last_offset),
-		   format_linenum (numbuf1, offset));
-	    last_offset = offset;
+		   format_linenum (numbuf1, last_offset + offset));
+	    last_offset += offset;
 	    return first_guess+offset;
 	}
 	if (0 < offset && offset <= max_neg_offset
@@ -922,8 +920,8 @@ locate_hunk (LINENUM fuzz)
 	    if (debug & 1)
 	      say ("Offset changing from %s to %s\n",
 		   format_linenum (numbuf0, last_offset),
-		   format_linenum (numbuf1, -offset));
-	    last_offset = -offset;
+		   format_linenum (numbuf1, last_offset - offset));
+	    last_offset -= offset;
 	    return first_guess-offset;
 	}
     }
@@ -1012,7 +1010,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 		return FALSE;
 	    if (R_do_defines) {
 		if (def_state == OUTSIDE) {
-		    fprintf (fp, outstate->after_newline + if_defined,
+		    fprintf (fp, outstate->after_newline + not_defined,
 			     R_do_defines);
 		    def_state = IN_IFNDEF;
 		}
@@ -1067,7 +1065,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 		return FALSE;
 	    assert (outstate->after_newline);
 	    if (R_do_defines) {
-	       fprintf (fp, not_defined, R_do_defines);
+	       fprintf (fp, 1 + not_defined, R_do_defines);
 	       if (ferror (fp))
 		write_fatal ();
 	       def_state = IN_IFNDEF;
@@ -1303,8 +1301,8 @@ similar (register char const *a, register size_t alen,
 
 /* Make a temporary file.  */
 
-#if HAVE_MKTEMP
-char *mktemp PARAMS ((char *));
+#if HAVE_MKTEMP && ! HAVE_DECL_MKTEMP && ! defined mktemp
+char *mktemp (char *));
 #endif
 
 #ifndef TMPDIR
@@ -1312,7 +1310,7 @@ char *mktemp PARAMS ((char *));
 #endif
 
 static char const *
-make_temp (int letter)
+make_temp (char letter)
 {
   char *r;
 #if HAVE_MKTEMP
@@ -1322,7 +1320,14 @@ make_temp (int letter)
   if (!tmpdir) tmpdir = TMPDIR;
   r = xmalloc (strlen (tmpdir) + 10);
   sprintf (r, "%s/p%cXXXXXX", tmpdir, letter);
+
+  /* It is OK to use mktemp here, since the rest of the code always
+     opens temp files with O_EXCL.  It might be better to use mkstemp
+     to avoid some DoS problems, but simply substituting mkstemp for
+     mktemp here will not fix the DoS problems; a more extensive
+     change would be needed.  */
   mktemp (r);
+
   if (!*r)
     pfatal ("mktemp");
 #else
