@@ -1,11 +1,11 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.32 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: common.h,v 1.33 2003/05/18 08:24:13 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free
-   Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -117,15 +117,6 @@
 
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
-#endif
-
-
-#ifndef FILESYSTEM_PREFIX_LEN
-#define FILESYSTEM_PREFIX_LEN(f) 0
-#endif
-
-#ifndef ISSLASH
-#define ISSLASH(c) ((c) == '/')
 #endif
 
 
@@ -316,6 +307,3 @@ void *realloc ();
 #ifndef TTY_DEVICE
 #define TTY_DEVICE "/dev/tty"
 #endif
-
-/* The official name of this program (e.g., no `g' prefix).  */
-#define PROGRAM_NAME "patch"
