@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.c,v 1.1 1992/08/26 02:05:59 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/pch.c,v 1.2 1993/06/01 01:54:19 eggert Exp $
  *
  * $Log: pch.c,v $
- * Revision 1.1  1992/08/26 02:05:59  djm
- * Initial revision
+ * Revision 1.2  1993/06/01 01:54:19  eggert
+ * Formerly pch.c.~6~
  *
- * Revision 1.1  1992/08/26 02:05:59  djm
- * Initial revision
+ * Revision 1.2  1993/06/01 01:54:19  eggert
+ * Formerly pch.c.~6~
  *
  * Revision 2.0.2.0  90/05/01  22:17:51  davison
  * patch12u: unidiff support added
@@ -57,7 +57,7 @@ static LINENUM p_context = 3;		/* # of context lines */
 static LINENUM p_input_line = 0;	/* current line # from patch file */
 static char **p_line = Null(char**);	/* the text of the hunk */
 static short *p_len = Null(short*);	/* length of each line */
-static char *p_char = Nullch;		/* +, -, and ! */
+static char *p_Char = Nullch;		/* +, -, and ! */
 static int hunkmax = INITHUNKMAX;	/* size of above arrays to begin with */
 static int p_indent;			/* indent to patch */
 static LINENUM p_base;			/* where to intuit this time */
@@ -117,8 +117,8 @@ set_hunkmax()
     if (p_len == Null(short*))
 	p_len  = (short*) malloc((MEM)hunkmax * sizeof(short));
 #endif
-    if (p_char == Nullch)
-	p_char = (char*)  malloc((MEM)hunkmax * sizeof(char));
+    if (p_Char == Nullch)
+	p_Char = (char*)  malloc((MEM)hunkmax * sizeof(char));
 }
 
 /* Enlarge the arrays containing the current hunk of patch. */
@@ -129,16 +129,16 @@ grow_hunkmax()
     hunkmax *= 2;
     /* 
      * Note that on most systems, only the p_line array ever gets fresh memory
-     * since p_len can move into p_line's old space, and p_char can move into
+     * since p_len can move into p_line's old space, and p_Char can move into
      * p_len's old space.  Not on PDP-11's however.  But it doesn't matter.
      */
-    assert(p_line != Null(char**) && p_len != Null(short*) && p_char != Nullch);
+    assert(p_line != Null(char**) && p_len != Null(short*) && p_Char != Nullch);
 #ifndef lint
     p_line = (char**) realloc((char*)p_line, (MEM)hunkmax * sizeof(char *));
     p_len  = (short*) realloc((char*)p_len,  (MEM)hunkmax * sizeof(short));
-    p_char = (char*)  realloc((char*)p_char, (MEM)hunkmax * sizeof(char));
+    p_Char = (char*)  realloc((char*)p_Char, (MEM)hunkmax * sizeof(char));
 #endif
-    if (p_line != Null(char**) && p_len != Null(short*) && p_char != Nullch)
+    if (p_line != Null(char**) && p_len != Null(short*) && p_Char != Nullch)
 	return;
     if (!using_plan_a)
 	fatal1("out of memory\n");
@@ -498,7 +498,7 @@ another_hunk()
 	    }
 	    p_end++;
 	    assert(p_end < hunkmax);
-	    p_char[p_end] = *buf;
+	    p_Char[p_end] = *buf;
 #ifdef zilog
 	    p_line[(short)p_end] = Nullch;
 #else
@@ -555,7 +555,7 @@ another_hunk()
 	    case '-':
 		if (buf[1] == '-') {
 		    if (repl_beginning ||
-			(p_end != p_ptrn_lines + 1 + (p_char[p_end-1] == '\n')))
+			(p_end != p_ptrn_lines + 1 + (p_Char[p_end-1] == '\n')))
 		    {
 			if (p_end == 1) {
 			    /* `old' lines were omitted - set up to fill */
@@ -593,7 +593,7 @@ another_hunk()
 			p_end--;
 			return FALSE;
 		    }
-		    p_char[p_end] = '=';
+		    p_Char[p_end] = '=';
 		    for (s=buf; *s && !isdigit(*s); s++) ;
 		    if (!*s)
 			malformed ();
@@ -660,7 +660,7 @@ another_hunk()
 		    context++;
 		    if (!repl_beginning)
 			ptrn_copiable++;
-		    p_char[p_end] = ' ';
+		    p_Char[p_end] = ' ';
 		}
 		break;
 	    case ' ':
@@ -721,7 +721,7 @@ another_hunk()
 	    /* and we were expecting one line -- fix it up. */
 	    while (filldst < p_end) {
 		p_line[filldst] = p_line[filldst+1];
-		p_char[filldst] = p_char[filldst+1];
+		p_Char[filldst] = p_Char[filldst+1];
 		p_len[filldst] = p_len[filldst+1];
 		filldst++;
 	    }
@@ -749,18 +749,18 @@ another_hunk()
 	    p_bfake = filldst;		/* remember where not to free() */
 	    p_efake = filldst + fillcnt - 1;
 	    while (fillcnt-- > 0) {
-		while (fillsrc <= p_end && p_char[fillsrc] != ' ')
+		while (fillsrc <= p_end && p_Char[fillsrc] != ' ')
 		    fillsrc++;
 		if (fillsrc > p_end)
 		    fatal2("replacement text or line numbers mangled in hunk at line %ld\n",
 			p_hunk_beg);
 		p_line[filldst] = p_line[fillsrc];
-		p_char[filldst] = p_char[fillsrc];
+		p_Char[filldst] = p_Char[fillsrc];
 		p_len[filldst] = p_len[fillsrc];
 		fillsrc++; filldst++;
 	    }
 	    while (fillsrc <= p_end && fillsrc != repl_beginning &&
-	      p_char[fillsrc] != ' ')
+	      p_Char[fillsrc] != ' ')
 		fillsrc++;
 #ifdef DEBUGGING
 	    if (debug & 64)
@@ -821,14 +821,14 @@ another_hunk()
 	    p_end = -1;
 	    return FALSE;
 	}
-	p_char[0] = '*';
+	p_Char[0] = '*';
         Sprintf(buf,"--- %ld,%ld ----\n",p_newfirst,p_newfirst+p_repl_lines-1);
 	p_line[filldst] = savestr(buf);
 	if (out_of_mem) {
 	    p_end = 0;
 	    return FALSE;
 	}
-	p_char[filldst++] = '=';
+	p_Char[filldst++] = '=';
 	p_context = 100;
 	context = 0;
 	p_hunk_beg = p_input_line + 1;
@@ -864,7 +864,7 @@ another_hunk()
 		    p_end = filldst-1;
 		    malformed ();
 		}
-		p_char[fillsrc] = ch;
+		p_Char[fillsrc] = ch;
 		p_line[fillsrc] = s;
 		p_len[fillsrc++] = strlen(s);
 		break;
@@ -880,7 +880,7 @@ another_hunk()
 		    malformed ();
 		}
 		context++;
-		p_char[fillsrc] = ch;
+		p_Char[fillsrc] = ch;
 		p_line[fillsrc] = s;
 		p_len[fillsrc++] = strlen(s);
 		s = savestr(s);
@@ -899,7 +899,7 @@ another_hunk()
 		    p_end = fillsrc-1;
 		    malformed ();
 		}
-		p_char[filldst] = ch;
+		p_Char[filldst] = ch;
 		p_line[filldst] = s;
 		p_len[filldst++] = strlen(s);
 		break;
@@ -960,7 +960,7 @@ another_hunk()
 	    p_end = -1;
 	    return FALSE;
 	}
-	p_char[0] = '*';
+	p_Char[0] = '*';
 	for (i=1; i<=p_ptrn_lines; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
@@ -975,7 +975,7 @@ another_hunk()
 		return FALSE;
 	    }
 	    p_len[i] = strlen(p_line[i]);
-	    p_char[i] = '-';
+	    p_Char[i] = '-';
 	}
 	if (hunk_type == 'c') {
 	    ret = pgets(buf, sizeof buf, pfp);
@@ -992,7 +992,7 @@ another_hunk()
 	    p_end = i-1;
 	    return FALSE;
 	}
-	p_char[i] = '=';
+	p_Char[i] = '=';
 	for (i++; i<=p_end; i++) {
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
@@ -1007,7 +1007,7 @@ another_hunk()
 		return FALSE;
 	    }
 	    p_len[i] = strlen(p_line[i]);
-	    p_char[i] = '+';
+	    p_Char[i] = '+';
 	}
     }
     if (reverse)			/* backwards patch? */
@@ -1023,13 +1023,13 @@ another_hunk()
 		special = '^';
 	    else
 		special = ' ';
-	    fprintf(stderr, "%3d %c %c %s", i, p_char[i], special, p_line[i]);
+	    fprintf(stderr, "%3d %c %c %s", i, p_Char[i], special, p_line[i]);
 	    Fflush(stderr);
 	}
     }
 #endif
     if (p_end+1 < hunkmax)	/* paranoia reigns supreme... */
-	p_char[p_end+1] = '^';  /* add a stopper for apply_hunk */
+	p_Char[p_end+1] = '^';  /* add a stopper for apply_hunk */
     return TRUE;
 }
 
@@ -1080,12 +1080,12 @@ pch_swap()
 
     tp_line = p_line;
     tp_len = p_len;
-    tp_char = p_char;
+    tp_char = p_Char;
     p_line = Null(char**);	/* force set_hunkmax to allocate again */
     p_len = Null(short*);
-    p_char = Nullch;
+    p_Char = Nullch;
     set_hunkmax();
-    if (p_line == Null(char**) || p_len == Null(short*) || p_char == Nullch) {
+    if (p_line == Null(char**) || p_len == Null(short*) || p_Char == Nullch) {
 #ifndef lint
 	if (p_line == Null(char**))
 	    free((char*)p_line);
@@ -1094,9 +1094,9 @@ pch_swap()
 	    free((char*)p_len);
 	p_len = tp_len;
 #endif
-	if (p_char == Nullch)
-	    free((char*)p_char);
-	p_char = tp_char;
+	if (p_Char == Nullch)
+	    free((char*)p_Char);
+	p_Char = tp_char;
 	return FALSE;		/* not enough memory to swap hunk! */
     }
 
@@ -1117,20 +1117,20 @@ pch_swap()
     }
     for (n=0; i <= p_end; i++,n++) {
 	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
-	if (p_char[n] == '+')
-	    p_char[n] = '-';
+	p_Char[n] = tp_char[i];
+	if (p_Char[n] == '+')
+	    p_Char[n] = '-';
 	p_len[n] = tp_len[i];
     }
     if (blankline) {
 	i = p_ptrn_lines + 1;
 	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
+	p_Char[n] = tp_char[i];
 	p_len[n] = tp_len[i];
 	n++;
     }
-    assert(p_char[0] == '=');
-    p_char[0] = '*';
+    assert(p_Char[0] == '=');
+    p_Char[0] = '*';
     for (s=p_line[0]; *s; s++)
 	if (*s == '-')
 	    *s = '*';
@@ -1144,9 +1144,9 @@ pch_swap()
 	    *s = '-';
     for (i=0; n <= p_end; i++,n++) {
 	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
-	if (p_char[n] == '-')
-	    p_char[n] = '+';
+	p_Char[n] = tp_char[i];
+	if (p_Char[n] == '-')
+	    p_Char[n] = '+';
 	p_len[n] = tp_len[i];
     }
     assert(i == p_ptrn_lines + 1);
@@ -1227,7 +1227,7 @@ char
 pch_char(line)
 LINENUM line;
 {
-    return p_char[line];
+    return p_Char[line];
 }
 
 /* Return a pointer to a particular patch line. */
