@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.18 1997/06/13 06:28:37 eggert Exp $
+.Id $Id: patch.man,v 1.19 1997/06/17 06:52:12 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -115,9 +115,6 @@ As each hunk is completed, you are told if the hunk
 failed, and if so which line (in the new file)
 .B patch
 thought the hunk should go on.
-If the
-.B \*=verbose
-option is given, you are also told about hunks that succeeded.
 If the hunk is installed at a different line
 from the line number specified in the diff you
 are told the offset.
@@ -127,6 +124,9 @@ indicate that a hunk was installed in the
 wrong place.
 You are also told if a fuzz factor was used to make the match, in which
 case you should also be slightly suspicious.
+If the
+.B \*=verbose
+option is given, you are also told about hunks that match exactly.
 .PP
 If no original file
 .I origfile
@@ -232,13 +232,37 @@ mentioned previously.
 .TP 3
 \fB\-b\fP  or  \fB\*=backup\fP
 Make backup files.
+That is, when patching a file,
+rename or copy the original instead of removing it.
+When backing up a file that does not exist,
+an empty, unreadable backup file is created
+as a placeholder to represent the nonexistent file.
+.Sp
 This option is equivalent to
 .BR \*=version\-control=simple ;
 see the
 .B \-V
 or
 .B \*=version\-control
-option for details.
+option.
+.TP
+.B \*=backup\-if\-mismatch
+Back up a file if the patch does not match the file exactly
+and if backups are not otherwise requested.
+The backup file name is calculated as usual,
+except that if the version control method is
+.BR none ,
+a simple backup name is used.
+This is the default unless the
+.B POSIXLY_CORRECT
+environment variable is set.
+.TP
+.B \*=no\-backup\-if\-mismatch
+Do not back up a file if the patch does not match the file exactly
+and if backups are not otherwise requested.
+This is the default if the
+.B POSIXLY_CORRECT
+environment variable is set.
 .TP
 \fB\-B\fP \fIpref\fP  or  \fB\*=prefix=\fP\fIpref\fP
 Prefix simple backup file names with
@@ -480,8 +504,8 @@ revision header and patch level, and exit.
 \fB\-V\fP \fImethod\fP  or  \fB\*=version\-control=\fP\fImethod\fP
 Use
 .I method
-when creating
-backup file names.  The type of backups made can also be given in the
+to determine
+backup file names.  The method can also be given by the
 .B PATCH_VERSION_CONTROL
 (or, if that's not set, the
 .BR VERSION_CONTROL )
@@ -504,7 +528,8 @@ Make numbered backups of files that already have them,
 otherwise simple backups.
 .TP
 \fBnone\fP
-Do not make backups.
+Do not make backups, unless backup-if-mismatch is in effect
+and patches do not match files.
 This is the default.
 .TP
 \fBnumbered\fP  or  \fBt\fP
@@ -517,9 +542,7 @@ where
 is the version number.
 .TP
 \fBsimple\fP  or  \fBnever\fP
-Make simple backups.  That is, when patching a file
-.IR F ,
-rename or copy the original instead of removing it.
+Make simple backups.
 The
 .B \-B
 or
@@ -547,10 +570,6 @@ is used instead; if even appending
 would make the name too long, then
 .B ~
 replaces the last character of the file name.
-.PP
-When backing up a file that does not exist,
-an empty, unreadable backup file is created
-as a placeholder to represent the nonexistent file.
 .RE
 .TP
 \fB\*=verbose\fP
@@ -597,7 +616,7 @@ and
 .B \-T
 or
 .B \*=set\-time
-options normally refrain from setting a file's time if its time
+options normally refrain from setting a file's time if the file's original time
 does not match the time given in the patch header, or if its
 contents do not match the patch exactly.  However, if the
 .B \-f
@@ -630,11 +649,13 @@ option.
 If set,
 .B patch
 conforms more strictly to the \s-1POSIX\s0 standard:
-it takes the first existing file when intuiting file names from diff headers,
+it takes the first existing file from the list (old, new, index)
+when intuiting file names from diff headers,
 it does not remove files that are empty after patching,
 it does not ask whether to get files from \s-1RCS\s0 or \s-1SCCS\s0,
-and it requires that all options precede the
-files in the command line.
+it requires that all options precede the
+files in the command line,
+and by default it does not make backup files.
 .TP
 .B SIMPLE_BACKUP_SUFFIX
 Extension to use for simple backup file names instead of
@@ -714,8 +735,9 @@ If you put a
 line in with the patch, it won't let them apply
 patches out of order without some warning.
 .PP
-You can create a file by sending out a diff that compares an
-empty file dated the Epoch (1970-01-01 00:00:00 \s-1UTC\s0)
+You can create a file by sending out a diff that compares
+.B /dev/null
+or an empty file dated the Epoch (1970-01-01 00:00:00 \s-1UTC\s0)
 to the file you want to create.
 This only works if the file you want to create doesn't exist already in
 the target directory.
@@ -898,16 +920,27 @@ option, or by setting the
 .B VERSION_CONTROL
 environment variable to
 .BR simple .
-In traditional
+.Sp
+Conversely, in \s-1POSIX\s0
 .BR patch ,
-the
-.BR \-b
-option had an operand that specified the simple backup suffix;
-this option is now named
-.B \-z
-or
-.B \*=suffix
-in \s-1GNU\s0 patch.
+backups are never made, even when there is a mismatch.
+In \s-1GNU\s0
+.BR patch ,
+this behavior is enabled with the
+.B \*=no\-backup\-if\-mismatch
+option or by setting the
+.B POSIXLY_CORRECT
+environment variable.
+.Sp
+The
+.BI \-b " suffix"
+option
+of traditional
+.B patch
+is equivalent to the
+.BI "\-b \-z" " suffix"
+options of \s-1GNU\s0
+.BR patch .
 .TP
 .B " \(bu"
 Traditional
@@ -1022,7 +1055,8 @@ Larry Wall wrote the original version of
 .BR patch .
 Paul Eggert removed
 .BR patch 's
-arbitrary limits, added support for binary files,
+arbitrary limits; added support for binary files,
+setting file times, and deleting files;
 and made it conform better to \s-1POSIX\s0.
 Other contributors include Wayne Davison, who added unidiff support,
 and David MacKenzie, who added configuration and backup support.
