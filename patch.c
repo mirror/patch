@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.32 1999/09/03 08:35:57 eggert Exp $ */
+/* $Id: patch.c,v 1.33 1999/09/30 23:48:27 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -788,7 +788,22 @@ get_some_switches (void)
     /* Process any filename args.  */
     if (optind < Argc)
       {
+	struct stat outstat;
+
 	inname = savestr (Argv[optind++]);
+
+	/* Handle `patch -o F F' as if it were `patch F'.  */
+	if (outfile
+	    && (strcmp (outfile, inname) == 0
+		|| (stat (outfile, &outstat) == 0
+		    && stat (inname, &instat) == 0
+		    && outstat.st_dev == instat.st_dev
+		    && outstat.st_ino == instat.st_ino)))
+	  {
+	    free (outfile);
+	    outfile = 0;
+	  }
+
 	invc = -1;
 	if (optind < Argc)
 	  {
