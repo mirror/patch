@@ -428,6 +428,6 @@ xmalloc (size)
 {
   register char *p = (char *) malloc (size);
   if (!p)
-    fatal("out of memory");
+    fatal1("out of memory");
   return p;
 }
