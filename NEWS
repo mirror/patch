@@ -49,8 +49,10 @@ Changes since version 2.2:
 * The environment variables TMP and TEMP are consulted for the name of
   the temporary directory if TMPDIR is not set.
 
-* An untested port to MS-DOS and MS-Windows is available;
-  see the `pc' directory.
+* A port to MS-DOS and MS-Windows is available; see the `pc' directory.
+
+* Backup file names are no longer ever computed by uppercasing characters,
+  since this isn't portable to systems with case-insensitive file names.
 
 Changes in version 2.2:
 
