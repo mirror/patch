@@ -42,7 +42,8 @@ AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 jm_STRUCT_UTIMBUF
 
-AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1\$U.o getopt\$U.o"])
+AC_CHECK_FUNC(getopt_long, ,
+  [LIBOBJS="$LIBOBJS getopt1\$U.$ac_objext getopt\$U.$ac_objext"])
 AC_SUBST(LIBOBJS)
 AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
   pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
