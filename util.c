@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.36 2003/05/20 14:04:53 eggert Exp $ */
+/* $Id: util.c,v 1.37 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -26,8 +26,10 @@
 #include <common.h>
 #include <backupfile.h>
 #include <dirname.h>
+#include <hash.h>
 #include <quotearg.h>
 #include <quotesys.h>
+#include <timespec.h>
 #include <version.h>
 #undef XTERN
 #define XTERN
@@ -49,22 +51,103 @@
 
 static void makedirs (char *);
 
+typedef struct
+{
+  dev_t	dev;
+  ino_t	ino;
+  struct timespec mtime;
+} file_id;
+
+/* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
+
+static unsigned int
+file_id_hasher (void const *entry, unsigned int table_size)
+{
+  file_id const *e = entry;
+  unsigned int i = e->ino + e->dev + e->mtime.tv_sec + e->mtime.tv_nsec;
+  return i % table_size;
+}
+
+/* Do ENTRY1 and ENTRY2 refer to the same files?  */
+
+static bool
+file_id_comparator (void const *entry1, void const *entry2)
+{
+  file_id const *e1 = entry1;
+  file_id const *e2 = entry2;
+  return (e1->mtime.tv_nsec == e2->mtime.tv_nsec
+	  && e1->mtime.tv_sec == e2->mtime.tv_sec
+	  && e1->ino == e2->ino
+	  && e1->dev == e2->dev);
+}
+
+static Hash_table *file_id_table;
+
+/* Initialize the hash table.  */
+
+void
+init_backup_hash_table (void)
+{
+  file_id_table = hash_initialize (0, NULL, file_id_hasher,
+				   file_id_comparator, free);
+  if (!file_id_table)
+    xalloc_die ();
+}
+
+/* Insert a file with status ST into the hash table.  */
+
+static void
+insert_file (struct stat const *st)
+{
+   file_id *p;
+   static file_id *next_slot;
+
+   if (!next_slot)
+     next_slot = xmalloc (sizeof *next_slot);
+   next_slot->dev = st->st_dev;
+   next_slot->ino = st->st_ino;
+   next_slot->mtime.tv_sec = st->st_mtime;
+   next_slot->mtime.tv_nsec = TIMESPEC_NS (st->st_mtim);
+   p = hash_insert (file_id_table, next_slot);
+   if (!p)
+     xalloc_die ();
+   if (p == next_slot)
+     next_slot = NULL;
+}
+
+/* Has the file identified by ST already been inserted into the hash
+   table?  */
+
+static bool
+file_already_seen (struct stat const *st)
+{
+  file_id f;
+  f.dev = st->st_dev;
+  f.ino = st->st_ino;
+  f.mtime.tv_sec = st->st_mtime;
+  f.mtime.tv_nsec = TIMESPEC_NS (st->st_mtim);
+  return hash_lookup (file_id_table, &f) != 0;
+}
+
 /* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
-   needs removal when cleaning up at the end of execution)
+   needs removal when cleaning up at the end of execution, and where
+   *FROMST is FROM's status if known),
    to TO, renaming it if possible and copying it if necessary.
    If we must create TO, use MODE to create it.
-   If FROM is null, remove TO (ignoring FROMSTAT).
+   If FROM is null, remove TO.
    FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
+   and FROMST must be nonnull if both FROM and BACKUP are nonnull.
    Back up TO if BACKUP is true.  */
 
 void
 move_file (char const *from, int volatile *from_needs_removal,
+	   struct stat const *fromst,
 	   char *to, mode_t mode, bool backup)
 {
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
 
-  if (backup)
+  if (backup && (to_errno || ! file_already_seen (&to_st)))
     {
       int try_makedirs_errno = 0;
       char *bakname;
@@ -155,6 +238,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 
 	  if (errno == EXDEV)
 	    {
+	      struct stat tost;
 	      if (! backup)
 		{
 		  if (unlink (to) == 0)
@@ -164,7 +248,9 @@ move_file (char const *from, int volatile *from_needs_removal,
 		}
 	      if (! to_dir_known_to_exist)
 		makedirs (to);
-	      copy_file (from, to, 0, mode);
+	      copy_file (from, to, backup ? &tost : 0, 0, mode);
+	      if (backup)
+		insert_file (&tost);
 	      return;
 	    }
 
@@ -173,6 +259,8 @@ move_file (char const *from, int volatile *from_needs_removal,
 	}
 
     rename_succeeded:
+      if (backup)
+	insert_file (fromst);
       /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
 	 rename returned zero because FROM and TO are hard links to
 	 the same file.  */
@@ -209,7 +297,8 @@ create_file (char const *file, int open_flags, mode_t mode)
 /* Copy a file. */
 
 void
-copy_file (char const *from, char const *to, int to_flags, mode_t mode)
+copy_file (char const *from, char const *to, struct stat *tost,
+	   int to_flags, mode_t mode)
 {
   int tofd;
   int fromfd;
@@ -227,7 +316,8 @@ copy_file (char const *from, char const *to, int to_flags, mode_t mode)
     }
   if (close (fromfd) != 0)
     read_fatal ();
-  if (close (tofd) != 0)
+  if ((tost && fstat (tofd, tost) != 0)
+      || close (tofd) != 0)
     write_fatal ();
 }
 
@@ -958,24 +1048,31 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
 	    if (*u != '\t' && strchr (u + 1, '\t'))
 	      continue;
 
-	    if (set_time | set_utc)
-	      stamp = str2time (&u, initial_time,
-				set_utc ? 0L : TM_LOCAL_ZONE);
+	    if (*u == '\n')
+	      stamp = (time_t) -1;
 	    else
 	      {
-		/* The head says the file is nonexistent if the timestamp
-		   is the epoch; but the listed time is local time, not UTC,
-		   and POSIX.1 allows local time offset anywhere in the range
-		   -25:00 < offset < +26:00.  Match any time in that
-		   range by assuming local time is -25:00 and then matching
-		   any ``local'' time T in the range 0 < T < 25+26 hours.  */
-		stamp = str2time (&u, initial_time, -25L * 60 * 60);
-		if (0 < stamp && stamp < (25 + 26) * 60L * 60)
-		  stamp = 0;
-	      }
+		if (set_time | set_utc)
+		  stamp = str2time (&u, initial_time,
+				    set_utc ? 0L : TM_LOCAL_ZONE);
+		else
+		  {
+		    /* The head says the file is nonexistent if the
+		       timestamp is the epoch; but the listed time is
+		       local time, not UTC, and POSIX.1 allows local
+		       time offset anywhere in the range -25:00 <
+		       offset < +26:00.  Match any time in that range
+		       by assuming local time is -25:00 and then
+		       matching any ``local'' time T in the range 0 <
+		       T < 25+26 hours.  */
+		    stamp = str2time (&u, initial_time, -25L * 60 * 60);
+		    if (0 < stamp && stamp < (25 + 26) * 60L * 60)
+		      stamp = 0;
+		  }
 
-	    if (*u && ! ISSPACE ((unsigned char) *u))
-	      stamp = (time_t) -1;
+		if (*u && ! ISSPACE ((unsigned char) *u))
+		  stamp = (time_t) -1;
+	      }
 
 	    *t = '\0';
 	    break;

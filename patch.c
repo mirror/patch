@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.44 2003/05/20 13:55:03 eggert Exp $ */
+/* $Id: patch.c,v 1.45 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
@@ -28,6 +28,7 @@
 #define XTERN extern
 #include <argmatch.h>
 #include <backupfile.h>
+#include <exitfail.h>
 #include <getopt.h>
 #include <inp.h>
 #include <pch.h>
@@ -64,7 +65,7 @@ static bool apply_hunk (struct outstate *, LINENUM);
 static bool copy_till (struct outstate *, LINENUM);
 static bool patch_match (LINENUM, LINENUM, LINENUM, LINENUM);
 static bool similar (char const *, size_t, char const *, size_t);
-static bool spew_output (struct outstate *);
+static bool spew_output (struct outstate *, struct stat *);
 static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
 static void abort_hunk (void);
@@ -117,9 +118,10 @@ main (int argc, char **argv)
     char const *val;
     bool somefailed = false;
     struct outstate outstate;
+    struct stat outst;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
-    xalloc_exit_failure = 2;
+    exit_failure = 2;
     program_name = argv[0];
     init_time ();
 
@@ -165,7 +167,10 @@ main (int argc, char **argv)
     get_some_switches();
 
     if (make_backups | backup_if_mismatch)
-      backup_type = get_version (version_control_context, version_control);
+      {
+	backup_type = get_version (version_control_context, version_control);
+	init_backup_hash_table ();
+      }
 
     init_output (outfile, 0, &outstate);
 
@@ -338,7 +343,7 @@ main (int argc, char **argv)
 
 	    /* Finish spewing out the new file.  */
 	    assert (hunk);
-	    if (! spew_output (&outstate))
+	    if (! spew_output (&outstate, &outst))
 	      {
 		say ("Skipping patch.\n");
 		skip_rest_of_patch = true;
@@ -359,7 +364,7 @@ main (int argc, char **argv)
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
-		  move_file ((char *) 0, (int *) 0, outname, (mode_t) 0,
+		  move_file (0, 0, 0, outname, 0,
 			     (make_backups
 			      || (backup_if_mismatch && (mismatch | failed))));
 		  removedirs (outname);
@@ -380,7 +385,7 @@ main (int argc, char **argv)
 		{
 		  time_t t;
 
-		  move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal,
+		  move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
 			     outname, instat.st_mode,
 			     (make_backups
 			      || (backup_if_mismatch && (mismatch | failed))));
@@ -428,7 +433,7 @@ main (int argc, char **argv)
 		say (" -- saving rejects to file %s", quotearg (rej));
 		if (! dry_run)
 		  {
-		    move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
+		    move_file (TMPREJNAME, &TMPREJNAME_needs_removal, 0,
 			       rej, instat.st_mode, false);
 		    if (! inerrno
 			&& (chmod (rej, (instat.st_mode
@@ -1212,7 +1217,7 @@ copy_till (register struct outstate *outstate, register LINENUM lastline)
 /* Finish copying the input file to the output file. */
 
 static bool
-spew_output (struct outstate *outstate)
+spew_output (struct outstate *outstate, struct stat *st)
 {
     if (debug & 256)
       {
@@ -1229,7 +1234,9 @@ spew_output (struct outstate *outstate)
 
     if (outstate->ofp && ! outfile)
       {
-	if (fclose (outstate->ofp) != 0)
+	if (fflush (outstate->ofp) != 0
+	    || fstat (fileno (outstate->ofp), st) != 0
+	    || fclose (outstate->ofp) != 0)
 	  write_fatal ();
 	outstate->ofp = 0;
       }

@@ -32,7 +32,7 @@ AC_PROG_MAKE_SET
 # because <errno.h> reserves symbols starting with `E'.
 AC_PATH_PROG(ed_PROGRAM, ed, ed)
 
-AC_GNU_SOURCE
+gl_USE_SYSTEM_EXTENSIONS
 AC_AIX
 AC_MINIX
 AC_PROG_CC_STDC
@@ -58,12 +58,15 @@ jm_CHECK_TYPE_STRUCT_UTIMBUF
 gl_BACKUPFILE
 gl_DIRNAME
 gl_ERROR
+gl_EXITFAIL
 gl_FUNC_MEMCHR
 gl_GETOPT
+gl_HASH
 gl_PREREQ_XMALLOC
 gl_QUOTE
 gl_QUOTEARG
 gl_STRCASE
+gl_TIMESPEC
 gl_XALLOC
 
 AC_CHECK_DECLS([free, getenv, malloc, mktemp])
