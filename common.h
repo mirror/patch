@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: common.h,v 1.17 1997/06/09 05:36:28 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -44,6 +44,7 @@ If not, write to the Free Software Foundation,
 #include <assert.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
 
 #include <sys/stat.h>
 #if ! defined S_ISDIR && defined S_IFDIR
@@ -174,6 +175,9 @@ XTERN bool skip_rest_of_patch;
 XTERN int strippath;
 XTERN bool canonicalize;
 XTERN int patch_get;
+XTERN int set_time;
+XTERN int set_utc;
+XTERN time_t timestamp[2];
 
 enum diff
   {
