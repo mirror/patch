@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.9 1997/04/14 05:32:30 eggert Exp $ */
+/* $Id: util.c,v 1.10 1997/05/05 07:31:21 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -61,6 +61,7 @@ move_file (from, to, backup)
   register char *s;
   register char *bakname;
   struct stat tost, bakst;
+  int try_makedirs_errno = 0;
 
   if (backup && stat (to, &tost) == 0)
     {
@@ -80,6 +81,8 @@ move_file (from, to, backup)
 	  memcpy (bakname + plen, to, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
 	  memcpy (bakname + plen + tlen + blen, o, osize);
+	  if (strchr (p, '/') || strchr (b, '/'))
+	    try_makedirs_errno = ENOENT;
 	}
       else
 	{
@@ -92,10 +95,12 @@ move_file (from, to, backup)
       /* Find a backup name that is not the same file.
 	 Change the first lowercase char into uppercase;
 	 if that doesn't suffice, chop off the first char and try again.  */
-      while (stat (bakname, &bakst) == 0
-	     && tost.st_dev == bakst.st_dev
-	     && tost.st_ino == bakst.st_ino)
+      while (stat (bakname, &bakst) == 0)
 	{
+	  try_makedirs_errno = 0;
+	  if (tost.st_dev != bakst.st_dev
+	      || tost.st_ino != bakst.st_ino)
+	    break;
 	  /* Skip initial non-lowercase chars.  */
 	  for (s=simplename; *s && !ISLOWER ((unsigned char) *s); s++)
 	    continue;
@@ -106,8 +111,13 @@ move_file (from, to, backup)
 	}
       if (debug & 4)
 	  say ("Moving %s to %s.\n", to, bakname);
-      if (rename (to, bakname) != 0)
-	pfatal ("Can't rename `%s' to `%s'", to, bakname);
+      while (rename (to, bakname) != 0)
+	{
+	  if (errno != try_makedirs_errno)
+	    pfatal ("Can't rename `%s' to `%s'", to, bakname);
+	  makedirs (bakname);
+	  try_makedirs_errno = 0;
+	}
       free (bakname);
     }
 
@@ -345,7 +355,16 @@ ask (format, va_alist)
     }
   else
     {
-      r = read (ttyfd, buf, bufsize - 1);
+      size_t s = 0;
+      while ((r = read (ttyfd, buf + s, bufsize - 1 - s)) == bufsize - 1 - s
+	     && buf[bufsize - 2] != '\n')
+	{
+	  s = bufsize - 1;
+	  bufsize *= 2;
+	  buf = realloc (buf, bufsize);
+	  if (!buf)
+	    memory_fatal ();
+	}
       if (r == 0)
 	printf ("EOF\n");
       else if (r < 0)
@@ -502,76 +521,79 @@ exit_with_signal (sig)
   exit (2);
 }
 
+int
+systemic (command)
+     char const *command;
+{
+  if (debug & 8)
+    say ("+ %s\n", command);
+  return system (command);
+}
+
 #if !HAVE_MKDIR
-/* This is good enough for `patch'; it's not a general emulator.  */
+/* This mkdir substitute is good enough for `patch';
+   it's not a general emulator.  */
+#include <quotearg.h>
+static char const MKDIR1[] = "mkdir ";
+static char const MKDIR2[] = " 2>/dev/null";
 static int mkdir PARAMS ((char const *, int));
 static int
 mkdir (path, mode)
      char const *path;
      int mode; /* ignored */
 {
-  char *cmd = xmalloc (strlen (path) + 9);
-  int r;
-  sprintf (cmd, "mkdir '%s'", path);
-  r = system (cmd);
-  free (cmd);
-  return r;
+  struct stat st;
+
+  if (stat (path, &st) != 0)
+    {
+      char *cmd = xmalloc (sizeof MKDIR1 - 1 + quote_system_arg (0, path)
+			   + sizeof MKDIR2);
+      char *p = cmd;
+      strcpy (p, MKDIR1);
+      p += sizeof MKDIR1 - 1;
+      p += quote_system_arg (p, path);
+      strcpy (p, MKDIR2);
+      systemic (cmd);
+      free (cmd);
+    }
+
+  return 0;
 }
 #endif
 
 /* Replace '/' with '\0' in FILENAME if it marks a place that
    needs testing for the existence of directory.  Return the address
-   of the last location replaced, or FILENAME if none were replaced.  */
+   of the last location replaced, or 0 if none were replaced.  */
 static char *replace_slashes PARAMS ((char *));
 static char *
 replace_slashes (filename)
      char *filename;
 {
   char *f;
+  char *last_location_replaced = 0;
+  char const *component_start;
+
   for (f = filename;  *f == '/';  f++)
     continue;
+
+  component_start = f;
+
   for (; *f; f++)
     if (*f == '/')
       {
-	*f = '\0';
+	/* "." and ".." need not be tested.  */
+	if (! (f - component_start <= 2
+	       && component_start[0] == '.' && f[-1] == '.'))
+	  {
+	    *f = '\0';
+	    last_location_replaced = f;
+	  }
 	while (f[1] == '/')
 	  f++;
+	component_start = f;
       }
-  while (filename != f && *--f)
-    continue;
-  return f;
-}
 
-/* Count the number of path name components in the existing leading prefix
-   of `filename'.  Do not count the last element, or the root dir.  */
-int
-countdirs (filename)
-     char *filename;
-{
-  int count = 0;
-
-  if (*filename)
-    {
-      register char *f;
-      register char *flim = replace_slashes (filename);
-
-      /* Now turn the '\0's back to '/'s, calling stat as we go.  */
-      for (f = filename;  f <= flim;  f++)
-	if (!*f)
-	  {
-	    struct stat sbuf;
-	    if (stat (filename, &sbuf) != 0)
-	      break;
-	    count++;
-	    *f = '/';
-	  }
-
-      for (;  f <= flim;  f++)
-	if (!*f)
-	  *f = '/';
-    }
-
-  return count;
+  return last_location_replaced;
 }
 
 /* Make sure we'll have the directories to create a file.
@@ -581,38 +603,25 @@ void
 makedirs (filename)
      register char *filename;
 {
-  if (*filename)
-    {
-      register char *f;
-      register char *flim = replace_slashes (filename);
+  register char *f;
+  register char *flim = replace_slashes (filename);
 
-      /* Now turn the NULs back to '/'s; stop when the path doesn't exist.  */
-      errno = 0;
+  if (flim)
+    {
+      /* Create any missing directories, replacing NULs by '/'s.
+	 Ignore errors.  We may have to keep going even after an EEXIST,
+	 since the path may contain ".."s; and when there is an EEXIST
+	 failure the system may return some other error number.
+	 Any problems will eventually be reported when we create the file.  */
       for (f = filename;  f <= flim;  f++)
 	if (!*f)
 	  {
-	    struct stat sbuf;
-	    if (stat (filename, &sbuf) != 0)
-	      break;
+	    mkdir (filename,
+		   S_IRUSR|S_IWUSR|S_IXUSR
+		   |S_IRGRP|S_IWGRP|S_IXGRP
+		   |S_IROTH|S_IWOTH|S_IXOTH);
 	    *f = '/';
 	  }
-
-      /* Create the missing directories, replacing NULs by '/'s.  */
-      if (errno == ENOENT)
-	for (;  f <= flim;  f++)
-	  if (!*f)
-	    {
-	      if (mkdir (filename,
-			 S_IRUSR|S_IWUSR|S_IXUSR
-			 |S_IRGRP|S_IWGRP|S_IXGRP
-			 |S_IROTH|S_IWOTH|S_IXOTH) != 0)
-		break;
-	      *f = '/';
-	    }
-
-      for (;  f <= flim;  f++)
-	if (!*f)
-	  *f = '/';
     }
 }
 
