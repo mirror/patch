@@ -1,30 +1,29 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.28 1998/03/21 15:48:43 eggert Exp $ */
+/* $Id: pch.c,v 1.29 1999/08/30 06:20:08 eggert Exp $ */
 
-/*
-Copyright 1986, 1987, 1988 Larry Wall
-Copyright 1990, 1991, 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
+/* Copyright 1986, 1987, 1988 Larry Wall
+   Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.
-If not, write to the Free Software Foundation,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define XTERN extern
 #include <common.h>
 #include <backupfile.h>
+#include <basename.h>
 #include <inp.h>
 #include <quotearg.h>
 #include <util.h>
@@ -37,8 +36,10 @@ If not, write to the Free Software Foundation,
 /* Patch (diff listing) abstract type. */
 
 static FILE *pfp;			/* patch file pointer */
-static int p_says_nonexistent[2];	/* [0] for old file, [1] for new;
-		value is 0 for nonempty, 1 for empty, 2 for nonexistent */
+static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
+		0 for existent and nonempty,
+		1 for existent and probably (but not necessarily) empty,
+		2 for nonexistent */
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static time_t p_timestamp[2];		/* timestamps in patch headers */
 static off_t p_filesize;		/* size of the patch file */
@@ -82,7 +83,7 @@ static void skip_to PARAMS ((file_offset, LINENUM));
 /* Prepare to look for the next patch in the patch file. */
 
 void
-re_patch()
+re_patch (void)
 {
     p_first = 0;
     p_newfirst = 0;
@@ -97,8 +98,7 @@ re_patch()
 /* Open the patch file at the beginning of time. */
 
 void
-open_patch_file(filename)
-     char const *filename;
+open_patch_file (char const *filename)
 {
     file_offset file_pos = 0;
     struct stat st;
@@ -161,7 +161,7 @@ open_patch_file(filename)
 /* Make sure our dynamically realloced tables are malloced to begin with. */
 
 void
-set_hunkmax()
+set_hunkmax (void)
 {
     if (!p_line)
 	p_line = (char **) malloc (hunkmax * sizeof *p_line);
@@ -174,7 +174,7 @@ set_hunkmax()
 /* Enlarge the arrays containing the current hunk of patch. */
 
 static bool
-grow_hunkmax()
+grow_hunkmax (void)
 {
     hunkmax *= 2;
     assert (p_line && p_len && p_Char);
@@ -194,7 +194,7 @@ grow_hunkmax()
 /* True if the remainder of the patch file contains a diff of some sort. */
 
 bool
-there_is_another_patch()
+there_is_another_patch (void)
 {
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
@@ -240,7 +240,7 @@ there_is_another_patch()
 	    say ("can't find file to patch at input line %s\n",
 		 format_linenum (numbuf, p_sline));
 	    say (strippath == -1
-		 ? "Perhaps you should have used the -p or --strip option?\n"
+	         ? "Perhaps you should have used the -p or --strip option?\n"
 		 : "Perhaps you used the wrong -p or --strip option?\n");
 	  }
       }
@@ -284,7 +284,7 @@ there_is_another_patch()
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff
-intuit_diff_type()
+intuit_diff_type (void)
 {
     register file_offset this_line = 0;
     register file_offset first_command_line = -1;
@@ -542,6 +542,8 @@ intuit_diff_type()
 
 	if (! posixly_correct)
 	  {
+	    int is_empty;
+
 	    i = best_name (name, stat_errno);
 
 	    if (i == NONE && patch_get)
@@ -559,7 +561,7 @@ intuit_diff_type()
 		      if (nope == NONE || strcmp (name[nope], name[i]) != 0)
 			{
 			  cs = (version_controller
-				(name[i], readonly, (struct stat *) 0,
+			        (name[i], readonly, (struct stat *) 0,
 				 &getbuf, &diffbuf));
 			  version_controlled[i] = !! cs;
 			  if (cs)
@@ -583,7 +585,8 @@ intuit_diff_type()
 		    }
 	      }
 
-	    if (p_says_nonexistent[reverse ^ (i == NONE || st[i].st_size == 0)])
+	    is_empty = i == NONE || st[i].st_size == 0;
+	    if ((! is_empty) < p_says_nonexistent[reverse ^ is_empty])
 	      {
 		assert (i0 != NONE);
 		if (ok_to_reverse
@@ -644,9 +647,7 @@ intuit_diff_type()
 /* Count the path name components in FILENAME's prefix.
    If CHECKDIRS is nonzero, count only existing directories.  */
 static int
-prefix_components (filename, checkdirs)
-     char *filename;
-     int checkdirs;
+prefix_components (char *filename, int checkdirs)
 {
   int count = 0;
   struct stat stat_buf;
@@ -676,9 +677,7 @@ prefix_components (filename, checkdirs)
    Ignore null names, and ignore NAME[i] if IGNORE[i] is nonzero.
    Return NONE if all names are ignored.  */
 static enum nametype
-best_name (name, ignore)
-     char *const *name;
-     int const *ignore;
+best_name (char *const *name, int const *ignore)
 {
   enum nametype i;
   int components[3];
@@ -724,9 +723,7 @@ best_name (name, ignore)
 /* Remember where this patch ends so we know where to start up again. */
 
 static void
-next_intuit_at(file_pos,file_line)
-file_offset file_pos;
-LINENUM file_line;
+next_intuit_at (file_offset file_pos, LINENUM file_line)
 {
     p_base = file_pos;
     p_bline = file_line;
@@ -735,9 +732,7 @@ LINENUM file_line;
 /* Basically a verbose fseek() to the actual diff listing. */
 
 static void
-skip_to(file_pos,file_line)
-file_offset file_pos;
-LINENUM file_line;
+skip_to (file_offset file_pos, LINENUM file_line)
 {
     register FILE *i = pfp;
     register FILE *o = stdout;
@@ -769,7 +764,7 @@ LINENUM file_line;
 
 /* Make this a function for better debugging.  */
 static void
-malformed ()
+malformed (void)
 {
     char numbuf[LINENUM_LENGTH_BOUND + 1];
     fatal ("malformed patch at line %s: %s",
@@ -780,9 +775,7 @@ malformed ()
 /* Parse a line number from a string.
    Return the address of the first char after the number.  */
 static char *
-scan_linenum (s0, linenum)
-     char *s0;
-     LINENUM *linenum;
+scan_linenum (char *s0, LINENUM *linenum)
 {
   char *s;
   LINENUM n = 0;
@@ -795,11 +788,11 @@ scan_linenum (s0, linenum)
       overflow |= new_n / 10 != n;
       n = new_n;
     }
-
+  
   if (s == s0)
     fatal ("missing line number at line %s: %s",
 	   format_linenum (numbuf, p_input_line), buf);
-
+  
   if (overflow)
     fatal ("line number %.*s is too large at line %s: %s",
 	   (int) (s - s0), s0, format_linenum (numbuf, p_input_line), buf);
@@ -812,9 +805,7 @@ scan_linenum (s0, linenum)
    0 if not; -1 if ran out of memory. */
 
 int
-another_hunk (difftype, rev)
-     enum diff difftype;
-     int rev;
+another_hunk (enum diff difftype, int rev)
 {
     register char *s;
     register LINENUM context = 0;
@@ -1194,8 +1185,8 @@ another_hunk (difftype, rev)
 		    fillsrc++;
 		if (p_end < fillsrc || fillsrc == repl_beginning)
 		  {
-		    fatal ("replacement text or line numbers mangled in hunk at line %ld",
-			p_hunk_beg);
+		    fatal ("replacement text or line numbers mangled in hunk at line %s",
+			   format_linenum (numbuf0, p_hunk_beg));
 		  }
 		p_line[filldst] = p_line[fillsrc];
 		p_Char[filldst] = p_Char[fillsrc];
@@ -1506,7 +1497,7 @@ another_hunk (difftype, rev)
 }
 
 static size_t
-get_line ()
+get_line (void)
 {
    return pget_line (p_indent, p_rfc934_nesting, p_strip_trailing_cr);
 }
@@ -1521,10 +1512,7 @@ get_line ()
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (indent, rfc934_nesting, strip_trailing_cr)
-     int indent;
-     int rfc934_nesting;
-     int strip_trailing_cr;
+pget_line (int indent, int rfc934_nesting, int strip_trailing_cr)
 {
   register FILE *fp = pfp;
   register int c;
@@ -1609,7 +1597,7 @@ pget_line (indent, rfc934_nesting, strip_trailing_cr)
 }
 
 static bool
-incomplete_line ()
+incomplete_line (void)
 {
   register FILE *fp = pfp;
   register int c;
@@ -1632,7 +1620,7 @@ incomplete_line ()
 /* Reverse the old and new portions of the current hunk. */
 
 bool
-pch_swap()
+pch_swap (void)
 {
     char **tp_line;		/* the text of the hunk */
     size_t *tp_len;		/* length of each line */
@@ -1734,8 +1722,7 @@ pch_swap()
    Return 1 for empty, 2 for nonexistent.  */
 
 bool
-pch_says_nonexistent (which)
-     int which;
+pch_says_nonexistent (int which)
 {
   return p_says_nonexistent[which];
 }
@@ -1744,8 +1731,7 @@ pch_says_nonexistent (which)
    or -1 if there was no timestamp or an error in the timestamp.  */
 
 time_t
-pch_timestamp (which)
-     int which;
+pch_timestamp (int which)
 {
   return p_timestamp[which];
 }
@@ -1753,7 +1739,7 @@ pch_timestamp (which)
 /* Return the specified line position in the old file of the old context. */
 
 LINENUM
-pch_first()
+pch_first (void)
 {
     return p_first;
 }
@@ -1761,7 +1747,7 @@ pch_first()
 /* Return the number of lines of old context. */
 
 LINENUM
-pch_ptrn_lines()
+pch_ptrn_lines (void)
 {
     return p_ptrn_lines;
 }
@@ -1769,7 +1755,7 @@ pch_ptrn_lines()
 /* Return the probable line position in the new file of the first line. */
 
 LINENUM
-pch_newfirst()
+pch_newfirst (void)
 {
     return p_newfirst;
 }
@@ -1777,7 +1763,7 @@ pch_newfirst()
 /* Return the number of lines in the replacement text including context. */
 
 LINENUM
-pch_repl_lines()
+pch_repl_lines (void)
 {
     return p_repl_lines;
 }
@@ -1785,7 +1771,7 @@ pch_repl_lines()
 /* Return the number of lines in the whole hunk. */
 
 LINENUM
-pch_end()
+pch_end (void)
 {
     return p_end;
 }
@@ -1793,7 +1779,7 @@ pch_end()
 /* Return the number of context lines before the first changed line. */
 
 LINENUM
-pch_prefix_context ()
+pch_prefix_context (void)
 {
     return p_prefix_context;
 }
@@ -1801,7 +1787,7 @@ pch_prefix_context ()
 /* Return the number of context lines after the last changed line. */
 
 LINENUM
-pch_suffix_context ()
+pch_suffix_context (void)
 {
     return p_suffix_context;
 }
@@ -1809,8 +1795,7 @@ pch_suffix_context ()
 /* Return the length of a particular patch line. */
 
 size_t
-pch_line_len(line)
-LINENUM line;
+pch_line_len (LINENUM line)
 {
     return p_len[line];
 }
@@ -1818,8 +1803,7 @@ LINENUM line;
 /* Return the control character (+, -, *, !, etc) for a patch line. */
 
 char
-pch_char(line)
-LINENUM line;
+pch_char (LINENUM line)
 {
     return p_Char[line];
 }
@@ -1827,8 +1811,7 @@ LINENUM line;
 /* Return a pointer to a particular patch line. */
 
 char *
-pfetch(line)
-LINENUM line;
+pfetch (LINENUM line)
 {
     return p_line[line];
 }
@@ -1836,9 +1819,7 @@ LINENUM line;
 /* Output a patch line.  */
 
 bool
-pch_write_line (line, file)
-     LINENUM line;
-     FILE *file;
+pch_write_line (LINENUM line, FILE *file)
 {
   bool after_newline = p_line[line][p_len[line] - 1] == '\n';
   if (! fwrite (p_line[line], sizeof (*p_line[line]), p_len[line], file))
@@ -1849,7 +1830,7 @@ pch_write_line (line, file)
 /* Return where in the patch file this hunk began, for error messages. */
 
 LINENUM
-pch_hunk_beg()
+pch_hunk_beg (void)
 {
     return p_hunk_beg;
 }
@@ -1857,8 +1838,7 @@ pch_hunk_beg()
 /* Apply an ed script by feeding ed itself. */
 
 void
-do_ed_script (ofp)
-     FILE *ofp;
+do_ed_script (FILE *ofp)
 {
     static char const ed_program[] = ed_PROGRAM;
 
