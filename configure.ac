@@ -8,7 +8,7 @@ AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 
 PACKAGE=patch
-VERSION=2.3.5
+VERSION=2.3.6
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -60,12 +60,26 @@ AC_C_CONST
 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h string.h unistd.h varargs.h)
+AC_CHECK_HEADERS(fcntl.h limits.h string.h unistd.h utime.h varargs.h)
 
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
+
+dnl Some systems have utime.h but don't declare the struct anywhere.
+AC_MSG_CHECKING(for struct utimbuf)
+AC_CACHE_VAL(patch_cv_sys_struct_utimbuf,
+[AC_TRY_COMPILE([#include <sys/types.h>
+#if HAVE_UTIME_H
+#include <utime.h>
+#endif], [static struct utimbuf x; x.actime = x.modtime;],
+  patch_cv_sys_struct_utimbuf=yes,
+  patch_cv_sys_struct_utimbuf=no)])
+AC_MSG_RESULT($patch_cv_sys_struct_utimbuf)
+if test $patch_cv_sys_struct_utimbuf = yes; then
+   AC_DEFINE(HAVE_STRUCT_UTIMBUF)
+fi
 
 # Check for NetBSD 1.0 bug, where memchr(..., 0) returns nonzero.
 AC_MSG_CHECKING(for working memchr)
