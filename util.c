@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: util.c,v 1.17 1997/05/30 08:03:48 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -634,7 +634,7 @@ systemic (command)
    they are not general emulators.  */
 
 #include <quotearg.h>
-static int doprogam PARAMS ((char const *, char const *));
+static int doprogram PARAMS ((char const *, char const *));
 static int mkdir PARAMS ((char const *, mode_t));
 static int rmdir PARAMS ((char const *));
 
