@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.22 1997/07/10 08:16:12 eggert Exp $
+.Id $Id: patch.man,v 1.23 1997/07/16 12:26:36 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -66,6 +66,8 @@ diff listing to
 .BR patch ,
 and it should work.
 If the entire diff is indented by a consistent amount,
+or if a context diff is encapsulated one or more times by prepending
+"\fB\- \fP" to lines starting with "\fB\-\fP" as specified by Internet RFC 934,
 this is taken into account.
 .PP
 With context diffs, and to a lesser extent with normal diffs,
@@ -684,6 +686,10 @@ controlling terminal; used to get answers to questions asked of the user
 .SH "SEE ALSO"
 .BR diff (1),
 .BR ed (1)
+.Sp
+Marshall T. Rose and Einar A. Stefferud,
+Proposed Standard for Message Encapsulation,
+Internet RFC 934 <URL:ftp://ftp.isi.edu/in-notes/rfc934.txt> (1985-01).
 .SH "NOTES FOR PATCH SENDERS"
 There are several things you should bear in mind if you are going to
 be sending out patches.

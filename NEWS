@@ -13,6 +13,9 @@ Changes in version 2.5:
 * When asking the user whether to reverse a patch,
   the default answer is now `no' instead of `yes'.
 
+* `patch' can now recognize context diffs that have been encapsulated
+  by prepending "- " to lines beginning with "-" (as per Internet RFC 934).
+
 Changes in version 2.4:
 
 * New options:
