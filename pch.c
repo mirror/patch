@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.22 1997/06/13 06:28:37 eggert Exp $ */
+/* $Id: pch.c,v 1.23 1997/06/17 06:52:12 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -99,6 +99,7 @@ open_patch_file(filename)
     struct stat st;
     if (!filename || !*filename || strEQ (filename, "-"))
       {
+	file_offset stdin_pos;
 #if HAVE_SETMODE
 	if (binary_transput)
 	  {
@@ -109,10 +110,10 @@ open_patch_file(filename)
 #endif
 	if (fstat (STDIN_FILENO, &st) != 0)
 	  pfatal ("fstat");
-	if (S_ISREG (st.st_mode))
+	if (S_ISREG (st.st_mode) && (stdin_pos = file_tell (stdin)) != -1)
 	  {
 	    pfp = stdin;
-	    file_pos = file_tell (stdin);
+	    file_pos = stdin_pos;
 	  }
 	else
 	  {
@@ -384,8 +385,8 @@ intuit_diff_type()
 	    retval = UNI_DIFF;
 	    if (! ((name[OLD] || ! p_timestamp[OLD])
 		   && (name[NEW] || ! p_timestamp[NEW])))
-	      fatal ("missing header for unified diff at line %ld of patch",
-		     p_sline);
+	      say ("missing header for unified diff at line %ld of patch\n",
+		   p_sline);
 	    goto scan_exit;
 	}
 	stars_this_line = strnEQ(s, "********", 8);
@@ -420,8 +421,8 @@ intuit_diff_type()
 
 	    if (! ((name[OLD] || ! p_timestamp[OLD])
 		   && (name[NEW] || ! p_timestamp[NEW])))
-	      fatal ("missing header for context diff at line %ld of patch",
-		     p_sline);
+	      say ("missing header for context diff at line %ld of patch\n",
+		   p_sline);
 	    goto scan_exit;
 	}
 	if ((diff_type == NO_DIFF || diff_type == NORMAL_DIFF) &&
