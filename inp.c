@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.1 1992/08/26 02:00:54 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.2 1993/05/29 16:46:25 eggert Exp $
  *
  * $Log: inp.c,v $
- * Revision 1.1  1992/08/26 02:00:54  djm
- * Initial revision
+ * Revision 1.2  1993/05/29 16:46:25  eggert
+ * Formerly inp.c.~9~
  *
- * Revision 1.1  1992/08/26 02:00:54  djm
- * Initial revision
+ * Revision 1.2  1993/05/29 16:46:25  eggert
+ * Formerly inp.c.~9~
  *
  * Revision 2.0.1.1  88/06/03  15:06:13  lwall
  * patch10: made a little smarter about sccs files
@@ -86,6 +86,7 @@ char *filename;
     Reg1 char *s;
     Reg2 LINENUM iline;
     char lbuf[MAXLINELEN];
+    int read_only;
 
     statfailed = stat(filename, &filestat);
     if (statfailed && ok_to_create_file) {
@@ -97,10 +98,12 @@ char *filename;
     }
     /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
     if (statfailed
-	/* No one can write to it.  */
-	|| (filestat.st_mode & 0222) == 0
-	/* I can't write to it.  */
-	|| ((filestat.st_mode & 0022) == 0 && filestat.st_uid != myuid)) {
+	|| (! (read_only = strcmp(filename, outname))
+	    && (/* No one can write to it.  */
+		(filestat.st_mode & 0222) == 0
+		/* I can't write to it.  */
+		|| ((filestat.st_mode & 0022) == 0
+		    && filestat.st_uid != myuid)))) {
 	struct stat cstat;
 	char *cs = Nullch;
 	char *filebase;
@@ -118,12 +121,12 @@ char *filename;
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
 	    || try("RCS/%s"  , filebase,         0)
 	    || try(    "%s%s", filebase, RCSSUFFIX)) {
-	    Sprintf(buf, CHECKOUT, filename);
+	    Sprintf(buf, read_only ? CHECKOUT : CHECKOUT_LOCKED, filename);
 	    Sprintf(lbuf, RCSDIFF, filename);
 	    cs = "RCS";
 	} else if (   try("SCCS/%s%s", SCCSPREFIX, filebase)
 		   || try(     "%s%s", SCCSPREFIX, filebase)) {
-	    Sprintf(buf, GET, s);
+	    Sprintf(buf, read_only ? GET : GET_LOCKED, s);
 	    Sprintf(lbuf, SCCSDIFF, s, filename);
 	    cs = "SCCS";
 	} else if (statfailed)
