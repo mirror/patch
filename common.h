@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.12 1997/05/06 12:27:15 eggert Exp $ */
+/* $Id: common.h,v 1.13 1997/05/15 17:59:15 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -86,6 +86,9 @@ If not, write to the Free Software Foundation,
 #ifndef INT_MAX
 #define INT_MAX 2147483647
 #endif
+#ifndef LONG_MIN
+#define LONG_MIN (-1-2147483647L)
+#endif
 
 #include <ctype.h>
 /* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
@@ -104,6 +107,15 @@ If not, write to the Free Software Foundation,
 
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
+#endif
+
+
+#ifndef FILESYSTEM_PREFIX_LEN
+#define FILESYSTEM_PREFIX_LEN(f) 0
+#endif
+
+#ifndef ISSLASH
+#define ISSLASH(c) ((c) == '/')
 #endif
 
 
@@ -141,7 +153,6 @@ XTERN bool using_plan_a;		/* try to keep everything in memory */
 XTERN char *inname;
 XTERN int inerrno;
 XTERN struct stat instat;
-XTERN bool ok_to_create_file;
 XTERN bool dry_run;
 XTERN bool posixly_correct;
 
@@ -159,7 +170,7 @@ XTERN int debug;
 #endif
 XTERN bool force;
 XTERN bool batch;
-XTERN bool reverse;
+XTERN int reverse;
 XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
 XTERN int strippath;
@@ -197,6 +208,7 @@ XTERN char *revision;			/* prerequisite revision, if any */
 # endif
 #endif
 
+int ok_to_reverse PARAMS ((void));
 VOID *xmalloc PARAMS ((size_t));
 void fatal_exit PARAMS ((int)) __attribute__ ((noreturn));
 
@@ -258,6 +270,27 @@ off_t lseek ();
 #ifndef O_RDONLY
 #define O_RDONLY 0
 #endif
+#ifndef O_WRONLY
+#define O_WRONLY 1
+#endif
 #ifndef O_RDWR
 #define O_RDWR 2
+#endif
+#ifndef _O_BINARY
+#define _O_BINARY 0
+#endif
+#ifndef O_BINARY
+#define O_BINARY _O_BINARY
+#endif
+#ifndef O_CREAT
+#define O_CREAT 0
+#endif
+#ifndef O_TRUNC
+#define O_TRUNC 0
+#endif
+
+#if HAVE_SETMODE
+  XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
+#else
+# define binary_transput 0
 #endif
