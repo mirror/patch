@@ -87,7 +87,7 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 	quote.h quotearg.h quotesys.h \
 	unlocked-io.h util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
-	README-alpha aclocal.m4 \
+	aclocal.m4 \
 	config.hin configure configure.ac \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
