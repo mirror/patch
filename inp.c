@@ -1,10 +1,10 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.24 2002/06/03 05:35:40 eggert Exp $ */
+/* $Id: inp.c,v 1.25 2003/05/20 13:58:02 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
-   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free Software
-   Foundation, Inc.
+   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,9 +48,9 @@ static LINENUM lines_per_buf;		/* how many lines per buffer */
 static size_t tireclen;			/* length of records in tmp file */
 static size_t last_line_size;		/* size of last input line */
 
-static bool plan_a (char const *);	/* yield FALSE if memory runs out */
+static bool plan_a (char const *);	/* yield false if memory runs out */
 static void plan_b (char const *);
-static void report_revision (int);
+static void report_revision (bool);
 static void too_many_lines (char const *) __attribute__((noreturn));
 
 /* New patch--prepare to edit another file. */
@@ -103,7 +103,7 @@ scan_input (char *filename)
 /* Report whether a desired revision was found.  */
 
 static void
-report_revision (int found_revision)
+report_revision (bool found_revision)
 {
   char const *rev = quotearg (revision);
 
@@ -141,7 +141,7 @@ too_many_lines (char const *filename)
 void
 get_input_file (char const *filename, char const *outname)
 {
-    int elsewhere = strcmp (filename, outname);
+    bool elsewhere = strcmp (filename, outname) != 0;
     char const *cs;
     char *diffbuf;
     char *getbuf;
@@ -229,7 +229,7 @@ plan_a (char const *filename)
      or if storage isn't available.  */
   if (! (size == instat.st_size
 	 && (buffer = malloc (size ? size : (size_t) 1))))
-    return FALSE;
+    return false;
 
   /* Read the input file, but don't bother reading it if it's empty.
      When creating files, the files do not actually exist.  */
@@ -255,7 +255,7 @@ plan_a (char const *filename)
 	      /* Perhaps size is too large for this host.  */
 	      close (ifd);
 	      free (buffer);
-	      return FALSE;
+	      return false;
 	    }
 	  buffered += n;
 	}
@@ -275,7 +275,7 @@ plan_a (char const *filename)
 	 && (ptr = (char const **) malloc ((size_t) iline * sizeof *ptr))))
     {
       free (buffer);
-      return FALSE;
+      return false;
     }
   iline = 0;
   for (s = buffer;  ;  s++)
@@ -292,7 +292,7 @@ plan_a (char const *filename)
     {
       char const *rev = revision;
       int rev0 = rev[0];
-      int found_revision = 0;
+      bool found_revision = false;
       size_t revlen = strlen (rev);
 
       if (revlen <= size)
@@ -304,7 +304,7 @@ plan_a (char const *filename)
 		&& (s == buffer || ISSPACE ((unsigned char) s[-1]))
 		&& (s + 1 == limrev || ISSPACE ((unsigned char) s[revlen])))
 	      {
-		found_revision = 1;
+		found_revision = true;
 		break;
 	      }
 	}
@@ -315,7 +315,7 @@ plan_a (char const *filename)
   /* Plan A will work.  */
   i_buffer = buffer;
   i_ptr = ptr;
-  return TRUE;
+  return true;
 }
 
 /* Keep (virtually) nothing in memory. */
@@ -327,7 +327,7 @@ plan_b (char const *filename)
   register int c;
   register size_t len;
   register size_t maxlen;
-  register int found_revision;
+  register bool found_revision;
   register size_t i;
   register char const *rev;
   register size_t revlen;
@@ -427,7 +427,7 @@ plan_b (char const *filename)
    WHICHBUF is ignored when the file is in memory.  */
 
 char const *
-ifetch (LINENUM line, int whichbuf, size_t *psize)
+ifetch (LINENUM line, bool whichbuf, size_t *psize)
 {
     register char const *q;
     register char const *p;
@@ -445,9 +445,9 @@ ifetch (LINENUM line, int whichbuf, size_t *psize)
 	LINENUM baseline = line - offline;
 
 	if (tiline[0] == baseline)
-	    whichbuf = 0;
+	    whichbuf = false;
 	else if (tiline[1] == baseline)
-	    whichbuf = 1;
+	    whichbuf = true;
 	else {
 	    tiline[whichbuf] = baseline;
 	    if (lseek (tifd, (off_t) (baseline/lines_per_buf * tibufsize),
