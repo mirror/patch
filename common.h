@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.31 2002/05/25 06:28:29 eggert Exp $ */
+/* $Id: common.h,v 1.32 2002/05/28 07:12:03 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
@@ -24,14 +24,6 @@
 
 #ifndef DEBUGGING
 #define DEBUGGING 1
-#endif
-
-/* We must define `volatile' and `const' first (the latter inside config.h),
-   so that they're used consistently in all system includes.  */
-#ifndef __STDC__
-# ifndef volatile
-# define volatile
-# endif
 #endif
 
 #include <config.h>
@@ -218,25 +210,11 @@ XTERN enum diff diff_type;
 
 XTERN char *revision;			/* prerequisite revision, if any */
 
-#ifdef __STDC__
-# define GENERIC_OBJECT void
-#else
-# define GENERIC_OBJECT char
-#endif
-
 #if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6) || __STRICT_ANSI__
 # define __attribute__(x)
 #endif
 
-#ifndef PARAMS
-# if defined PROTOTYPES || (defined __STDC__ && __STDC__)
-#  define PARAMS(args) args
-# else
-#  define PARAMS(args) ()
-# endif
-#endif
-
-void fatal_exit PARAMS ((int)) __attribute__ ((noreturn));
+void fatal_exit (int) __attribute__ ((noreturn));
 
 #include <errno.h>
 #if !STDC_HEADERS && !defined errno
@@ -249,7 +227,7 @@ extern int errno;
 # if !HAVE_MEMCHR
 #  define memcmp(s1, s2, n) bcmp (s1, s2, n)
 #  define memcpy(d, s, n) bcopy (s, d, n)
-GENERIC_OBJECT *memchr ();
+void *memchr ();
 # endif
 #endif
 
@@ -257,8 +235,8 @@ GENERIC_OBJECT *memchr ();
 # include <stdlib.h>
 #else
 char *getenv ();
-GENERIC_OBJECT *malloc ();
-GENERIC_OBJECT *realloc ();
+void *malloc ();
+void *realloc ();
 #endif
 
 #if HAVE_UNISTD_H
