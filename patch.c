@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.25 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: patch.c,v 1.26 1998/03/17 18:35:38 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -596,7 +596,7 @@ static char const *const option_help[] =
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
 "",
-"Report bugs to <bug-gnu-utils@prep.ai.mit.edu>.",
+"Report bugs to <bug-gnu-utils@gnu.org>.",
 0
 };
 
