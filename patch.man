@@ -2,14 +2,14 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.6 1997/04/07 05:35:15 eggert Exp $
-.ta 5n
+.Id $Id: patch.man,v 1.7 1997/04/14 05:32:30 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
 .if n .sp
 ..
 .TH PATCH 1 \*(Dt GNU
+.ta 3n
 .SH NAME
 patch \- apply a diff file to an original
 .SH SYNOPSIS
@@ -20,7 +20,8 @@ patch \- apply a diff file to an original
 .Sp
 but usually just
 .Sp
-.BI "patch \-p" number " <" patchfile
+.BI "patch \-p" number
+.BI < patchfile
 .SH DESCRIPTION
 .B patch
 takes a patch file
@@ -333,6 +334,15 @@ Whatever you end up with is looked for either in the current directory,
 or the directory specified by the
 .B \-d
 option.
+With GNU
+.BR patch ,
+the two-argument
+.BI "\-p " N
+form of this option is equivalent to one-argument
+.BI \-p N
+form, but this is not true of traditional
+.BR patch ,
+so the one-argument form is recommended for portability.
 .TP
 \fB\-r\fP \fIfile\fP  or  \fB\*=reject\-file=\fP\fIfile\fP
 Put rejects into
@@ -579,6 +589,37 @@ The file will be left empty, but not actually be removed unless the
 or
 .B \*=remove\-empty\-files
 option is given.
+An easy way to generate patches that create and remove files is to use GNU
+.BR diff 's
+.B \*=new\-file
+option.
+.PP
+If the recipient is supposed to use the
+.BI \-p N
+option, do not send output that looks like this:
+.Sp
+.ft B
+	diff \-uNR v2.0.29/prog/README prog/README
+.br
+	\-\-\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+.br
+	+++ prog/README   Mon Mar 17 14:58:22 1997
+.ft
+.Sp
+because the two file names have different numbers of slashes,
+and different versions of
+.B patch
+interpret the file names differently.
+To avoid confusion, send output that looks like this instead:
+.Sp
+.ft B
+	diff \-uNR v2.0.29/prog/README v2.0.30/prog/README
+.br
+	\-\-\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+.br
+	+++ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
+.ft
+.Sp
 .PP
 Take care not to send out reversed patches, since it makes people wonder
 whether they already applied the patch.
