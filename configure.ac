@@ -59,26 +59,16 @@ gl_BACKUPFILE
 gl_DIRNAME
 gl_ERROR
 gl_FUNC_MEMCHR
-gl_FUNC_RMDIR
 gl_GETOPT
 gl_PREREQ_XMALLOC
 gl_QUOTE
 gl_QUOTEARG
-
-dnl This should be in gnulib, but isn't for some reason.
-AC_DEFUN([jm_PREREQ_ADDEXT],
-[
-  dnl For addext.c.
-  AC_REQUIRE([AC_SYS_LONG_FILE_NAMES])
-  AC_CHECK_FUNCS(pathconf)
-  AC_CHECK_HEADERS(limits.h string.h unistd.h)
-])
-jm_PREREQ_ADDEXT
+gl_STRCASE
+gl_XALLOC
 
 AC_CHECK_DECLS([free, getenv, malloc, mktemp])
 AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
   pathconf raise sigaction sigprocmask sigsetmask strerror)
-AC_REPLACE_FUNCS(mkdir strncasecmp)
 AC_FUNC_FSEEKO
 jm_FUNC_GLIBC_UNLOCKED_IO
 jm_FUNC_MALLOC
