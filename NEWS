@@ -1,9 +1,66 @@
-Changes in version 2.2:
+The diffutils 2.7 documentation for `patch' is obsolete; this should be
+fixed in diffutils 2.8.  In the mean time, see `patch --help',
+or consult the man page in this distribution.
 
-* Removed the input line length limit (was 1k).
-* Added the --help option.
-* The backup file extension defaults to "~" on systems without long file
-  names, like it used to.
+Changes since version 2.1:
+
+* Arbitrary limits removed (e.g. line length, file name length).
+
+* On POSIX-compliant hosts, you can now patch binary files using the output of
+  GNU `diff -a'.
+
+* New options:
+  --dry-run
+  --help
+  --verbose
+  -i FILE or --input=FILE
+  -V rcs or --version-control=rcs
+  -V sccs or --version-control=sccs
+  -y PREF or --basename-prefix=PREF
+
+* patch is now quieter by default; use --verbose for the old chatty behavior.
+
+* Patch now complies better with POSIX.2 if your host is POSIX-compliant.
+
+  Therefore:
+  - By default, no backups are made.  Set the VERSION_CONTROL environment
+    variable to "existing" if you prefer patch's traditional behavior.
+  - The simple backup file name for F defaults to F.orig
+    regardless of whether the file system supports long file names,
+    and F~ is used only if F.orig is too long for that particular file.
+  - Similarly for the reject file names F.rej and F#.
+
+  Also:
+  - The pseudo-option `+' has been withdrawn.
+  - -b is equivalent to --version-control=simple;
+    `-z SUFF' has the meaning that `-b SUFF' used to.
+  - Names of files to be patched are taken first from *** line and then from
+    --- line of context diffes; then from Index: line; /dev/tty is
+    consulted if none of the above files exist.
+  - Exit status 0 means success, 1 means hunks were rejected, 2 means trouble.
+  - `-l' ignores changes only in spaces and tabs, not in other white space.
+  - If no `-p' option is given, `-pINFINITY' is assumed, instead of trying
+    to guess the proper value.
+  - `-p' now requires an operand; use `-p 0' to get the effect of the old plain
+    `-p' option.
+  - `-p' treates two or more adjacent slashes as if it were one slash.
+  - The TERM signal is caught.
+  - New option `-i F' reads patch from F instead of stdin.
+  - If a patch header would be ambiguous because it names two different files
+    that both exist, the patch header is ignored.
+
+* The `patch' options and build procedure conform to current GNU standards.
+  For example, the `--version' option now outputs copyright information.
+
+* When the patch is creating a file, but a nonempty file of that name already
+  exists, `patch' now asks for confirmation before patching.
+
+* RCS is used only if the version control method is `rcs', or is `existing'
+  and there is already an RCS file.  Similarly for SCCS.
+
+* Copyright notices have been clarified.  Every file in this version of `patch'
+  can be distributed under the GNU General Public License.  See README for
+  details.
 
 Changes in version 2.1:
 
@@ -18,7 +75,7 @@ Changes in version 2.0.12g8:
 * Start of the 12g series, with a GNU-style configure script and
   long-named options.
 * Added the -t --batch option, similar to -f.
-* Improved detection of files that are locked under RCS or SCCS.  
+* Improved detection of files that are locked under RCS or SCCS.
 * Reinstate the -E option to remove output files that are empty after
   being patched.
 * Print the system error message when system calls fail.
