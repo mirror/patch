@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.40 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: patch.c,v 1.41 2002/05/28 07:23:50 eggert Exp $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
@@ -1302,7 +1302,7 @@ similar (register char const *a, register size_t alen,
 /* Make a temporary file.  */
 
 #if HAVE_MKTEMP && ! HAVE_DECL_MKTEMP && ! defined mktemp
-char *mktemp (char *));
+char *mktemp (char *);
 #endif
 
 #ifndef TMPDIR
