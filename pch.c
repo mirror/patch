@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.8 1997/05/05 07:31:21 eggert Exp $ */
+/* $Id: pch.c,v 1.9 1997/05/06 01:39:20 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -63,6 +63,7 @@ enum nametype { OLD, NEW, INDEX, NONE };
 
 static enum diff intuit_diff_type PARAMS ((void));
 static enum nametype best_name PARAMS ((char * const *, int const *));
+static int existing_prefix_components PARAMS ((char *));
 static int path_name_components PARAMS ((char const *));
 static size_t pget_line PARAMS ((int));
 static size_t get_line PARAMS ((void));
@@ -387,7 +388,9 @@ intuit_diff_type()
 	 is nonzero, the best one otherwise.
        - If no named files exist, some names are given, posixly_correct is
 	 zero, and the patch appears to create a file,
-	 then use the best of the names given.
+	 then use the best name whose existing directory prefix contains
+	 the most nontrivial path name components.
+	 ("." and ".." are trivial.)
        - Otherwise, report failure by setting `inname' to 0;
 	 this causes our invoker to ask the user for a file name.  */
 
@@ -412,7 +415,25 @@ intuit_diff_type()
 	  {
 	    i = best_name (name, stat_errno);
 	    if (i == NONE && !posixly_correct && ok_to_create_file)
-	      i = best_name (name, 0);
+	      {
+		int existing[3];
+		int existing_max = 0;
+		int distance_from_maximum[3];
+
+		for (i = OLD;  i <= INDEX;  i++)
+		  if (name[i])
+		    {
+		      existing[i] = existing_prefix_components (name[i]);
+		      if (existing_max < existing[i])
+			existing_max = existing[i];
+		    }
+
+		for (i = OLD;  i <= INDEX;  i++)
+		  if (name[i])
+		    distance_from_maximum[i] = existing_max - existing[i];
+
+	        i = best_name (name, distance_from_maximum);
+	      }
 	  }
       }
 
@@ -451,13 +472,43 @@ path_name_components (filename)
   return count;
 }
 
+/* Count the number of nontrivial path name components in the existing prefix
+   of FILENAME.  They must all be directories.  */
+static int
+existing_prefix_components (filename)
+     char *filename;
+{
+  int count = 0;
+  struct stat st;
+  char *f;
+  char *flim = replace_slashes (filename);
+
+  if (flim)
+    {
+      for (f = filename;  f <= flim;  f++)
+	if (!*f)
+	  {
+	    if (! (stat (filename, &st) == 0 && S_ISDIR (st.st_mode)))
+	      break;
+	    count++;
+	    *f = '/';
+	  }
+
+      for (;  f <= flim;  f++)
+	if (!*f)
+	  *f = '/';
+    }
+
+  return count;
+}
+
 /* Return the index of the best of NAME[OLD], NAME[NEW], and NAME[INDEX].
-   Ignore null names, and ignore NAME[i] if STAT_ERRNO is not null and
-   STAT_ERRNO[i] is nonzero.  Return NONE if all names are ignored.  */
+   Ignore null names, and ignore NAME[i] if IGNORE[i] is nonzero.
+   Return NONE if all names are ignored.  */
 static enum nametype
-best_name (name, stat_errno)
+best_name (name, ignore)
      char *const *name;
-     int const *stat_errno;
+     int const *ignore;
 {
   enum nametype i;
   int components[3];
@@ -468,7 +519,7 @@ best_name (name, stat_errno)
   size_t len_min = (size_t) -1;
 
   for (i = OLD;  i <= INDEX;  i++)
-    if (name[i] && ! (stat_errno && stat_errno[i] != 0))
+    if (name[i] && !ignore[i])
       {
 	/* Take the names with the fewest path name components.  */
 	components[i] = path_name_components (name[i]);
@@ -491,7 +542,7 @@ best_name (name, stat_errno)
 
   /* Of those, take the first name.  */
   for (i = OLD;  i <= INDEX;  i++)
-    if (name[i] && ! (stat_errno && stat_errno[i] != 0)
+    if (name[i] && !ignore[i]
 	&& components[i] == components_min
 	&& basename_len[i] == basename_len_min
 	&& len[i] == len_min)
