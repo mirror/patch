@@ -1,17 +1,16 @@
 /* Print the version number.  */
 
-/* $Id: version.c,v 1.12 2002/05/25 10:36:44 eggert Exp $ */
+/* $Id: version.c,v 1.13 2003/05/18 08:25:17 eggert Exp $ */
 
 #define XTERN extern
 #include <common.h>
 #undef XTERN
 #define XTERN
-#include <patchlevel.h>
 #include <version.h>
 
 static char const copyright_string[] = "\
 Copyright (C) 1988 Larry Wall\n\
-Copyright (C) 2002 Free Software Foundation, Inc.";
+Copyright (C) 2003 Free Software Foundation, Inc.";
 
 static char const free_software_msgid[] = "\
 This program comes with NO WARRANTY, to the extent permitted by law.\n\
@@ -25,6 +24,6 @@ written by Larry Wall and Paul Eggert";
 void
 version (void)
 {
-  printf ("%s %s\n%s\n\n%s\n\n%s\n", PROGRAM_NAME, PATCH_VERSION,
+  printf ("%s %s\n%s\n\n%s\n\n%s\n", PACKAGE_NAME, PACKAGE_VERSION,
 	  copyright_string, free_software_msgid, authorship_msgid);
 }
