@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.11 1997/05/15 17:59:15 eggert Exp $ */
+/* $Id: inp.c,v 1.12 1997/05/19 06:52:03 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -100,12 +100,12 @@ char *filename;
 	break;
 
       case VERBOSE:
-	say ("Patching file %s using Plan %s...\n",
+	say ("Patching file `%s' using Plan %s...\n",
 	     filename, using_plan_a ? "A" : "B");
 	break;
 
       case DEFAULT_VERBOSITY:
-	say ("patching file %s\n", filename);
+	say ("patching file `%s'\n", filename);
 	break;
       }
 }
@@ -148,14 +148,13 @@ get_input_file (filename, outname)
      char const *outname;
 {
     int elsewhere = strcmp (filename, outname);
-    int input_errno = inerrno;
 
-    if (input_errno == -1)
-      input_errno = stat (inname, &instat) == 0 ? 0 : errno;
+    if (inerrno == -1)
+      inerrno = stat (inname, &instat) == 0 ? 0 : errno;
 
     /* Perhaps look for RCS or SCCS versions.  */
     if (backup_type == numbered_existing
-	&& (input_errno
+	&& (inerrno
 	    || (! elsewhere
 		&& (/* No one can write to it.  */
 		    (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) == 0
@@ -189,7 +188,7 @@ get_input_file (filename, outname)
 	    &&
 	    /* Check that RCS file is not working file.
 	       Some hosts don't report file name length errors.  */
-	    (input_errno
+	    (inerrno
 	     || instat.st_dev != cstat.st_dev
 	     || instat.st_ino != cstat.st_ino)) {
 
@@ -227,15 +226,15 @@ get_input_file (filename, outname)
 
 	    cs = "SCCS";
 
-	} else if (input_errno && !pch_says_nonexistent (reverse))
+	} else if (inerrno && !pch_says_nonexistent (reverse))
 	  {
-	    errno = input_errno;
+	    errno = inerrno;
 	    pfatal ("can't find file `%s'", filename);
 	  }
 	/* else we can't write to it but it's not under a version
 	   control system, so just proceed.  */
 	if (cs) {
-	    if (!input_errno) {
+	    if (!inerrno) {
 		if (!elsewhere
 		    && (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) != 0)
 		    /* Somebody can write to it.  */
@@ -244,11 +243,11 @@ get_input_file (filename, outname)
 		/* It might be checked out unlocked.  See if it's safe to
 		   check out the default version locked.  */
 		if (verbosity == VERBOSE)
-		    say ("Comparing file %s to default %s version...\n",
+		    say ("Comparing file `%s' to default %s version...\n",
 			 filename, cs);
 		if (systemic (diffbuf) != 0)
 		  {
-		    say ("warning: patching file %s, which does not match default %s version\n",
+		    say ("warning: patching file `%s', which does not match default %s version\n",
 			 filename, cs);
 		    cs = 0;
 		  }
@@ -257,49 +256,28 @@ get_input_file (filename, outname)
 	      {
 		if (dry_run)
 		  {
-		    if (input_errno)
+		    if (inerrno)
 		      fatal ("can't do dry run on nonexistent version-controlled file `%s'; invoke `%s' and try again",
 			     filename, buf);
 		  }
 		else
 		  {
 		    if (verbosity == VERBOSE)
-		      say ("Checking out file %s from %s...\n", filename, cs);
+		      say ("Checking out file `%s' from %s...\n", filename, cs);
 		    if (systemic (getbuf) != 0
 			|| stat (filename, &instat) != 0)
 		      fatal ("can't check out file `%s' from %s", filename, cs);
-		    input_errno = 0;
+		    inerrno = 0;
 		  }
 	      }
 	}
 	free (trybuf);
     }
 
-    if (input_errno)
+    if (inerrno)
       {
-	reverse ^= pch_says_nonexistent (reverse ^ 1) && ok_to_reverse ();
-	if (pch_says_nonexistent (reverse))
-	  {
-	    int fd;
-	    if (verbosity == VERBOSE)
-	      say ("(Creating file %s...)\n", inname);
-	    if (dry_run)
-	      {
-		instat.st_mode = 0;
-		instat.st_size = 0;
-		return;
-	      }
-	    fd = creat (inname,
-			S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-	    if (fd < 0 && (errno == ENOENT || errno == ENOTDIR))
-	      {
-		makedirs (inname);
-		fd = creat (inname,
-			    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-	      }
-	    if (fd < 0 || fstat (fd, &instat) != 0 || close (fd) != 0)
-	      pfatal ("can't create empty file `%s'", inname);
-	  }
+	instat.st_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	instat.st_size = 0;
       }
     else if (! S_ISREG (instat.st_mode))
       fatal ("`%s' is not a regular file -- can't patch", filename);
@@ -332,7 +310,7 @@ plan_a(filename)
   buffer = (char *) (ptr + (size + 2));
 
   /* Read the input file, but don't bother reading it if it's empty.
-     During dry runs, empty files may not actually exist.  */
+     When creating files, the files do not actually exist.  */
   if (size)
     {
       int ifd = open (filename, O_RDONLY|binary_transput);
@@ -418,15 +396,11 @@ plan_b(filename)
   register size_t revlen;
   register LINENUM line;
 
-  if (dry_run)
+  if (instat.st_size == 0)
     filename = "/dev/null";
   if (! (ifp = fopen (filename, binary_transput ? "rb" : "r")))
     pfatal ("can't open file `%s'", filename);
-  if (! (O_CREAT && O_TRUNC))
-    close (creat (TMPINNAME, S_IRUSR|S_IWUSR));
-  tifd = open (TMPINNAME, O_RDWR|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR);
-  if (tifd < 0)
-    pfatal ("can't open file `%s'", TMPINNAME);
+  tifd = create_file (TMPINNAME, O_RDWR | O_BINARY, (mode_t) 0);
   i = 0;
   len = 0;
   maxlen = 1;
