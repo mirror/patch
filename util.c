@@ -1,10 +1,10 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.34 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: util.c,v 1.35 2003/05/18 08:26:55 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
-   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002 Free
+   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -140,9 +140,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	say ("Renaming file %s to %s\n",
 	     quotearg_n (0, from), quotearg_n (1, to));
 
-      if (rename (from, to) == 0)
-	*from_needs_removal = 0;
-      else
+      if (rename (from, to) != 0)
 	{
 	  int to_dir_known_to_exist = 0;
 
@@ -152,10 +150,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	      makedirs (to);
 	      to_dir_known_to_exist = 1;
 	      if (rename (from, to) == 0)
-		{
-		  *from_needs_removal = 0;
-		  return;
-		}
+		goto rename_succeeded;
 	    }
 
 	  if (errno == EXDEV)
@@ -176,6 +171,14 @@ move_file (char const *from, int volatile *from_needs_removal,
 	  pfatal ("Can't rename file %s to %s",
 		  quotearg_n (0, from), quotearg_n (1, to));
 	}
+
+    rename_succeeded:
+      /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
+	 rename returned zero because FROM and TO are hard links to
+	 the same file.  */
+      if (0 < to_errno
+	  || (to_errno == 0 && to_st.st_nlink <= 1))
+	*from_needs_removal = 0;
     }
   else if (! backup)
     {
@@ -947,12 +950,15 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
 	    if (strip_leading < 0 || --sleading >= 0)
 		name = t+1;
 	  }
-	/* Allow file names with internal spaces,
-	   but only if a tab separates the file name from the date.  */
-	else if (*t == '\t'
-		 || (ISSPACE ((unsigned char) *t) && ! strchr (t + 1, '\t')))
+	else if (ISSPACE ((unsigned char) *t))
 	  {
+	    /* Allow file names with internal spaces,
+	       but only if a tab separates the file name from the date.  */
 	    char const *u = t;
+	    while (*u != '\t' && ISSPACE ((unsigned char) u[1]))
+	      u++;
+	    if (*u != '\t' && strchr (u + 1, '\t'))
+	      continue;
 
 	    if (set_time | set_utc)
 	      stamp = str2time (&u, initial_time,
