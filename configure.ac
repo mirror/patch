@@ -8,7 +8,7 @@ AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 
 PACKAGE=patch
-VERSION=2.2.91
+VERSION=2.2.92
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -89,5 +89,32 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
 AC_SYS_LONG_FILE_NAMES
+
+AC_MSG_CHECKING([for d_ino member in directory struct])
+AC_CACHE_VAL(patch_cv_sys_d_ino_in_dirent,
+[AC_TRY_LINK([
+#include <sys/types.h>
+#if HAVE_DIRENT_H
+# include <dirent.h>
+#else
+# define dirent direct
+# if HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# ifdef HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# ifdef HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
+],
+  [struct dirent dp; dp.d_ino = 0;],
+    patch_cv_sys_d_ino_in_dirent=yes,
+    patch_cv_sys_d_ino_in_dirent=no)])
+AC_MSG_RESULT($patch_cv_sys_d_ino_in_dirent)
+if test $patch_cv_sys_d_ino_in_dirent = yes; then
+  AC_DEFINE(D_INO_IN_DIRENT)
+fi
 
 AC_OUTPUT(Makefile)
