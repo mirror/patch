@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.19 1997/06/09 05:36:28 eggert Exp $ */
+/* $Id: patch.c,v 1.20 1997/06/13 06:28:37 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -85,7 +85,6 @@ static char * const *Argv;
 static FILE *ofp;  /* output file pointer */
 static FILE *rejfp;  /* reject file pointer */
 
-static char *output;
 static char const *patchname;
 static char *rejname;
 static char const * volatile TMPREJNAME;
@@ -149,8 +148,8 @@ char **argv;
     Argv = argv;
     get_some_switches();
 
-    if (output)
-      init_output (output);
+    if (outfile)
+      init_output (outfile);
 
     /* Make sure we clean up in case of disaster.  */
     set_signals(0);
@@ -163,7 +162,7 @@ char **argv;
       int hunk = 0;
       int failed = 0;
       int imperfections = 0;
-      char *outname = output ? output : inname;
+      char *outname = outfile ? outfile : inname;
 
       if (!skip_rest_of_patch)
 	get_input_file (inname, outname);
@@ -177,7 +176,7 @@ char **argv;
 	bool after_newline = TRUE;
 
 	/* initialize the patched file */
-	if (!skip_rest_of_patch && !output)
+	if (! skip_rest_of_patch && ! outfile)
 	    init_output(TMPOUTNAME);
 
 	/* initialize reject file */
@@ -238,7 +237,7 @@ char **argv;
 			 && ++fuzz <= mymaxfuzz);
 
 		if (skip_rest_of_patch) {		/* just got decided */
-		  if (ofp && !output)
+		  if (ofp && ! outfile)
 		    {
 		      fclose (ofp);
 		      ofp = 0;
@@ -249,8 +248,8 @@ char **argv;
 	    newwhere = pch_newfirst() + last_offset;
 	    if (skip_rest_of_patch) {
 		abort_hunk();
-		failed = 1;
-		if (verbosity != SILENT)
+		failed++;
+		if (verbosity == VERBOSE)
 		    say ("Hunk #%d ignored at %ld.\n", hunk, newwhere);
 	    }
 	    else if (!where
@@ -259,13 +258,13 @@ char **argv;
 		if (where)
 		  say ("Patch attempted to create file `%s', which already exists.\n", inname);
 		abort_hunk();
-		failed = 1;
+		failed++;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    }
 	    else if (! apply_hunk (&after_newline, where)) {
 		abort_hunk ();
-		failed = 1;
+		failed++;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    } else {
@@ -284,7 +283,7 @@ char **argv;
 	}
 
 	if (got_hunk < 0  &&  using_plan_a) {
-	    if (output)
+	    if (outfile)
 	      fatal ("out of memory using Plan A");
 	    say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
 	    if (ofp)
@@ -300,13 +299,17 @@ char **argv;
 	if (!skip_rest_of_patch)
 	  {
 	    assert (hunk);
-	    skip_rest_of_patch = ! spew_output (&after_newline);
+	    if (! spew_output (&after_newline))
+	      {
+		say ("Skipping patch.\n");
+		skip_rest_of_patch = TRUE;
+	      }
 	  }
       }
 
       /* and put the output where desired */
       ignore_signals ();
-      if (!skip_rest_of_patch && !output) {
+      if (! skip_rest_of_patch && ! outfile) {
 	  struct stat statbuf;
 
 	  if ((remove_empty_files
@@ -329,19 +332,21 @@ char **argv;
 	    {
 	      if (! dry_run)
 		{
+		  time_t t;
+
 		  move_file (TMPOUTNAME, outname, instat.st_mode,
 			     backup_type != none);
 
 		  if ((set_time | set_utc)
-		      && timestamp[reverse ^ 1] != (time_t) -1)
+		      && (t = pch_timestamp (reverse ^ 1)) != (time_t) -1)
 		    {
 		      struct utimbuf utimbuf;
-		      utimbuf.actime = utimbuf.modtime = timestamp[reverse ^ 1];
+		      utimbuf.actime = utimbuf.modtime = t;
 
 		      if (! force && ! inerrno
 			  && ! pch_says_nonexistent (reverse)
-			  && timestamp[reverse] != (time_t) -1
-			  && timestamp[reverse] != instat.st_mtime)
+			  && (t = pch_timestamp (reverse)) != (time_t) -1
+			  && t != instat.st_mtime)
 			say ("not setting time of file `%s' (time mismatch)\n",
 			     outname);
 		      else if (! force && (imperfections | failed))
@@ -629,7 +634,7 @@ get_some_switches()
 	    case 'o':
 		if (strcmp (optarg, "-") == 0)
 		  fatal ("can't output patches to standard output");
-		output = savestr (optarg);
+		outfile = savestr (optarg);
 		break;
 	    case 'p':
 		strippath = numeric_string (optarg, 0, "strip count");
@@ -703,6 +708,7 @@ get_some_switches()
     if (optind < Argc)
       {
 	inname = savestr (Argv[optind++]);
+	invc = -1;
 	if (optind < Argc)
 	  {
 	    patchname = savestr (Argv[optind++]);
@@ -1107,7 +1113,7 @@ spew_output (after_newline)
       if (! copy_till (after_newline, input_lines))
 	return FALSE;
 
-    if (ofp && !output)
+    if (ofp && ! outfile)
       {
 	if (fclose (ofp) != 0)
 	  write_fatal ();
