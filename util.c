@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.33 2002/05/25 10:51:11 eggert Exp $ */
+/* $Id: util.c,v 1.34 2002/05/28 07:12:03 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -45,23 +45,9 @@
 # define raise(sig) kill (getpid (), sig)
 #endif
 
-#if defined PROTOTYPES || (defined __STDC__ && __STDC__)
-# include <stdarg.h>
-# define vararg_start va_start
-#else
-# define vararg_start(ap,p) va_start (ap)
-# if HAVE_VARARGS_H
-#  include <varargs.h>
-# else
-   typedef char *va_list;
-#  define va_dcl int va_alist;
-#  define va_start(ap) ((ap) = (va_list) &va_alist)
-#  define va_arg(ap, t) (((t *) ((ap) += sizeof (t)))  [-1])
-#  define va_end(ap)
-# endif
-#endif
+#include <stdarg.h>
 
-static void makedirs PARAMS ((char *));
+static void makedirs (char *);
 
 /* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
    needs removal when cleaning up at the end of execution)
@@ -513,7 +499,7 @@ fatal (char const *format, ...)
 {
   va_list args;
   fprintf (stderr, "%s: **** ", program_name);
-  vararg_start (args, format);
+  va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
   putc ('\n', stderr);
@@ -547,7 +533,7 @@ pfatal (char const *format, ...)
   int errnum = errno;
   va_list args;
   fprintf (stderr, "%s: **** ", program_name);
-  vararg_start (args, format);
+  va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
   fflush (stderr); /* perror bypasses stdio on some hosts.  */
@@ -563,7 +549,7 @@ void
 say (char const *format, ...)
 {
   va_list args;
-  vararg_start (args, format);
+  va_start (args, format);
   vfprintf (stdout, format, args);
   va_end (args);
   fflush (stdout);
@@ -578,7 +564,7 @@ ask (char const *format, ...)
   int r;
   va_list args;
 
-  vararg_start (args, format);
+  va_start (args, format);
   vfprintf (stdout, format, args);
   va_end (args);
   fflush (stdout);
@@ -639,7 +625,7 @@ ok_to_reverse (char const *format, ...)
   if (noreverse || ! (force && verbosity == SILENT))
     {
       va_list args;
-      vararg_start (args, format);
+      va_start (args, format);
       vfprintf (stdout, format, args);
       va_end (args);
     }
@@ -735,7 +721,7 @@ static sigset_t initial_signal_mask;
 static sigset_t signals_to_block;
 
 #if ! HAVE_SIGACTION
-static RETSIGTYPE fatal_exit_handler PARAMS ((int)) __attribute__ ((noreturn));
+static RETSIGTYPE fatal_exit_handler (int) __attribute__ ((noreturn));
 static RETSIGTYPE
 fatal_exit_handler (int sig)
 {
