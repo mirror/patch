@@ -1,10 +1,10 @@
 /* inputting files to be patched */
 
-/* $Id: inp.h,v 1.6 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: inp.h,v 1.7 2003/05/20 14:05:22 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
-   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free
-   Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 XTERN LINENUM input_lines;		/* how long is input file in lines */
 
-char const *ifetch (LINENUM, int, size_t *);
+char const *ifetch (LINENUM, bool, size_t *);
 void get_input_file (char const *, char const *);
 void re_input (void);
 void scan_input (char *);
