@@ -3,6 +3,11 @@
 	introduced in the 2003-05-18 patch.  Bug reported by Andreas
 	Gruenbacher.
 
+	* configure.ac (gl_FUNC_RMDIR): Remove.
+	(jm_PREREQ_ADDEXT): Remove; now down by gl_BACKUPFILE.
+	(gl_STRCASE, gl_XALLOC): Add.
+	(AC_REPLACE_FUNCS): Remove mkdir, strcasecmp.
+
 2003-05-20  Paul Eggert  <eggert@twinsun.com>
 
 	* NEWS, configure.ac (AC_INIT): Version 2.5.9 released.
