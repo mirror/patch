@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.9 1997/05/06 01:39:20 eggert Exp $ */
+/* $Id: pch.c,v 1.10 1997/05/06 12:30:13 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -51,9 +51,9 @@ static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
 static size_t hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
-static long p_base;			/* where to intuit this time */
+static file_offset p_base;		/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
-static long p_start;			/* where intuit found a patch */
+static file_offset p_start;		/* where intuit found a patch */
 static LINENUM p_sline;			/* and the line number for it */
 static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
@@ -63,14 +63,13 @@ enum nametype { OLD, NEW, INDEX, NONE };
 
 static enum diff intuit_diff_type PARAMS ((void));
 static enum nametype best_name PARAMS ((char * const *, int const *));
-static int existing_prefix_components PARAMS ((char *));
-static int path_name_components PARAMS ((char const *));
+static int prefix_components PARAMS ((char *, int));
 static size_t pget_line PARAMS ((int));
 static size_t get_line PARAMS ((void));
 static bool incomplete_line PARAMS ((void));
 static bool grow_hunkmax PARAMS ((void));
-static void next_intuit_at PARAMS ((long, LINENUM));
-static void skip_to PARAMS ((long, LINENUM));
+static void next_intuit_at PARAMS ((file_offset, LINENUM));
+static void skip_to PARAMS ((file_offset, LINENUM));
 
 /* Prepare to look for the next patch in the patch file. */
 
@@ -92,7 +91,7 @@ void
 open_patch_file(filename)
      char const *filename;
 {
-    long file_pos = 0;
+    file_offset file_pos = 0;
     struct stat st;
     if (!filename || !*filename || strEQ (filename, "-"))
       {
@@ -101,7 +100,7 @@ open_patch_file(filename)
 	if (S_ISREG (st.st_mode))
 	  {
 	    pfp = stdin;
-	    file_pos = ftell (stdin);
+	    file_pos = file_tell (stdin);
 	    filename = 0;
 	  }
 	else
@@ -226,9 +225,9 @@ intuit_diff_type()
     register char *s;
     register char *t;
     register int indent;
-    register long this_line = 0;
-    register long previous_line;
-    register long first_command_line = -1;
+    register file_offset this_line = 0;
+    register file_offset previous_line;
+    register file_offset first_command_line = -1;
     LINENUM fcl_line = 0; /* Pacify `gcc -W'.  */
     register bool last_line_was_command = FALSE;
     register bool this_is_a_command = FALSE;
@@ -248,7 +247,7 @@ intuit_diff_type()
 	previous_line = this_line;
 	last_line_was_command = this_is_a_command;
 	stars_last_line = stars_this_line;
-	this_line = ftell(pfp);
+	this_line = file_tell (pfp);
 	indent = 0;
 	if (! pget_line (0)) {
 	    if (first_command_line >= 0) {
@@ -354,7 +353,7 @@ intuit_diff_type()
 		/* If the patch is a reversed context diff,
 		   scan the entire first hunk to see whether
 		   it's OK to create the file.  */
-		long saved_p_base = p_base;
+		file_offset saved_p_base = p_base;
 		LINENUM saved_p_bline = p_bline;
 		p_input_line = p_sline;
 		Fseek (pfp, previous_line, SEEK_SET);
@@ -388,9 +387,8 @@ intuit_diff_type()
 	 is nonzero, the best one otherwise.
        - If no named files exist, some names are given, posixly_correct is
 	 zero, and the patch appears to create a file,
-	 then use the best name whose existing directory prefix contains
-	 the most nontrivial path name components.
-	 ("." and ".." are trivial.)
+	 then use the best name requiring the creation of the fewest
+	 nontrivial directories.  ("." and ".." are trivial.)
        - Otherwise, report failure by setting `inname' to 0;
 	 this causes our invoker to ask the user for a file name.  */
 
@@ -416,23 +414,24 @@ intuit_diff_type()
 	    i = best_name (name, stat_errno);
 	    if (i == NONE && !posixly_correct && ok_to_create_file)
 	      {
-		int existing[3];
-		int existing_max = 0;
-		int distance_from_maximum[3];
+		int newdirs[3];
+		int newdirs_min = INT_MAX;
+		int distance_from_minimum[3];
 
 		for (i = OLD;  i <= INDEX;  i++)
 		  if (name[i])
 		    {
-		      existing[i] = existing_prefix_components (name[i]);
-		      if (existing_max < existing[i])
-			existing_max = existing[i];
+		      newdirs[i] = (prefix_components (name[i], 0)
+				    - prefix_components (name[i], 1));
+		      if (newdirs[i] < newdirs_min)
+			newdirs_min = newdirs[i];
 		    }
 
 		for (i = OLD;  i <= INDEX;  i++)
 		  if (name[i])
-		    distance_from_maximum[i] = existing_max - existing[i];
+		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
 
-	        i = best_name (name, distance_from_maximum);
+	        i = best_name (name, distance_from_minimum);
 	      }
 	  }
       }
@@ -454,29 +453,12 @@ intuit_diff_type()
     return retval;
 }
 
-/* Count the number of path name components in FILENAME.  */
+/* Count the nontrivial path name components in FILENAME's prefix.
+   If CHECKDIRS is nonzero, count only existing directories.  */
 static int
-path_name_components (filename)
-     char const *filename;
-{
-  int count = 0;
-  int slash0 = 1;
-
-  for (; *filename; filename++)
-    {
-      int slash1 = *filename == '/';
-      count += slash0 & ~slash1;
-      slash0 = slash1;
-    }
-
-  return count;
-}
-
-/* Count the number of nontrivial path name components in the existing prefix
-   of FILENAME.  They must all be directories.  */
-static int
-existing_prefix_components (filename)
+prefix_components (filename, checkdirs)
      char *filename;
+     int checkdirs;
 {
   int count = 0;
   struct stat st;
@@ -488,7 +470,8 @@ existing_prefix_components (filename)
       for (f = filename;  f <= flim;  f++)
 	if (!*f)
 	  {
-	    if (! (stat (filename, &st) == 0 && S_ISDIR (st.st_mode)))
+	    if (checkdirs
+		&& ! (stat (filename, &st) == 0 && S_ISDIR (st.st_mode)))
 	      break;
 	    count++;
 	    *f = '/';
@@ -521,8 +504,8 @@ best_name (name, ignore)
   for (i = OLD;  i <= INDEX;  i++)
     if (name[i] && !ignore[i])
       {
-	/* Take the names with the fewest path name components.  */
-	components[i] = path_name_components (name[i]);
+	/* Take the names with the fewest nontrivial prefix components.  */
+	components[i] = prefix_components (name[i], 0);
 	if (components_min < components[i])
 	  continue;
 	components_min = components[i];
@@ -555,7 +538,7 @@ best_name (name, ignore)
 
 static void
 next_intuit_at(file_pos,file_line)
-long file_pos;
+file_offset file_pos;
 LINENUM file_line;
 {
     p_base = file_pos;
@@ -566,7 +549,7 @@ LINENUM file_line;
 
 static void
 skip_to(file_pos,file_line)
-long file_pos;
+file_offset file_pos;
 LINENUM file_line;
 {
     register FILE *i = pfp;
@@ -578,7 +561,7 @@ LINENUM file_line;
 	Fseek (i, p_base, SEEK_SET);
 	say ("The text leading up to this was:\n--------------------------\n");
 
-	while (ftell (i) < file_pos)
+	while (file_tell (i) < file_pos)
 	  {
 	    putc ('|', o);
 	    do
@@ -628,7 +611,7 @@ another_hunk (difftype)
 
     p_max = hunkmax;			/* gets reduced when --- found */
     if (difftype == CONTEXT_DIFF || difftype == NEW_CONTEXT_DIFF) {
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
 	LINENUM repl_beginning = 0;	/* index of --- line */
 	register LINENUM fillcnt = 0;	/* #lines of missing ptrn or repl */
@@ -638,7 +621,7 @@ another_hunk (difftype)
 	bool some_context = FALSE;	/* (perhaps internal) context seen */
 	register bool repl_could_be_missing = TRUE;
 	bool repl_missing = FALSE;	/* we are now backtracking */
-	long repl_backtrack_position = 0;
+	file_offset repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	LINENUM repl_patch_line;	/* input line number for same */
 	LINENUM repl_context;		/* context for same */
@@ -770,7 +753,7 @@ another_hunk (difftype)
 			}
 		    }
 		    repl_beginning = p_end;
-		    repl_backtrack_position = ftell(pfp);
+		    repl_backtrack_position = file_tell (pfp);
 		    repl_patch_line = p_input_line;
 		    repl_context = context;
 		    p_len[p_end] = strlen (buf);
@@ -992,7 +975,7 @@ another_hunk (difftype)
 	}
     }
     else if (difftype == UNI_DIFF) {
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
 	register LINENUM fillsrc;	/* index of old lines */
 	register LINENUM filldst;	/* index of new lines */
@@ -1150,7 +1133,7 @@ another_hunk (difftype)
 	char hunk_type;
 	register int i;
 	LINENUM min, max;
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 
 	p_prefix_context = p_suffix_context = 0;
 	chars_read = get_line ();
@@ -1363,7 +1346,7 @@ incomplete_line ()
 {
   register FILE *fp = pfp;
   register int c;
-  register long line_beginning = ftell (fp);
+  register file_offset line_beginning = file_tell (fp);
 
   if (getc (fp) == '\\')
     {
@@ -1593,7 +1576,7 @@ do_ed_script (ofp)
     static char const ed_program[] = ED_PROGRAM;
 
     register char *t;
-    register long beginning_of_this_line;
+    register file_offset beginning_of_this_line;
     register bool this_line_is_command = FALSE;
     register FILE *pipefp = 0;
     register size_t chars_read;
@@ -1607,7 +1590,7 @@ do_ed_script (ofp)
 	  pfatal (buf);
     }
     for (;;) {
-	beginning_of_this_line = ftell(pfp);
+	beginning_of_this_line = file_tell (pfp);
 	chars_read = get_line ();
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);
