@@ -5,14 +5,6 @@ support making GNU Emacs-style backup files, and to support the GNU
 conventions for option parsing and configuring and compilation.  They
 also include fixes for some bugs.
 
-There are two GNU variants of patch: one that retains Larry Wall's
-interactive Configure script and has patchlevels starting with `12u';
-and this one, which has a GNU-style non-interactive configure script
-and accepts long-named options, and has patchlevels starting with
-`12g'.  Unlike the 12g variant, the 12u variant contains no copylefted
-code, for the paranoid.  The two variants are otherwise the same.
-They should be available from the same places.
-
 The FSF is distributing this version of patch independently because as
 of this writing, Larry Wall has not released a new version of patch
 since mid-1988.  I have heard that he has been too busy working on
