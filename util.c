@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.11 1997/05/05 17:51:22 eggert Exp $ */
+/* $Id: util.c,v 1.12 1997/05/06 01:39:20 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -564,8 +564,7 @@ mkdir (path, mode)
 /* Replace '/' with '\0' in FILENAME if it marks a place that
    needs testing for the existence of directory.  Return the address
    of the last location replaced, or 0 if none were replaced.  */
-static char *replace_slashes PARAMS ((char *));
-static char *
+char *
 replace_slashes (filename)
      char *filename;
 {
@@ -638,7 +637,7 @@ int strip_leading;
 
     if (!at)
 	return 0;
-    while (ISSPACE (*at))
+    while (ISSPACE ((unsigned char) *at))
 	at++;
     if (debug & 128)
 	say ("fetchname %s %d\n", at, strip_leading);
@@ -653,7 +652,7 @@ int strip_leading;
 	    if (--sleading >= 0)
 		name = t+1;
 	  }
-	else if (ISSPACE (*t))
+	else if (ISSPACE ((unsigned char) *t))
 	  {
 	    *t = '\0';
 	    break;
