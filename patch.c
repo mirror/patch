@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.13 1997/05/06 12:30:13 eggert Exp $ */
+/* $Id: patch.c,v 1.14 1997/05/15 17:59:15 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -36,6 +36,7 @@ If not, write to the Free Software Foundation,
 
 /* procedures */
 
+static FILE *create_output_file PARAMS ((char const *));
 static LINENUM locate_hunk PARAMS ((LINENUM, LINENUM));
 static bool apply_hunk PARAMS ((bool *, LINENUM));
 static bool copy_till PARAMS ((bool *, LINENUM));
@@ -97,6 +98,8 @@ char **argv;
 {
     bool somefailed = FALSE;
 
+    init_time ();
+
     setbuf(stderr, serrbuf);
 
     bufsize = 8 * 1024;
@@ -105,11 +108,13 @@ char **argv;
     strippath = INT_MAX;
 
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
-    if (! posixly_correct)
-      {
-	backup_type = numbered_existing;
-	remove_empty_files = TRUE;
-      }
+
+    /* Compile with -DDEFAULT_VERSION_CONTROL=numbered_existing for traditional
+       patch backups by default, despite what POSIX.2 says.  */
+#   ifdef DEFAULT_VERSION_CONTROL
+      if (!posixly_correct)
+	backup_type = DEFAULT_VERSION_CONTROL;
+#   endif
 
     {
       char const *v;
@@ -123,16 +128,17 @@ char **argv;
 	backup_type = get_version (v);
     }
 
-    /* parse switches */
-    Argc = argc;
-    Argv = argv;
-    get_some_switches();
-
-    /* Cons up the names of the global temporary files.  */
+    /* Cons up the names of the global temporary files.
+       Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
     TMPOUTNAME = make_temp ('o');
     TMPINNAME = make_temp ('i');
     TMPREJNAME = make_temp ('r');
     TMPPATNAME = make_temp ('p');
+
+    /* parse switches */
+    Argc = argc;
+    Argv = argv;
+    get_some_switches();
 
     if (output)
       init_output (output);
@@ -147,7 +153,7 @@ char **argv;
     ) {					/* for each patch in patch file */
       int hunk = 0;
       int failed = 0;
-      char const *outname = output ? output : inname;
+      char *outname = output ? output : inname;
 
       if (!skip_rest_of_patch)
 	get_input_file (inname, outname);
@@ -157,7 +163,7 @@ char **argv;
 	  do_ed_script (ofp);
       } else {
 	int got_hunk;
-	bool rev_okayed = FALSE;
+	int apply_anyway = 0;
 	bool after_newline = TRUE;
 
 	/* initialize the patched file */
@@ -193,54 +199,29 @@ char **argv;
 		    LINENUM suffix_fuzz =
 			    fuzz < max_suffix_fuzz ? fuzz : max_suffix_fuzz;
 		    where = locate_hunk (prefix_fuzz, suffix_fuzz);
-		    if (hunk == 1 && !where && !(force|rev_okayed)) {
+		    if (hunk == 1 && !where && !(force|apply_anyway)) {
 						/* dwim for reversed patch? */
 			if (!pch_swap()) {
-			    if (!fuzz)
-				say (
+			    say (
 "Not enough memory to try swapped hunk!  Assuming unswapped.\n");
 			    continue;
 			}
-			reverse = !reverse;
 			/* Try again.  */
 			where = locate_hunk (prefix_fuzz, suffix_fuzz);
-			if (!where) {	    /* didn't find it swapped */
-			    if (!pch_swap())	/* put it back to normal */
-				fatal ("lost hunk on alloc error!");
-			    reverse = !reverse;
-			}
-			else if (noreverse) {
-			    if (!pch_swap())	/* put it back to normal */
-				fatal ("lost hunk on alloc error!");
-			    reverse = !reverse;
-			    say (
-"Ignoring previously applied (or reversed) patch.\n");
-			    skip_rest_of_patch = TRUE;
-			}
-			else if (batch) {
-			    if (verbosity != SILENT)
-				say (
-"%seversed (or previously applied) patch detected!  %s -R.\n",
-				reverse ? "R" : "Unr",
-				reverse ? "Assuming" : "Ignoring");
-			}
-			else {
-			    ask (
-"%seversed (or previously applied) patch detected!  %s -R? [y] ",
-				reverse ? "R" : "Unr",
-				reverse ? "Assume" : "Ignore");
-			    if (*buf == 'n') {
-				ask ("Apply anyway? [n] ");
-				if (*buf == 'y')
-				    rev_okayed = TRUE;
-				else
-				    skip_rest_of_patch = TRUE;
+			if (where && ok_to_reverse ())
+			  reverse ^= 1;
+			else
+			  {
+			    /* Put it back to normal.  */
+			    if (! pch_swap ())
+			      fatal ("lost hunk on alloc error!");
+			    if (where)
+			      {
+				apply_anyway = 1;
+				fuzz--; /* Undo `++fuzz' below.  */
 				where = 0;
-				reverse = !reverse;
-				if (!pch_swap())  /* put it back to normal */
-				    fatal ("lost hunk on alloc error!");
-			    }
-			}
+			      }
+			  }
 		    }
 		} while (!skip_rest_of_patch && !where
 			 && (++fuzz <= max_prefix_fuzz
@@ -263,7 +244,8 @@ char **argv;
 		    say ("Hunk #%d ignored at %ld.\n", hunk, newwhere);
 	    }
 	    else if (!where
-		     || (where == 1 && ok_to_create_file && input_lines)) {
+		     || (where == 1 && pch_says_nonexistent (reverse)
+			 && input_lines)) {
 		if (where)
 		  say ("\nPatch attempted to create file `%s', which already exists.\n", inname);
 		abort_hunk();
@@ -292,7 +274,7 @@ char **argv;
 	if (got_hunk < 0  &&  using_plan_a) {
 	    if (output)
 	      fatal ("out of memory using Plan A");
-	    say ("\n\nRan out of memory using Plan A--trying again...\n\n");
+	    say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
 	    if (ofp)
 	      {
 		fclose (ofp);
@@ -314,20 +296,26 @@ char **argv;
       if (!skip_rest_of_patch && !output) {
 	  struct stat statbuf;
 
-	  if (remove_empty_files
+	  if ((remove_empty_files
+	       || (pch_says_nonexistent (reverse ^ 1) && !posixly_correct))
 	      && stat (TMPOUTNAME, &statbuf) == 0
 	      && statbuf.st_size == 0)
 	    {
 	      if (verbosity == VERBOSE)
-		say ("Removing %s (empty after patching).\n", outname);
+		say ("Removing file `%s'%s.\n", outname,
+		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
-		unlink (outname);
+		{
+		  if (unlink (outname) != 0)
+		    pfatal ("can't remove file `%s'", outname);
+		  removedirs (outname);
+		}
 	    }
 	  else
 	    {
 	      if (! dry_run)
 		{
-		  move_file (TMPOUTNAME, outname, backup_type != none);
+		  move_file (TMPOUTNAME, &instat, outname, backup_type != none);
 		  chmod (outname, instat.st_mode);
 		}
 	    }
@@ -346,9 +334,12 @@ char **argv;
 		    strcpy (rej, outname);
 		    addext (rej, ".rej", '#');
 		}
-		say ("--saving rejects to %s", rej);
+		say (" -- saving rejects to %s", rej);
 		if (! dry_run)
-		    move_file (TMPREJNAME, rej, FALSE);
+		  {
+		    move_file (TMPREJNAME, &instat, rej, FALSE);
+		    chmod (rej, instat.st_mode & ~(S_IXUSR|S_IXGRP|S_IXOTH));
+		  }
 		if (!rejname)
 		    free (rej);
 	    }
@@ -426,6 +417,7 @@ static struct option const longopts[] =
   {"suffix", required_argument, NULL, 'z'},
   {"dry-run", no_argument, NULL, 129},
   {"verbose", no_argument, NULL, 130},
+  {"binary", no_argument, NULL, 131},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -473,6 +465,11 @@ static char const * const option_help[] = {
 "  --dry-run  Do not actually change any files; just print what would happen.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
+#if HAVE_SETMODE
+"  --binary  Read and write data in binary mode.",
+#else
+"  --binary  Read and write data in binary mode (no effect on this platform).",
+#endif
 "",
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
@@ -537,7 +534,7 @@ get_some_switches()
 		break;
 	    case 'B':
 		if (!*optarg)
-		  pfatal ("backup prefix is empty");
+		  fatal ("backup prefix is empty");
 		origprae = savestr (optarg);
 		backup_type = simple;
 		break;
@@ -546,7 +543,7 @@ get_some_switches()
 		break;
 	    case 'd':
 		if (chdir(optarg) < 0)
-		    pfatal ("can't cd to %s", optarg);
+		  pfatal ("can't change directory to `%s'", optarg);
 		break;
 	    case 'D':
 		do_defines = savestr (optarg);
@@ -579,7 +576,7 @@ get_some_switches()
 		break;
 	    case 'o':
 		if (strcmp (optarg, "-") == 0)
-		  fatal ("cannot output patches to standard output");
+		  fatal ("can't output patches to standard output");
 		output = savestr (optarg);
 		break;
 	    case 'p':
@@ -589,8 +586,8 @@ get_some_switches()
 		rejname = savestr (optarg);
 		break;
 	    case 'R':
-		reverse = TRUE;
-		reverse_flag_specified = TRUE;
+		reverse = 1;
+		reverse_flag_specified = 1;
 		break;
 	    case 's':
 		verbosity = SILENT;
@@ -615,14 +612,14 @@ get_some_switches()
 #endif
 	    case 'Y':
 		if (!*optarg)
-		  pfatal ("backup basename prefix is empty");
+		  fatal ("backup basename prefix is empty");
 		origbase = savestr (optarg);
 		backup_type = simple;
 		break;
 	    case 'z':
 	    case_z:
 		if (!*optarg)
-		  pfatal ("backup suffix is empty");
+		  fatal ("backup suffix is empty");
 		simple_backup_suffix = savestr (optarg);
 		backup_type = simple;
 		break;
@@ -631,6 +628,13 @@ get_some_switches()
 		break;
 	    case 130:
 		verbosity = VERBOSE;
+		break;
+	    case 131:
+#if HAVE_SETMODE
+		binary_transput = O_BINARY;
+		setmode (STDIN_FILENO, O_BINARY);
+		setmode (STDOUT_FILENO, O_BINARY);
+#endif
 		break;
 	    default:
 		usage (stderr, 2);
@@ -842,7 +846,7 @@ LINENUM where;
 	    if (debug & 1)
 	      say ("oldchar = '%c', newchar = '%c'\n",
 		   pch_char (old), pch_char (new));
-	    fatal ("Out-of-sync patch, lines %ld,%ld--mangled text or line numbers, maybe?",
+	    fatal ("Out-of-sync patch, lines %ld,%ld -- mangled text or line numbers, maybe?",
 		pch_hunk_beg() + old,
 		pch_hunk_beg() + new);
 	}
@@ -929,15 +933,30 @@ LINENUM where;
     return TRUE;
 }
 
+/* Create an output file.  */
+
+static FILE *
+create_output_file (name)
+     char const *name;
+{
+  int fd;
+  FILE *f;
+  if (! (O_CREAT && O_TRUNC))
+    close (creat (name, instat.st_mode));
+  fd = open (name, O_WRONLY|O_CREAT|O_TRUNC|binary_transput,
+	     S_IRUSR|S_IWUSR|instat.st_mode);
+  if (fd < 0  ||  ! (f = fdopen (fd, binary_transput ? "wb" : "w")))
+    pfatal ("can't create `%s'", name);
+  return f;
+}
+
 /* Open the new file. */
 
 static void
 init_output(name)
      char const *name;
 {
-    ofp = fopen(name, "w");
-    if (! ofp)
-	pfatal ("can't create %s", name);
+  ofp = create_output_file (name);
 }
 
 /* Open a file to put hunks we can't locate. */
@@ -946,9 +965,7 @@ static void
 init_reject(name)
      char const *name;
 {
-    rejfp = fopen(name, "w");
-    if (!rejfp)
-	pfatal ("can't create %s", name);
+  rejfp = create_output_file (name);
 }
 
 /* Copy input file to output, up to wherever hunk is to be applied. */
@@ -1072,10 +1089,50 @@ similar (a, alen, b, blen)
     }
 }
 
+/* Is it OK to reverse the patch?  */
+
+int
+ok_to_reverse ()
+{
+  if (noreverse)
+    {
+      say ("Ignoring previously applied (or reversed) patch.\n");
+      skip_rest_of_patch = TRUE;
+      return 0;
+    }
+  else if (batch)
+    {
+      if (verbosity != SILENT)
+	say ("%seversed (or previously applied) patch detected!  %s -R.\n",
+	     reverse ? "R" : "Unr",
+	     reverse ? "Assuming" : "Ignoring");
+      return 1;
+    }
+  else
+    {
+      ask ("%seversed (or previously applied) patch detected!  %s -R? [y] ",
+	   reverse ? "R" : "Unr",
+	   reverse ? "Assume" : "Ignore");
+      if (*buf != 'n')
+	return 1;
+      else
+	{
+	  ask ("Apply anyway? [n] ");
+	  if (*buf != 'y')
+	    skip_rest_of_patch = TRUE;
+	  return 0;
+	}
+    }
+}
+
 /* Make a temporary file.  */
 
 #if HAVE_MKTEMP
 char *mktemp PARAMS ((char *));
+#endif
+
+#ifndef TMPDIR
+#define TMPDIR "/tmp"
 #endif
 
 static char const *
@@ -1084,11 +1141,12 @@ make_temp (letter)
 {
   char *r;
 #if HAVE_MKTEMP
-  char const *tmpdir = getenv ("TMPDIR");
-  if (!tmpdir)
-    tmpdir = "/tmp";
-  r = xmalloc (strlen (tmpdir) + 14);
-  sprintf (r, "%s/patch%cXXXXXX", tmpdir, letter);
+  char const *tmpdir = getenv ("TMPDIR");	/* Unix tradition */
+  if (!tmpdir) tmpdir = getenv ("TMP");		/* DOS tradition */
+  if (!tmpdir) tmpdir = getenv ("TEMP");	/* another DOS tradition */
+  if (!tmpdir) tmpdir = TMPDIR;
+  r = xmalloc (strlen (tmpdir) + 10);
+  sprintf (r, "%s/p%cXXXXXX", tmpdir, letter);
   mktemp (r);
   if (!*r)
     pfatal ("mktemp");
