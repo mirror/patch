@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.25 1997/07/16 12:26:36 eggert Exp $ */
+/* $Id: pch.c,v 1.26 1997/07/21 17:59:46 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -143,6 +143,8 @@ open_patch_file(filename)
 	  pfatal ("fstat");
       }
     p_filesize = st.st_size;
+    if (p_filesize != (file_offset) p_filesize)
+      fatal ("patch file is too long");
     next_intuit_at (file_pos, (LINENUM) 1);
     set_hunkmax();
 }
@@ -198,6 +200,8 @@ there_is_another_patch()
 	  say (p_base
 	       ? "  Ignoring the trailing garbage.\ndone\n"
 	       : "  I can't seem to find a patch in there anywhere.\n");
+	if (! p_base && p_filesize)
+	  fatal ("Only garbage was found in the patch input.");
 	return FALSE;
     }
     if (skip_rest_of_patch)
