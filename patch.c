@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.23 1997/07/05 10:32:23 eggert Exp $ */
+/* $Id: patch.c,v 1.24 1997/09/03 17:15:05 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -302,22 +302,23 @@ char **argv;
 	    }
 	}
 
-	if (got_hunk < 0  &&  using_plan_a) {
-	    if (outfile)
-	      fatal ("out of memory using Plan A");
-	    say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
-	    if (outstate.ofp)
-	      {
-		fclose (outstate.ofp);
-		outstate.ofp = 0;
-	      }
-	    fclose (rejfp);
-	    continue;
-	}
-
-	/* finish spewing out the new file */
 	if (!skip_rest_of_patch)
 	  {
+	    if (got_hunk < 0  &&  using_plan_a)
+	      {
+		if (outfile)
+		  fatal ("out of memory using Plan A");
+		say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
+		if (outstate.ofp)
+		  {
+		    fclose (outstate.ofp);
+		    outstate.ofp = 0;
+		  }
+		fclose (rejfp);
+		continue;
+	      }
+
+	    /* Finish spewing out the new file.  */
 	    assert (hunk);
 	    if (! spew_output (&outstate))
 	      {
