@@ -42,6 +42,7 @@ LIBS = @LIBS@
 OBJEXT = @OBJEXT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+STDBOOL_H = @STDBOOL_H@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -61,11 +62,11 @@ CONFIG_STATUS = config.status
 
 SHELL = /bin/sh
 
-LIBSRCS = error.c malloc.c memchr.c \
+LIBSRCS = error.c hash.c malloc.c memchr.c \
 	realloc.c strcasecmp.c strncasecmp.c
 SRCS = $(LIBSRCS) \
 	addext.c argmatch.c backupfile.c \
-	basename.c dirname.c \
+	basename.c dirname.c exitfail.c \
 	getopt.c getopt1.c inp.c \
 	maketime.c partime.c \
 	patch.c pch.c \
@@ -73,21 +74,21 @@ SRCS = $(LIBSRCS) \
 	util.c version.c xmalloc.c
 OBJS = $(LIBOBJS) \
 	addext.$(OBJEXT) argmatch.$(OBJEXT) backupfile.$(OBJEXT) \
-	basename.$(OBJEXT) dirname.$(OBJEXT) \
-	getopt.$(OBJEXT) getopt1.$(OBJEXT) inp.$(OBJEXT) \
+	basename.$(OBJEXT) dirname.$(OBJEXT) exitfail.$(OBJEXT) \
+	getopt.$(OBJEXT) getopt1.$(OBJEXT) hash.$(OBJEXT) inp.$(OBJEXT) \
 	maketime.$(OBJEXT) partime.$(OBJEXT) \
 	patch.$(OBJEXT) pch.$(OBJEXT) \
 	quote.$(OBJEXT) quotearg.$(OBJEXT) quotesys.$(OBJEXT) \
 	util.$(OBJEXT) version.$(OBJEXT) xmalloc.$(OBJEXT)
 HDRS = argmatch.h backupfile.h common.h dirname.h \
-	error.h getopt.h gettext.h \
+	error.h exitfail.h getopt.h gettext.h hash.h \
 	inp.h maketime.h partime.h pch.h \
 	quote.h quotearg.h quotesys.h \
 	unlocked-io.h util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	aclocal.m4 \
 	config.hin configure configure.ac \
-	install-sh mkinstalldirs patch.man stdbool_.h
+	install-sh mkinstalldirs patch.man stdbool_.h timespec.h
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
 DISTFILES_M4 = $(ACINCLUDE_INPUTS)
 DISTFILES_PC = pc/chdirsaf.c
@@ -137,8 +138,8 @@ configure: configure.ac $(srcdir)/aclocal.m4
 config.hin: configure.ac $(srcdir)/aclocal.m4
 	cd $(srcdir) && rm -f config.hin && autoheader
 stdbool.h: stdbool_.h
-	sed -e 's/@''HAVE__BOOL''@/$(HAVE__BOOL)/g' < $(srcdir)/stdbool_.h > stdbool.h-t
-	mv stdbool.h-t stdbool.h
+	sed -e 's/@''HAVE__BOOL''@/$(HAVE__BOOL)/g' < $(srcdir)/stdbool_.h > $@-t
+	mv $@-t $@
 
 M4DIR = $(srcdir)/m4
 ACINCLUDE_INPUTS = \
@@ -147,7 +148,10 @@ ACINCLUDE_INPUTS = \
   $(M4DIR)/dirname.m4 \
   $(M4DIR)/dos.m4 \
   $(M4DIR)/error.m4 \
+  $(M4DIR)/exitfail.m4 \
+  $(M4DIR)/extensions.m4 \
   $(M4DIR)/getopt.m4 \
+  $(M4DIR)/hash.m4 \
   $(M4DIR)/malloc.m4 \
   $(M4DIR)/mbrtowc.m4 \
   $(M4DIR)/mbstate_t.m4 \
@@ -158,8 +162,10 @@ ACINCLUDE_INPUTS = \
   $(M4DIR)/quotearg.m4 \
   $(M4DIR)/realloc.m4 \
   $(M4DIR)/setmode.m4 \
+  $(M4DIR)/st_mtim.m4 \
   $(M4DIR)/stdbool.m4 \
   $(M4DIR)/strcase.m4 \
+  $(M4DIR)/timespec.m4 \
   $(M4DIR)/unlocked-io.m4 \
   $(M4DIR)/utimbuf.m4 \
   $(M4DIR)/xalloc.m4
@@ -198,7 +204,7 @@ dist:: $(DISTFILES) $(DISTFILES_M4) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	rm -rf $(PV)
 
 $(OBJS): config.h
-COMMON = common.h @STDBOOL_H@
+COMMON = common.h $(STDBOOL_H)
 addext.$(OBJEXT): backupfile.h dirname.h
 argmatch.$(OBJEXT): argmatch.h gettext.h error.h \
 	quote.h quotearg.h unlocked-io.h
@@ -218,6 +224,6 @@ quotearg.$(OBJEXT): gettext.h quotearg.h xalloc.h
 quotesys.$(OBJEXT): quotesys.h
 strncasecmp.$(OBJEXT): strcasecmp.c
 util.$(OBJEXT): backupfile.h $(COMMON) dirname.h maketime.h \
-	partime.h quotearg.h quotesys.h util.h version.h xalloc.h
+	partime.h quotearg.h quotesys.h timespec.h util.h version.h xalloc.h
 version.$(OBJEXT): $(COMMON) version.h
 xmalloc.$(OBJEXT): error.h gettext.h xalloc.h
