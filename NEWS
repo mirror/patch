@@ -3,7 +3,7 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
-Changes since version 2.2:
+Changes in version 2.3:
 
 * Unless the POSIXLY_CORRECT environment variable is set:
 
