@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.21 1997/06/09 05:36:28 eggert Exp $ */
+/* $Id: pch.c,v 1.22 1997/06/13 06:28:37 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -38,6 +38,7 @@ If not, write to the Free Software Foundation,
 static FILE *pfp;			/* patch file pointer */
 static int p_says_nonexistent[2];	/* [0] for old file, [1] for new;
 		value is 0 for nonempty, 1 for empty, 2 for nonexistent */
+static time_t p_timestamp[2];		/* timestamps in patch headers */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
 static LINENUM p_newfirst;		/* 1st line number of replacement */
@@ -217,14 +218,14 @@ there_is_another_patch()
 	if (p_indent)
 	  say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
 	if (! inname)
-	  say ("can't intuit the name of file to be patched at input line %ld\n",
+	  say ("can't find file to patch at input line %ld\n",
 	       p_sline);
       }
 
     skip_to(p_start,p_sline);
     while (!inname) {
 	if (force || batch) {
-	    say ("No file to patch.  Skipping...\n");
+	    say ("No file to patch.  Skipping patch.\n");
 	    skip_rest_of_patch = TRUE;
 	    return TRUE;
 	}
@@ -233,7 +234,10 @@ there_is_another_patch()
 	if (inname)
 	  {
 	    if (stat (inname, &instat) == 0)
-	      inerrno = 0;
+	      {
+		inerrno = 0;
+		invc = -1;
+	      }
 	    else
 	      {
 		perror (inname);
@@ -245,7 +249,7 @@ there_is_another_patch()
 	    ask ("Skip this patch? [y] ");
 	    if (*buf != 'n') {
 		if (verbosity != SILENT)
-		    say ("Skipping patch...\n");
+		    say ("Skipping patch.\n");
 		skip_rest_of_patch = TRUE;
 		return TRUE;
 	    }
@@ -274,10 +278,14 @@ intuit_diff_type()
     char *name[3];
     struct stat st[3];
     int stat_errno[3];
+    int version_controlled[3];
     register enum diff retval;
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
-    timestamp[OLD] = timestamp[NEW] = (time_t) -1;
+    version_controlled[OLD] = -1;
+    version_controlled[NEW] = -1;
+    version_controlled[INDEX] = -1;
+    p_timestamp[OLD] = p_timestamp[NEW] = (time_t) -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
@@ -318,12 +326,12 @@ intuit_diff_type()
 	    p_indent = indent;		/* assume this for now */
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    name[OLD] = fetchname (s+4, strippath, &timestamp[OLD]);
+	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
 	else if (strnEQ(s, "--- ", 4))
-	    name[NEW] = fetchname (s+4, strippath, &timestamp[NEW]);
+	    name[NEW] = fetchname (s+4, strippath, &p_timestamp[NEW]);
 	else if (strnEQ(s, "+++ ", 4))
 	    /* Swap with NEW below.  */
-	    name[OLD] = fetchname (s+4, strippath, &timestamp[OLD]);
+	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
 	else if (strnEQ(s, "Index:", 6))
 	    name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
 	else if (strnEQ(s, "Prereq:", 7)) {
@@ -353,29 +361,29 @@ intuit_diff_type()
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
 
-	    /* `name' and `timestamp' are backwards; swap them.  */
-	    time_t ti = timestamp[OLD];
-	    timestamp[OLD] = timestamp[NEW];
-	    timestamp[NEW] = ti;
+	    /* `name' and `p_timestamp' are backwards; swap them.  */
+	    time_t ti = p_timestamp[OLD];
+	    p_timestamp[OLD] = p_timestamp[NEW];
+	    p_timestamp[NEW] = ti;
 	    t = name[OLD];
 	    name[OLD] = name[NEW];
 	    name[NEW] = t;
 
 	    s += 4;
 	    if (! atol (s))
-	      p_says_nonexistent[OLD] = 1 + ! timestamp[OLD];
+	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD];
 	    while (*s != ' ' && *s != '\n')
 	      s++;
 	    while (*s == ' ')
 	      s++;
 	    if (! atol (s))
-	      p_says_nonexistent[NEW] = 1 + ! timestamp[NEW];
+	      p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    if (! ((name[OLD] || ! timestamp[OLD])
-		   && (name[NEW] || ! timestamp[NEW])))
+	    if (! ((name[OLD] || ! p_timestamp[OLD])
+		   && (name[NEW] || ! p_timestamp[NEW])))
 	      fatal ("missing header for unified diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
@@ -387,7 +395,7 @@ intuit_diff_type()
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
 	    s += 4;
 	    if (! atol (s))
-	      p_says_nonexistent[OLD] = 1 + ! timestamp[OLD];
+	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD];
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -406,12 +414,12 @@ intuit_diff_type()
 	      p_input_line -= 2;
 	      if (another_hunk (retval, 0)
 		  && ! p_repl_lines && p_newfirst == 1)
-		p_says_nonexistent[NEW] = 1 + ! timestamp[NEW];
+		p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
 	      next_intuit_at (saved_p_base, saved_p_bline);
 	    }
 
-	    if (! ((name[OLD] || ! timestamp[OLD])
-		   && (name[NEW] || ! timestamp[NEW])))
+	    if (! ((name[OLD] || ! p_timestamp[OLD])
+		   && (name[NEW] || ! p_timestamp[NEW])))
 	      fatal ("missing header for context diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
@@ -434,12 +442,18 @@ intuit_diff_type()
        (with some modifications if posixly_correct is zero):
 
        - Take the old and new names from the context header if present,
-	 and take the index name from the `Index:' line if present.
+	 and take the index name from the `Index:' line if present and
+	 if either the old and new names are both absent
+	 or posixly_correct is nonzero.
 	 Consider the file names to be in the order (old, new, index).
        - If some named files exist, use the first one if posixly_correct
 	 is nonzero, the best one otherwise.
-       - If no named files exist, some names are given, posixly_correct is
-	 zero, and the patch appears to create a file, then use the best name
+       - If patch_get is nonzero, and no named files exist,
+	 but an RCS or SCCS master file exists,
+	 use the first named file with an RCS or SCCS master.
+       - If no named files exist, no RCS or SCCS master was found,
+	 some names are given, posixly_correct is zero,
+	 and the patch appears to create a file, then use the best name
 	 requiring the creation of the fewest directories.
        - Otherwise, report failure by setting `inname' to 0;
 	 this causes our invoker to ask the user for a file name.  */
@@ -449,6 +463,12 @@ intuit_diff_type()
     if (!inname)
       {
 	enum nametype i0 = NONE;
+
+	if (! posixly_correct && (name[OLD] || name[NEW]) && name[INDEX])
+	  {
+	    free (name[INDEX]);
+	    name[INDEX] = 0;
+	  }
 
 	for (i = OLD;  i <= INDEX;  i++)
 	  if (name[i])
@@ -474,6 +494,44 @@ intuit_diff_type()
 	if (! posixly_correct)
 	  {
 	    i = best_name (name, stat_errno);
+
+	    if (i == NONE && patch_get)
+	      {
+		enum nametype nope = NONE;
+
+		for (i = OLD;  i <= INDEX;  i++)
+		  if (name[i])
+		    {
+		      char const *cs;
+		      char *getbuf;
+		      char *diffbuf;
+		      int readonly = outfile && strcmp (outfile, name[i]) != 0;
+
+		      if (nope == NONE || strcmp (name[nope], name[i]) != 0)
+			{
+			  cs = (version_controller
+			        (name[i], readonly, (struct stat *) 0,
+				 &getbuf, &diffbuf));
+			  version_controlled[i] = !! cs;
+			  if (cs)
+			    {
+			      if (version_get (name[i], cs, 0, readonly,
+					       getbuf, &st[i]))
+				stat_errno[i] = 0;
+			      else
+				version_controlled[i] = 0;
+
+			      free (getbuf);
+			      free (diffbuf);
+
+			      if (! stat_errno[i])
+				break;
+			    }
+			}
+
+		      nope = i;
+		    }
+	      }
 
 	    if (p_says_nonexistent[reverse ^ (i == NONE || st[i].st_size == 0)])
 	      {
@@ -522,6 +580,7 @@ intuit_diff_type()
 	inname = name[i];
 	name[i] = 0;
 	inerrno = stat_errno[i];
+	invc = version_controlled[i];
 	instat = st[i];
       }
 
@@ -1572,6 +1631,16 @@ pch_says_nonexistent (which)
   return p_says_nonexistent[which];
 }
 
+/* Return timestamp of patch header for file WHICH (0 = old, 1 = new),
+   or -1 if there was no timestamp or an error in the timestamp.  */
+
+time_t
+pch_timestamp (which)
+     int which;
+{
+  return p_timestamp[which];
+}
+
 /* Return the specified line position in the old file of the old context. */
 
 LINENUM
@@ -1695,6 +1764,7 @@ do_ed_script (ofp)
 	copy_file (inname, TMPOUTNAME, instat.st_mode);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
+	fflush (stdout);
 	pipefp = popen(buf, binary_transput ? "wb" : "w");
 	if (!pipefp)
 	  pfatal ("can't open pipe to `%s'", buf);
