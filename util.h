@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.8 1997/05/05 07:31:21 eggert Exp $ */
+/* $Id: util.h,v 1.9 1997/05/06 01:39:20 eggert Exp $ */
 
 void ask PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
 void say PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
@@ -11,6 +11,7 @@ void pfatal PARAMS ((char const *, ...))
 	__attribute__ ((noreturn, format (printf, 1, 2)));
 
 char *fetchname PARAMS ((char *, int));
+char *replace_slashes PARAMS ((char *));
 char *savebuf PARAMS ((char const *, size_t));
 char *savestr PARAMS ((char const *));
 int systemic PARAMS ((char const *));
