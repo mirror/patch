@@ -118,7 +118,7 @@ TAGS: $(HDRS) patchlevel.h $(SRCS)
 	etags $(HDRS) patchlevel.h $(SRCS)
 
 clean::
-	rm -f patch *.o */*.o core
+	rm -f patch core* *core *.o
 
 mostlyclean:: clean
 
@@ -155,5 +155,5 @@ partime.o: partime.h
 patch.o: argmatch.h backupfile.h common.h getopt.h inp.h pch.h util.h version.h
 pch.o: common.h inp.h pch.h util.h
 quotearg.o: quotearg.h
-util.o: backupfile.h common.h maketime.h quotearg.h util.h version.h
+util.o: backupfile.h common.h maketime.h partime.h quotearg.h util.h version.h
 version.o: common.h patchlevel.h util.h version.h
