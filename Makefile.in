@@ -99,8 +99,11 @@ patch_name = `echo patch | sed '$(transform)'`
 all:: patch$(EXEEXT)
 
 info::
-check::
 installcheck::
+
+# Not a good check, but it's better than nothing.
+check:: all
+	./patch --help >/dev/null
 
 COMPILE = $(CC) -c $(CPPFLAGS) $(DEFS) -Ded_PROGRAM=\"$(ed_PROGRAM)\" \
 	-I. -I$(srcdir) $(CFLAGS)
