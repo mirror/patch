@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.34 1999/10/18 01:49:12 eggert Exp $ */
+/* $Id: pch.c,v 1.35 1999/10/25 06:05:43 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -836,7 +836,8 @@ another_hunk (enum diff difftype, int rev)
 	bool ptrn_spaces_eaten = FALSE;	/* ptrn was slightly misformed */
 	bool some_context = FALSE;	/* (perhaps internal) context seen */
 	register bool repl_could_be_missing = TRUE;
-	bool repl_missing = FALSE;	/* we are now backtracking */
+	bool ptrn_missing = FALSE;	/* The pattern was missing.  */
+	bool repl_missing = FALSE;	/* Likewise for replacement.  */
 	file_offset repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	LINENUM repl_patch_line;	/* input line number for same */
@@ -844,8 +845,8 @@ another_hunk (enum diff difftype, int rev)
 	LINENUM ptrn_prefix_context = -1; /* lines in pattern prefix context */
 	LINENUM ptrn_suffix_context = -1; /* lines in pattern suffix context */
 	LINENUM repl_prefix_context = -1; /* lines in replac. prefix context */
-	register LINENUM ptrn_copiable = 0;
-					/* # of copiable lines in ptrn */
+	LINENUM ptrn_copiable = 0;	/* # of copiable lines in ptrn */
+	LINENUM repl_copiable = 0;	/* Likewise for replacement.  */
 
 	/* Pacify `gcc -Wall'.  */
 	fillsrc = filldst = repl_patch_line = repl_context = 0;
@@ -945,6 +946,7 @@ another_hunk (enum diff difftype, int rev)
 		      {
 			/* `Old' lines were omitted.  Set up to fill
 			   them in from `new' context lines.  */
+			ptrn_missing = TRUE;
 			p_end = p_ptrn_lines + 1;
 			ptrn_prefix_context = ptrn_suffix_context = -1;
 			fillsrc = p_end + 1;
@@ -1073,7 +1075,9 @@ another_hunk (enum diff difftype, int rev)
 		    ptrn_spaces_eaten |= (repl_beginning != 0);
 		    some_context = TRUE;
 		    context++;
-		    if (!repl_beginning)
+		    if (repl_beginning)
+			repl_copiable++;
+		    else
 			ptrn_copiable++;
 		    p_Char[p_end] = ' ';
 		}
@@ -1094,7 +1098,9 @@ another_hunk (enum diff difftype, int rev)
 		}
 		some_context = TRUE;
 		context++;
-		if (!repl_beginning)
+		if (repl_beginning)
+		    repl_copiable++;
+		else
 		    ptrn_copiable++;
 		chars_read -=
 		  (1 < chars_read
@@ -1136,6 +1142,9 @@ another_hunk (enum diff difftype, int rev)
 	    fillcnt = p_repl_lines;
 	    p_end = p_max;
 	}
+	else if (! ptrn_missing && ptrn_copiable != repl_copiable)
+	  fatal ("context mangled in hunk at line %s",
+		 format_linenum (numbuf0, p_hunk_beg));
 	else if (!some_context && fillcnt == 1) {
 	    /* the first hunk was a null hunk with no context */
 	    /* and we were expecting one line -- fix it up. */
