@@ -61,7 +61,8 @@ CONFIG_STATUS = config.status
 
 SHELL = /bin/sh
 
-LIBSRCS = malloc.c memchr.c mkdir.c realloc.c rename.c rmdir.c
+LIBSRCS = malloc.c memchr.c mkdir.c \
+	realloc.c rename.c rmdir.c strcasecmp.c strncasecmp.c
 SRCS = $(LIBSRCS) \
 	addext.c argmatch.c backupfile.c \
 	basename.c dirname.c \
@@ -87,7 +88,7 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 	unlocked-io.h util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	README-alpha aclocal.m4 \
-	config.guess config.hin config.sub configure configure.ac \
+	config.hin configure configure.ac \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
 DISTFILES_M4 = $(ACINCLUDE_INPUTS)
