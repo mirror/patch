@@ -1,3 +1,9 @@
+Changes in version 2.1:
+
+* A few more portability bugs have been fixed.  The version number has
+  been changed from 2.0.12g11 to 2.1, because the name
+  `patch-2.0.12g10' was too long for traditional Unix file systems.
+
 Versions 2.0.12g9 through 2.0.12g11 fix various portability bugs.
 
 Changes in version 2.0.12g8:
