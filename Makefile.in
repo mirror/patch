@@ -1,4 +1,19 @@
 # Makefile for GNU patch.
+# Copyright (C) 1993 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #### Start of system configuration section. ####
 
@@ -37,7 +52,7 @@ OBJS = backupfile.o getopt.o getopt1.o inp.o patch.o pch.o util.o \
 HDRS = EXTERN.h INTERN.h backupfile.h common.h getopt.h \
 	inp.h patchlevel.h pch.h util.h version.h
 MISC = COPYING ChangeLog INSTALL Makefile.in README NEWS \
-	configure configure.in config.h.in patch.man
+	configure configure.in config.h.in patch.man mkinstalldirs
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
 
 all: patch
@@ -52,12 +67,22 @@ installcheck:
 patch: $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) $(LIBS) -o $@
 
-install: all
+install: all installdirs
 	$(INSTALL_PROGRAM) patch $(bindir)/patch
 	-$(INSTALL_DATA) $(srcdir)/patch.man $(mandir)/patch.$(manext)
 
+installdirs:
+	$(SHELL) ${srcdir}/mkinstalldirs $(bindir) $(mandir)
+
 uninstall:
 	rm -f $(bindir)/patch $(mandir)/patch.$(manext)
+
+Makefile: Makefile.in config.status
+	$(SHELL) config.status
+config.status: configure
+	$(SHELL) $(srcdir)/configure --no-create
+configure: configure.in
+	cd $(srcdir); autoconf
 
 TAGS: $(SRCS)
 	etags $(SRCS)
