@@ -3,6 +3,10 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+Changes in version 2.5.5:
+
+* The bug reporting address is now <bug-patch@gnu.org>.
+
 Changes in version 2.5.4:
 
 * A security hole has been closed.
