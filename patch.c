@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.37 1999/10/18 01:44:25 eggert Exp $ */
+/* $Id: patch.c,v 1.38 1999/10/18 16:40:48 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -186,6 +186,7 @@ main (int argc, char **argv)
 
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = 0;
+	somefailed |= skip_rest_of_patch;
 	do_ed_script (outstate.ofp);
 	if (! dry_run && ! outfile)
 	  {
