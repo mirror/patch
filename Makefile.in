@@ -46,11 +46,11 @@ manext = 1
 SHELL = /bin/sh
 
 SRCS = backupfile.c getopt.c getopt1.c inp.c patch.c pch.c util.c \
-	version.c rename.c
+	version.c rename.c getline.c
 OBJS = backupfile.o getopt.o getopt1.o inp.o patch.o pch.o util.o \
 	version.o @LIBOBJS@
 HDRS = EXTERN.h INTERN.h backupfile.h common.h getopt.h \
-	inp.h patchlevel.h pch.h util.h version.h
+	inp.h patchlevel.h pch.h util.h version.h acconfig.h
 MISC = COPYING ChangeLog INSTALL Makefile.in README NEWS \
 	configure configure.in config.h.in patch.man mkinstalldirs
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
@@ -83,6 +83,8 @@ config.status: configure
 	$(SHELL) $(srcdir)/configure --no-create
 configure: configure.in
 	cd $(srcdir); autoconf
+config.h.in: configure.in acconfig.h
+	cd $(srcdir); autoheader
 
 TAGS: $(SRCS)
 	etags $(SRCS)
