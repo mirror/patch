@@ -97,7 +97,7 @@ config.status: configure
 configure: configure.in
 	cd $(srcdir) && autoconf
 config.hin: configure.in acconfig.h
-	cd $(srcdir) && autoheader
+	cd $(srcdir) && rm -f config.hin && autoheader
 
 patchlevel.h: Makefile
 	echo '#define PATCH_VERSION "$(VERSION)"' >patchlevel.h
