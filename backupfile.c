@@ -19,6 +19,7 @@
    Some algorithms adapted from GNU Emacs. */
 
 #include "config.h"
+#include "EXTERN.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/types.h>
