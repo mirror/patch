@@ -70,7 +70,6 @@ MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	acconfig.h aclocal.m4 config.hin configure configure.in \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
-DISTFILES_M4 = m4/malloc.m4 m4/realloc.m4
 DISTFILES_PC = pc/chdirsaf.c
 DISTFILES_PC_DJGPP = pc/djgpp/README pc/djgpp/config.sed \
 	pc/djgpp/configure.bat pc/djgpp/configure.sed
@@ -138,11 +137,10 @@ maintainer-clean::
 
 PV = $(PACKAGE)-$(VERSION)
 
-dist:: $(DISTFILES) $(DISTFILES_M4) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
+dist:: $(DISTFILES) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	rm -rf $(PV)
-	mkdir $(PV) $(PV)/m4 $(PV)/pc $(PV)/pc/djgpp
+	mkdir $(PV) $(PV)/pc $(PV)/pc/djgpp
 	cp -p $(DISTFILES) $(PV)
-	cp -p $(DISTFILES_M4) $(PV)/m4
 	cp -p $(DISTFILES_PC) $(PV)/pc
 	cp -p $(DISTFILES_PC_DJGPP) $(PV)/pc/djgpp
 	tar -chf - $(PV) | gzip -9 >$(PV).tar.gz
