@@ -40,8 +40,8 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 OBJEXT = @OBJEXT@
-PACKAGE = @PACKAGE@
-VERSION = @VERSION@
+PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_VERSION = @PACKAGE_VERSION@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -146,7 +146,7 @@ $(srcdir)/aclocal.m4: $(ACINCLUDE_INPUTS)
 	cat $(ACINCLUDE_INPUTS) >$(srcdir)/aclocal.m4
 
 patchlevel.h: configure.ac
-	echo '#define PATCH_VERSION "$(VERSION)"' >patchlevel.h
+	echo '#define PATCH_VERSION "$(PACKAGE_VERSION)"' >patchlevel.h
 
 TAGS: $(HDRS) patchlevel.h $(SRCS)
 	etags $(HDRS) patchlevel.h $(SRCS)
@@ -166,7 +166,7 @@ maintainer-clean::
 	$(MAKE) distclean
 	rm -f TAGS
 
-PV = $(PACKAGE)-$(VERSION)
+PV = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
 dist:: $(DISTFILES) $(DISTFILES_M4) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	rm -rf $(PV)
