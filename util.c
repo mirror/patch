@@ -193,7 +193,7 @@ afatal ()
 EXITING void
 zfatal ()
 {
-    fputc ('\n', stderr);
+    Fputc ('\n', stderr);
     my_exit(1);
 }
 
@@ -244,24 +244,24 @@ zask ()
     size_t buflen = strlen (buf);
 
     Fflush(stderr);
-    write(STDERR_FILENO, buf, buflen);
+    Write (STDERR_FILENO, buf, buflen);
     if (tty_stderr) {			/* might be redirected to a file */
 	r = read(STDERR_FILENO, buf, bufsize);
     }
     else if (isatty(STDOUT_FILENO)) {	/* this may be new file output */
 	Fflush(stdout);
-	write (STDOUT_FILENO, buf, buflen);
+	Write (STDOUT_FILENO, buf, buflen);
 	r = read (STDOUT_FILENO, buf, bufsize);
     }
     else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
 					/* might be deleted or unwriteable */
-	write(ttyfd, buf, buflen);
+	Write (ttyfd, buf, buflen);
 	r = read(ttyfd, buf, bufsize);
 	Close(ttyfd);
     }
     else if (isatty(STDIN_FILENO)) {	/* this is probably patch input */
 	Fflush(stdin);
-	write (STDIN_FILENO, buf, buflen);
+	Write (STDIN_FILENO, buf, buflen);
 	r = read (STDIN_FILENO, buf, bufsize);
     }
     else {				/* no terminal at all--default it */
@@ -282,7 +282,9 @@ void
 set_signals(reset)
 int reset;
 {
-    static RETSIGTYPE (*hupval)(),(*intval)();
+    static RETSIGTYPE (*hupval)();
+    static RETSIGTYPE (*intval)();
+    static RETSIGTYPE (*termval)();
 
     if (!reset) {
 #ifdef SIGHUP
@@ -295,12 +297,20 @@ int reset;
 	if (intval != SIG_IGN)
 	    intval = (RETSIGTYPE(*)())my_exit;
 #endif
+#ifdef SIGTERM
+	termval = signal(SIGTERM, SIG_IGN);
+	if (termval != SIG_IGN)
+	    termval = (RETSIGTYPE(*)())my_exit;
+#endif
     }
 #ifdef SIGHUP
     Signal(SIGHUP, hupval);
 #endif
 #ifdef SIGINT
     Signal(SIGINT, intval);
+#endif
+#ifdef SIGTERM
+    Signal(SIGTERM, termval);
 #endif
 }
 
@@ -315,55 +325,68 @@ ignore_signals()
 #ifdef SIGINT
     Signal(SIGINT, SIG_IGN);
 #endif
+#ifdef SIGTERM
+    Signal(SIGTERM, SIG_IGN);
+#endif
 }
 
+#if !HAVE_MKDIR
+/* This is good enough for `patch'; it's not a general emulator.  */
+static int
+mkdir (path, mode)
+     char *path;
+     int mode; /* ignored */
+{
+  char *cmd = xmalloc (strlen (path) + 9);
+  int r;
+  Sprintf (cmd, "mkdir '%s'", path);
+  r = system (cmd);
+  free (cmd);
+  return r;
+}
+#endif
+
 /* Make sure we'll have the directories to create a file.
-   If `striplast' is TRUE, ignore the last element of `filename'.  */
+   Ignore the last element of `filename'.  */
 
 void
-makedirs(filename,striplast)
+makedirs (filename)
 Reg1 char *filename;
-bool striplast;
 {
-    char tmpbuf[256];
-    Reg2 char *s = tmpbuf;
-    char *dirv[20];		/* Point to the NULs between elements.  */
-    Reg3 int i;
-    Reg4 int dirvp = 0;		/* Number of finished entries in dirv. */
+  Reg1 char *f;
+  Reg2 char *flim;
+  Reg3 bool skip_mkdir;
+  struct stat sbuf;
 
-    /* Copy `filename' into `tmpbuf' with a NUL instead of a slash
-       between the directories.  */
-    while (*filename) {
-	if (*filename == '/') {
-	    filename++;
-	    dirv[dirvp++] = s;
-	    *s++ = '\0';
-	}
-	else {
-	    *s++ = *filename++;
-	}
-    }
-    *s = '\0';
-    dirv[dirvp] = s;
-    if (striplast)
-	dirvp--;
-    if (dirvp < 0)
-	return;
+  /* Replace '/'s with NULs in filename.  */
+  for (f = filename;  *f;  f++)
+    if (*f == '/')
+      *f = 0;
+  while (filename != f && *--f)
+    continue;
+  flim = f;
+  f = filename;
 
-    strcpy(buf, "mkdir");
-    s = buf;
-    for (i=0; i<=dirvp; i++) {
-	struct stat sbuf;
-
-	if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
-	    while (*s) s++;
-	    *s++ = ' ';
-	    strcpy(s, tmpbuf);
+  /* Now turn the NULs back to '/'s; stop when the path doesn't exist.  */
+  if (!*f || stat (f, &sbuf) == 0)
+    for (;  f < flim;  f++)
+      if (!*f)
+	{
+	  *f = '/';
+	  if (stat (filename, &sbuf) != 0)
+	    break;
 	}
-	*dirv[i] = '/';
-    }
-    if (s != buf)
-	system(buf);
+
+  skip_mkdir = f == flim || errno != ENOENT;
+  
+  /* Create the missing directories, replacing NULs by '/'s.  */
+  for (;  f <= flim;  f++)
+    if (!*f)
+      {
+	if (!skip_mkdir && mkdir (filename, 0777) != 0)
+	  skip_mkdir = TRUE;
+	*f = '/';
+      }
 }
 
 /* Make filenames more reasonable. */
@@ -377,7 +400,6 @@ int assume_exists;
     char *fullname;
     char *name;
     Reg1 char *t;
-    char tmpbuf[200];
     int sleading = strip_leading;
     struct stat st;
 
@@ -418,30 +440,33 @@ int assume_exists;
     if (stat(name, &st) && !assume_exists) {
 	char *filebase = basename(name);
 	size_t pathlen = filebase - name;
+	char *tmpbuf = xmalloc (strlen (name) + 32);
 
 	/* Put any leading path into `tmpbuf'.  */
 	strncpy(tmpbuf, name, pathlen);
 
 #define try1(f, a1)	(Sprintf(tmpbuf+pathlen,f,a1),	 stat(tmpbuf, &st) == 0)
 #define try2(f, a1, a2)	(Sprintf(tmpbuf+pathlen,f,a1,a2),stat(tmpbuf, &st) == 0)
-	if (   try2("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try1("RCS/%s"  , filebase)
-	    || try2(    "%s%s", filebase, RCSSUFFIX)
-	    || try2("SCCS/%s%s", SCCSPREFIX, filebase)
-	    || try2(     "%s%s", SCCSPREFIX, filebase))
-	  return name;
-	free(name);
-	name = 0;
+	if (!(   try2("RCS/%s%s", filebase, RCSSUFFIX)
+	      || try1("RCS/%s"  , filebase)
+	      || try2(    "%s%s", filebase, RCSSUFFIX)
+	      || try2("SCCS/%s%s", SCCSPREFIX, filebase)
+	      || try2(     "%s%s", SCCSPREFIX, filebase)))
+	  {
+	    free (name);
+	    name = 0;
+	  }
+	free (tmpbuf);
     }
 
     return name;
 }
 
-char *
+VOID *
 xmalloc (size)
      size_t size;
 {
-  register char *p = malloc (size);
+  register VOID *p = malloc (size);
   if (!p)
     memory_fatal ();
   return p;
