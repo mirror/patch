@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.2 1993/05/29 16:46:25 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.3 1993/05/31 04:52:39 eggert Exp $
  *
  * $Log: inp.c,v $
- * Revision 1.2  1993/05/29 16:46:25  eggert
- * Formerly inp.c.~9~
+ * Revision 1.3  1993/05/31 04:52:39  eggert
+ * Formerly inp.c.~10~
  *
- * Revision 1.2  1993/05/29 16:46:25  eggert
- * Formerly inp.c.~9~
+ * Revision 1.3  1993/05/31 04:52:39  eggert
+ * Formerly inp.c.~10~
  *
  * Revision 2.0.1.1  88/06/03  15:06:13  lwall
  * patch10: made a little smarter about sccs files
@@ -86,7 +86,7 @@ char *filename;
     Reg1 char *s;
     Reg2 LINENUM iline;
     char lbuf[MAXLINELEN];
-    int read_only;
+    int output_elsewhere = strcmp(filename, outname);
 
     statfailed = stat(filename, &filestat);
     if (statfailed && ok_to_create_file) {
@@ -98,7 +98,7 @@ char *filename;
     }
     /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
     if (statfailed
-	|| (! (read_only = strcmp(filename, outname))
+	|| (! output_elsewhere
 	    && (/* No one can write to it.  */
 		(filestat.st_mode & 0222) == 0
 		/* I can't write to it.  */
@@ -121,12 +121,12 @@ char *filename;
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
 	    || try("RCS/%s"  , filebase,         0)
 	    || try(    "%s%s", filebase, RCSSUFFIX)) {
-	    Sprintf(buf, read_only ? CHECKOUT : CHECKOUT_LOCKED, filename);
+	    Sprintf(buf, output_elsewhere?CHECKOUT:CHECKOUT_LOCKED, filename);
 	    Sprintf(lbuf, RCSDIFF, filename);
 	    cs = "RCS";
 	} else if (   try("SCCS/%s%s", SCCSPREFIX, filebase)
 		   || try(     "%s%s", SCCSPREFIX, filebase)) {
-	    Sprintf(buf, read_only ? GET : GET_LOCKED, s);
+	    Sprintf(buf, output_elsewhere?GET:GET_LOCKED, s);
 	    Sprintf(lbuf, SCCSDIFF, s, filename);
 	    cs = "SCCS";
 	} else if (statfailed)
