@@ -65,12 +65,16 @@ char *malloc ();
 #define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
 #endif
 
+#if !HAVE_LONG_FILE_NAMES
+#define HAVE_LONG_FILE_NAMES 0
+#endif
+
 /* Which type of backup file names are generated. */
 enum backup_type backup_type = none;
 
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-char *simple_backup_suffix = "~";
+char *simple_backup_suffix = ".orig";
 
 char *basename ();
 char *dirname ();
@@ -378,14 +382,12 @@ addext (filename, ext, e)
       *s = c;
     }
 #endif
-  if (slen_max == -1) {
-#if HAVE_LONG_FILE_NAMES
-    slen_max = 255;
-#else
-    slen_max = 14;
-#endif
-  }
-  if (slen + extlen <= slen_max)
+  if (slen_max == -1)
+    slen_max = HAVE_LONG_FILE_NAMES ? 255 : 14;
+
+  /* Don't use ext if !HAVE_LONG_FILE_NAMES, even if it would fit.
+     This matches patch's historical behavior.  */
+  if (HAVE_LONG_FILE_NAMES && slen + extlen <= slen_max)
     strcpy (s + slen, ext);
   else
     {
