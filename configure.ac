@@ -2,7 +2,7 @@
 # Copyright 1993, 1997-1998, 1999 Free Software Foundation, Inc.
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.12)
+AC_PREREQ(2.50)
 AC_INIT(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
@@ -21,11 +21,10 @@ AC_PROG_MAKE_SET
 # because <errno.h> reserves symbols starting with `E'.
 AC_PATH_PROG(ed_PROGRAM, ed, ed)
 
-AC_SYS_LARGEFILE
-
 AC_AIX
 AC_MINIX
 AC_ISC_POSIX
+AC_SYS_LARGEFILE
 AC_EXEEXT
 
 AM_C_PROTOTYPES
@@ -45,9 +44,10 @@ jm_STRUCT_UTIMBUF
 
 AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1\$U.o getopt\$U.o"])
 AC_SUBST(LIBOBJS)
-AC_CHECK_FUNCS(_doprintf fseeko geteuid getuid isascii memcmp mktemp \
+AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
   pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
 AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
+AC_FUNC_FSEEKO
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 AC_FUNC_CLOSEDIR_VOID
