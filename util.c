@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.30 2001/02/08 01:28:34 eggert Exp $ */
+/* $Id: util.c,v 1.31 2001/07/29 04:52:41 eggert Exp $ */
 
 /* Copyright 1986 Larry Wall
    Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -958,7 +958,10 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
 	    if (strip_leading < 0 || --sleading >= 0)
 		name = t+1;
 	  }
-	else if (ISSPACE ((unsigned char) *t))
+	/* Allow file names with internal spaces,
+	   but only if a tab separates the file name from the date.  */
+	else if (*t == '\t'
+		 || (ISSPACE ((unsigned char) *t) && ! strchr (t + 1, '\t')))
 	  {
 	    char const *u = t;
 
