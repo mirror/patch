@@ -281,16 +281,24 @@ int reset;
     static RETSIGTYPE (*hupval)(),(*intval)();
 
     if (!reset) {
+#ifdef SIGHUP
 	hupval = signal(SIGHUP, SIG_IGN);
 	if (hupval != SIG_IGN)
 	    hupval = (RETSIGTYPE(*)())my_exit;
+#endif
+#ifdef SIGINT
 	intval = signal(SIGINT, SIG_IGN);
 	if (intval != SIG_IGN)
 	    intval = (RETSIGTYPE(*)())my_exit;
+#endif
     }
+#ifdef SIGHUP
     Signal(SIGHUP, hupval);
+#endif
+#ifdef SIGINT
     Signal(SIGINT, intval);
 #endif
+#endif /* !defined (lint) */
 }
 
 /* How to handle certain events when in a critical region. */
@@ -299,9 +307,13 @@ void
 ignore_signals()
 {
 #ifndef lint
+#ifdef SIGHUP
     Signal(SIGHUP, SIG_IGN);
+#endif
+#ifdef SIGINT
     Signal(SIGINT, SIG_IGN);
 #endif
+#endif /* !defined (lint) */
 }
 
 /* Make sure we'll have the directories to create a file.
