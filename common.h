@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.15 1997/05/21 18:29:20 eggert Exp $ */
+/* $Id: common.h,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -97,9 +97,6 @@ If not, write to the Free Software Foundation,
 #define CTYPE_DOMAIN(c) 1
 #else
 #define CTYPE_DOMAIN(c) ((unsigned) (c) <= 0177)
-#endif
-#ifndef ISLOWER
-#define ISLOWER(c) (CTYPE_DOMAIN (c) && islower (c))
 #endif
 #ifndef ISSPACE
 #define ISSPACE(c) (CTYPE_DOMAIN (c) && isspace (c))
