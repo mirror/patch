@@ -1,9 +1,11 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.38 1999/10/18 16:40:48 eggert Exp $ */
+/* $Id: patch.c,v 1.39 2002/05/25 10:36:44 eggert Exp $ */
 
-/* Copyright 1984, 1985-1987, 1988 Larry Wall
-   Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
+
+   Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,6 +28,7 @@
 #define XTERN extern
 #include <argmatch.h>
 #include <backupfile.h>
+#include <exitfail.h>
 #include <getopt.h>
 #include <inp.h>
 #include <pch.h>
@@ -119,6 +122,7 @@ main (int argc, char **argv)
     struct outstate outstate;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
+    exit_failure = 2;
     program_name = argv[0];
     init_time ();
 
@@ -581,7 +585,7 @@ static char const *const option_help[] =
 "  --posix  Conform to the POSIX standard.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE_DOS
 "  --binary  Read and write data in binary mode.",
 #else
 "  --binary  Read and write data in binary mode (no effect on this platform).",
@@ -751,7 +755,7 @@ get_some_switches (void)
 		verbosity = VERBOSE;
 		break;
 	    case CHAR_MAX + 3:
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE_DOS
 		binary_transput = O_BINARY;
 #endif
 		break;
