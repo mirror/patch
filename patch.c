@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.35 1999/10/11 03:54:25 eggert Exp $ */
+/* $Id: patch.c,v 1.36 1999/10/13 06:20:29 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -107,8 +107,6 @@ static LINENUM maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
 
-char const program_name[] = "patch";
-
 /* Apply a set of diffs as appropriate. */
 
 int main PARAMS ((int, char **));
@@ -121,6 +119,7 @@ main (int argc, char **argv)
     struct outstate outstate;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
+    program_name = argv[0];
     init_time ();
 
     setbuf(stderr, serrbuf);
@@ -584,7 +583,7 @@ static char const *const option_help[] =
 "  --posix  Conform to the POSIX standard.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
 "  --binary  Read and write data in binary mode.",
 #else
 "  --binary  Read and write data in binary mode (no effect on this platform).",
@@ -754,7 +753,7 @@ get_some_switches (void)
 		verbosity = VERBOSE;
 		break;
 	    case CHAR_MAX + 3:
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
 		binary_transput = O_BINARY;
 #endif
 		break;
