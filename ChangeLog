@@ -1,3 +1,11 @@
+2004-07-21  Paul Eggert  <eggert@twinsun.com>
+
+	* Makefile.in (SRCS): Move hash.c here from LIBSRCS.
+	(exitfail.$(OBJEXT), patch.$(OBJEXT), xmalloc.$(OBJEXT)):
+	Depend on exitfail.h.
+	(hash.$(OBJEXT), util.$(OBJEXT)): Depend on hash.h.
+	* util.c: Whitespace cleanup in file_id.
+
 2004-07-19  Stepan Kasal  <kasal@ucw.cz>
 
 	* pch.c (get_ed_command_letter): Allow commands without address.

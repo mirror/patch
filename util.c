@@ -53,8 +53,8 @@ static void makedirs (char *);
 
 typedef struct
 {
-  dev_t	dev;
-  ino_t	ino;
+  dev_t dev;
+  ino_t ino;
   struct timespec mtime;
 } file_id;
 
