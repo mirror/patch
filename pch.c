@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.11 1997/05/15 17:59:15 eggert Exp $ */
+/* $Id: pch.c,v 1.12 1997/05/15 18:58:04 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -488,22 +488,23 @@ prefix_components (filename, checkdirs)
   int count = 0;
   struct stat stat_buf;
   int stat_result;
-  char *f;
+  char *f = filename + FILESYSTEM_PREFIX_LEN (filename);
 
-  for (f = filename;  *f;  f++)
-    if (ISSLASH (f[0]) && filename < f && ISSLASH (f[-1]))
-      {
-	if (checkdirs)
-	  {
-	    *f = '\0';
-	    stat_result = stat (filename, &stat_buf);
-	    *f = '/';
-	    if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
-	      break;
-	  }
+  if (*f)
+    while (*++f)
+      if (ISSLASH (f[0]) && ! ISSLASH (f[-1]))
+	{
+	  if (checkdirs)
+	    {
+	      *f = '\0';
+	      stat_result = stat (filename, &stat_buf);
+	      *f = '/';
+	      if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
+		break;
+	    }
 
-	count++;
-      }
+	  count++;
+	}
 
   return count;
 }
