@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.13 1997/05/15 17:59:15 eggert Exp $ */
+/* $Id: common.h,v 1.14 1997/05/19 06:52:03 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -170,6 +170,7 @@ XTERN int debug;
 #endif
 XTERN bool force;
 XTERN bool batch;
+XTERN bool noreverse;
 XTERN int reverse;
 XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
@@ -208,7 +209,6 @@ XTERN char *revision;			/* prerequisite revision, if any */
 # endif
 #endif
 
-int ok_to_reverse PARAMS ((void));
 VOID *xmalloc PARAMS ((size_t));
 void fatal_exit PARAMS ((int)) __attribute__ ((noreturn));
 
