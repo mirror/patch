@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.32 2002/05/25 10:36:44 eggert Exp $ */
+/* $Id: util.c,v 1.33 2002/05/25 10:51:11 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -277,7 +277,7 @@ version_controller (char const *filename, int readonly,
   struct stat cstat;
   char const *filebase = base_name (filename);
   char const *dotslash = *filename == '-' ? "./" : "";
-  size_t dir_len = filebase - filename;
+  size_t dirlen = filebase - filename;
   size_t filenamelen = strlen (filename);
   size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
   size_t maxtrysize = filenamelen + maxfixlen + 1;
@@ -291,8 +291,8 @@ version_controller (char const *filename, int readonly,
 
   strcpy (trybuf, filename);
 
-#define try1(f,a1)    (sprintf (trybuf + dir_len, f, a1),    stat (trybuf, &cstat) == 0)
-#define try2(f,a1,a2) (sprintf (trybuf + dir_len, f, a1,a2), stat (trybuf, &cstat) == 0)
+#define try1(f,a1)    (sprintf (trybuf + dirlen, f, a1),    stat (trybuf, &cstat) == 0)
+#define try2(f,a1,a2) (sprintf (trybuf + dirlen, f, a1,a2), stat (trybuf, &cstat) == 0)
 
   /* Check that RCS file is not working file.
      Some hosts don't report file name length errors.  */
