@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.33 1999/09/30 23:48:27 eggert Exp $ */
+/* $Id: patch.c,v 1.34 1999/10/03 01:17:38 eggert Exp $ */
 
 /* Copyright 1984, 1985-1987, 1988 Larry Wall
    Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -583,7 +583,7 @@ static char const *const option_help[] =
 "  --posix  Conform to the POSIX standard.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
 "  --binary  Read and write data in binary mode.",
 #else
 "  --binary  Read and write data in binary mode (no effect on this platform).",
@@ -753,7 +753,7 @@ get_some_switches (void)
 		verbosity = VERBOSE;
 		break;
 	    case CHAR_MAX + 3:
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
 		binary_transput = O_BINARY;
 #endif
 		break;
