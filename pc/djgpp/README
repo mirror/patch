@@ -1,8 +1,3 @@
-(This DJGPP port has not actually been tested under DJGPP,
-and it probably needs a bit of tweaking.  Please send
-any bug reports to <bug-gnu-utils@prep.ai.mit.edu>.)
-
-
 To configure `patch' for DJGPP, issue these commands from the
 `patch' source directory:
 
