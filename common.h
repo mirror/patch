@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.4 1993/07/21 03:27:25 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.5 1993/07/21 17:23:28 djm Exp $
  *
  * $Log: common.h,v $
- * Revision 1.4  1993/07/21 03:27:25  eggert
- * Formerly common.h.~12~
+ * Revision 1.5  1993/07/21 17:23:28  djm
+ * Formerly common.h.~13~
  *
- * Revision 1.4  1993/07/21 03:27:25  eggert
- * Formerly common.h.~12~
+ * Revision 1.5  1993/07/21 17:23:28  djm
+ * Formerly common.h.~13~
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -66,7 +66,7 @@
 
 #define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
-#define MAXLINELEN (8 * 1024)		/* FIXME this is evil */
+#define MAXLINELEN (8 * 1024)		/* initial input line length */
 #define BUFFERSIZE (8 * 1024)		/* for copying input in plan_b  */
 
 #define SCCSPREFIX "s."
@@ -97,7 +97,6 @@
 
 typedef char bool;
 typedef long LINENUM;			/* must be signed */
-typedef unsigned MEM;			/* what to feed malloc */
 
 /* globals */
 
@@ -108,7 +107,8 @@ EXT int optind_last;			/* for restarting plan_b */
 EXT struct stat filestat;		/* file statistics area */
 EXT int filemode INIT(0644);
 
-EXT char buf[MAXLINELEN];		/* general purpose buffer */
+EXT char *buf;				/* general purpose buffer */
+EXT size_t bufsize INIT(MAXLINELEN);	/* allocated size of buf */
 EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
 EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
 
