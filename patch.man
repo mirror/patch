@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.7 1997/04/14 05:32:30 eggert Exp $
+.Id $Id: patch.man,v 1.8 1997/04/17 17:08:15 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -100,7 +100,7 @@ suffix
 if
 .B \&.rej
 would generate a file name that is too long).
-(The rejected hunk comes out in context diff form regardless of
+(The rejected hunk comes out in ordinary context diff form regardless of
 the input patch's form.
 If the input was a normal diff, many of the contexts are simply null.)
 The line numbers on the hunks in the reject file may be different than
@@ -130,18 +130,21 @@ is specified on the command line,
 .B patch
 tries to figure out from the leading garbage what the name of the file
 to edit is.
-In the header of a context diff, the file name is found from lines beginning
-with \fB\(**\(**\(**\fP or \fB\*=\-\fP;
-except that if the file names differ and both files exist,
-the context header is ignored.
-Only context diffs have lines like that, but if there is an
+If the header is that of a context diff,
+.B patch
+tests for the existence of the old and new files named in the header.
+If there is an
 .B Index:
 line in the leading garbage,
 .B patch
-tries to use the file name from that line.
-The
-.B Index:
-line takes precedence over a context diff header.
+tests for the existence of the file named in that line.
+If none of the file names refer to existing files, but the patch appears
+to create a file, then
+.B patch
+tries the same file names again, this time testing only for the
+existence of the file names' directory prefix;
+.B patch
+uses the first name with the longest existing prefix.
 If no file name can be intuited from the leading garbage, you are asked
 for the name of the file to patch.
 .PP
@@ -164,9 +167,7 @@ or
 .B \*=version\-control
 option)
 is set to
-.B existing
-or
-.BR rcs ,
+.BR existing ,
 .B patch
 attempts to check out and lock the file.
 \s-1SCCS\s0 is treated in a similar way.
@@ -218,7 +219,7 @@ is
 .BR /junk/src/patch/util.c .
 .TP
 \fB\-c\fP  or  \fB\*=context\fP
-Interpret the patch file as a context diff.
+Interpret the patch file as a ordinary context diff.
 .TP
 \fB\*=verbose\fP
 Output extra information about the work being done.
@@ -304,9 +305,9 @@ instead of patching files in place.
 \fB\-p\fP\fInumber\fP  or  \fB\*=strip\fP\fB=\fP\fInumber\fP
 Strip the smallest prefix containing
 .I number
-leading slashes from each pathname found in the patch file.
+leading slashes from each file name found in the patch file.
 A sequence of one or more adjacent slashes is counted as a single slash.
-This controls how pathnames found in the patch file are treated, in case
+This controls how file names found in the patch file are treated, in case
 you keep your files in a different directory than the person who sent
 out the patch.
 For example, supposing the file name in the patch file was
@@ -315,7 +316,7 @@ For example, supposing the file name in the patch file was
 .Sp
 setting
 .B \-p0
-gives the entire pathname unmodified,
+gives the entire file name unmodified,
 .B \-p1
 gives
 .Sp
@@ -423,10 +424,11 @@ accepted):
 .RS
 .TP 3
 \fBexisting\fP  or  \fBnil\fP
-Make \s-1RCS\s0 or \s-1SCCS\s0 backups for files that are under
-\s-1RCS\s0 or \s-1SCCS\s0 control,
-otherwise numbered backups of files that already have them,
+Make numbered backups of files that already have them,
 otherwise simple backups.
+If a file is read-only or does not exist,
+check it out from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
+similarly for \s-1SCCS\s0.
 .TP
 \fBnone\fP
 Do not make backups.
@@ -440,19 +442,6 @@ is
 where
 .I N
 is the version number.
-.TP
-.B rcs
-Make \s-1RCS\s0 backups.
-If the original file is not under \s-1RCS\s0 control,
-check in and lock an initial revision;
-otherwise if it matches the default \s-1RCS\s0 revision,
-check out and lock that revision;
-otherwise if the user has locked the default revision,
-check in a new revision and move the lock to the new revision;
-otherwise report an error.
-.TP
-.B sccs
-Make \s-1SCCS\s0 backups in the same style as \s-1RCS\s0.
 .TP
 \fBsimple\fP  or  \fBnever\fP
 Make simple backups.  That is, when patching a file
