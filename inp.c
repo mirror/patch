@@ -1,39 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.6 1993/07/29 20:11:38 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.7 1993/07/30 02:02:51 eggert Exp $
  *
  * $Log: inp.c,v $
- * Revision 1.6  1993/07/29 20:11:38  eggert
- * (tibufsize): New variable; buffers grow as needed.
- * (TIBUFSIZE_MINIMUM): New macro.
- * (report_revision): New function.
- * (plan_a): Do not search patch as a big string, since that fails
- * if it contains null bytes.
- * Prepend `./' to filenames starting with `-', for RCS and SCCS.
- * If file does not match default RCS/SCCS version, go ahead and patch
- * it anyway; warn about the problem but do not report a fatal error.
- * (plan_b): Do not use a fixed buffer to read lines; read byte by byte
- * instead, so that the lines can be arbitrarily long.  Do not search
- * lines as strings, since they may contain null bytes.
- * (plan_a, plan_b): Report I/O errors.
- * (rev_in_string): Remove.
- * (ifetch): Yield size of line too, since strlen no longer applies.
- * (plan_a, plan_b): No longer exported.
+ * Revision 1.7  1993/07/30 02:02:51  eggert
+ * (plan_a): Remove fixed internal buffer.  Remove lint.
  *
- * Revision 1.6  1993/07/29 20:11:38  eggert
- * (tibufsize): New variable; buffers grow as needed.
- * (TIBUFSIZE_MINIMUM): New macro.
- * (report_revision): New function.
- * (plan_a): Do not search patch as a big string, since that fails
- * if it contains null bytes.
- * Prepend `./' to filenames starting with `-', for RCS and SCCS.
- * If file does not match default RCS/SCCS version, go ahead and patch
- * it anyway; warn about the problem but do not report a fatal error.
- * (plan_b): Do not use a fixed buffer to read lines; read byte by byte
- * instead, so that the lines can be arbitrarily long.  Do not search
- * lines as strings, since they may contain null bytes.
- * (plan_a, plan_b): Report I/O errors.
- * (rev_in_string): Remove.
- * (ifetch): Yield size of line too, since strlen no longer applies.
- * (plan_a, plan_b): No longer exported.
+ * Revision 1.7  1993/07/30 02:02:51  eggert
+ * (plan_a): Remove fixed internal buffer.  Remove lint.
  *
  * Revision 2.0.1.1  88/06/03  15:06:13  lwall
  * patch10: made a little smarter about sccs files
@@ -154,15 +126,15 @@ char *filename;
     Reg7 char *rev;
     Reg8 size_t revlen;
     Reg9 LINENUM iline;
-    char lbuf[MAXLINELEN];
     int elsewhere = strcmp(filename, outname);
+    char const *dotslash;
 
     statfailed = stat(filename, &filestat);
     if (statfailed && ok_to_create_file) {
 	if (verbose)
 	    say2("(Creating file %s...)\n",filename);
-	makedirs(filename, TRUE);
-	close(creat(filename, 0666));
+	makedirs (filename);
+	Close (creat (filename, 0666));
 	statfailed = stat(filename, &filestat);
     }
     /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
@@ -177,6 +149,7 @@ char *filename;
 	char const *cs = 0;
 	char *filebase;
 	size_t pathlen;
+	char *lbuf = xmalloc (strlen (filename) + 100);
 
 	filebase = basename(filename);
 	pathlen = filebase - filename;
@@ -185,6 +158,7 @@ char *filename;
 	   Leave room in lbuf for the diff command.  */
 	s = lbuf + 20;
 	strncpy(s, filename, pathlen);
+	dotslash = *filename=='-' ? "./" : "";
 
 #define try1(f,a1)	(Sprintf(s + pathlen, f, a1),	stat(s, &cstat) == 0)
 #define try2(f,a1,a2)	(Sprintf(s + pathlen, f, a1,a2),stat(s, &cstat) == 0)
@@ -197,14 +171,14 @@ char *filename;
 	    (statfailed
 	     || (  (filestat.st_dev ^ cstat.st_dev)
 		 | (filestat.st_ino ^ cstat.st_ino)))) {
-	    char const *dir = *filename=='-' ? "./" : "";
-	    Sprintf(buf, elsewhere?CHECKOUT:CHECKOUT_LOCKED, dir, filename);
-	    Sprintf(lbuf, RCSDIFF, dir, filename);
+	    Sprintf(buf, elsewhere?CHECKOUT:CHECKOUT_LOCKED,
+		    dotslash, filename);
+	    Sprintf(lbuf, RCSDIFF, dotslash, filename);
 	    cs = "RCS";
 	} else if (   try2("SCCS/%s%s", SCCSPREFIX, filebase)
 		   || try2(     "%s%s", SCCSPREFIX, filebase)) {
 	    Sprintf(buf, elsewhere?GET:GET_LOCKED, s);
-	    Sprintf(lbuf, SCCSDIFF, s, *filename=='-' ? "./" : "", filename);
+	    Sprintf(lbuf, SCCSDIFF, s, dotslash, filename);
 	    cs = "SCCS";
 	} else if (statfailed)
 	    fatal2("can't find %s", filename);
@@ -234,6 +208,7 @@ char *filename;
 		    fatal3("can't check out file %s from %s", filename, cs);
 	    }
 	}
+	free (lbuf);
     }
     if (!S_ISREG(filestat.st_mode))
 	fatal2("%s is not a regular file--can't patch", filename);
@@ -277,7 +252,7 @@ char *filename;
 	}
     }
     iline += i_size && s[-1] != '\n';
-    i_ptr = malloc((size_t)((iline + 2) * sizeof(*i_ptr)));
+    i_ptr = (char **) malloc((size_t)((iline + 2) * sizeof(*i_ptr)));
     if (!i_ptr) {	/* shucks, it was a near thing */
 	free(i_womp);
 	return FALSE;
