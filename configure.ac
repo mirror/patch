@@ -7,7 +7,7 @@ AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 
 PACKAGE=patch
-VERSION=2.1.5
+VERSION=2.1.6
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -25,7 +25,7 @@ AC_C_CONST
 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h stdlib.h string.h unistd.h varargs.h)
+AC_CHECK_HEADERS(fcntl.h limits.h string.h unistd.h varargs.h)
 
 AC_TYPE_OFF_T
 AC_TYPE_SIGNAL
