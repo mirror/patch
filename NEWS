@@ -5,6 +5,20 @@ Known problems:
 
 Change in version 2.4:
 
+* New options:
+  -Z or --set-utc sets times of patched files, assuming diff uses UTC (GMT).
+  -T or --set-time is similar, assuming local time (not recommended).
+
+* By default, `patch' is now more verbose when fuzz is required.
+
+* -g or --get and PATCH_GET now specify a numeric value.
+  If the value is positive, working files are gotten from RCS or SCCS files;
+  if zero, working files are not gotten;
+  and if negative, `patch' asks the user whether to get each file.
+
+* The -G or --no-get option introduced in GNU patch 2.3 has been removed;
+  use -g0 instead.
+
 * `patch' now matches against empty and nonexistent files more generously.
   A patch against an empty file applies to a nonexistent file, and vice versa.
 
