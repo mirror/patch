@@ -174,6 +174,7 @@ $(OBJS): config.h
 addext$U.o: backupfile.h
 argmatch$U.o: argmatch.h error.h quotearg.h
 backupfile$U.o: argmatch.h backupfile.h
+basename$U.o: basename.h
 error$U.o: error.h
 getopt$U.o getopt1$U.o: getopt.h
 inp$U.o: backupfile.h common.h inp.h pch.h quotearg.h util.h xalloc.h
