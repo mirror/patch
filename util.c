@@ -42,7 +42,7 @@ char *from, *to;
 	fromfd = open(from, 0);
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
-	while ((i=read(fromfd, buf, sizeof buf)) > 0)
+	while ((i=read(fromfd, buf, bufsize)) > 0)
 	    if (write(1, buf, i) != 1)
 		pfatal1("write failed");
 	Close(fromfd);
@@ -114,7 +114,7 @@ char *from, *to;
 	fromfd = open(from, 0);
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
-	while ((i=read(fromfd, buf, sizeof buf)) > 0)
+	while ((i=read(fromfd, buf, bufsize)) > 0)
 	    if (write(tofd, buf, i) != i)
 		pfatal1("write failed");
 	Close(fromfd);
@@ -140,7 +140,7 @@ char *from, *to;
     fromfd = open(from, 0);
     if (fromfd < 0)
 	pfatal2("internal error, can't reopen %s", from);
-    while ((i=read(fromfd, buf, sizeof buf)) > 0)
+    while ((i=read(fromfd, buf, bufsize)) > 0)
 	if (write(tofd, buf, i) != i)
 	    pfatal2("write to %s failed", to);
     Close(fromfd);
@@ -160,7 +160,7 @@ Reg1 char *s;
 	s = "Oops";
     t = s;
     while (*t++);
-    rv = malloc((MEM) (t - s));
+    rv = malloc((size_t) (t - s));
     if (rv == Nullch) {
 	if (using_plan_a)
 	    out_of_mem = TRUE;
@@ -240,23 +240,23 @@ long arg1,arg2,arg3;
     Fflush(stderr);
     write(2, buf, strlen(buf));
     if (tty2) {				/* might be redirected to a file */
-	r = read(2, buf, sizeof buf);
+	r = read(2, buf, bufsize);
     }
     else if (isatty(1)) {		/* this may be new file output */
 	Fflush(stdout);
 	write(1, buf, strlen(buf));
-	r = read(1, buf, sizeof buf);
+	r = read(1, buf, bufsize);
     }
     else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
 					/* might be deleted or unwriteable */
 	write(ttyfd, buf, strlen(buf));
-	r = read(ttyfd, buf, sizeof buf);
+	r = read(ttyfd, buf, bufsize);
 	Close(ttyfd);
     }
     else if (isatty(0)) {		/* this is probably patch input */
 	Fflush(stdin);
 	write(0, buf, strlen(buf));
-	r = read(0, buf, sizeof buf);
+	r = read(0, buf, bufsize);
     }
     else {				/* no terminal at all--default it */
 	buf[0] = '\n';
@@ -436,7 +436,7 @@ int assume_exists;
 
 char *
 xmalloc (size)
-     unsigned size;
+     size_t size;
 {
   register char *p = (char *) malloc (size);
   if (!p)
