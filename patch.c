@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.14 1997/05/15 17:59:15 eggert Exp $ */
+/* $Id: patch.c,v 1.15 1997/05/19 06:52:03 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -37,7 +37,7 @@ If not, write to the Free Software Foundation,
 /* procedures */
 
 static FILE *create_output_file PARAMS ((char const *));
-static LINENUM locate_hunk PARAMS ((LINENUM, LINENUM));
+static LINENUM locate_hunk PARAMS ((LINENUM));
 static bool apply_hunk PARAMS ((bool *, LINENUM));
 static bool copy_till PARAMS ((bool *, LINENUM));
 static bool patch_match PARAMS ((LINENUM, LINENUM, LINENUM, LINENUM));
@@ -57,8 +57,6 @@ static int remove_empty_files;
 
 /* TRUE if -R was specified on command line.  */
 static int reverse_flag_specified;
-
-static bool noreverse;
 
 /* how many input lines have been irretractably output */
 static LINENUM last_frozen_line;
@@ -123,7 +121,9 @@ char **argv;
       if (v && *v)
 	simple_backup_suffix = v;
 
-      v = getenv ("VERSION_CONTROL");
+      v = getenv ("PATCH_VERSION_CONTROL");
+      if (! v)
+        v = getenv ("VERSION_CONTROL");
       if (v && *v)
 	backup_type = get_version (v);
     }
@@ -181,24 +181,19 @@ char **argv;
 	/* might misfire and we can't catch it easily */
 
 	/* apply each hunk of patch */
-	while (0 < (got_hunk = another_hunk (diff_type))) {
+	while (0 < (got_hunk = another_hunk (diff_type, reverse))) {
 	    LINENUM where = 0; /* Pacify `gcc -Wall'.  */
 	    LINENUM newwhere;
 	    LINENUM fuzz = 0;
-	    LINENUM max_prefix_fuzz = pch_prefix_context ();
-	    LINENUM max_suffix_fuzz = pch_suffix_context ();
+	    LINENUM prefix_context = pch_prefix_context ();
+	    LINENUM suffix_context = pch_suffix_context ();
+	    LINENUM context = (prefix_context < suffix_context
+			       ? suffix_context : prefix_context);
+	    LINENUM mymaxfuzz = (maxfuzz < context ? maxfuzz : context);
 	    hunk++;
-	    if (maxfuzz < max_prefix_fuzz)
-		max_prefix_fuzz = maxfuzz;
-	    if (maxfuzz < max_suffix_fuzz)
-		max_suffix_fuzz = maxfuzz;
 	    if (!skip_rest_of_patch) {
 		do {
-		    LINENUM prefix_fuzz =
-			    fuzz < max_prefix_fuzz ? fuzz : max_prefix_fuzz;
-		    LINENUM suffix_fuzz =
-			    fuzz < max_suffix_fuzz ? fuzz : max_suffix_fuzz;
-		    where = locate_hunk (prefix_fuzz, suffix_fuzz);
+		    where = locate_hunk(fuzz);
 		    if (hunk == 1 && !where && !(force|apply_anyway)) {
 						/* dwim for reversed patch? */
 			if (!pch_swap()) {
@@ -207,8 +202,13 @@ char **argv;
 			    continue;
 			}
 			/* Try again.  */
-			where = locate_hunk (prefix_fuzz, suffix_fuzz);
-			if (where && ok_to_reverse ())
+			where = locate_hunk (fuzz);
+			if (where
+			    && (ok_to_reverse
+				("%s patch detected!",
+				 (reverse
+				  ? "Unreversed"
+				  : "Reversed (or previously applied)"))))
 			  reverse ^= 1;
 			else
 			  {
@@ -224,8 +224,7 @@ char **argv;
 			  }
 		    }
 		} while (!skip_rest_of_patch && !where
-			 && (++fuzz <= max_prefix_fuzz
-			     || fuzz <= max_suffix_fuzz));
+			 && ++fuzz <= mymaxfuzz);
 
 		if (skip_rest_of_patch) {		/* just got decided */
 		  if (ofp && !output)
@@ -284,11 +283,12 @@ char **argv;
 	    continue;
 	}
 
-	assert(hunk);
-
 	/* finish spewing out the new file */
 	if (!skip_rest_of_patch)
-	  skip_rest_of_patch = ! spew_output (&after_newline);
+	  {
+	    assert (hunk);
+	    skip_rest_of_patch = ! spew_output (&after_newline);
+	  }
       }
 
       /* and put the output where desired */
@@ -306,8 +306,8 @@ char **argv;
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
-		  if (unlink (outname) != 0)
-		    pfatal ("can't remove file `%s'", outname);
+		  move_file ((char *) 0, outname, (mode_t) 0,
+			     backup_type != none);
 		  removedirs (outname);
 		}
 	    }
@@ -315,8 +315,10 @@ char **argv;
 	    {
 	      if (! dry_run)
 		{
-		  move_file (TMPOUTNAME, &instat, outname, backup_type != none);
-		  chmod (outname, instat.st_mode);
+		  move_file (TMPOUTNAME, outname, instat.st_mode,
+			     backup_type != none);
+		  if (! inerrno && chmod (outname, instat.st_mode) != 0)
+		    pfatal ("can't set permissions on file `%s'", outname);
 		}
 	    }
       }
@@ -337,8 +339,12 @@ char **argv;
 		say (" -- saving rejects to %s", rej);
 		if (! dry_run)
 		  {
-		    move_file (TMPREJNAME, &instat, rej, FALSE);
-		    chmod (rej, instat.st_mode & ~(S_IXUSR|S_IXGRP|S_IXOTH));
+		    move_file (TMPREJNAME, rej, instat.st_mode, FALSE);
+		    if (! inerrno
+			&& (chmod (rej, (instat.st_mode
+					 & ~(S_IXUSR|S_IXGRP|S_IXOTH)))
+			    != 0))
+		      pfatal ("can't set permissions on file `%s'", rej);
 		  }
 		if (!rejname)
 		    free (rej);
@@ -688,47 +694,76 @@ numeric_optarg (argtype_msgid)
 /* Attempt to find the right place to apply this hunk of patch. */
 
 static LINENUM
-locate_hunk (prefix_fuzz, suffix_fuzz)
-     LINENUM prefix_fuzz;
-     LINENUM suffix_fuzz;
+locate_hunk(fuzz)
+LINENUM fuzz;
 {
     register LINENUM first_guess = pch_first () + last_offset;
     register LINENUM offset;
     LINENUM pat_lines = pch_ptrn_lines();
-    register LINENUM max_pos_offset
-      = input_lines - first_guess - pat_lines + 1;
-    register LINENUM max_neg_offset
-      = first_guess - last_frozen_line - 1 + pch_prefix_context ();
+    LINENUM prefix_context = pch_prefix_context ();
+    LINENUM suffix_context = pch_suffix_context ();
+    LINENUM context = (prefix_context < suffix_context
+		       ? suffix_context : prefix_context);
+    LINENUM prefix_fuzz = fuzz + prefix_context - context;
+    LINENUM suffix_fuzz = fuzz + suffix_context - context;
+    LINENUM max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
+    LINENUM min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
+    LINENUM max_pos_offset = max_where - first_guess;
+    LINENUM max_neg_offset = first_guess - min_where;
+    LINENUM max_offset = (max_pos_offset < max_neg_offset
+			  ? max_neg_offset : max_pos_offset);
 
     if (!pat_lines)			/* null range matches always */
 	return first_guess;
-    if (max_neg_offset >= first_guess)	/* do not try lines < 0 */
-	max_neg_offset = first_guess - 1;
-    if (first_guess <= input_lines
-	&& patch_match (first_guess, (LINENUM) 0, prefix_fuzz, suffix_fuzz))
-	return first_guess;
-    for (offset = 1; ; offset++) {
-	register bool check_after = offset <= max_pos_offset;
-	register bool check_before = offset <= max_neg_offset;
 
-	if (check_after
+    /* Do not try lines <= 0.  */
+    if (first_guess <= max_neg_offset)
+	max_neg_offset = first_guess - 1;
+
+    if (prefix_fuzz < 0)
+      {
+	/* Can only match start of file.  */
+
+	if (suffix_fuzz < 0)
+	  /* Can only match entire file.  */
+	  if (pat_lines != input_lines || prefix_context < last_frozen_line)
+	    return 0;
+
+	offset = 1 - first_guess;
+	return
+	  ((last_frozen_line <= prefix_context
+	    && offset <= max_pos_offset
+	    && patch_match (first_guess, offset, (LINENUM) 0, suffix_fuzz))
+	   ? first_guess : 0);
+      }
+
+    if (suffix_fuzz < 0)
+      {
+	/* Can only match end of file.  */
+	offset = first_guess - (input_lines - pat_lines + 1);
+	return
+	  ((offset <= max_neg_offset
+	    && patch_match (first_guess, -offset, prefix_fuzz, (LINENUM) 0))
+	   ? first_guess : 0);
+      }
+
+    for (offset = 0;  offset <= max_offset;  offset++) {
+	if (offset <= max_pos_offset
 	    && patch_match (first_guess, offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
 		say ("Offset changing from %ld to %ld\n", last_offset, offset);
 	    last_offset = offset;
 	    return first_guess+offset;
 	}
-	else if (check_before
-		 && patch_match (first_guess, -offset,
-				 prefix_fuzz, suffix_fuzz)) {
+	if (0 < offset && offset <= max_neg_offset
+	    && patch_match (first_guess, -offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
 		say ("Offset changing from %ld to %ld\n", last_offset, -offset);
 	    last_offset = -offset;
 	    return first_guess-offset;
 	}
-	else if (!check_before && !check_after)
-	    return 0;
     }
+    return 0;
 }
 
 /* We did not find the pattern, dump out the hunk so they can handle it. */
@@ -939,13 +974,9 @@ static FILE *
 create_output_file (name)
      char const *name;
 {
-  int fd;
-  FILE *f;
-  if (! (O_CREAT && O_TRUNC))
-    close (creat (name, instat.st_mode));
-  fd = open (name, O_WRONLY|O_CREAT|O_TRUNC|binary_transput,
-	     S_IRUSR|S_IWUSR|instat.st_mode);
-  if (fd < 0  ||  ! (f = fdopen (fd, binary_transput ? "wb" : "w")))
+  int fd = create_file (name, O_WRONLY | binary_transput, instat.st_mode);
+  FILE *f = fdopen (fd, binary_transput ? "wb" : "w");
+  if (! f)
     pfatal ("can't create `%s'", name);
   return f;
 }
@@ -1086,42 +1117,6 @@ similar (a, alen, b, blen)
 	return FALSE;
       else
 	alen--, blen--;
-    }
-}
-
-/* Is it OK to reverse the patch?  */
-
-int
-ok_to_reverse ()
-{
-  if (noreverse)
-    {
-      say ("Ignoring previously applied (or reversed) patch.\n");
-      skip_rest_of_patch = TRUE;
-      return 0;
-    }
-  else if (batch)
-    {
-      if (verbosity != SILENT)
-	say ("%seversed (or previously applied) patch detected!  %s -R.\n",
-	     reverse ? "R" : "Unr",
-	     reverse ? "Assuming" : "Ignoring");
-      return 1;
-    }
-  else
-    {
-      ask ("%seversed (or previously applied) patch detected!  %s -R? [y] ",
-	   reverse ? "R" : "Unr",
-	   reverse ? "Assume" : "Ignore");
-      if (*buf != 'n')
-	return 1;
-      else
-	{
-	  ask ("Apply anyway? [n] ");
-	  if (*buf != 'y')
-	    skip_rest_of_patch = TRUE;
-	  return 0;
-	}
     }
 }
 
