@@ -15,6 +15,9 @@ Changes since version 2.2:
   - Files that ``become nonexistent'' after patching are now removed.
     When a file is removed, any empty ancestor directories are also removed.
 
+* If the PATCH_VERSION_CONTROL environment variable is set,
+  it overrides the VERSION_CONTROL environment variable.
+
 * The method used to intuit names of files to be patched is now as follows:
 
   - Take the old and new names from the context header if present,
@@ -41,7 +44,8 @@ Changes since version 2.2:
 * The environment variables TMP and TEMP are consulted for the name of
   the temporary directory if TMPDIR is not set.
 
-* A port to MS-DOS and MS-Windows is available; see the `pc' directory.
+* An untested port to MS-DOS and MS-Windows is available;
+  see the `pc' directory.
 
 Changes in version 2.2:
 
