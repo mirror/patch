@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.3 1993/07/21 00:08:00 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.4 1993/07/21 03:27:25 eggert Exp $
  *
  * $Log: common.h,v $
- * Revision 1.3  1993/07/21 00:08:00  djm
- * Formerly common.h.~11~
+ * Revision 1.4  1993/07/21 03:27:25  eggert
+ * Formerly common.h.~12~
  *
- * Revision 1.3  1993/07/21 00:08:00  djm
- * Formerly common.h.~11~
+ * Revision 1.4  1993/07/21 03:27:25  eggert
+ * Formerly common.h.~12~
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -67,7 +67,7 @@
 #define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 #define MAXLINELEN (8 * 1024)		/* FIXME this is evil */
-#define BUFFERSIZE 1024			/* for copying input in plan_b  */
+#define BUFFERSIZE (8 * 1024)		/* for copying input in plan_b  */
 
 #define SCCSPREFIX "s."
 #define GET "get %s"
@@ -108,7 +108,7 @@ EXT int optind_last;			/* for restarting plan_b */
 EXT struct stat filestat;		/* file statistics area */
 EXT int filemode INIT(0644);
 
-EXT char *buf;				/* general purpose buffer */
+EXT char buf[MAXLINELEN];		/* general purpose buffer */
 EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
 EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
 
