@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.4 1993/06/08 15:23:01 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/inp.c,v 1.5 1993/07/21 17:54:10 djm Exp $
  *
  * $Log: inp.c,v $
- * Revision 1.4  1993/06/08 15:23:01  eggert
- * Formerly inp.c.~11~
+ * Revision 1.5  1993/07/21 17:54:10  djm
+ * entered into RCS
  *
- * Revision 1.4  1993/06/08 15:23:01  eggert
- * Formerly inp.c.~11~
+ * Revision 1.5  1993/07/21 17:54:10  djm
+ * entered into RCS
  *
  * Revision 2.0.1.1  88/06/03  15:06:13  lwall
  * patch10: made a little smarter about sccs files
@@ -24,7 +24,7 @@
 
 /* Input-file-with-indexable-lines abstract type */
 
-static long i_size;			/* size of the input file */
+static off_t i_size;			/* size of the input file */
 static char *i_womp;			/* plan a buffer for entire file */
 static char **i_ptr;			/* pointers to lines in i_womp */
 
@@ -172,7 +172,7 @@ char *filename;
 #ifdef lint
     i_womp = Nullch;
 #else
-    i_womp = malloc((MEM)(i_size+2));	/* lint says this may alloc less than */
+    i_womp = malloc((size_t)(i_size+2));	/* lint says this may alloc less than */
 					/* i_size, but that's okay, I think. */
 #endif
     if (i_womp == Nullch)
@@ -180,7 +180,7 @@ char *filename;
     if ((ifd = open(filename, 0)) < 0)
 	pfatal2("can't open file %s", filename);
 #ifndef lint
-    if (read(ifd, i_womp, (int)i_size) != i_size) {
+    if (read(ifd, i_womp, (size_t)i_size) != i_size) {
 	Close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 	free(i_womp);	/* at this point it doesn't matter if i_womp was */
 	return FALSE;	/*   undersized. */
@@ -201,7 +201,7 @@ char *filename;
 #ifdef lint
     i_ptr = Null(char**);
 #else
-    i_ptr = (char **)malloc((MEM)((iline + 2) * sizeof(char *)));
+    i_ptr = (char **)malloc((size_t)((iline + 2) * sizeof(char *)));
 #endif
     if (i_ptr == Null(char **)) {	/* shucks, it was a near thing */
 	free((char *)i_womp);
@@ -263,7 +263,7 @@ char *filename;
 	pfatal2("can't open file %s", filename);
     if ((tifd = creat(TMPINNAME, 0666)) < 0)
 	pfatal2("can't open file %s", TMPINNAME);
-    while (fgets(buf, sizeof buf, ifp) != Nullch) {
+    while (fgets(buf, bufsize, ifp) != Nullch) {
 	if (revision != Nullch && !found_revision && rev_in_string(buf))
 	    found_revision = TRUE;
 	if ((i = strlen(buf)) > maxlen)
@@ -296,8 +296,8 @@ char *filename;
     Fseek(ifp, 0L, 0);		/* rewind file */
     lines_per_buf = BUFFERSIZE / maxlen;
     tireclen = maxlen;
-    tibuf[0] = malloc((MEM)(BUFFERSIZE + 1));
-    tibuf[1] = malloc((MEM)(BUFFERSIZE + 1));
+    tibuf[0] = malloc((size_t)(BUFFERSIZE + 1));
+    tibuf[1] = malloc((size_t)(BUFFERSIZE + 1));
     if (tibuf[1] == Nullch)
 	fatal1("out of memory\n");
     for (i=1; ; i++) {
@@ -344,7 +344,7 @@ int whichbuf;				/* ignored when file in memory */
 #ifndef lint		/* complains of long accuracy */
 	    Lseek(tifd, (long)baseline / lines_per_buf * BUFFERSIZE, 0);
 #endif
-	    if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
+	    if (read(tifd, tibuf[whichbuf], (size_t)BUFFERSIZE) < 0)
 		pfatal2("error reading tmp file %s", TMPINNAME);
 	}
 	return tibuf[whichbuf] + (tireclen*offline);
