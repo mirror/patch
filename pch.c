@@ -1,9 +1,11 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.38 2001/07/29 04:35:03 eggert Exp $ */
+/* $Id: pch.c,v 1.39 2002/05/25 10:43:26 eggert Exp $ */
 
-/* Copyright 1986, 1987, 1988 Larry Wall
-   Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1986, 1987, 1988 Larry Wall
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
+   2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +25,7 @@
 #define XTERN extern
 #include <common.h>
 #include <backupfile.h>
-#include <basename.h>
+#include <dirname.h>
 #include <inp.h>
 #include <quotearg.h>
 #include <util.h>
@@ -105,7 +107,7 @@ open_patch_file (char const *filename)
     if (!filename || !*filename || strEQ (filename, "-"))
       {
 	file_offset stdin_pos;
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE_DOS
 	if (binary_transput)
 	  {
 	    if (isatty (STDIN_FILENO))
@@ -493,7 +495,7 @@ intuit_diff_type (void)
   scan_exit:
 
     /* To intuit `inname', the name of the file to patch,
-       use the algorithm specified by POSIX 1003.2b/D11 section 5.22.7.2
+       use the algorithm specified by POSIX 1003.1-2001 XCU lines 25680-26599
        (with some modifications if posixly_correct is zero):
 
        - Take the old and new names from the context header if present,
@@ -794,11 +796,11 @@ scan_linenum (char *s0, LINENUM *linenum)
       overflow |= new_n / 10 != n;
       n = new_n;
     }
-  
+
   if (s == s0)
     fatal ("missing line number at line %s: %s",
 	   format_linenum (numbuf, p_input_line), buf);
-  
+
   if (overflow)
     fatal ("line number %.*s is too large at line %s: %s",
 	   (int) (s - s0), s0, format_linenum (numbuf, p_input_line), buf);
