@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.36 2000/07/01 01:52:43 eggert Exp $ */
+/* $Id: pch.c,v 1.37 2000/07/03 18:52:49 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -1514,6 +1514,7 @@ get_line (void)
 /* Input a line from the patch file, worrying about indentation.
    Strip up to INDENT characters' worth of leading indentation.
    Then remove up to RFC934_NESTING instances of leading "- ".
+   Ignore any resulting lines that begin with '#'; they're comments.
    If STRIP_TRAILING_CR is nonzero, remove any trailing carriage-return.
    Ignore any partial lines at end of input, but warn about them.
    Succeed if a line was read; it is terminated by "\n\0" for convenience.
