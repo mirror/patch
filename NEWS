@@ -3,7 +3,7 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
-Changes since version 2.5:
+Changes in version 2.5.4:
 
 * A security hole has been closed.
   It involved race conditions with temporary files.
@@ -18,6 +18,9 @@ Changes since version 2.5:
 
 * `patch' now ignores trailing carriage returns in lines of context diffs
   if the context diff headers end in carriage return.
+
+* `patch' now ignores context diff header file names that have fewer slashes
+   than the count specified by the -p or --strip option.
 
 * New options:
   --posix
