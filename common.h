@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.9 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: common.h,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -125,7 +125,7 @@ typedef long LINENUM;			/* must be signed */
 
 /* globals */
 
-XTERN char const program_name[];
+extern char const program_name[];
 
 XTERN char *buf;			/* general purpose buffer */
 XTERN size_t bufsize;			/* allocated size of buf */
@@ -208,19 +208,12 @@ VOID *memchr ();
 # endif
 #endif
 
-#if HAVE_STDLIB_H
+#if STDC_HEADERS
 # include <stdlib.h>
-#endif
-#ifndef atol
+#else
 long atol ();
-#endif
-#ifndef getenv
 char *getenv ();
-#endif
-#ifndef malloc
 VOID *malloc ();
-#endif
-#ifndef realloc
 VOID *realloc ();
 #endif
 
