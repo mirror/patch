@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.18 1997/06/02 19:08:08 eggert Exp $ */
+/* $Id: patch.c,v 1.19 1997/06/09 05:36:28 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -34,6 +34,18 @@ If not, write to the Free Software Foundation,
 #include <util.h>
 #include <version.h>
 
+#if HAVE_UTIME_H
+# include <utime.h>
+#endif
+/* Some nonstandard hosts don't declare this structure even in <utime.h>.  */
+#if ! HAVE_STRUCT_UTIMBUF
+struct utimbuf
+{
+  time_t actime;
+  time_t modtime;
+};
+#endif
+
 /* procedures */
 
 static FILE *create_output_file PARAMS ((char const *));
@@ -44,7 +56,7 @@ static bool patch_match PARAMS ((LINENUM, LINENUM, LINENUM, LINENUM));
 static bool similar PARAMS ((char const *, size_t, char const *, size_t));
 static bool spew_output PARAMS ((bool *));
 static char const *make_temp PARAMS ((int));
-static int numeric_optarg PARAMS ((char const *));
+static int numeric_string PARAMS ((char const *, int, char const *));
 static void abort_hunk PARAMS ((void));
 static void cleanup PARAMS ((void));
 static void get_some_switches PARAMS ((void));
@@ -94,6 +106,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
+    char const *val;
     bool somefailed = FALSE;
 
     init_time ();
@@ -105,8 +118,10 @@ char **argv;
 
     strippath = INT_MAX;
 
-    patch_get = getenv ("PATCH_GET") != 0;
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
+    patch_get = ((val = getenv ("PATCH_GET"))
+		 ? numeric_string (val, 1, "PATCH_GET value")
+		 : posixly_correct - 1);
 
     {
       char const *v;
@@ -147,6 +162,7 @@ char **argv;
     ) {					/* for each patch in patch file */
       int hunk = 0;
       int failed = 0;
+      int imperfections = 0;
       char *outname = output ? output : inname;
 
       if (!skip_rest_of_patch)
@@ -188,7 +204,8 @@ char **argv;
 	    if (!skip_rest_of_patch) {
 		do {
 		    where = locate_hunk(fuzz);
-		    if (hunk == 1 && !where && !(force|apply_anyway)) {
+		    if (hunk == 1 && ! where && ! (force | apply_anyway)
+			&& reverse == reverse_flag_specified) {
 						/* dwim for reversed patch? */
 			if (!pch_swap()) {
 			    say (
@@ -232,7 +249,7 @@ char **argv;
 	    newwhere = pch_newfirst() + last_offset;
 	    if (skip_rest_of_patch) {
 		abort_hunk();
-		failed++;
+		failed = 1;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d ignored at %ld.\n", hunk, newwhere);
 	    }
@@ -240,19 +257,21 @@ char **argv;
 		     || (where == 1 && pch_says_nonexistent (reverse)
 			 && instat.st_size)) {
 		if (where)
-		  say ("\nPatch attempted to create file `%s', which already exists.\n", inname);
+		  say ("Patch attempted to create file `%s', which already exists.\n", inname);
 		abort_hunk();
-		failed++;
+		failed = 1;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    }
-	    else {
-		if (! apply_hunk (&after_newline, where)) {
-		    abort_hunk ();
-		    failed++;
-		    if (verbosity != SILENT)
-			say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
-		} else if (verbosity == VERBOSE) {
+	    else if (! apply_hunk (&after_newline, where)) {
+		abort_hunk ();
+		failed = 1;
+		if (verbosity != SILENT)
+		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
+	    } else {
+		if (fuzz | last_offset)
+		    imperfections = 1;
+		if (verbosity == VERBOSE || (fuzz && verbosity != SILENT)) {
 		    say ("Hunk #%d succeeded at %ld", hunk, newwhere);
 		    if (fuzz)
 			say (" with fuzz %ld", fuzz);
@@ -312,6 +331,26 @@ char **argv;
 		{
 		  move_file (TMPOUTNAME, outname, instat.st_mode,
 			     backup_type != none);
+
+		  if ((set_time | set_utc)
+		      && timestamp[reverse ^ 1] != (time_t) -1)
+		    {
+		      struct utimbuf utimbuf;
+		      utimbuf.actime = utimbuf.modtime = timestamp[reverse ^ 1];
+
+		      if (! force && ! inerrno
+			  && ! pch_says_nonexistent (reverse)
+			  && timestamp[reverse] != (time_t) -1
+			  && timestamp[reverse] != instat.st_mtime)
+			say ("not setting time of file `%s' (time mismatch)\n",
+			     outname);
+		      else if (! force && (imperfections | failed))
+			say ("not setting time of file `%s' (contents mismatch)\n",
+			     outname);
+		      else if (utime (outname, &utimbuf) != 0)
+			pfatal ("can't set timestamp on file `%s'", outname);
+		    }
+
 		  if (! inerrno && chmod (outname, instat.st_mode) != 0)
 		    pfatal ("can't set permissions on file `%s'", outname);
 		}
@@ -386,7 +425,7 @@ reinitialize_almost_everything()
     skip_rest_of_patch = FALSE;
 }
 
-static char const shortopts[] = "bB:cd:D:eEfF:gGi:lnNo:p:r:RstuvV:x:Y:z:";
+static char const shortopts[] = "bB:cd:D:eEfF:g:i:lnNo:p:r:RstTuvV:x:Y:z:Z";
 static struct option const longopts[] =
 {
   {"backup", no_argument, NULL, 'b'},
@@ -399,7 +438,6 @@ static struct option const longopts[] =
   {"force", no_argument, NULL, 'f'},
   {"fuzz", required_argument, NULL, 'F'},
   {"get", no_argument, NULL, 'g'},
-  {"no-get", no_argument, NULL, 'G'},
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
   {"normal", no_argument, NULL, 'n'},
@@ -411,12 +449,14 @@ static struct option const longopts[] =
   {"quiet", no_argument, NULL, 's'},
   {"silent", no_argument, NULL, 's'},
   {"batch", no_argument, NULL, 't'},
+  {"set-time", no_argument, NULL, 'T'},
   {"unified", no_argument, NULL, 'u'},
   {"version", no_argument, NULL, 'v'},
   {"version-control", required_argument, NULL, 'V'},
   {"debug", required_argument, NULL, 'x'},
   {"basename-prefix", required_argument, NULL, 'Y'},
   {"suffix", required_argument, NULL, 'z'},
+  {"set-utc", no_argument, NULL, 'Z'},
   {"dry-run", no_argument, NULL, 129},
   {"verbose", no_argument, NULL, 130},
   {"binary", no_argument, NULL, 131},
@@ -450,6 +490,9 @@ static char const *const option_help[] =
 "  -D NAME  --ifdef=NAME  Make merged if-then-else output using NAME.",
 "  -E  --remove-empty-files  Remove output files that are empty after patching.",
 "",
+"  -Z  --set-utc  Set times of patched files, assuming diff uses UTC (GMT).",
+"  -T  --set-time  Likewise, assuming local time.",
+"",
 "Backup and version control options:",
 "",
 "  -V STYLE  --version-control=STYLE  Use STYLE version control.",
@@ -460,8 +503,7 @@ static char const *const option_help[] =
 "  -Y PREFIX  --basename-prefix=PREFIX  Prepend PREFIX to backup file basenames.",
 "  -z SUFFIX  --suffix=SUFFIX  Append SUFFIX to backup file names.",
 "",
-"  -g  --get  Get files from RCS or SCCS.",
-"  -G  --no-get  Do not get files.",
+"  -g NUM  --get=NUM  Get files from RCS or SCCS if positive; ask if negative.",
 "",
 "Miscellaneous options:",
 "",
@@ -567,13 +609,10 @@ get_some_switches()
 		force = TRUE;
 		break;
 	    case 'F':
-		maxfuzz = numeric_optarg ("fuzz factor");
+		maxfuzz = numeric_string (optarg, 0, "fuzz factor");
 		break;
 	    case 'g':
-		patch_get = 1;
-		break;
-	    case 'G':
-		patch_get = 0;
+		patch_get = numeric_string (optarg, 1, "get option value");
 		break;
 	    case 'i':
 		patchname = savestr (optarg);
@@ -593,7 +632,7 @@ get_some_switches()
 		output = savestr (optarg);
 		break;
 	    case 'p':
-		strippath = numeric_optarg ("strip count");
+		strippath = numeric_string (optarg, 0, "strip count");
 		break;
 	    case 'r':
 		rejname = savestr (optarg);
@@ -608,6 +647,9 @@ get_some_switches()
 	    case 't':
 		batch = TRUE;
 		break;
+	    case 'T':
+		set_time = 1;
+		break;
 	    case 'u':
 		diff_type = UNI_DIFF;
 		break;
@@ -620,7 +662,7 @@ get_some_switches()
 		break;
 #if DEBUGGING
 	    case 'x':
-		debug = numeric_optarg ("debugging option");
+		debug = numeric_string (optarg, 1, "debugging option");
 		break;
 #endif
 	    case 'Y':
@@ -635,6 +677,9 @@ get_some_switches()
 		  fatal ("backup suffix is empty");
 		simple_backup_suffix = savestr (optarg);
 		backup_type = simple;
+		break;
+	    case 'Z':
+		set_utc = 1;
 		break;
 	    case 129:
 		dry_run = TRUE;
@@ -671,29 +716,40 @@ get_some_switches()
       }
 }
 
-/* Handle a numeric option of type ARGTYPE_MSGID by converting
-   optarg to a nonnegative integer, returning the result.  */
+/* Handle STRING (possibly negative if NEGATIVE_ALLOWED is nonzero)
+   of type ARGTYPE_MSGID by converting it to an integer,
+   returning the result.  */
 static int
-numeric_optarg (argtype_msgid)
+numeric_string (string, negative_allowed, argtype_msgid)
+     char const *string;
+     int negative_allowed;
      char const *argtype_msgid;
 {
   int value = 0;
-  char const *p = optarg;
+  char const *p = string;
+  int sign = *p == '-' ? -1 : 1;
+
+  p += *p == '-' || *p == '+';
 
   do
     {
       int v10 = value * 10;
       int digit = *p - '0';
+      int signed_digit = sign * digit;
+      int next_value = v10 + signed_digit;
 
       if (9 < (unsigned) digit)
-	fatal ("%s `%s' is not a number", argtype_msgid, optarg);
+	fatal ("%s `%s' is not a number", argtype_msgid, string);
 
-      if (v10 / 10 != value || v10 + digit < v10)
-	fatal ("%s `%s' is too large", argtype_msgid, optarg);
+      if (v10 / 10 != value || (next_value < v10) != (signed_digit < 0))
+	fatal ("%s `%s' is too large", argtype_msgid, string);
 
-      value = v10 + digit;
+      value = next_value;
     }
   while (*++p);
+
+  if (value < 0 && ! negative_allowed)
+    fatal ("%s `%s' is negative", argtype_msgid, string);
 
   return value;
 }
