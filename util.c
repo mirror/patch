@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.23 1997/07/05 10:32:23 eggert Exp $ */
+/* $Id: util.c,v 1.24 1997/07/10 08:16:12 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -658,8 +658,8 @@ ok_to_reverse (format, va_alist)
     }
   else
     {
-      ask (reverse ? "  Ignore -R? [y] " : "  Assume -R? [y] ");
-      r = *buf != 'n';
+      ask (reverse ? "  Ignore -R? [n] " : "  Assume -R? [n] ");
+      r = *buf == 'y';
       if (! r)
 	{
 	  ask ("Apply anyway? [n] ");
