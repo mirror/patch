@@ -1,10 +1,10 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.19 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: util.h,v 1.20 2003/05/20 13:56:48 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
-   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002 Free
+   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
 
 XTERN enum backup_type backup_type;
 
-int ok_to_reverse (char const *, ...) __attribute__ ((format (printf, 1, 2)));
+bool ok_to_reverse (char const *, ...) __attribute__ ((format (printf, 1, 2)));
 void ask (char const *, ...) __attribute__ ((format (printf, 1, 2)));
 void say (char const *, ...) __attribute__ ((format (printf, 1, 2)));
 
@@ -40,8 +40,8 @@ void pfatal (char const *, ...)
 char *fetchname (char *, int, time_t *);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
-char const *version_controller (char const *, int, struct stat const *, char **, char **);
-int version_get (char const *, char const *, int, int, char const *, struct stat *);
+char const *version_controller (char const *, bool, struct stat const *, char **, char **);
+bool version_get (char const *, char const *, bool, bool, char const *, struct stat *);
 int create_file (char const *, int, mode_t);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], LINENUM);
@@ -51,9 +51,9 @@ void exit_with_signal (int) __attribute__ ((noreturn));
 void ignore_signals (void);
 void init_time (void);
 void memory_fatal (void) __attribute__ ((noreturn));
-void move_file (char const *, int volatile *, char *, mode_t, int);
+void move_file (char const *, int volatile *, char *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char *);
-void set_signals (int);
+void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
