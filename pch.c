@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.33 1999/10/13 06:20:29 eggert Exp $ */
+/* $Id: pch.c,v 1.34 1999/10/18 01:49:12 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -1848,7 +1848,7 @@ do_ed_script (FILE *ofp)
     register FILE *pipefp = 0;
     register size_t chars_read;
 
-    if (!skip_rest_of_patch) {
+    if (! dry_run && ! skip_rest_of_patch) {
 	int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
 	assert (! inerrno);
 	TMPOUTNAME_needs_removal = 1;
