@@ -1,13 +1,14 @@
-The diffutils 2.7 documentation for `patch' is obsolete; this should be
-fixed in diffutils 2.8.  In the mean time, see `patch --help',
-or consult the man page in this distribution.
+Known problems:
+
+* The diffutils 2.7 documentation for `patch' is obsolete; this should be
+  fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
 Changes since version 2.1:
 
 * Arbitrary limits removed (e.g. line length, file name length).
 
-* On POSIX-compliant hosts, you can now patch binary files using the output of
-  GNU `diff -a'.
+* On POSIX.1-compliant hosts, you can now patch binary files using the output
+  of GNU `diff -a'.
 
 * New options:
   --dry-run
@@ -20,7 +21,7 @@ Changes since version 2.1:
 
 * patch is now quieter by default; use --verbose for the old chatty behavior.
 
-* Patch now complies better with POSIX.2 if your host is POSIX-compliant.
+* Patch now complies better with POSIX.2 if your host complies with POSIX.1.
 
   Therefore:
   - By default, no backups are made.  Set the VERSION_CONTROL environment
@@ -35,7 +36,7 @@ Changes since version 2.1:
   - -b is equivalent to --version-control=simple;
     `-z SUFF' has the meaning that `-b SUFF' used to.
   - Names of files to be patched are taken first from *** line and then from
-    --- line of context diffes; then from Index: line; /dev/tty is
+    --- line of context diffs; then from Index: line; /dev/tty is
     consulted if none of the above files exist.
   - Exit status 0 means success, 1 means hunks were rejected, 2 means trouble.
   - `-l' ignores changes only in spaces and tabs, not in other white space.
@@ -43,7 +44,7 @@ Changes since version 2.1:
     to guess the proper value.
   - `-p' now requires an operand; use `-p 0' to get the effect of the old plain
     `-p' option.
-  - `-p' treates two or more adjacent slashes as if it were one slash.
+  - `-p' treats two or more adjacent slashes as if it were one slash.
   - The TERM signal is caught.
   - New option `-i F' reads patch from F instead of stdin.
   - If a patch header would be ambiguous because it names two different files
