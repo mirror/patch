@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.10 1997/05/06 01:39:20 eggert Exp $
+.Id $Id: patch.man,v 1.11 1997/05/06 12:30:13 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -151,8 +151,8 @@ If no named files exist, some names are given,
 .B POSIXLY_CORRECT
 is not set, and the patch appears to create a file,
 .B patch
-uses the best name whose existing directory prefix
-contains the most nontrivial path name components.
+uses the best name requiring the creation of the fewest
+nontrivial directories.
 (\c
 .B .\&
 and
@@ -162,7 +162,7 @@ If no file name results from the above heuristics, you are asked
 for the name of the file to patch.
 To determine the best of a nonempty list of file names,
 .B patch
-first takes all the names with the fewest path name components;
+first takes all the names with the fewest nontrivial path name components;
 of those, it then takes all the names with the shortest basename;
 of those, it then takes all the shortest names;
 finally, it takes the first remaining name.
@@ -266,6 +266,9 @@ script.
 .TP
 \fB\-E\fP  or  \fB\*=remove\-empty\-files\fP
 Remove output files that are empty after the patches have been applied.
+This is the default unless the
+.B POSIXLY_CORRECT
+environment variable is set.
 .TP
 \fB\-f\fP  or  \fB\*=force\fP
 Assume that the user knows exactly what he or she is doing, and do not
@@ -533,6 +536,7 @@ If set,
 .B patch
 conforms more strictly to the POSIX standard:
 it takes the first existing file when intuiting file names from diff headers,
+it does not remove files that are empty after patching,
 it ignores \s-1RCS\s0 and \s-1SCCS\s0 files,
 and it requires that all options precede the
 files in the command line.
@@ -582,9 +586,9 @@ by telling them which directory to
 .B cd
 to, and which
 .B patch
-options to use.  The options
-.B "\-ENp1"
-are recommended.
+options to use.  The
+.B "\-p1"
+option is recommended.
 Test your procedure by pretending to be a recipient and applying
 your patches to a copy of the original files.
 .PP
@@ -610,11 +614,13 @@ This only works if the file you want to create doesn't exist already in
 the target directory.
 Conversely, you can remove a file by sending out a diff that compares the
 file to be deleted with an empty file.
-The file will be left empty, but not actually be removed unless the
+The file will be removed unless the
+.B POSIXLY_CORRECT
+environment variable is set and the
 .B \-E
 or
 .B \*=remove\-empty\-files
-option is given.
+option is not given.
 An easy way to generate patches that create and remove files is to use GNU
 .BR diff 's
 .B \*=new\-file
@@ -728,20 +734,20 @@ Copyright
 .if t \(co
 1997 Free Software Foundation, Inc.
 .PP
-Permission is granted to make and distribute verbatim copies of
-this manual provided the copyright notice and this permission notice
-are preserved on all copies.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
 .PP
-Permission is granted to copy and distribute modified versions of this
-manual under the conditions for verbatim copying, provided that the
-entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 .PP
-Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions, except that this permission notice may be included in
-translations approved by the copyright holders instead of in
-the original English.
+You should have received a copy of the GNU General Public License
+along with this program; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place \- Suite 330, Boston, MA 02111-1307, USA.
 .SH AUTHORS
 Larry Wall wrote the original version of
 .BR patch .
