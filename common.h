@@ -1,11 +1,35 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.6 1993/07/22 19:15:44 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.7 1993/07/29 20:11:38 eggert Exp $
  *
  * $Log: common.h,v $
- * Revision 1.6  1993/07/22 19:15:44  djm
- * entered into RCS
+ * Revision 1.7  1993/07/29 20:11:38  eggert
+ * (bool): Change to int, so ANSI C prototype promotion works.
+ * (CANVARARG): Remove varargs hack; it wasn't portable.
+ * (filearg): Now a pointer, not an array, so that it can be reallocated.
+ * (GET*, SCCSDIFF, CHECKOUT*, RCSDIFF): Quote operands to commands.
+ * (my_exit): Declare here.
+ * (BUFFERSIZE, Ctl, filemode, Fseek, Fstat, Lseek, MAXFILEC, MAXHUNKSIZE,
+ * Mktemp, myuid, Null, Nullch, Nullfp, Nulline, Pclose, VOIDUSED): Remove.
+ * All invokers changed.
+ * (Argc, Argv, *define[sd], last_offset, maxfuzz, noreverse, ofp,
+ * optind_last, rejfp, rejname): No longer externally visible; all
+ * definers changed.
+ * (INT_MAX, INT_MIN, STD*_FILENO, SEEK_SET): Define if the underlying
+ * system doesn't.  Include <limits.h> for this.
  *
- * Revision 1.6  1993/07/22 19:15:44  djm
- * entered into RCS
+ * Revision 1.7  1993/07/29 20:11:38  eggert
+ * (bool): Change to int, so ANSI C prototype promotion works.
+ * (CANVARARG): Remove varargs hack; it wasn't portable.
+ * (filearg): Now a pointer, not an array, so that it can be reallocated.
+ * (GET*, SCCSDIFF, CHECKOUT*, RCSDIFF): Quote operands to commands.
+ * (my_exit): Declare here.
+ * (BUFFERSIZE, Ctl, filemode, Fseek, Fstat, Lseek, MAXFILEC, MAXHUNKSIZE,
+ * Mktemp, myuid, Null, Nullch, Nullfp, Nulline, Pclose, VOIDUSED): Remove.
+ * All invokers changed.
+ * (Argc, Argv, *define[sd], last_offset, maxfuzz, noreverse, ofp,
+ * optind_last, rejfp, rejname): No longer externally visible; all
+ * definers changed.
+ * (INT_MAX, INT_MIN, STD*_FILENO, SEEK_SET): Define if the underlying
+ * system doesn't.  Include <limits.h> for this.
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -20,22 +44,16 @@
 
 #define DEBUGGING
 
-#define VOIDUSED 7
 #include "config.h"
 
 /* shut lint up about the following when return value ignored */
 
 #define Signal (void)signal
 #define Unlink (void)unlink
-#define Lseek (void)lseek
-#define Fseek (void)fseek
-#define Fstat (void)fstat
-#define Pclose (void)pclose
 #define Close (void)close
 #define Fclose (void)fclose
 #define Fflush (void)fflush
 #define Sprintf (void)sprintf
-#define Mktemp (void)mktemp
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 
@@ -52,7 +70,18 @@
 #undef malloc
 #undef realloc
 
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
 /* constants */
+
+#ifndef INT_MAX
+#define INT_MAX 2147483647
+#endif
+#ifndef INT_MIN
+#define INT_MIN (-1 - INT_MAX)
+#endif
 
 /* AIX predefines these.  */
 #ifdef TRUE
@@ -64,29 +93,20 @@
 #define TRUE (1)
 #define FALSE (0)
 
-#define MAXHUNKSIZE 100000		/* is this enough lines? */
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 #define MAXLINELEN (8 * 1024)		/* initial input line length */
-#define BUFFERSIZE (8 * 1024)		/* for copying input in plan_b  */
 
 #define SCCSPREFIX "s."
-#define GET "get %s"
-#define GET_LOCKED "get -e %s"
-#define SCCSDIFF "get -p %s | diff - %s >/dev/null"
+#define GET "get '%s'"
+#define GET_LOCKED "get -e '%s'"
+#define SCCSDIFF "get -p '%s' | diff - '%s%s' >/dev/null"
 
 #define RCSSUFFIX ",v"
-#define CHECKOUT "co %s"
-#define CHECKOUT_LOCKED "co -l %s"
-#define RCSDIFF "rcsdiff %s > /dev/null"
+#define CHECKOUT "co '%s%s'"
+#define CHECKOUT_LOCKED "co -l '%s%s'"
+#define RCSDIFF "rcsdiff '%s%s' > /dev/null"
 
 /* handy definitions */
-
-#define Null(t) ((t)0)
-#define Nullch Null(char *)
-#define Nullfp Null(FILE *)
-#define Nulline Null(LINENUM)
-
-#define Ctl(ch) ((ch) & 037)
 
 #define strNE(s1,s2) (strcmp(s1, s2))
 #define strEQ(s1,s2) (!strcmp(s1, s2))
@@ -95,76 +115,56 @@
 
 /* typedefs */
 
-typedef char bool;
+typedef int bool;			/* must promote to itself */
 typedef long LINENUM;			/* must be signed */
 
 /* globals */
 
-EXT int Argc;				/* guess */
-EXT char **Argv;
-EXT int optind_last;			/* for restarting plan_b */
-
 EXT struct stat filestat;		/* file statistics area */
-EXT int filemode INIT(0644);
 
 EXT char *buf;				/* general purpose buffer */
 EXT size_t bufsize INIT(MAXLINELEN);	/* allocated size of buf */
-EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
-EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
-
-EXT int myuid;				/* cache getuid return value */
 
 EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
-EXT bool out_of_mem INIT(FALSE);	/* ran out of memory in plan a */
+EXT bool out_of_mem;			/* ran out of memory in plan a */
 
-#define MAXFILEC 2
-EXT int filec INIT(0);			/* how many file arguments? */
-EXT char *filearg[MAXFILEC];
-EXT bool ok_to_create_file INIT(FALSE);
-EXT char *bestguess INIT(Nullch);	/* guess at correct filename */
+EXT int filec;				/* how many file arguments? */
+EXT char **filearg;
+EXT bool ok_to_create_file;
 
-EXT char *outname INIT(Nullch);
-EXT char rejname[128];
+EXT char *outname;
 
-EXT char *origprae INIT(Nullch);
+EXT char *origprae;
 
 EXT char *TMPOUTNAME;
 EXT char *TMPINNAME;
 EXT char *TMPREJNAME;
 EXT char *TMPPATNAME;
-EXT bool toutkeep INIT(FALSE);
-EXT bool trejkeep INIT(FALSE);
+EXT bool toutkeep;
+EXT bool trejkeep;
 
-EXT LINENUM last_offset INIT(0);
 #ifdef DEBUGGING
 EXT int debug INIT(0);
 #endif
-EXT LINENUM maxfuzz INIT(2);
-EXT bool force INIT(FALSE);
-EXT bool batch INIT(FALSE);
+EXT bool force;
+EXT bool batch;
 EXT bool verbose INIT(TRUE);
-EXT bool reverse INIT(FALSE);
-EXT bool noreverse INIT(FALSE);
-EXT bool skip_rest_of_patch INIT(FALSE);
-EXT int strippath INIT(957);
-EXT bool canonicalize INIT(FALSE);
+EXT bool reverse;
+EXT bool skip_rest_of_patch;
+EXT int strippath INIT(INT_MAX);
+EXT bool canonicalize;
 
 #define CONTEXT_DIFF 1
 #define NORMAL_DIFF 2
 #define ED_DIFF 3
 #define NEW_CONTEXT_DIFF 4
 #define UNI_DIFF 5
-EXT int diff_type INIT(0);
+EXT int diff_type;
 
-EXT bool do_defines INIT(FALSE);	/* patch using ifdef, ifndef, etc. */
-EXT char if_defined[128];		/* #ifdef xyzzy */
-EXT char not_defined[128];		/* #ifndef xyzzy */
-EXT char else_defined[] INIT("#else\n");/* #else */
-EXT char end_defined[128];		/* #endif xyzzy */
-
-EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
+EXT char *revision;			/* prerequisite revision, if any */
 
 char *xmalloc PARAMS((size_t));
+EXITING void my_exit PARAMS((int));
 
 #include <errno.h>
 #ifdef STDC_HEADERS
@@ -197,13 +197,23 @@ long lseek();
 #define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
 
-/* Define if the system lets you pass fewer arguments to a function
-   than the function actually accepts (in the absence of a prototype).
-   Defining it makes I/O calls slightly more efficient.
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
 
-   You need not bother defining it unless your C preprocessor chokes on
-   multi-line arguments to macros.  */
-#undef CANVARARG
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+
+#if ! HAVE_MEMCMP
+int memcmp PARAMS((const void *, const void *, size_t));
+#endif
 
 /* Define Reg* as either `register' or nothing, depending on whether
    the C compiler pays attention to this many register declarations.
