@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.23 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: inp.c,v 1.24 2002/06/03 05:35:40 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
    Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free Software
@@ -105,26 +105,26 @@ scan_input (char *filename)
 static void
 report_revision (int found_revision)
 {
-  revision = quotearg (revision);
+  char const *rev = quotearg (revision);
 
   if (found_revision)
     {
       if (verbosity == VERBOSE)
-	say ("Good.  This file appears to be the %s version.\n", revision);
+	say ("Good.  This file appears to be the %s version.\n", rev);
     }
   else if (force)
     {
       if (verbosity != SILENT)
 	say ("Warning: this file doesn't appear to be the %s version -- patching anyway.\n",
-	     revision);
+	     rev);
     }
   else if (batch)
     fatal ("This file doesn't appear to be the %s version -- aborting.",
-	   revision);
+	   rev);
   else
     {
       ask ("This file doesn't appear to be the %s version -- patch anyway? [n] ",
-	   revision);
+	   rev);
       if (*buf != 'y')
 	fatal ("aborted");
     }
