@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.15 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: util.c,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -80,8 +80,7 @@ move_file (from, to, mode, backup)
   if (! to_errno)
     {
       int try_makedirs_errno = 0;
-      char *bakname, *simplename;
-      struct stat bakst;
+      char *bakname;
 
       if (origprae || origbase)
 	{
@@ -97,15 +96,12 @@ move_file (from, to, mode, backup)
 	  memcpy (bakname + plen, to, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
 	  memcpy (bakname + plen + tlen + blen, o, osize);
-	  if (FILESYSTEM_PREFIX_LEN (p))
-	    try_makedirs_errno = ENOENT;
-	  else
-	    for (; *p; p++)
-	      if (ISSLASH (*p))
-		{
-		  try_makedirs_errno = ENOENT;
-		  break;
-		}
+	  for (p += FILESYSTEM_PREFIX_LEN (p);  *p;  p++)
+	    if (ISSLASH (*p))
+	      {
+		try_makedirs_errno = ENOENT;
+		break;
+	      }
 	}
       else
 	{
@@ -114,25 +110,6 @@ move_file (from, to, mode, backup)
 	    memory_fatal ();
 	}
 
-      simplename = base_name (bakname);
-      /* Find a backup name that is not the same file.
-	 Change the first lowercase char into uppercase;
-	 if that doesn't suffice, remove the first char and try again.  */
-      while (stat (bakname, &bakst) == 0)
-	{
-	  register char *s;
-	  try_makedirs_errno = 0;
-	  if (to_st.st_dev != bakst.st_dev
-	      || to_st.st_ino != bakst.st_ino)
-	    break;
-	  /* Skip initial non-lowercase chars.  */
-	  for (s = simplename; *s && !ISLOWER ((unsigned char) *s); s++)
-	    continue;
-	  if (*s)
-	    *s = toupper ((unsigned char) *s);
-	  else
-	    remove_prefix (simplename, 1);
-	}
       if (debug & 4)
 	say ("renaming `%s' to `%s'\n", to, bakname);
       while (rename (to, bakname) != 0)
