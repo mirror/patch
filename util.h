@@ -1,21 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.4 1993/07/29 20:11:38 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.5 1993/07/30 02:02:51 eggert Exp $
  *
  * $Log: util.h,v $
- * Revision 1.4  1993/07/29 20:11:38  eggert
- * (say*, fatal*, pfatal*, ask*): Delete; these
- * pseudo-varargs functions weren't ANSI C.  Replace by macros
- * that invoke [fs]printf directly, and invoke new functions
- * [az]{say,fatal,pfatal,ask} before and after.
- * (savebuf, read_fatal, write_fatal, memory_fatal, Fseek): New functions.
- * (fatal*): Output trailing newline after message.  All invokers changed.
+ * Revision 1.5  1993/07/30 02:02:51  eggert
+ * (makedirs): Omit `striplast' argument.  Remove `aask'.
  *
- * Revision 1.4  1993/07/29 20:11:38  eggert
- * (say*, fatal*, pfatal*, ask*): Delete; these
- * pseudo-varargs functions weren't ANSI C.  Replace by macros
- * that invoke [fs]printf directly, and invoke new functions
- * [az]{say,fatal,pfatal,ask} before and after.
- * (savebuf, read_fatal, write_fatal, memory_fatal, Fseek): New functions.
- * (fatal*): Output trailing newline after message.  All invokers changed.
+ * Revision 1.5  1993/07/30 02:02:51  eggert
+ * (makedirs): Omit `striplast' argument.  Remove `aask'.
  *
  * Revision 2.0  86/09/17  15:40:06  lwall
  * Baseline for netwide release.
@@ -51,10 +41,9 @@ void read_fatal PARAMS((void));
 void write_fatal PARAMS((void));
 FILE *apfatal PARAMS((void));
 EXITING void zpfatal PARAMS((void));
-FILE *aask PARAMS((void));
 void zask PARAMS((void));
 void set_signals PARAMS((int));
 void ignore_signals PARAMS((void));
-void makedirs PARAMS((char *, bool));
+void makedirs PARAMS((char *));
 char *basename PARAMS((char *));
 void Fseek PARAMS((FILE *, long, int));
