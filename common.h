@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.26 1999/09/28 19:28:11 eggert Exp $ */
+/* $Id: common.h,v 1.27 1999/10/03 01:17:38 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -332,7 +332,7 @@ GENERIC_OBJECT *realloc ();
 #define O_TRUNC 0
 #endif
 
-#if HAVE_SETMODE
+#if HAVE_SETMODE && O_BINARY
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
