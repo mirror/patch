@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.7 1997/04/14 05:32:30 eggert Exp $ */
+/* $Id: util.h,v 1.8 1997/05/05 07:31:21 eggert Exp $ */
 
 void ask PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
 void say PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
@@ -13,7 +13,7 @@ void pfatal PARAMS ((char const *, ...))
 char *fetchname PARAMS ((char *, int));
 char *savebuf PARAMS ((char const *, size_t));
 char *savestr PARAMS ((char const *));
-int countdirs PARAMS ((char *));
+int systemic PARAMS ((char const *));
 void Fseek PARAMS ((FILE *, long, int));
 void copy_file PARAMS ((char const *, char const *));
 void exit_with_signal PARAMS ((int)) __attribute__ ((noreturn));
