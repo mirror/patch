@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.17 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: patch.c,v 1.18 1997/06/02 19:08:08 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -238,7 +238,7 @@ char **argv;
 	    }
 	    else if (!where
 		     || (where == 1 && pch_says_nonexistent (reverse)
-			 && input_lines)) {
+			 && instat.st_size)) {
 		if (where)
 		  say ("\nPatch attempted to create file `%s', which already exists.\n", inname);
 		abort_hunk();
@@ -291,7 +291,8 @@ char **argv;
 	  struct stat statbuf;
 
 	  if ((remove_empty_files
-	       || (pch_says_nonexistent (reverse ^ 1) && !posixly_correct))
+	       || (pch_says_nonexistent (reverse ^ 1) == 2
+		   && ! posixly_correct))
 	      && stat (TMPOUTNAME, &statbuf) == 0
 	      && statbuf.st_size == 0)
 	    {
