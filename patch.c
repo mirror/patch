@@ -1,5 +1,5 @@
 char rcsid[] =
-	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.1 1993/05/30 16:46:14 eggert Exp $";
+	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.2 1993/06/25 14:27:00 eggert Exp $";
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,11 +9,11 @@ char rcsid[] =
  * money off of it, or pretend that you wrote it.
  *
  * $Log: patch.c,v $
- * Revision 1.1  1993/05/30 16:46:14  eggert
- * Initial revision
+ * Revision 1.2  1993/06/25 14:27:00  eggert
+ * Formerly patch.c.~14~
  *
- * Revision 1.1  1993/05/30 16:46:14  eggert
- * Initial revision
+ * Revision 1.2  1993/06/25 14:27:00  eggert
+ * Formerly patch.c.~14~
  *
  * Revision 2.0.2.0  90/05/01  22:17:50  davison
  * patch12u: unidiff support added
@@ -191,8 +191,6 @@ char **argv;
       v = getenv ("SIMPLE_BACKUP_SUFFIX");
       if (v)
 	simple_backup_suffix = v;
-      else
-	simple_backup_suffix = ".orig";
 #ifndef NODIR
       v = getenv ("VERSION_CONTROL");
       backup_type = get_version (v); /* OK to pass NULL. */
