@@ -16,6 +16,8 @@ Changes in version 2.5:
 * `patch' can now recognize context diffs that have been encapsulated
   by prepending "- " to lines beginning with "-" (as per Internet RFC 934).
 
+* `patch' now reports an error if the input contains garbage and no patches.
+
 Changes in version 2.4:
 
 * New options:
