@@ -1,26 +1,24 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.19 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: common.h,v 1.20 1999/08/30 06:20:08 eggert Exp $ */
 
-/*
-Copyright 1986, 1988 Larry Wall
-Copyright 1990, 1991, 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
+/* Copyright 1986, 1988 Larry Wall
+   Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.
-If not, write to the Free Software Foundation,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef DEBUGGING
 #define DEBUGGING 1
@@ -33,11 +31,6 @@ If not, write to the Free Software Foundation,
 # define volatile
 # endif
 #endif
-
-/* Enable support for fseeko and ftello on hosts
-   where it is available but is turned off by default.
-   This must be defined before any system file is included.  */
-#define _LARGEFILE_SOURCE 1
 
 #include <config.h>
 
@@ -265,9 +258,10 @@ GENERIC_OBJECT *realloc ();
 
 #if HAVE_UNISTD_H
 # include <unistd.h>
-#endif
-#ifndef lseek
-off_t lseek ();
+#else
+# ifndef lseek
+   off_t lseek ();
+# endif
 #endif
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -281,7 +275,7 @@ off_t lseek ();
 #ifndef STDERR_FILENO
 #define STDERR_FILENO 2
 #endif
-#if _LFS_LARGEFILE
+#if HAVE_FSEEKO
   typedef off_t file_offset;
 # define file_seek fseeko
 # define file_tell ftello
