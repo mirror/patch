@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.8 1997/04/17 17:08:15 eggert Exp $
+.Id $Id: patch.man,v 1.9 1997/05/05 07:31:21 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -132,21 +132,34 @@ tries to figure out from the leading garbage what the name of the file
 to edit is.
 If the header is that of a context diff,
 .B patch
-tests for the existence of the old and new files named in the header.
-If there is an
+takes the old and new file names in the header,
+and if there is an
 .B Index:
 line in the leading garbage,
 .B patch
-tests for the existence of the file named in that line.
-If none of the file names refer to existing files, but the patch appears
-to create a file, then
+obtains the name in that line; any
+.B /dev/null
+names are ignored.
+These names are considered to be in the order (old, new, index),
+regardless of the order that they appear in the header.
+If some of the named files exist,
 .B patch
-tries the same file names again, this time testing only for the
-existence of the file names' directory prefix;
+uses the first name if the
+.B POSIXLY_CORRECT
+environment variable is set, and the best name otherwise.
+If no named files exist, some names are given,
+.B POSIXLY_CORRECT
+is not set, and the patch appears to create a file,
 .B patch
-uses the first name with the longest existing prefix.
-If no file name can be intuited from the leading garbage, you are asked
+uses the best of the names given.
+If no file name results from the above heuristics, you are asked
 for the name of the file to patch.
+To determine the best of a nonempty list of file names,
+.B patch
+first takes all the names with the fewest path name components;
+of those, it then takes all the names with the shortest basename;
+of those, it then takes all the shortest names;
+finally, it takes the first remaining name.
 .PP
 Additionally, if the leading garbage contains a
 .B Prereq:
@@ -429,10 +442,15 @@ otherwise simple backups.
 If a file is read-only or does not exist,
 check it out from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
 similarly for \s-1SCCS\s0.
+This is the default unless the
+.B POSIXLY_CORRECT
+environment variable is set.
 .TP
 \fBnone\fP
 Do not make backups.
-This is the default.
+This is the default if the
+.B POSIXLY_CORRECT
+environment variable is set.
 .TP
 \fBnumbered\fP  or  \fBt\fP
 Make numbered backups.  The numbered backup file name for
@@ -507,23 +525,25 @@ is used instead.
 .B POSIXLY_CORRECT
 If set,
 .B patch
-conforms more strictly to the Posix standard:
-i.e. it requires that all options precede the
+conforms more strictly to the POSIX standard:
+it takes the first existing file when intuiting file names from diff headers,
+it ignores \s-1RCS\s0 and \s-1SCCS\s0 files,
+and it requires that all options precede the
 files in the command line.
-.TP
-.B TMPDIR
-Directory to put temporary files in; default is
-.BR /tmp .
 .TP
 .B SIMPLE_BACKUP_SUFFIX
 Extension to use for simple backup file names instead of
 .BR \&.orig .
 .TP
+.B TMPDIR
+Directory to put temporary files in; default is
+.BR /tmp .
+.TP
 .B VERSION_CONTROL
 Selects version control style; see the
 .B \-v
 or
-.B \*=version_control
+.B \*=version\-control
 option.
 .SH FILES
 .IB $TMPDIR "/patch\(**"
@@ -609,6 +629,17 @@ To avoid confusion, send output that looks like this instead:
 	+++ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
 .ft
 .Sp
+.PP
+Avoid sending patches that compare backup file names like
+.BR README.orig ,
+since this might confuse
+.B patch
+into patching a backup file instead of the real file.
+Instead, send patches that compare the same base file names
+in different directories, e.g.\&
+.B old/README
+and
+.BR new/README .
 .PP
 Take care not to send out reversed patches, since it makes people wonder
 whether they already applied the patch.
@@ -700,6 +731,6 @@ Larry Wall wrote the original version of
 Paul Eggert removed
 .BR patch 's
 arbitrary limits, added support for binary files,
-and made it conform better to Posix.
+and made it conform better to POSIX.
 Other contributors include Wayne Davison, who added unidiff support,
 and David MacKenzie, who added configuration and backup support.

@@ -3,6 +3,29 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+Changes since version 2.2:
+
+* The default backup method is now `existing' (reverting to pre-2.2 behavior)
+  unless the POSIXLY_CORRECT environment variable is set.
+
+* The method used to intuit names of files to be patched is now as follows:
+
+  - Take the old and new names from the context header if present,
+    and take the index name from the `Index:' line if present.
+    Consider the file names to be in the order (old, new, index).
+  - If some named files exist, use the first one if POSIXLY_CORRECT is set,
+    the best one otherwise.
+  - If no named files exist, some names are given, POSIXLY_CORRECT is not set,
+    and the patch appears to create a file, then use the best of the names
+    given.
+  - Otherwise, ask the user for a file name.
+
+  The ``best'' of a nonempty list of file names is defined as follows:
+    - Take the names with the fewest path name components;
+      of those, take the names with the shortest basename;
+      of those, take the shortest names;
+      of those, take the first name.
+
 Changes in version 2.2:
 
 * Arbitrary limits removed (e.g. line length, file name length).
