@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.23 1999/09/03 07:05:15 eggert Exp $ */
+/* $Id: common.h,v 1.24 1999/09/03 08:35:57 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -156,7 +156,7 @@ typedef off_t LINENUM;			/* must be signed */
 
 /* globals */
 
-extern char const program_name[];
+XTERN char *program_name;	/* The name this program was run with. */
 
 XTERN char *buf;			/* general purpose buffer */
 XTERN size_t bufsize;			/* allocated size of buf */
@@ -224,7 +224,7 @@ XTERN char *revision;			/* prerequisite revision, if any */
 #endif
 
 #ifndef PARAMS
-# ifdef __STDC__
+# if defined PROTOTYPES || (defined __STDC__ && __STDC__)
 #  define PARAMS(args) args
 # else
 #  define PARAMS(args) ()
@@ -335,3 +335,6 @@ GENERIC_OBJECT *realloc ();
 #ifndef TTY_DEVICE
 #define TTY_DEVICE "/dev/tty"
 #endif
+
+/* The official name of this program (e.g., no `g' prefix).  */
+#define PROGRAM_NAME "patch"
