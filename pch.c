@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.24 1997/07/05 10:32:23 eggert Exp $ */
+/* $Id: pch.c,v 1.25 1997/07/16 12:26:36 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -38,6 +38,7 @@ If not, write to the Free Software Foundation,
 static FILE *pfp;			/* patch file pointer */
 static int p_says_nonexistent[2];	/* [0] for old file, [1] for new;
 		value is 0 for nonempty, 1 for empty, 2 for nonexistent */
+static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static time_t p_timestamp[2];		/* timestamps in patch headers */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
@@ -67,11 +68,11 @@ enum nametype { OLD, NEW, INDEX, NONE };
 static enum diff intuit_diff_type PARAMS ((void));
 static enum nametype best_name PARAMS ((char * const *, int const *));
 static int prefix_components PARAMS ((char *, int));
-static size_t pget_line PARAMS ((int));
+static size_t pget_line PARAMS ((int, int));
 static size_t get_line PARAMS ((void));
 static bool incomplete_line PARAMS ((void));
 static bool grow_hunkmax PARAMS ((void));
-static void malformed PARAMS ((void));
+static void malformed PARAMS ((void)) __attribute__ ((noreturn));
 static void next_intuit_at PARAMS ((file_offset, LINENUM));
 static void skip_to PARAMS ((file_offset, LINENUM));
 
@@ -291,6 +292,7 @@ intuit_diff_type()
     version_controlled[OLD] = -1;
     version_controlled[NEW] = -1;
     version_controlled[INDEX] = -1;
+    p_rfc934_nesting = 0;
     p_timestamp[OLD] = p_timestamp[NEW] = (time_t) -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
@@ -301,7 +303,7 @@ intuit_diff_type()
 	stars_last_line = stars_this_line;
 	this_line = file_tell (pfp);
 	indent = 0;
-	if (! pget_line (0)) {
+	if (! pget_line (0, 0)) {
 	    if (first_command_line >= 0) {
 					/* nothing but deletes!? */
 		p_start = first_command_line;
@@ -312,8 +314,7 @@ intuit_diff_type()
 	    else {
 		p_start = this_line;
 		p_sline = p_input_line;
-		retval = NO_DIFF;
-		goto scan_exit;
+		return NO_DIFF;
 	    }
 	}
 	for (s = buf; *s == ' ' || *s == '\t' || *s == 'X'; s++) {
@@ -333,8 +334,6 @@ intuit_diff_type()
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
-	else if (strnEQ(s, "--- ", 4))
-	    name[NEW] = fetchname (s+4, strippath, &p_timestamp[NEW]);
 	else if (strnEQ(s, "+++ ", 4))
 	    /* Swap with NEW below.  */
 	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
@@ -354,7 +353,21 @@ intuit_diff_type()
 		revision = savestr (revision);
 		*t = oldc;
 	    }
-	}
+	} else
+	  {
+	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)
+	      continue;
+	    if (strnEQ(t, "--- ", 4))
+	      {
+		time_t timestamp = (time_t) -1;
+		name[NEW] = fetchname (t+4, strippath, &timestamp);
+		if (timestamp != (time_t) -1)
+		  {
+		    p_timestamp[NEW] = timestamp;
+		    p_rfc934_nesting = (t - s) >> 1;
+		  }
+	      }
+	  }
 	if ((diff_type == NO_DIFF || diff_type == ED_DIFF) &&
 	  first_command_line >= 0 &&
 	  strEQ(s, ".\n") ) {
@@ -1429,19 +1442,21 @@ another_hunk (difftype, rev)
 static size_t
 get_line ()
 {
-   return pget_line (p_indent);
+   return pget_line (p_indent, p_rfc934_nesting);
 }
 
 /* Input a line from the patch file, worrying about indentation.
    Strip up to INDENT characters' worth of leading indentation.
+   Then remove up to RFC934_NESTING instances of leading "- ".
    Ignore any partial lines at end of input, but warn about them.
    Succeed if a line was read; it is terminated by "\n\0" for convenience.
    Return the number of characters read, including '\n' but not '\0'.
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (indent)
+pget_line (indent, rfc934_nesting)
      int indent;
+     int rfc934_nesting;
 {
   register FILE *fp = pfp;
   register int c;
@@ -1470,6 +1485,23 @@ pget_line (indent)
 
   i = 0;
   b = buf;
+
+  while (c == '-' && 0 <= --rfc934_nesting)
+    {
+      c = getc (fp);
+      if (c == EOF)
+	goto patch_ends_in_middle_of_line;
+      if (c != ' ')
+	{
+	  i = 1;
+	  b[0] = '-';
+	  break;
+	}
+      c = getc (fp);
+      if (c == EOF)
+	goto patch_ends_in_middle_of_line;
+    }
+
   s = bufsize;
 
   for (;;)
@@ -1492,17 +1524,18 @@ pget_line (indent)
 	break;
       c = getc (fp);
       if (c == EOF)
-	{
-	  if (ferror (fp))
-	    read_fatal ();
-	  say ("patch unexpectedly ends in middle of line\n");
-	  return 0;
-	}
+	goto patch_ends_in_middle_of_line;
     }
 
   b[i] = '\0';
   p_input_line++;
   return i;
+
+ patch_ends_in_middle_of_line:
+  if (ferror (fp))
+    read_fatal ();
+  say ("patch unexpectedly ends in middle of line\n");
+  return 0;
 }
 
 static bool
