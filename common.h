@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.29 1999/10/13 06:17:13 eggert Exp $ */
+/* $Id: common.h,v 1.30 1999/10/13 07:02:54 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -282,15 +282,6 @@ GENERIC_OBJECT *realloc ();
   typedef off_t file_offset;
 # define file_seek fseeko
 # define file_tell ftello
-# ifndef fseeko
-   /* GNU/Linux Red Hat 6.0 (sparc) has fseeko, but doesn't declare it
-      by default, and its `getconf LFS_CFLAGS' doesn't output the
-      proper options to declare it.  To work around this bug, declare
-      fseeko's return type here rather than descend into the
-      portability nightmare about whether we should define
-      _LARGEFILE_SOURCE or _XOPEN_SOURCE==500 or _XPG5 or whatever.  */
-   off_t fseeko ();
-# endif
 #else
   typedef long file_offset;
 # define file_seek fseek
