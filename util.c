@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.13 1997/05/06 12:30:13 eggert Exp $ */
+/* $Id: util.c,v 1.14 1997/05/15 17:59:15 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -30,6 +30,9 @@ If not, write to the Free Software Foundation,
 #define XTERN
 #include <util.h>
 
+#include <time.h>
+#include <maketime.h>
+
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
 #define SIGCHLD SIGCLD
@@ -54,8 +57,10 @@ If not, write to the Free Software Foundation,
 /* Rename a file, copying it if necessary. */
 
 void
-move_file (from, to, backup)
-     char const *from, *to;
+move_file (from, fromstat, to, backup)
+     char const *from;
+     struct stat const *fromstat;
+     char const *to;
      int backup;
 {
   register char *s;
@@ -81,8 +86,15 @@ move_file (from, to, backup)
 	  memcpy (bakname + plen, to, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
 	  memcpy (bakname + plen + tlen + blen, o, osize);
-	  if (strchr (p, '/') || strchr (b, '/'))
+	  if (FILESYSTEM_PREFIX_LEN (p))
 	    try_makedirs_errno = ENOENT;
+	  else
+	    for (; *p; p++)
+	      if (ISSLASH (*p))
+		{
+		  try_makedirs_errno = ENOENT;
+		  break;
+		}
 	}
       else
 	{
@@ -114,7 +126,7 @@ move_file (from, to, backup)
       while (rename (to, bakname) != 0)
 	{
 	  if (errno != try_makedirs_errno)
-	    pfatal ("Can't rename `%s' to `%s'", to, bakname);
+	    pfatal ("can't rename `%s' to `%s'", to, bakname);
 	  makedirs (bakname);
 	  try_makedirs_errno = 0;
 	}
@@ -131,37 +143,45 @@ move_file (from, to, backup)
 	{
 	  if (! backup && unlink (to) != 0
 	      && errno != ENOENT && errno != ENOTDIR)
-	    pfatal ("Can't remove `%s'", to);
-	  copy_file (from, to);
+	    pfatal ("can't remove `%s'", to);
+	  copy_file (from, fromstat, to);
 	  if (unlink (from) != 0)
-	    pfatal ("Can't remove `%s'", from);
+	    pfatal ("can't remove `%s'", from);
 	  return;
 	}
 #endif
-      pfatal ("Can't rename `%s' to `%s'", from, to);
+      pfatal ("can't rename `%s' to `%s'", from, to);
     }
 }
 
 /* Copy a file. */
 
 void
-copy_file(from,to)
+copy_file (from, fromstat, to)
      char const *from;
+     struct stat const *fromstat;
      char const *to;
 {
   int tofd;
-  int fromfd = open (from, O_RDONLY);
-  long i;
+  int fromfd = open (from, O_RDONLY|O_BINARY);
+  size_t i;
 
   if (fromfd < 0)
-    pfatal ("can't reopen %s", from);
-  tofd = creat (to, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+    pfatal ("can't reopen `%s'", from);
+  if (! (O_CREAT && O_TRUNC))
+    close (creat (to, fromstat->st_mode));
+  tofd = open (to, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY,
+	       S_IRUSR|S_IWUSR|fromstat->st_mode);
   if (tofd < 0)
-    pfatal ("can't create %s", to);
-  while ((i = read (fromfd, buf, bufsize)) > 0)
-    if (write (tofd, buf, (size_t) i) != i)
-      write_fatal ();
-  if (i < 0  ||  close (fromfd) != 0)
+    pfatal ("can't create `%s'", to);
+  while ((i = read (fromfd, buf, bufsize)) != 0)
+    {
+      if (i == -1)
+	read_fatal ();
+      if (write (tofd, buf, i) != i)
+	write_fatal ();
+    }
+  if (close (fromfd) != 0)
     read_fatal ();
   if (close (tofd) != 0)
     write_fatal ();
@@ -531,40 +551,58 @@ systemic (command)
 }
 
 #if !HAVE_MKDIR
-/* This mkdir substitute is good enough for `patch';
-   it's not a general emulator.  */
+/* These mkdir and rmdir substitutes are good enough for `patch';
+   they are not general emulators.  */
+
 #include <quotearg.h>
-static char const MKDIR1[] = "mkdir ";
-static char const MKDIR2[] = " 2>/dev/null";
+static int doprogam PARAMS ((char const *, char const *));
 static int mkdir PARAMS ((char const *, int));
+static int rmdir PARAMS ((char const *));
+
+static int
+doprogram (program, arg)
+     char const *program;
+     char const *arg;
+{
+  int result;
+  static char const DISCARD_OUTPUT[] = " 2>/dev/null";
+  size_t program_len = strlen (program);
+  char *cmd = xmalloc (program_len + 1 + quote_system_arg (0, arg)
+		       + sizeof DISCARD_OUTPUT);
+  char *p = cmd;
+  strcpy (p, program);
+  p += program_len;
+  *p++ = ' ';
+  p += quote_system_arg (p, arg);
+  strcpy (p, DISCARD_OUTPUT);
+  result = systemic (cmd);
+  free (cmd);
+  return result;
+}
+
 static int
 mkdir (path, mode)
      char const *path;
      int mode; /* ignored */
 {
-  struct stat st;
+  return doprogram ("mkdir", path);
+}
 
-  if (stat (path, &st) != 0)
-    {
-      char *cmd = xmalloc (sizeof MKDIR1 - 1 + quote_system_arg (0, path)
-			   + sizeof MKDIR2);
-      char *p = cmd;
-      strcpy (p, MKDIR1);
-      p += sizeof MKDIR1 - 1;
-      p += quote_system_arg (p, path);
-      strcpy (p, MKDIR2);
-      systemic (cmd);
-      free (cmd);
-    }
-
-  return 0;
+static int
+rmdir (path)
+     char const *path;
+{
+  int result = doprogram ("rmdir", path);
+  errno = EEXIST;
+  return result;
 }
 #endif
 
 /* Replace '/' with '\0' in FILENAME if it marks a place that
    needs testing for the existence of directory.  Return the address
    of the last location replaced, or 0 if none were replaced.  */
-char *
+static char *replace_slashes PARAMS ((char *));
+static char *
 replace_slashes (filename)
      char *filename;
 {
@@ -572,13 +610,13 @@ replace_slashes (filename)
   char *last_location_replaced = 0;
   char const *component_start;
 
-  for (f = filename;  *f == '/';  f++)
+  for (f = filename + FILESYSTEM_PREFIX_LEN (filename);  ISSLASH (*f);  f++)
     continue;
 
   component_start = f;
 
   for (; *f; f++)
-    if (*f == '/')
+    if (ISSLASH (*f))
       {
 	/* "." and ".." need not be tested.  */
 	if (! (f - component_start <= 2
@@ -587,7 +625,7 @@ replace_slashes (filename)
 	    *f = '\0';
 	    last_location_replaced = f;
 	  }
-	while (f[1] == '/')
+	while (ISSLASH (f[1]))
 	  f++;
 	component_start = f + 1;
       }
@@ -624,16 +662,52 @@ makedirs (filename)
     }
 }
 
+/* Remove empty ancestor directories of FILENAME.
+   Ignore errors, since the path may contain ".."s, and when there
+   is an EEXIST failure the system may return some other error number.  */
+void
+removedirs (filename)
+     char *filename;
+{
+  size_t i;
+
+  for (i = strlen (filename);  i != 0;  i--)
+    if (ISSLASH (filename[i])
+	&& ! (ISSLASH (filename[i - 1])
+	      || (filename[i - 1] == '.'
+		  && (i == 1
+		      || ISSLASH (filename[i - 2])
+		      || (filename[i - 2] == '.'
+			  && (i == 2
+			      || ISSLASH (filename[i - 3])))))))
+      {
+	filename[i] = '\0';
+	if (rmdir (filename) == 0 && verbosity == VERBOSE)
+	  say ("Removed empty directory `%s'.\n", filename);
+	filename[i] = '/';
+      }
+}
+
+static time_t initial_time;
+
+void
+init_time ()
+{
+  time (&initial_time);
+}
+
 /* Make filenames more reasonable. */
 
 char *
-fetchname (at, strip_leading)
+fetchname (at, strip_leading, head_says_nonexistent)
 char *at;
 int strip_leading;
+int *head_says_nonexistent;
 {
     char *name;
     register char *t;
     int sleading = strip_leading;
+    int says_nonexistent = 0;
 
     if (!at)
 	return 0;
@@ -645,25 +719,43 @@ int strip_leading;
     name = at;
     /* Strip off up to `sleading' leading slashes and null terminate.  */
     for (t = at;  *t;  t++)
-	if (*t == '/')
+      {
+	if (ISSLASH (*t))
 	  {
-	    while (t[1] == '/')
+	    while (ISSLASH (t[1]))
 	      t++;
 	    if (--sleading >= 0)
 		name = t+1;
 	  }
 	else if (ISSPACE ((unsigned char) *t))
 	  {
+	    /* The head says the file is nonexistent if the timestamp
+	       is the epoch; but the listed time is local time, not UTC,
+	       and POSIX.1 allows local time to be 24 hours away from UTC.
+	       So match any time within 24 hours of the epoch.
+	       Use a default time zone 24 hours behind UTC so that any
+	       non-zoned time within 24 hours of the epoch is valid.  */
+	    time_t stamp = str2time (t, initial_time, -24L * 60 * 60);
+	    if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
+	      says_nonexistent = 1;
 	    *t = '\0';
 	    break;
 	  }
+      }
 
     if (!*name)
       return 0;
 
     /* Allow files to be created by diffing against /dev/null.  */
     if (strcmp (at, "/dev/null") == 0)
-      return 0;
+      {
+	if (head_says_nonexistent)
+	  *head_says_nonexistent = 1;
+	return 0;
+      }
+
+    if (head_says_nonexistent)
+      *head_says_nonexistent = says_nonexistent;
 
     return savestr (name);
 }
