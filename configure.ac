@@ -45,13 +45,14 @@ jm_STRUCT_UTIMBUF
 
 AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1\$U.o getopt\$U.o"])
 AC_SUBST(LIBOBJS)
-AC_CHECK_FUNCS(_doprintf isascii fseeko memcmp mktemp \
+AC_CHECK_FUNCS(_doprintf fseeko geteuid getuid isascii memcmp mktemp \
   pathconf raise setmode sigaction sigprocmask sigsetmask strerror)
 AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
+PATCH_FUNC_MKDIR_TAKES_ONE_ARG
 
 AC_SYS_LONG_FILE_NAMES
 jm_STRUCT_DIRENT_D_INO
