@@ -60,6 +60,9 @@
 /* Define if memchr works.  */
 /* #undef HAVE_MEMCHR */
 
+/* Define if `struct utimbuf' is declared -- usually in <utime.h>.  */
+/* #undef HAVE_STRUCT_UTIMBUF */
+
 /* Define if you have the _doprintf function.  */
 /* #undef HAVE__DOPRINTF */
 
@@ -117,6 +120,9 @@
 /* Define if you have the <unistd.h> header file.  */
 /* #undef HAVE_UNISTD_H */
 
+/* Define if you have the <utime.h> header file.  */
+/* #undef HAVE_UTIME_H */
+
 /* Define if you have the <varargs.h> header file.  */
 /* #undef HAVE_VARARGS_H */
 
@@ -137,3 +143,5 @@ int chdir_safer (char const *);
 #endif
 
 #define TMPDIR "c:"
+
+#define TZ_is_unset(msgid) pfatal (msgid)
