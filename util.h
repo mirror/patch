@@ -1,94 +1,60 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.3 1993/07/22 19:23:24 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.4 1993/07/29 20:11:38 eggert Exp $
  *
  * $Log: util.h,v $
- * Revision 1.3  1993/07/22 19:23:24  djm
- * entered into RCS
+ * Revision 1.4  1993/07/29 20:11:38  eggert
+ * (say*, fatal*, pfatal*, ask*): Delete; these
+ * pseudo-varargs functions weren't ANSI C.  Replace by macros
+ * that invoke [fs]printf directly, and invoke new functions
+ * [az]{say,fatal,pfatal,ask} before and after.
+ * (savebuf, read_fatal, write_fatal, memory_fatal, Fseek): New functions.
+ * (fatal*): Output trailing newline after message.  All invokers changed.
  *
- * Revision 1.3  1993/07/22 19:23:24  djm
- * entered into RCS
+ * Revision 1.4  1993/07/29 20:11:38  eggert
+ * (say*, fatal*, pfatal*, ask*): Delete; these
+ * pseudo-varargs functions weren't ANSI C.  Replace by macros
+ * that invoke [fs]printf directly, and invoke new functions
+ * [az]{say,fatal,pfatal,ask} before and after.
+ * (savebuf, read_fatal, write_fatal, memory_fatal, Fseek): New functions.
+ * (fatal*): Output trailing newline after message.  All invokers changed.
  *
  * Revision 2.0  86/09/17  15:40:06  lwall
  * Baseline for netwide release.
  * 
  */
 
-/* and for those machine that can't handle a variable argument list */
-
-#ifdef CANVARARG
-
-#define say1 say
-#define say2 say
-#define say3 say
-#define say4 say
-#define ask1 ask
-#define ask2 ask
-#define ask3 ask
-#define ask4 ask
-#define fatal1 fatal
-#define fatal2 fatal
-#define fatal3 fatal
-#define fatal4 fatal
-#define pfatal1 pfatal
-#define pfatal2 pfatal
-#define pfatal3 pfatal
-#define pfatal4 pfatal
-
-#else /* hope they allow multi-line macro actual arguments */
-
-#ifdef lint
-
-#define say1(a) say(a, 0, 0, 0)
-#define say2(a,b) say(a, (b)==(b), 0, 0)
-#define say3(a,b,c) say(a, (b)==(b), (c)==(c), 0)
-#define say4(a,b,c,d) say(a, (b)==(b), (c)==(c), (d)==(d))
-#define ask1(a) ask(a, 0, 0, 0)
-#define ask2(a,b) ask(a, (b)==(b), 0, 0)
-#define ask3(a,b,c) ask(a, (b)==(b), (c)==(c), 0)
-#define ask4(a,b,c,d) ask(a, (b)==(b), (c)==(c), (d)==(d))
-#define fatal1(a) fatal(a, 0, 0, 0)
-#define fatal2(a,b) fatal(a, (b)==(b), 0, 0)
-#define fatal3(a,b,c) fatal(a, (b)==(b), (c)==(c), 0)
-#define fatal4(a,b,c,d) fatal(a, (b)==(b), (c)==(c), (d)==(d))
-#define pfatal1(a) pfatal(a, 0, 0, 0)
-#define pfatal2(a,b) pfatal(a, (b)==(b), 0, 0)
-#define pfatal3(a,b,c) pfatal(a, (b)==(b), (c)==(c), 0)
-#define pfatal4(a,b,c,d) pfatal(a, (b)==(b), (c)==(c), (d)==(d))
-
-#else /* lint */
-    /* if this doesn't work, try defining CANVARARG above */
-#define say1(a) say(a, Nullch, Nullch, Nullch)
-#define say2(a,b) say(a, b, Nullch, Nullch)
-#define say3(a,b,c) say(a, b, c, Nullch)
-#define say4 say
-#define ask1(a) ask(a, Nullch, Nullch, Nullch)
-#define ask2(a,b) ask(a, b, Nullch, Nullch)
-#define ask3(a,b,c) ask(a, b, c, Nullch)
-#define ask4 ask
-#define fatal1(a) fatal(a, Nullch, Nullch, Nullch)
-#define fatal2(a,b) fatal(a, b, Nullch, Nullch)
-#define fatal3(a,b,c) fatal(a, b, c, Nullch)
-#define fatal4 fatal
-#define pfatal1(a) pfatal(a, Nullch, Nullch, Nullch)
-#define pfatal2(a,b) pfatal(a, b, Nullch, Nullch)
-#define pfatal3(a,b,c) pfatal(a, b, c, Nullch)
-#define pfatal4 pfatal
-
-#endif /* lint */
-
-/* if neither of the above work, join all multi-line macro calls. */
-#endif
-
-EXT char serrbuf[BUFSIZ];		/* buffer for stderr */
+#define say1(a) (fprintf (stderr, a), Fflush (stderr))
+#define say2(a,b) (fprintf (stderr, a,b), Fflush (stderr))
+#define say3(a,b,c) (fprintf (stderr, a,b,c), Fflush (stderr))
+#define say4(a,b,c,d) (fprintf (stderr, a,b,c,d), Fflush (stderr))
+#define fatal1(a) (fprintf (afatal (), a), zfatal ())
+#define fatal2(a,b) (fprintf (afatal (), a,b), zfatal ())
+#define fatal3(a,b,c) (fprintf (afatal (), a,b,c), zfatal ())
+#define fatal4(a,b,c,d) (fprintf (afatal (), a,b,c,d), zfatal ())
+#define pfatal1(a) (fprintf (apfatal (), a), zpfatal ())
+#define pfatal2(a,b) (fprintf (apfatal (), a,b), zpfatal ())
+#define pfatal3(a,b,c) (fprintf (apfatal (), a,b,c), zpfatal ())
+#define pfatal4(a,b,c,d) (fprintf (apfatal (), a,b,c,d), zpfatal ())
+#define ask1(a) (Sprintf (buf, a), zask())
+#define ask2(a,b) (Sprintf (buf, a,b), zask())
+#define ask3(a,b,c) (Sprintf (buf, a,b,c), zask())
+#define ask4(a,b,c,d) (Sprintf (buf, a,b,c,d), zask())
 
 char *fetchname PARAMS((char *, int, int));
 int move_file PARAMS((char *, char *));
 void copy_file PARAMS((char *, char *));
-void say();
-void fatal();
-void pfatal();
-void ask();
+char *savebuf PARAMS((char *, size_t));
 char *savestr PARAMS((char *));
+FILE *afatal PARAMS((void));
+EXITING void zfatal PARAMS((void));
+void memory_fatal PARAMS((void));
+void read_fatal PARAMS((void));
+void write_fatal PARAMS((void));
+FILE *apfatal PARAMS((void));
+EXITING void zpfatal PARAMS((void));
+FILE *aask PARAMS((void));
+void zask PARAMS((void));
 void set_signals PARAMS((int));
 void ignore_signals PARAMS((void));
 void makedirs PARAMS((char *, bool));
 char *basename PARAMS((char *));
+void Fseek PARAMS((FILE *, long, int));
