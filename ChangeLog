@@ -1,3 +1,9 @@
+2003-11-10  Manu B  <manubee@users.sourceforge.net>
+
+	Trivial change to port to mingw, which declares mkdir in unistd.h.
+	* m4/mkdir.m4 (PATCH_FUNC_MKDIR_TAKES_ONE_ARG): Include unistd.h.
+	* common.h (mkdir): Define after including unistd.h.
+
 2003-09-11  Paul Eggert  <eggert@twinsun.com>
 
 	* pch.c (do_ed_script): Adjust to copy_file signature change.

@@ -68,9 +68,6 @@
 #ifndef S_IRUSR
 #define S_IRUSR (S_IROTH << 6)
 #endif
-#ifdef MKDIR_TAKES_ONE_ARG
-# define mkdir(name, mode) ((mkdir) (name))
-#endif
 
 #if HAVE_LIMITS_H
 # include <limits.h>
@@ -267,7 +264,12 @@ extern int errno;
 #define O_TRUNC 0
 #endif
 
-#if HAVE_SETMODE_DOS
+#ifdef MKDIR_TAKES_ONE_ARG
+# undef mkdir
+# define mkdir(name, mode) ((mkdir) (name))
+#endif
+
+#ifdef HAVE_SETMODE_DOS
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
