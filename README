@@ -5,7 +5,7 @@ They add support for:
  * making GNU Emacs-style backup files
  * improved interaction with RCS and SCCS
  * the GNU conventions for option parsing and configuring and compilation.
- * better POSIX.2 compliance
+ * better POSIX compliance
 They also fix some bugs.  See the NEWS and ChangeLog files for details.
 
 Tutorial-style documentation for patch is included in the GNU
