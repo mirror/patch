@@ -1,9 +1,11 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.31 2001/07/29 04:52:41 eggert Exp $ */
+/* $Id: util.c,v 1.32 2002/05/25 10:36:44 eggert Exp $ */
 
-/* Copyright 1986 Larry Wall
-   Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1986 Larry Wall
+
+   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +25,7 @@
 #define XTERN extern
 #include <common.h>
 #include <backupfile.h>
-#include <basename.h>
+#include <dirname.h>
 #include <quotearg.h>
 #include <quotesys.h>
 #include <version.h>
@@ -481,7 +483,7 @@ format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], LINENUM n)
 	*--p = '0' + (int) (n % 10);
       while ((n /= 10) != 0);
     }
-	   
+
   return p;
 }
 
@@ -587,7 +589,8 @@ ask (char const *format, ...)
 	 since it's unlikely that stdout will be seen by the tty user.
 	 The isatty test also works around a bug in GNU Emacs 19.34 under Linux
 	 which makes a call-process `patch' hang when it reads from /dev/tty.
-	 POSIX.2 requires that we read /dev/tty, though.  */
+	 POSIX.1-2001 XCU line 26599 requires that we read /dev/tty,
+	 though.  */
       ttyfd = (posixly_correct || isatty (STDOUT_FILENO)
 	       ? open (TTY_DEVICE, O_RDONLY)
 	       : -1);
