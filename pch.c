@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.15 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: pch.c,v 1.16 1997/05/26 17:52:29 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -99,7 +99,11 @@ open_patch_file(filename)
       {
 #if HAVE_SETMODE
 	if (binary_transput)
-	  setmode (STDIN_FILENO, O_BINARY);
+	  {
+	    if (isatty (STDIN_FILENO))
+	      fatal ("cannot read binary data from tty on this platform");
+	    setmode (STDIN_FILENO, O_BINARY);
+	  }
 #endif
 	if (fstat (STDIN_FILENO, &st) != 0)
 	  pfatal ("fstat");
