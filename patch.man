@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.19 1997/06/17 06:52:12 eggert Exp $
+.Id $Id: patch.man,v 1.20 1997/06/17 22:32:49 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -705,7 +705,8 @@ and
 should not contain any slashes.
 The
 .B diff
-command's time stamps should be in \s-1UTC\s0,
+command's headers should have dates
+and times in Universal Time using traditional Unix format,
 so that patch recipients can use the
 .B \-Z
 or
@@ -713,7 +714,7 @@ or
 option.
 Here is an example command, using Bourne shell syntax:
 .Sp
-	\fBTZ=UTC0 diff \-Naur version\-2.2 version\-2.3\fP
+	\fBLC_ALL=C TZ=UTC0 diff \-Naur gcc\-2.7 gcc\-2.8\fP
 .PP
 Tell your recipients how to apply the patch
 by telling them which directory to
