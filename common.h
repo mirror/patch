@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.27 1999/10/03 01:17:38 eggert Exp $ */
+/* $Id: common.h,v 1.28 1999/10/11 03:33:08 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -72,9 +72,6 @@
 #endif
 #ifndef S_IRUSR
 #define S_IRUSR (S_IROTH << 6)
-#endif
-#if MKDIR_ONE_ARG
-# define mkdir(name, mode) ((mkdir) (name))
 #endif
 
 #if HAVE_LIMITS_H
@@ -159,7 +156,7 @@ typedef off_t LINENUM;			/* must be signed */
 
 /* globals */
 
-XTERN char *program_name;	/* The name this program was run with. */
+extern char const program_name[];
 
 XTERN char *buf;			/* general purpose buffer */
 XTERN size_t bufsize;			/* allocated size of buf */
@@ -227,7 +224,7 @@ XTERN char *revision;			/* prerequisite revision, if any */
 #endif
 
 #ifndef PARAMS
-# if defined PROTOTYPES || (defined __STDC__ && __STDC__)
+# ifdef __STDC__
 #  define PARAMS(args) args
 # else
 #  define PARAMS(args) ()
@@ -282,26 +279,10 @@ GENERIC_OBJECT *realloc ();
   typedef off_t file_offset;
 # define file_seek fseeko
 # define file_tell ftello
-# ifndef fseeko
-   /* GNU/Linux Red Hat 6.0 (sparc) has fseeko, but doesn't declare it
-      by default, and its `getconf LFS_CFLAGS' doesn't output the
-      proper options to declare it.  To work around this bug, declare
-      fseeko's return type here rather than descend into the
-      portability nightmare about whether we should define
-      _LARGEFILE_SOURCE or _XOPEN_SOURCE==500 or _XPG5 or whatever.  */
-   off_t fseeko ();
-# endif
 #else
   typedef long file_offset;
 # define file_seek fseek
 # define file_tell ftell
-#endif
-#if ! (HAVE_GETEUID || defined geteuid)
-# if ! (HAVE_GETUID || defined getuid)
-#  define geteuid() (-1)
-# else
-#  define geteuid() getuid ()
-# endif
 #endif
 
 #if HAVE_FCNTL_H
@@ -332,7 +313,7 @@ GENERIC_OBJECT *realloc ();
 #define O_TRUNC 0
 #endif
 
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
@@ -345,6 +326,3 @@ GENERIC_OBJECT *realloc ();
 #ifndef TTY_DEVICE
 #define TTY_DEVICE "/dev/tty"
 #endif
-
-/* The official name of this program (e.g., no `g' prefix).  */
-#define PROGRAM_NAME "patch"
