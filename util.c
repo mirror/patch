@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.18 1997/06/03 17:42:49 eggert Exp $ */
+/* $Id: util.c,v 1.19 1997/06/04 18:32:14 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -441,7 +441,7 @@ ok_to_reverse (format, va_alist)
 {
   int r = 0;
 
-  if (noreverse || ! batch || verbosity != SILENT)
+  if (! (verbosity == SILENT && (noreverse || force || batch)))
     {
       va_list args;
       vararg_start (args, format);
@@ -451,8 +451,15 @@ ok_to_reverse (format, va_alist)
 
   if (noreverse)
     {
-      printf ("  Ignoring it.\n");
+      if (verbosity != SILENT)
+	printf ("  Ignoring it.\n");
       skip_rest_of_patch = TRUE;
+      r = 0;
+    }
+  else if (force)
+    {
+      if (verbosity != SILENT)
+	printf ("  Applying it anyway.\n");
       r = 0;
     }
   else if (batch)
