@@ -42,4 +42,4 @@ See the file INSTALL for compilation and installation instructions for Unix.
 For non-Unix systems, copy config.h.in to config.h and change
 #undef statements in it to #define as appropriate for your system,
 and copy Makefile.in to Makefile and set the variables that are
-enclosed in @ signs appropriate for your system.
+enclosed in @ signs as appropriate for your system.
