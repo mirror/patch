@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.29 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: pch.c,v 1.30 1999/08/30 06:20:08 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
