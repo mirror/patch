@@ -4,8 +4,6 @@
 #include "util.h"
 #include "backupfile.h"
 
-void my_exit();
-
 #ifndef HAVE_STRERROR
 static char *
 private_strerror (errnum)
@@ -31,6 +29,7 @@ char *from, *to;
     Reg1 char *s;
     Reg2 int i;
     Reg3 int fromfd;
+    struct stat st;
 
     /* to stdout? */
 
@@ -43,9 +42,10 @@ char *from, *to;
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, bufsize)) > 0)
-	    if (write(1, buf, i) != 1)
-		pfatal1("write failed");
-	Close(fromfd);
+	    if (! fwrite (buf, sizeof (*buf), (size_t) i, stdout))
+		write_fatal ();
+	if (i < 0  ||  close (fromfd) != 0)
+	    read_fatal ();
 	return 0;
     }
 
@@ -55,8 +55,8 @@ char *from, *to;
     } else {
 #ifndef NODIR
 	char *backupname = find_backup_file_name(to);
-	if (backupname == (char *) 0)
-	    fatal1("out of memory\n");
+	if (!backupname)
+	    memory_fatal ();
 	Strcpy(bakname, backupname);
 	free(backupname);
 #else /* NODIR */
@@ -65,9 +65,9 @@ char *from, *to;
 #endif /* NODIR */
     }
 
-    if (stat(to, &filestat) == 0) {	/* output file exists */
-	dev_t to_device = filestat.st_dev;
-	ino_t to_inode  = filestat.st_ino;
+    if (stat(to, &st) == 0) {	/* output file exists */
+	dev_t to_device = st.st_dev;
+	ino_t to_inode  = st.st_ino;
 	char *simplename = bakname;
 	
 	for (s=bakname; *s; s++) {
@@ -77,8 +77,8 @@ char *from, *to;
 	/* Find a backup name that is not the same file.
 	   Change the first lowercase char into uppercase;
 	   if that isn't sufficient, chop off the first char and try again.  */
-	while (stat(bakname, &filestat) == 0 &&
-		to_device == filestat.st_dev && to_inode == filestat.st_ino) {
+	while (stat(bakname, &st) == 0 &&
+		to_device == st.st_dev && to_inode == st.st_ino) {
 	    /* Skip initial non-lowercase chars.  */
 	    for (s=simplename; *s && !islower(*s); s++) ;
 	    if (*s)
@@ -115,10 +115,12 @@ char *from, *to;
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, bufsize)) > 0)
-	    if (write(tofd, buf, i) != i)
-		pfatal1("write failed");
-	Close(fromfd);
-	Close(tofd);
+	    if (write (tofd, buf, (size_t) i) != i)
+		write_fatal ();
+	if (i < 0  ||  close (fromfd) != 0)
+	    read_fatal ();
+	if (close(tofd) != 0)
+	    write_fatal ();
     }
     Unlink(from);
     return 0;
@@ -141,86 +143,92 @@ char *from, *to;
     if (fromfd < 0)
 	pfatal2("internal error, can't reopen %s", from);
     while ((i=read(fromfd, buf, bufsize)) > 0)
-	if (write(tofd, buf, i) != i)
-	    pfatal2("write to %s failed", to);
-    Close(fromfd);
-    Close(tofd);
+	if (write(tofd, buf, (size_t) i) != i)
+	    write_fatal ();
+    if (i < 0  ||  close (fromfd) != 0)
+	read_fatal ();
+    if (close(tofd) != 0)
+	write_fatal ();
 }
 
 /* Allocate a unique area for a string. */
 
 char *
-savestr(s)
+savebuf(s, size)
 Reg1 char *s;
+Reg2 size_t size;
 {
     Reg3 char *rv;
-    Reg2 char *t;
 
-    if (!s)
-	s = "Oops";
-    t = s;
-    while (*t++);
-    rv = malloc((size_t) (t - s));
-    if (rv == Nullch) {
+    assert(s && size);
+    rv = malloc(size);
+    if (!rv) {
 	if (using_plan_a)
 	    out_of_mem = TRUE;
 	else
-	    fatal1("out of memory\n");
+	    memory_fatal ();
     }
     else {
-	t = rv;
-	while (*t++ = *s++);
+	memcpy(rv, s, size);
     }
     return rv;
 }
 
-#if defined(lint) && defined(CANVARARG)
-
-/*VARARGS ARGSUSED*/
-say(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-fatal(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-pfatal(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-ask(pat) char *pat; { ; }
-
-#else
-
-/* Vanilla terminal output (buffered). */
-
-void
-say(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+char *
+savestr(s)
+     char *s;
 {
-    fprintf(stderr, pat, arg1, arg2, arg3);
-    Fflush(stderr);
+  return savebuf (s, strlen (s) + 1);
 }
 
 /* Terminal output, pun intended. */
 
-void				/* very void */
-fatal(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+FILE *
+afatal ()
 {
     fprintf(stderr, "patch: **** ");
-    fprintf(stderr, pat, arg1, arg2, arg3);
+    return stderr;
+}
+
+EXITING void
+zfatal ()
+{
+    fputc ('\n', stderr);
     my_exit(1);
+}
+
+void
+memory_fatal ()
+{
+  fatal1 ("out of memory");
+}
+
+void
+read_fatal ()
+{
+  pfatal1 ("read error");
+}
+
+void
+write_fatal ()
+{
+  pfatal1 ("write error");
 }
 
 /* Say something from patch, something from the system, then silence . . . */
 
-void				/* very void */
-pfatal(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
-{
-    int errnum = errno;
+static int errnum;
 
-    fprintf(stderr, "patch: **** ");
-    fprintf(stderr, pat, arg1, arg2, arg3);
+FILE *
+apfatal ()
+{
+    errnum = errno;
+    return afatal ();
+}
+
+EXITING void
+zpfatal ()
+{
     fprintf(stderr, ": %s\n", strerror(errnum));
     my_exit(1);
 }
@@ -228,35 +236,33 @@ long arg1,arg2,arg3;
 /* Get a response from the user, somehow or other. */
 
 void
-ask(pat,arg1,arg2,arg3)
-char *pat;
-long arg1,arg2,arg3;
+zask ()
 {
     int ttyfd;
     int r;
-    bool tty2 = isatty(2);
+    bool tty_stderr = isatty (STDERR_FILENO);
+    size_t buflen = strlen (buf);
 
-    Sprintf(buf, pat, arg1, arg2, arg3);
     Fflush(stderr);
-    write(2, buf, strlen(buf));
-    if (tty2) {				/* might be redirected to a file */
-	r = read(2, buf, bufsize);
+    write(STDERR_FILENO, buf, buflen);
+    if (tty_stderr) {			/* might be redirected to a file */
+	r = read(STDERR_FILENO, buf, bufsize);
     }
-    else if (isatty(1)) {		/* this may be new file output */
+    else if (isatty(STDOUT_FILENO)) {	/* this may be new file output */
 	Fflush(stdout);
-	write(1, buf, strlen(buf));
-	r = read(1, buf, bufsize);
+	write (STDOUT_FILENO, buf, buflen);
+	r = read (STDOUT_FILENO, buf, bufsize);
     }
     else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
 					/* might be deleted or unwriteable */
-	write(ttyfd, buf, strlen(buf));
+	write(ttyfd, buf, buflen);
 	r = read(ttyfd, buf, bufsize);
 	Close(ttyfd);
     }
-    else if (isatty(0)) {		/* this is probably patch input */
+    else if (isatty(STDIN_FILENO)) {	/* this is probably patch input */
 	Fflush(stdin);
-	write(0, buf, strlen(buf));
-	r = read(0, buf, bufsize);
+	write (STDIN_FILENO, buf, buflen);
+	r = read (STDIN_FILENO, buf, bufsize);
     }
     else {				/* no terminal at all--default it */
 	buf[0] = '\n';
@@ -266,10 +272,9 @@ long arg1,arg2,arg3;
 	buf[0] = 0;
     else
 	buf[r] = '\0';
-    if (!tty2)
+    if (!tty_stderr)
 	say1(buf);
 }
-#endif /* lint */
 
 /* How to handle certain events when not in a critical region. */
 
@@ -277,7 +282,6 @@ void
 set_signals(reset)
 int reset;
 {
-#ifndef lint
     static RETSIGTYPE (*hupval)(),(*intval)();
 
     if (!reset) {
@@ -298,7 +302,6 @@ int reset;
 #ifdef SIGINT
     Signal(SIGINT, intval);
 #endif
-#endif /* !defined (lint) */
 }
 
 /* How to handle certain events when in a critical region. */
@@ -306,14 +309,12 @@ int reset;
 void
 ignore_signals()
 {
-#ifndef lint
 #ifdef SIGHUP
     Signal(SIGHUP, SIG_IGN);
 #endif
 #ifdef SIGINT
     Signal(SIGINT, SIG_IGN);
 #endif
-#endif /* !defined (lint) */
 }
 
 /* Make sure we'll have the directories to create a file.
@@ -378,9 +379,10 @@ int assume_exists;
     Reg1 char *t;
     char tmpbuf[200];
     int sleading = strip_leading;
+    struct stat st;
 
     if (!at)
-	return Nullch;
+	return 0;
     while (isspace(*at))
 	at++;
 #ifdef DEBUGGING
@@ -388,7 +390,7 @@ int assume_exists;
 	say4("fetchname %s %d %d\n",at,strip_leading,assume_exists);
 #endif
     if (strnEQ(at, "/dev/null", 9))	/* so files can be created by diffing */
-	return Nullch;			/*   against /dev/null. */
+	return 0;			/*   against /dev/null. */
     name = fullname = t = savestr(at);
 
     /* Strip off up to `sleading' leading slashes and null terminate.  */
@@ -398,13 +400,13 @@ int assume_exists;
 		name = t+1;
     *t = '\0';
 
-    /* If no -p option was given (957 is the default value!),
+    /* If no -p option was given (INT_MAX is the default value),
        we were given a relative pathname,
        and the leading directories that we just stripped off all exist,
        put them back on.  */
-    if (strip_leading == 957 && name != fullname && *fullname != '/') {
+    if (strip_leading == INT_MAX && name != fullname && *fullname != '/') {
 	name[-1] = '\0';
-	if (stat(fullname, &filestat) == 0 && S_ISDIR (filestat.st_mode)) {
+	if (stat(fullname, &st) == 0 && S_ISDIR (st.st_mode)) {
 	    name[-1] = '/';
 	    name=fullname;
 	}
@@ -413,22 +415,23 @@ int assume_exists;
     name = savestr(name);
     free(fullname);
 
-    if (stat(name, &filestat) && !assume_exists) {
+    if (stat(name, &st) && !assume_exists) {
 	char *filebase = basename(name);
-	int pathlen = filebase - name;
+	size_t pathlen = filebase - name;
 
 	/* Put any leading path into `tmpbuf'.  */
 	strncpy(tmpbuf, name, pathlen);
 
-#define try(f, a1, a2) (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
-	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s"  , filebase,         0)
-	    || try(    "%s%s", filebase, RCSSUFFIX)
-	    || try("SCCS/%s%s", SCCSPREFIX, filebase)
-	    || try(     "%s%s", SCCSPREFIX, filebase))
+#define try1(f, a1)	(Sprintf(tmpbuf+pathlen,f,a1),	 stat(tmpbuf, &st) == 0)
+#define try2(f, a1, a2)	(Sprintf(tmpbuf+pathlen,f,a1,a2),stat(tmpbuf, &st) == 0)
+	if (   try2("RCS/%s%s", filebase, RCSSUFFIX)
+	    || try1("RCS/%s"  , filebase)
+	    || try2(    "%s%s", filebase, RCSSUFFIX)
+	    || try2("SCCS/%s%s", SCCSPREFIX, filebase)
+	    || try2(     "%s%s", SCCSPREFIX, filebase))
 	  return name;
 	free(name);
-	name = Nullch;
+	name = 0;
     }
 
     return name;
@@ -438,8 +441,32 @@ char *
 xmalloc (size)
      size_t size;
 {
-  register char *p = (char *) malloc (size);
+  register char *p = malloc (size);
   if (!p)
-    fatal1("out of memory");
+    memory_fatal ();
   return p;
+}
+
+#if ! HAVE_MEMCMP
+int
+memcmp (a, b, n)
+     const void *a, *b;
+     size_t n;
+{
+  const unsigned char *p = a, *q = b;
+  while (n--)
+    if (*p++ != *q++)
+      return p[-1] < q[-1] ? -1 : 1;
+  return 0;
+}
+#endif
+
+void
+Fseek (stream, offset, ptrname)
+     FILE *stream;
+     long offset;
+     int ptrname;
+{
+  if (fseek (stream, offset, ptrname) != 0)
+    pfatal1 ("fseek");
 }
