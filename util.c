@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.7 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: util.c,v 1.8 1997/04/07 04:33:52 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -412,7 +412,7 @@ static sigset_t initial_signal_mask;
 static sigset_t signals_to_block;
 
 #if ! HAVE_SIGACTION
-static RETSIGTYPE fatal_exit_handler PARAMS ((void)) __attribute__ ((noreturn));
+static RETSIGTYPE fatal_exit_handler PARAMS ((int)) __attribute__ ((noreturn));
 static RETSIGTYPE
 fatal_exit_handler (sig)
      int sig;
