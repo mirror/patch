@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.7 1997/04/14 05:32:30 eggert Exp $ */
+/* $Id: pch.c,v 1.8 1997/05/05 07:31:21 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -24,6 +24,7 @@ If not, write to the Free Software Foundation,
 
 #define XTERN extern
 #include <common.h>
+#include <backupfile.h>
 #include <inp.h>
 #include <util.h>
 #undef XTERN
@@ -58,7 +59,11 @@ static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
 
+enum nametype { OLD, NEW, INDEX, NONE };
+
 static enum diff intuit_diff_type PARAMS ((void));
+static enum nametype best_name PARAMS ((char * const *, int const *));
+static int path_name_components PARAMS ((char const *));
 static size_t pget_line PARAMS ((int));
 static size_t get_line PARAMS ((void));
 static bool incomplete_line PARAMS ((void));
@@ -228,11 +233,10 @@ intuit_diff_type()
     register bool this_is_a_command = FALSE;
     register bool stars_last_line = FALSE;
     register bool stars_this_line = FALSE;
-    enum nametype { OLD, NEW, INDEX, NONE } i;
+    enum nametype i;
     char *name[3];
     struct stat st[3];
     int stat_errno[3];
-    int dir_count[3];
     register enum diff retval;
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
@@ -372,40 +376,44 @@ intuit_diff_type()
 
   scan_exit:
 
-    /* Use algorithm specified by POSIX 1003.2b/D11 to deduce `inname',
-       the name of the file to patch; except that if the patch syntactically
-       can create a file, before asking the user for a file name
-       redo the earlier steps in sequence, this time ignoring the
-       nonexistence of a file if the path length of the existing directory
-       in the file name is a maximum among all the candidate file names.  */
+    /* To intuit `inname', the name of the file to patch,
+       use the algorithm specified by POSIX 1003.2b/D11 section 5.22.7.2
+       (with some modifications if posixly_correct is zero):
 
-    for (i = OLD;  i <= INDEX;  i++)
-      if (!inname && name[i])
-	{
-	  if (stat (name[i], &st[i]) != 0)
-	    stat_errno[i] = errno;
-	  else
-	    {
-	      stat_errno[i] = 0;
-	      break;
-	    }
-	}
+       - Take the old and new names from the context header if present,
+	 and take the index name from the `Index:' line if present.
+	 Consider the file names to be in the order (old, new, index).
+       - If some named files exist, use the first one if posixly_correct
+	 is nonzero, the best one otherwise.
+       - If no named files exist, some names are given, posixly_correct is
+	 zero, and the patch appears to create a file,
+	 then use the best of the names given.
+       - Otherwise, report failure by setting `inname' to 0;
+	 this causes our invoker to ask the user for a file name.  */
 
-    if (i == NONE && !inname && ok_to_create_file)
+    i = NONE;
+
+    if (!inname)
       {
-	int dir_count_max = 0;
-
 	for (i = OLD;  i <= INDEX;  i++)
 	  if (name[i])
 	    {
-	      dir_count[i] = countdirs (name[i]);
-	      if (dir_count_max < dir_count[i])
-		dir_count_max = dir_count[i];
+	      if (stat (name[i], &st[i]) != 0)
+		stat_errno[i] = errno;
+	      else
+		{
+		  stat_errno[i] = 0;
+		  if (posixly_correct)
+		    break;
+		}
 	    }
 
-	for (i = OLD;  i <= INDEX;  i++)
-	  if (name[i] && dir_count[i] == dir_count_max)
-	    break;
+	if (i == NONE)
+	  {
+	    i = best_name (name, stat_errno);
+	    if (i == NONE && !posixly_correct && ok_to_create_file)
+	      i = best_name (name, 0);
+	  }
       }
 
     if (i == NONE)
@@ -423,6 +431,73 @@ intuit_diff_type()
 	free (name[i]);
 
     return retval;
+}
+
+/* Count the number of path name components in FILENAME.  */
+static int
+path_name_components (filename)
+     char const *filename;
+{
+  int count = 0;
+  int slash0 = 1;
+
+  for (; *filename; filename++)
+    {
+      int slash1 = *filename == '/';
+      count += slash0 & ~slash1;
+      slash0 = slash1;
+    }
+
+  return count;
+}
+
+/* Return the index of the best of NAME[OLD], NAME[NEW], and NAME[INDEX].
+   Ignore null names, and ignore NAME[i] if STAT_ERRNO is not null and
+   STAT_ERRNO[i] is nonzero.  Return NONE if all names are ignored.  */
+static enum nametype
+best_name (name, stat_errno)
+     char *const *name;
+     int const *stat_errno;
+{
+  enum nametype i;
+  int components[3];
+  int components_min = INT_MAX;
+  size_t basename_len[3];
+  size_t basename_len_min = (size_t) -1;
+  size_t len[3];
+  size_t len_min = (size_t) -1;
+
+  for (i = OLD;  i <= INDEX;  i++)
+    if (name[i] && ! (stat_errno && stat_errno[i] != 0))
+      {
+	/* Take the names with the fewest path name components.  */
+	components[i] = path_name_components (name[i]);
+	if (components_min < components[i])
+	  continue;
+	components_min = components[i];
+
+	/* Of those, take the names with the shortest basename.  */
+	basename_len[i] = strlen (base_name (name[i]));
+	if (basename_len_min < basename_len[i])
+	  continue;
+	basename_len_min = basename_len[i];
+
+	/* Of those, take the shortest names.  */
+	len[i] = strlen (name[i]);
+	if (len_min < len[i])
+	  continue;
+	len_min = len[i];
+      }
+
+  /* Of those, take the first name.  */
+  for (i = OLD;  i <= INDEX;  i++)
+    if (name[i] && ! (stat_errno && stat_errno[i] != 0)
+	&& components[i] == components_min
+	&& basename_len[i] == basename_len_min
+	&& len[i] == len_min)
+      break;
+
+  return i;
 }
 
 /* Remember where this patch ends so we know where to start up again. */
