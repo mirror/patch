@@ -1,3 +1,10 @@
+Changes in version 2.2:
+
+* Removed the input line length limit (was 1k).
+* Added the --help option.
+* The backup file extension defaults to "~" on systems without long file
+  names, like it used to.
+
 Changes in version 2.1:
 
 * A few more portability bugs have been fixed.  The version number has
