@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
+/* $Id: patch.c,v 1.11 1997/04/14 05:32:30 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -43,6 +43,7 @@ static bool patch_match PARAMS ((LINENUM, LINENUM, LINENUM, LINENUM));
 static bool similar PARAMS ((char const *, size_t, char const *, size_t));
 static bool spew_output PARAMS ((bool *));
 static char const *make_temp PARAMS ((int));
+static int numeric_optarg PARAMS ((char const *));
 static void abort_hunk PARAMS ((void));
 static void cleanup PARAMS ((void));
 static void get_some_switches PARAMS ((void));
@@ -560,7 +561,7 @@ get_some_switches()
 		force = TRUE;
 		break;
 	    case 'F':
-		maxfuzz = atoi(optarg);
+		maxfuzz = numeric_optarg ("fuzz factor");
 		break;
 	    case 'h':
 		usage (stdout, 0);
@@ -582,7 +583,7 @@ get_some_switches()
 		output = savestr (optarg);
 		break;
 	    case 'p':
-		strippath = atoi (optarg);
+		strippath = numeric_optarg ("strip count");
 		break;
 	    case 'r':
 		rejname = savestr (optarg);
@@ -610,7 +611,7 @@ get_some_switches()
 		break;
 #if DEBUGGING
 	    case 'x':
-		debug = atoi(optarg);
+		debug = numeric_optarg ("debugging option");
 		break;
 #endif
 	    case 'Y':
@@ -654,6 +655,33 @@ get_some_switches()
 	      }
 	  }
       }
+}
+
+/* Handle a numeric option of type ARGTYPE_MSGID by converting
+   optarg to a nonnegative integer, returning the result.  */
+static int
+numeric_optarg (argtype_msgid)
+     char const *argtype_msgid;
+{
+  int value = 0;
+  char const *p = optarg;
+
+  do
+    {
+      int v10 = value * 10;
+      int digit = *p - '0';
+
+      if (9 < (unsigned) digit)
+	fatal ("%s `%s' is not a number", argtype_msgid, optarg);
+
+      if (v10 / 10 != value || v10 + digit < v10)
+	fatal ("%s `%s' is too large", argtype_msgid, optarg);
+
+      value = v10 + digit;
+    }
+  while (*++p);
+
+  return value;
 }
 
 /* Attempt to find the right place to apply this hunk of patch. */
