@@ -1,13 +1,13 @@
 .\" -*- nroff -*-
 .rn '' }`
-'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.2 1993/06/26 00:29:10 eggert Exp $
+'\" $Header: /home/agruen/git/patch-h/cvsroot/patch/patch.man,v 1.3 1993/07/07 17:23:22 djm Exp $
 '\" 
 '\" $Log: patch.man,v $
-'\" Revision 1.2  1993/06/26 00:29:10  eggert
-'\" Formerly patch.man.~7~
+'\" Revision 1.3  1993/07/07 17:23:22  djm
+'\" entered into RCS
 '\"
-'\" Revision 1.2  1993/06/26 00:29:10  eggert
-'\" Formerly patch.man.~7~
+'\" Revision 1.3  1993/07/07 17:23:22  djm
+'\" entered into RCS
 '\"
 '\" Revision 2.0.1.2  88/06/22  20:47:18  lwall
 '\" patch12: now avoids Bell System Logo
@@ -321,6 +321,11 @@ Note that a larger fuzz factor increases the odds of a faulty patch.
 The default fuzz factor is 2, and it may not be set to more than
 the number of lines of context in the context diff, ordinarily 3.
 .TP 5
+.B "\-\-help"
+causes
+.I patch
+to print a summary of the options that it recognizes and exit.
+.TP 5
 .B "\-l, \-\-ignore\-whitespace"
 causes the pattern matching to be done loosely, in case the tabs and
 spaces have been munged in your input file.
@@ -439,12 +444,12 @@ will ignore the first and second of three patches.
 .B "\-u, \-\-unified"
 forces
 .I patch
-to interpret the patch file as a unified context diff (a unidiff).
+to interpret the patch file as a unified context diff.
 .TP 5
 .B "\-v, \-\-version"
 causes
 .I patch
-to print out its revision header and patch level.
+to print out its revision header and patch level, and exit.
 .TP 5
 .B "\-V method, \-\-version\-\-control=method"
 causes
