@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.23 1997/06/17 06:52:12 eggert Exp $ */
+/* $Id: pch.c,v 1.24 1997/07/05 10:32:23 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -219,8 +219,13 @@ there_is_another_patch()
 	if (p_indent)
 	  say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
 	if (! inname)
-	  say ("can't find file to patch at input line %ld\n",
-	       p_sline);
+	  {
+	    say ("can't find file to patch at input line %ld\n",
+		 p_sline);
+	    say (strippath == INT_MAX
+	         ? "Perhaps you should have used the -p or --strip option?\n"
+		 : "Perhaps you used the wrong -p or --strip option?\n");
+	  }
       }
 
     skip_to(p_start,p_sline);
