@@ -81,7 +81,15 @@ char *malloc ();
    add 1 for integer division truncation; add 1 more for a minus sign.  */
 #define INT_STRLEN_BOUND(t) ((sizeof (t) * CHAR_BIT - 1) * 302 / 1000 + 2)
 
-#define ISDIGIT(c) (((unsigned) (c) - '0') <= 9)
+/* ISDIGIT differs from isdigit, as follows:
+   - Its arg may be any int or unsigned int; it need not be an unsigned char.
+   - It's guaranteed to evaluate its argument exactly once.
+   - It's typically faster.
+   Posix 1003.2-1992 section 2.5.2.1 page 50 lines 1556-1558 says that
+   only '0' through '9' are digits.  Prefer ISDIGIT to isdigit unless
+   it's important to use the locale's definition of `digit' even when the
+   host does not conform to Posix.  */
+#define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
 
 #ifdef _POSIX_VERSION
 /* POSIX does not require that the d_ino field be present, and some
@@ -96,10 +104,10 @@ enum backup_type backup_type = none;
 
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-char const *simple_backup_suffix = ".orig";
+const char *simple_backup_suffix = ".orig";
 
-static int max_backup_version __BACKUPFILE_P ((char const *, char const *));
-static int version_number __BACKUPFILE_P ((char const *, char const *, size_t));
+static int max_backup_version __BACKUPFILE_P ((const char *, const char *));
+static int version_number __BACKUPFILE_P ((const char *, const char *, size_t));
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.
@@ -108,17 +116,20 @@ static int version_number __BACKUPFILE_P ((char const *, char const *, size_t));
 
 char *
 find_backup_file_name (file)
-     char const *file;
+     const char *file;
 {
   size_t backup_suffix_size_max;
+  size_t file_len = strlen (file);
+  size_t numbered_suffix_size_max = INT_STRLEN_BOUND (int) + 4;
   char *s;
+  const char *suffix = simple_backup_suffix;
 
   /* Allow room for simple or `.~N~' backups.  */
   backup_suffix_size_max = strlen (simple_backup_suffix) + 1;
-  if (HAVE_DIR && backup_suffix_size_max < INT_STRLEN_BOUND (int) + 4)
-    backup_suffix_size_max = INT_STRLEN_BOUND (int) + 4;
+  if (HAVE_DIR && backup_suffix_size_max < numbered_suffix_size_max)
+    backup_suffix_size_max = numbered_suffix_size_max;
 
-  s = malloc (strlen (file) + backup_suffix_size_max);
+  s = malloc (file_len + backup_suffix_size_max + numbered_suffix_size_max);
   if (s)
     {
       strcpy (s, file);
@@ -133,14 +144,15 @@ find_backup_file_name (file)
 	  highest_backup = max_backup_version (file + dir_len, s);
 	  if (! (backup_type == numbered_existing && highest_backup == 0))
 	    {
-	      sprintf (s, "%s.~%d~", file, highest_backup + 1);
-	      return s;
+	      char *numbered_suffix = s + (file_len + backup_suffix_size_max);
+	      sprintf (numbered_suffix, ".~%d~", highest_backup + 1);
+	      suffix = numbered_suffix;
 	    }
 	  strcpy (s, file);
 	}
 #endif /* HAVE_DIR */
 
-      addext (s, simple_backup_suffix, '~');
+      addext (s, suffix, '~');
     }
   return s;
 }
@@ -149,11 +161,13 @@ find_backup_file_name (file)
 
 /* Return the number of the highest-numbered backup file for file
    FILE in directory DIR.  If there are no numbered backups
-   of FILE in DIR, or an error occurs reading DIR, return 0.  */
+   of FILE in DIR, or an error occurs reading DIR, return 0.
+   */
 
 static int
 max_backup_version (file, dir)
-     char const *file, *dir;
+     const char *file;
+     const char *dir;
 {
   DIR *dirp;
   struct dirent *dp;
@@ -177,22 +191,23 @@ max_backup_version (file, dir)
       if (this_version > highest_version)
 	highest_version = this_version;
     }
-  if (CLOSEDIR (dirp) != 0)
+  if (CLOSEDIR (dirp))
     return 0;
   return highest_version;
 }
 
 /* If BACKUP is a numbered backup of BASE, return its version number;
-   otherwise return 0.  BASE_LENGTH is the length of BASE.  */
+   otherwise return 0.  BASE_LENGTH is the length of BASE.
+   */
 
 static int
 version_number (base, backup, base_length)
-     char const *base;
-     char const *backup;
+     const char *base;
+     const char *backup;
      size_t base_length;
 {
   int version;
-  char const *p;
+  const char *p;
 
   version = 0;
   if (strncmp (base, backup, base_length) == 0
@@ -208,12 +223,12 @@ version_number (base, backup, base_length)
 }
 #endif /* HAVE_DIR */
 
-static char const * const backup_args[] =
+static const char * const backup_args[] =
 {
   "never", "simple", "nil", "existing", "t", "numbered", 0
 };
 
-static enum backup_type const backup_types[] =
+static const enum backup_type backup_types[] =
 {
   simple, simple, numbered_existing, numbered_existing, numbered, numbered
 };
@@ -223,7 +238,7 @@ static enum backup_type const backup_types[] =
 
 enum backup_type
 get_version (version)
-     char const *version;
+     const char *version;
 {
   int i;
 
