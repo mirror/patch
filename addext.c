@@ -85,6 +85,7 @@ addext (filename, ext, e)
       char *dot = strchr (s, '.');
       if (dot)
 	{
+	  slen -= dot + 1 - s;
 	  s = dot + 1;
 	  slen_max = 3;
 	}
@@ -97,13 +98,8 @@ addext (filename, ext, e)
     strcpy (s + slen, ext);
   else
     {
-      if (slen_max <= slen) {
-	/* Try to preserve difference between .h .c etc.  */
-	if (slen == slen_max && s[slen - 2] == '.')
-	  s[slen - 2] = s[slen - 1];
-
+      if (slen_max <= slen)
 	slen = slen_max - 1;
-      }
       s[slen] = e;
       s[slen + 1] = 0;
     }
