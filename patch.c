@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.21 1997/06/17 06:52:12 eggert Exp $ */
+/* $Id: patch.c,v 1.22 1997/06/17 22:32:49 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -288,7 +288,8 @@ char **argv;
 		if (verbosity != SILENT)
 		    say ("Hunk #%d FAILED at %ld.\n", hunk, newwhere);
 	    } else {
-		if (verbosity == VERBOSE || (fuzz && verbosity != SILENT)) {
+		if (verbosity == VERBOSE
+		    || (verbosity != SILENT && (fuzz || last_offset))) {
 		    say ("Hunk #%d succeeded at %ld", hunk, newwhere);
 		    if (fuzz)
 			say (" with fuzz %ld", fuzz);
