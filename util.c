@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.10 1997/05/05 07:31:21 eggert Exp $ */
+/* $Id: util.c,v 1.11 1997/05/05 17:51:22 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -590,7 +590,7 @@ replace_slashes (filename)
 	  }
 	while (f[1] == '/')
 	  f++;
-	component_start = f;
+	component_start = f + 1;
       }
 
   return last_location_replaced;
