@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.16 1997/05/26 17:52:29 eggert Exp $ */
+/* $Id: pch.c,v 1.17 1997/06/01 10:44:17 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -118,7 +118,9 @@ open_patch_file(filename)
 	    pfp = fopen (TMPPATNAME, "w+b");
 	    if (!pfp)
 	      pfatal ("can't create `%s'", TMPPATNAME);
-	    while ((charsread = fread (buf, 1, bufsize, stdin)) != 0)
+	    for (st.st_size = 0;
+		 (charsread = fread (buf, 1, bufsize, stdin)) != 0;
+		 st.st_size += charsread)
 	      if (fwrite (buf, 1, charsread, pfp) != charsread)
 		write_fatal ();
 	    if (ferror (stdin) || fclose (stdin) != 0)
