@@ -1,35 +1,13 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.7 1993/07/29 20:11:38 eggert Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/common.h,v 1.8 1993/07/30 02:02:51 eggert Exp $
  *
  * $Log: common.h,v $
- * Revision 1.7  1993/07/29 20:11:38  eggert
- * (bool): Change to int, so ANSI C prototype promotion works.
- * (CANVARARG): Remove varargs hack; it wasn't portable.
- * (filearg): Now a pointer, not an array, so that it can be reallocated.
- * (GET*, SCCSDIFF, CHECKOUT*, RCSDIFF): Quote operands to commands.
- * (my_exit): Declare here.
- * (BUFFERSIZE, Ctl, filemode, Fseek, Fstat, Lseek, MAXFILEC, MAXHUNKSIZE,
- * Mktemp, myuid, Null, Nullch, Nullfp, Nulline, Pclose, VOIDUSED): Remove.
- * All invokers changed.
- * (Argc, Argv, *define[sd], last_offset, maxfuzz, noreverse, ofp,
- * optind_last, rejfp, rejname): No longer externally visible; all
- * definers changed.
- * (INT_MAX, INT_MIN, STD*_FILENO, SEEK_SET): Define if the underlying
- * system doesn't.  Include <limits.h> for this.
+ * Revision 1.8  1993/07/30 02:02:51  eggert
+ * (Chmod, Fputc, Write, VOID): New macros.
+ * (malloc, realloc): Yield `VOID *', not `char *'.
  *
- * Revision 1.7  1993/07/29 20:11:38  eggert
- * (bool): Change to int, so ANSI C prototype promotion works.
- * (CANVARARG): Remove varargs hack; it wasn't portable.
- * (filearg): Now a pointer, not an array, so that it can be reallocated.
- * (GET*, SCCSDIFF, CHECKOUT*, RCSDIFF): Quote operands to commands.
- * (my_exit): Declare here.
- * (BUFFERSIZE, Ctl, filemode, Fseek, Fstat, Lseek, MAXFILEC, MAXHUNKSIZE,
- * Mktemp, myuid, Null, Nullch, Nullfp, Nulline, Pclose, VOIDUSED): Remove.
- * All invokers changed.
- * (Argc, Argv, *define[sd], last_offset, maxfuzz, noreverse, ofp,
- * optind_last, rejfp, rejname): No longer externally visible; all
- * definers changed.
- * (INT_MAX, INT_MIN, STD*_FILENO, SEEK_SET): Define if the underlying
- * system doesn't.  Include <limits.h> for this.
+ * Revision 1.8  1993/07/30 02:02:51  eggert
+ * (Chmod, Fputc, Write, VOID): New macros.
+ * (malloc, realloc): Yield `VOID *', not `char *'.
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong
@@ -48,14 +26,17 @@
 
 /* shut lint up about the following when return value ignored */
 
-#define Signal (void)signal
-#define Unlink (void)unlink
+#define Chmod (void)chmod
 #define Close (void)close
 #define Fclose (void)fclose
 #define Fflush (void)fflush
+#define Fputc (void)fputc
+#define Signal (void)signal
 #define Sprintf (void)sprintf
-#define Strcpy (void)strcpy
 #define Strcat (void)strcat
+#define Strcpy (void)strcpy
+#define Unlink (void)unlink
+#define Write (void)write
 
 /* NeXT declares malloc and realloc incompatibly from us in some of
    these files.  Temporarily redefine them to prevent errors.  */
@@ -163,7 +144,13 @@ EXT int diff_type;
 
 EXT char *revision;			/* prerequisite revision, if any */
 
-char *xmalloc PARAMS((size_t));
+#if __STDC__
+#define VOID void
+#else
+#define VOID char
+#endif
+
+VOID *xmalloc PARAMS((size_t));
 EXITING void my_exit PARAMS((int));
 
 #include <errno.h>
@@ -171,10 +158,12 @@ EXITING void my_exit PARAMS((int));
 #include <stdlib.h>
 #include <string.h>
 #else
+#ifndef errno
 extern int errno;
+#endif
 FILE *popen();
-char *malloc();
-char *realloc();
+VOID *malloc();
+VOID *realloc();
 long atol();
 char *getenv();
 char *strcpy();
