@@ -1,10 +1,12 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.16 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: util.h,v 1.17 1999/08/30 06:20:08 eggert Exp $ */
 
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */
 #define LINENUM_LENGTH_BOUND (sizeof (LINENUM) * CHAR_BIT / 3 + 1)
+
+XTERN enum backup_type backup_type;
 
 int ok_to_reverse PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
 void ask PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
