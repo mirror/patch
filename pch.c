@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.40 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: pch.c,v 1.41 2002/05/28 18:51:23 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
@@ -266,6 +266,7 @@ there_is_another_patch (void)
 	    else
 	      {
 		perror (inname);
+		fflush (stderr);
 		free (inname);
 		inname = 0;
 	      }
