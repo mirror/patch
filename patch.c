@@ -1,11 +1,11 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.42 2002/05/28 20:02:35 eggert Exp $ */
+/* $Id: patch.c,v 1.43 2003/05/18 08:22:12 eggert Exp $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
-   Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002
-   Free Software Foundation, Inc.
+   Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002,
+   2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
 #define XTERN extern
 #include <argmatch.h>
 #include <backupfile.h>
-#include <exitfail.h>
 #include <getopt.h>
 #include <inp.h>
 #include <pch.h>
@@ -120,7 +119,7 @@ main (int argc, char **argv)
     struct outstate outstate;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
 
-    exit_failure = 2;
+    xalloc_exit_failure = 2;
     program_name = argv[0];
     init_time ();
 
@@ -190,7 +189,7 @@ main (int argc, char **argv)
 	outstate.zero_output = 0;
 	somefailed |= skip_rest_of_patch;
 	do_ed_script (outstate.ofp);
-	if (! dry_run && ! outfile)
+	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
 	    struct stat statbuf;
 	    if (stat (TMPOUTNAME, &statbuf) != 0)
@@ -592,7 +591,7 @@ static char const *const option_help[] =
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
 "",
-"Report bugs to <bug-patch@gnu.org>.",
+"Report bugs to <" PACKAGE_BUGREPORT ">.",
 0
 };
 
