@@ -1,3 +1,8 @@
+Changes in version 2.5.7:
+
+* patch -D now outputs preprocessor lines without comments, as required
+  by POSIX 1003.1-2001.
+
 Changes in version 2.5.6:
 
 * File names in context patches may now contain spaces, so long
