@@ -28,6 +28,7 @@ ed_PROGRAM = @ed_PROGRAM@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+transform = @program_transform_name@
 
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
@@ -45,7 +46,7 @@ bindir = $(exec_prefix)/bin
 
 # Where to put the manual pages.
 man1dir = $(prefix)/man/man1
-# Extension (not including `.') for the manual page filenames.
+# Extension (including `.') for the manual page filenames.
 man1ext = .1
 
 # Hooks for nonstandard builds.
@@ -71,6 +72,8 @@ DISTFILES_PC = pc/chdirsaf.c
 DISTFILES_PC_DJGPP = pc/djgpp/README pc/djgpp/config.h \
 	pc/djgpp/config.sed pc/djgpp/configure.bat
 
+patch_name = `echo patch | sed '$(transform)'`
+
 all:: patch
 
 info::
@@ -87,15 +90,17 @@ patch: $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 
 install:: all installdirs
-	$(INSTALL_PROGRAM) patch $(bindir)/`echo patch | sed '$(transform)'`
-	-$(INSTALL_DATA) $(srcdir)/patch.man \
-		$(man1dir)/`echo patch | sed '$(transform)'`$(man1ext)
+	$(INSTALL_PROGRAM) patch $(bindir)/$(patch_name)
+	-$(INSTALL_DATA) $(srcdir)/patch.man $(man1dir)/$(patch_name)$(man1ext)
 
 installdirs::
 	$(SHELL) $(srcdir)/mkinstalldirs $(bindir) $(man1dir)
 
+install-strip::
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
 uninstall::
-	rm -f $(bindir)/patch $(man1dir)/patch$(man1ext)
+	rm -f $(bindir)/$(patch_name) $(man1dir)/$(patch_name)$(man1ext)
 
 Makefile: Makefile.in $(CONFIG_STATUS)
 	$(SHELL) $(CONFIG_STATUS)
