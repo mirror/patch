@@ -1,27 +1,30 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/version.c,v 1.3 1993/07/29 20:11:38 eggert Exp $
- *
- * $Log: version.c,v $
- * Revision 1.3  1993/07/29 20:11:38  eggert
- * Don't exit.
- *
- * Revision 1.3  1993/07/29 20:11:38  eggert
- * Don't exit.
- *
- * Revision 2.0  86/09/17  15:40:11  lwall
- * Baseline for netwide release.
- * 
- */
-
-#include "EXTERN.h"
-#include "common.h"
-#include "INTERN.h"
-#include "patchlevel.h"
-#include "version.h"
-
 /* Print the version number.  */
+
+/* $Id: version.c,v 1.4 1997/04/07 01:07:00 eggert Exp $ */
+
+#define XTERN extern
+#include <common.h>
+#undef XTERN
+#define XTERN
+#include <patchlevel.h>
+#include <version.h>
+
+static char const copyright_string[] = "\
+Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall\n\
+Copyright 1989, 1990, 1991, 1992, 1993, 1997 Free Software Foundation, Inc.";
+
+static char const free_software_msgid[] = "\
+This program comes with NO WARRANTY, to the extent permitted by law.\n\
+You may redistribute copies of this program\n\
+under the terms of the GNU General Public License.\n\
+For more information about these matters, see the file named COPYING.";
+
+static char const authorship_msgid[] = "\
+written by Larry Wall with lots o' patches by Paul Eggert";
 
 void
 version()
 {
-    fprintf(stderr, "Patch version %s\n", PATCH_VERSION);
+  printf ("%s %s\n%s\n\n%s\n\n%s\n", program_name, PATCH_VERSION,
+	  copyright_string, free_software_msgid, authorship_msgid);
 }
