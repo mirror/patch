@@ -1,3 +1,8 @@
+2003-07-05  Paul Eggert  <eggert@twinsun.com>
+
+	* Makefile.in (check): Add a trivial check that "patch --help" works.
+	From a suggestion by Ed Avis.
+
 2003-07-02  Paul Eggert  <eggert@twinsun.com>
 
 	* pch.c (intuit_diff_type): If a unified-diff header line contains
