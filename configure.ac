@@ -8,7 +8,7 @@ AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 
 PACKAGE=patch
-VERSION=2.3.6
+VERSION=2.3.7
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 
@@ -97,7 +97,7 @@ fi
 
 AC_CHECK_FUNC(getopt_long, , [LIBOBJS="$LIBOBJS getopt1.o getopt.o"])
 AC_SUBST(LIBOBJS)
-AC_CHECK_FUNCS(_doprintf isascii memcmp mkdir mktemp pathconf sigaction sigprocmask sigsetmask)
+AC_CHECK_FUNCS(_doprintf isascii memcmp mkdir mktemp pathconf raise sigaction sigprocmask sigsetmask)
 AC_REPLACE_FUNCS(memchr rename)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
