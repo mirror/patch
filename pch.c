@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.35 1999/10/25 06:05:43 eggert Exp $ */
+/* $Id: pch.c,v 1.36 2000/07/01 01:52:43 eggert Exp $ */
 
 /* Copyright 1986, 1987, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -1525,77 +1525,83 @@ pget_line (int indent, int rfc934_nesting, int strip_trailing_cr)
 {
   register FILE *fp = pfp;
   register int c;
-  register int i = 0;
+  register int i;
   register char *b;
   register size_t s;
 
-  for (;;)
+  do
     {
-      c = getc (fp);
-      if (c == EOF)
+      i = 0;
+      for (;;)
 	{
-	  if (ferror (fp))
-	    read_fatal ();
-	  return 0;
-	}
-      if (indent <= i)
-	break;
-      if (c == ' ' || c == 'X')
-	i++;
-      else if (c == '\t')
-	i = (i + 8) & ~7;
-      else
-	break;
-    }
-
-  i = 0;
-  b = buf;
-
-  while (c == '-' && 0 <= --rfc934_nesting)
-    {
-      c = getc (fp);
-      if (c == EOF)
-	goto patch_ends_in_middle_of_line;
-      if (c != ' ')
-	{
-	  i = 1;
-	  b[0] = '-';
-	  break;
-	}
-      c = getc (fp);
-      if (c == EOF)
-	goto patch_ends_in_middle_of_line;
-    }
-
-  s = bufsize;
-
-  for (;;)
-    {
-      if (i == s - 1)
-	{
-	  s *= 2;
-	  b = realloc (b, s);
-	  if (!b)
+	  c = getc (fp);
+	  if (c == EOF)
 	    {
-	      if (!using_plan_a)
-		memory_fatal ();
-	      return (size_t) -1;
+	      if (ferror (fp))
+		read_fatal ();
+	      return 0;
 	    }
-	  buf = b;
-	  bufsize = s;
+	  if (indent <= i)
+	    break;
+	  if (c == ' ' || c == 'X')
+	    i++;
+	  else if (c == '\t')
+	    i = (i + 8) & ~7;
+	  else
+	    break;
 	}
-      b[i++] = c;
-      if (c == '\n')
-	break;
-      c = getc (fp);
-      if (c == EOF)
-	goto patch_ends_in_middle_of_line;
+
+      i = 0;
+      b = buf;
+
+      while (c == '-' && 0 <= --rfc934_nesting)
+	{
+	  c = getc (fp);
+	  if (c == EOF)
+	    goto patch_ends_in_middle_of_line;
+	  if (c != ' ')
+	    {
+	      i = 1;
+	      b[0] = '-';
+	      break;
+	    }
+	  c = getc (fp);
+	  if (c == EOF)
+	    goto patch_ends_in_middle_of_line;
+	}
+
+      s = bufsize;
+
+      for (;;)
+	{
+	  if (i == s - 1)
+	    {
+	      s *= 2;
+	      b = realloc (b, s);
+	      if (!b)
+		{
+		  if (!using_plan_a)
+		    memory_fatal ();
+		  return (size_t) -1;
+		}
+	      buf = b;
+	      bufsize = s;
+	    }
+	  b[i++] = c;
+	  if (c == '\n')
+	    break;
+	  c = getc (fp);
+	  if (c == EOF)
+	    goto patch_ends_in_middle_of_line;
+	}
+
+      p_input_line++;
     }
+  while (*b == '#');
 
   if (strip_trailing_cr && 2 <= i && b[i - 2] == '\r')
     b[i-- - 2] = '\n';
   b[i] = '\0';
-  p_input_line++;
   return i;
 
  patch_ends_in_middle_of_line:
