@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.41 2002/05/28 07:23:50 eggert Exp $ */
+/* $Id: patch.c,v 1.42 2002/05/28 20:02:35 eggert Exp $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
@@ -93,7 +93,7 @@ static char const *do_defines; /* symbol to patch using ifdef, ifndef, etc. */
 static char const if_defined[] = "\n#ifdef %s\n";
 static char const not_defined[] = "\n#ifndef %s\n";
 static char const else_defined[] = "\n#else\n";
-static char const end_defined[] = "\n#endif /* %s */\n";
+static char const end_defined[] = "\n#endif\n";
 
 static int Argc;
 static char * const *Argv;
@@ -1101,8 +1101,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	    old++;
 	    new++;
 	    if (R_do_defines && def_state != OUTSIDE) {
-		fprintf (fp, outstate->after_newline + end_defined,
-			 R_do_defines);
+		fprintf (fp, outstate->after_newline + end_defined);
 		if (ferror (fp))
 		  write_fatal ();
 		outstate->after_newline = 1;
@@ -1139,7 +1138,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	while (new <= pat_end && pch_char (new) == '+');
     }
     if (R_do_defines && def_state != OUTSIDE) {
-	fprintf (fp, outstate->after_newline + end_defined, R_do_defines);
+	fprintf (fp, outstate->after_newline + end_defined);
 	if (ferror (fp))
 	  write_fatal ();
 	outstate->after_newline = 1;
