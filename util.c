@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.12 1997/05/06 01:39:20 eggert Exp $ */
+/* $Id: util.c,v 1.13 1997/05/06 12:30:13 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -681,9 +681,9 @@ xmalloc (size)
 void
 Fseek (stream, offset, ptrname)
      FILE *stream;
-     long offset;
+     file_offset offset;
      int ptrname;
 {
-  if (fseek (stream, offset, ptrname) != 0)
+  if (file_seek (stream, offset, ptrname) != 0)
     pfatal ("fseek");
 }

@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.9 1997/05/06 01:39:20 eggert Exp $ */
+/* $Id: util.h,v 1.10 1997/05/06 12:30:13 eggert Exp $ */
 
 void ask PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
 void say PARAMS ((char const *, ...)) __attribute__ ((format (printf, 1, 2)));
@@ -15,7 +15,7 @@ char *replace_slashes PARAMS ((char *));
 char *savebuf PARAMS ((char const *, size_t));
 char *savestr PARAMS ((char const *));
 int systemic PARAMS ((char const *));
-void Fseek PARAMS ((FILE *, long, int));
+void Fseek PARAMS ((FILE *, file_offset, int));
 void copy_file PARAMS ((char const *, char const *));
 void exit_with_signal PARAMS ((int)) __attribute__ ((noreturn));
 void ignore_signals PARAMS ((void));
