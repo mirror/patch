@@ -37,6 +37,7 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 PACKAGE = @PACKAGE@
+U = @U@
 VERSION = @VERSION@
 
 prefix = @prefix@
@@ -61,9 +62,9 @@ SRCS = addext.c argmatch.c backupfile.c basename.c error.c inp.c maketime.c \
 	partime.c patch.c pch.c quotearg.c quotesys.c \
 	util.c version.c xmalloc.c $(LIBSRCS)
 OBJS = addext.o argmatch.o backupfile.o basename.o error.o inp.o maketime.o \
-	partime.o patch.o pch.o quotearg.o quotesys.o \
+	partime.o patch.o pch.o quotearg$U.o quotesys.o \
 	util.o version.o xmalloc.o $(LIBOBJS)
-HDRS = argmatch.h backupfile.h common.h getopt.h \
+HDRS = argmatch.h backupfile.h common.h error.h getopt.h \
 	inp.h maketime.h partime.h pch.h quotearg.h quotesys.h \
 	util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
@@ -120,7 +121,7 @@ TAGS: $(HDRS) patchlevel.h $(SRCS)
 	etags $(HDRS) patchlevel.h $(SRCS)
 
 mostlyclean::
-	rm -f core* *core *.o
+	rm -f ansi2knr core* *core *.o *_.c
 
 clean:: mostlyclean
 	rm -f patch
@@ -146,6 +147,14 @@ dist:: $(DISTFILES) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	tar -chf - $(PV) | gzip -9 >$(PV).tar.gz
 	rm -rf $(PV)
 
+ansi2knr.o: config.h
+ansi2knr: ansi2knr.o
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) ansi2knr.o $(LIBS)
+quotearg_.c: ansi2knr
+.SUFFIXES: _.c
+.c_.c:
+	./ansi2knr $< $@
+
 $(OBJS): config.h
 addext.o: backupfile.h
 argmatch.o: argmatch.h quotearg.h
@@ -159,7 +168,7 @@ partime.o: partime.h
 patch.o: argmatch.h backupfile.h common.h getopt.h inp.h \
 	pch.h quotearg.h util.h version.h xalloc.h
 pch.o: common.h inp.h pch.h quotearg.h util.h
-quotearg.o: quotearg.h xalloc.h
+quotearg$U.o: quotearg.h xalloc.h
 quotesys.o: quotesys.h
 xmalloc.o: xalloc.h
 util.o: backupfile.h common.h maketime.h \
