@@ -3,7 +3,14 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
-Change in version 2.4:
+Changes since version 2.4:
+
+* Version control is now independent of whether backups are made.
+  The -V or --version-control option and the VERSION_CONTROL and
+  PATCH_VERSION_CONTROL environment variables no longer affect whether
+  backups are made; they affect only the names of the backup files.
+
+Changes in version 2.4:
 
 * New options:
   -Z or --set-utc sets times of patched files, assuming diff uses UTC (GMT).
