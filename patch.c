@@ -1,6 +1,6 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.26 1998/03/17 18:35:38 eggert Exp $ */
+/* $Id: patch.c,v 1.27 1998/03/20 22:42:54 eggert Exp $ */
 
 /*
 Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
@@ -137,7 +137,7 @@ char **argv;
     val = getenv ("QUOTING_STYLE");
     {
       int i = val ? argmatch (val, quoting_style_args) : -1;
-      set_quoting_style (&quotearg_quoting_options,
+      set_quoting_style ((struct quoting_options *) 0,
 			 i < 0 ? shell_quoting_style : (enum quoting_style) i);
     }
 
@@ -781,7 +781,7 @@ get_some_switches()
 		      invalid_arg ("quoting style", optarg, i);
 		      usage (stderr, 2);
 		    }
-		  set_quoting_style (&quotearg_quoting_options,
+		  set_quoting_style ((struct quoting_options *) 0,
 				     (enum quoting_style) i);
 		}
 		break;
