@@ -31,6 +31,9 @@
 /* Define if on MINIX.  */
 /* #undef _MINIX */
 
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* #undef mode_t */
+
 /* Define to `long' if <sys/types.h> doesn't define.  */
 /* #undef off_t */
 
