@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.27 1999/08/30 06:20:08 eggert Exp $ */
+/* $Id: util.c,v 1.28 1999/09/03 08:35:57 eggert Exp $ */
 
 /* Copyright 1986 Larry Wall
    Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -43,7 +43,7 @@
 # define raise(sig) kill (getpid (), sig)
 #endif
 
-#ifdef __STDC__
+#if defined PROTOTYPES || (defined __STDC__ && __STDC__)
 # include <stdarg.h>
 # define vararg_start va_start
 #else
