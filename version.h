@@ -1,15 +1,5 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/version.h,v 1.2 1993/07/22 19:24:01 djm Exp $
- *
- * $Log: version.h,v $
- * Revision 1.2  1993/07/22 19:24:01  djm
- * entered into RCS
- *
- * Revision 1.2  1993/07/22 19:24:01  djm
- * entered into RCS
- *
- * Revision 2.0  86/09/17  15:40:14  lwall
- * Baseline for netwide release.
- * 
- */
+/* Print the version number.  */
 
-void version PARAMS((void));
+/* $Id: version.h,v 1.3 1997/04/07 01:07:00 eggert Exp $ */
+
+void version PARAMS ((void));
