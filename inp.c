@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.18 1997/07/21 17:59:46 eggert Exp $ */
+/* $Id: inp.c,v 1.19 1997/09/03 17:15:05 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -58,14 +58,21 @@ void
 re_input()
 {
     if (using_plan_a) {
-	free (i_buffer);
-	free (i_ptr);
+      if (i_buffer)
+	{
+	  free (i_buffer);
+	  i_buffer = 0;
+	  free (i_ptr);
+	}
     }
     else {
 	close (tifd);
 	tifd = -1;
-	free(tibuf[0]);
-	tibuf[0] = 0;
+	if (tibuf[0])
+	  {
+	    free (tibuf[0]);
+	    tibuf[0] = 0;
+	  }
 	tiline[0] = tiline[1] = -1;
 	tireclen = 0;
     }
