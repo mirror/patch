@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.13 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: pch.c,v 1.14 1997/05/21 18:29:20 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -667,6 +667,9 @@ another_hunk (difftype, rev)
 					/* file pos of first repl line */
 	LINENUM repl_patch_line;	/* input line number for same */
 	LINENUM repl_context;		/* context for same */
+	LINENUM ptrn_prefix_context = -1; /* lines in pattern prefix context */
+	LINENUM ptrn_suffix_context = -1; /* lines in pattern suffix context */
+	LINENUM repl_prefix_context = -1; /* lines in replac. prefix context */
 	register LINENUM ptrn_copiable = 0;
 					/* # of copiable lines in ptrn */
 
@@ -680,7 +683,6 @@ another_hunk (difftype, rev)
 	    next_intuit_at(line_beginning,p_input_line);
 	    return chars_read == (size_t) -1 ? -1 : 0;
 	}
-	p_prefix_context = -1;
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
 	    chars_read = get_line ();
@@ -760,85 +762,86 @@ another_hunk (difftype, rev)
 		p_max = hunkmax;
 		break;
 	    case '-':
-		if (buf[1] == '-') {
-		    if (p_prefix_context == -1)
-		      p_prefix_context = context;
-		    if (repl_beginning ||
-			(p_end != p_ptrn_lines + 1 + (p_Char[p_end-1] == '\n')))
-		    {
-			if (p_end == 1) {
-			    /* `old' lines were omitted - set up to fill */
-			    /* them in from 'new' context lines. */
-			    p_end = p_ptrn_lines + 1;
-			    fillsrc = p_end + 1;
-			    filldst = 1;
-			    fillcnt = p_ptrn_lines;
-			}
-			else {
-			    if (repl_beginning) {
-				if (repl_could_be_missing){
-				    repl_missing = TRUE;
-				    goto hunk_done;
-				}
-				fatal (
-"duplicate `---' at line %ld -- check line numbers at line %ld",
-				    p_input_line, p_hunk_beg + repl_beginning);
-			    }
-			    else {
-				fatal (
-"%s `---' at line %ld -- check line numbers at line %ld",
-				    (p_end <= p_ptrn_lines
-					? "Premature"
-					: "Overdue" ),
-				    p_input_line, p_hunk_beg);
-			    }
-			}
-		    }
-		    repl_beginning = p_end;
-		    repl_backtrack_position = file_tell (pfp);
-		    repl_patch_line = p_input_line;
-		    repl_context = context;
-		    p_len[p_end] = strlen (buf);
-		    if (! (p_line[p_end] = savestr (buf))) {
-			p_end--;
-			return -1;
-		    }
-		    p_Char[p_end] = '=';
-		    for (s = buf;  *s && !ISDIGIT (*s);  s++)
-		      continue;
-		    if (!*s)
-			malformed ();
-		    p_newfirst = (LINENUM) atol(s);
-		    while (ISDIGIT (*s))
-		      s++;
-		    if (*s == ',') {
-			do
-			  {
-			    if (!*++s)
-			      malformed ();
-			  }
-			while (!ISDIGIT (*s));
-			p_repl_lines = ((LINENUM)atol(s)) - p_newfirst + 1;
-		    }
-		    else if (p_newfirst)
-			p_repl_lines = 1;
-		    else {
-			p_repl_lines = 0;
-			p_newfirst = 1;
-		    }
-		    p_max = p_repl_lines + p_end;
-		    while (p_max >= hunkmax)
-			if (! grow_hunkmax ())
-			    return -1;
-		    if (p_repl_lines != ptrn_copiable
-			&& (p_prefix_context != 0
-			    || context != 0
-			    || p_repl_lines != 1))
-			repl_could_be_missing = FALSE;
-		    context = 0;
-		    break;
-		}
-		goto change_line;
+		if (buf[1] != '-')
+		  goto change_line;
+		if (ptrn_prefix_context == -1)
+		  ptrn_prefix_context = context;
+		ptrn_suffix_context = context;
+		if (repl_beginning
+		    || (p_end
+			!= p_ptrn_lines + 1 + (p_Char[p_end - 1] == '\n')))
+		  {
+		    if (p_end == 1)
+		      {
+			/* `Old' lines were omitted.  Set up to fill
+			   them in from `new' context lines.  */
+			p_end = p_ptrn_lines + 1;
+			ptrn_prefix_context = ptrn_suffix_context = -1;
+			fillsrc = p_end + 1;
+			filldst = 1;
+			fillcnt = p_ptrn_lines;
+		      }
+		    else if (! repl_beginning)
+		      fatal ("%s `---' at line %ld; check line numbers at line %ld",
+			     (p_end <= p_ptrn_lines
+			      ? "Premature"
+			      : "Overdue"),
+			     p_input_line, p_hunk_beg);
+		    else if (! repl_could_be_missing)
+		      fatal ("duplicate `---' at line %ld; check line numbers at line %ld",
+			     p_input_line, p_hunk_beg + repl_beginning);
+		    else
+		      {
+			repl_missing = TRUE;
+			goto hunk_done;
+		      }
+		  }
+		repl_beginning = p_end;
+		repl_backtrack_position = file_tell (pfp);
+		repl_patch_line = p_input_line;
+		repl_context = context;
+		p_len[p_end] = strlen (buf);
+		if (! (p_line[p_end] = savestr (buf)))
+		  {
+		    p_end--;
+		    return -1;
+		  }
+		p_Char[p_end] = '=';
+		for (s = buf;  *s && ! ISDIGIT (*s);  s++)
+		  continue;
+		if (!*s)
+		  malformed ();
+		p_newfirst = (LINENUM) atol (s);
+		while (ISDIGIT (*s))
+		  s++;
+		if (*s == ',')
+		  {
+		    do
+		      {
+			if (!*++s)
+			  malformed ();
+		      }
+		    while (! ISDIGIT (*s));
+		    p_repl_lines = (LINENUM) atol (s) - p_newfirst + 1;
+		  }
+		else if (p_newfirst)
+		  p_repl_lines = 1;
+		else
+		  {
+		    p_repl_lines = 0;
+		    p_newfirst = 1;
+		  }
+		p_max = p_repl_lines + p_end;
+		while (p_max >= hunkmax)
+		  if (! grow_hunkmax ())
+		    return -1;
+		if (p_repl_lines != ptrn_copiable
+		    && (p_prefix_context != 0
+			|| context != 0
+			|| p_repl_lines != 1))
+		  repl_could_be_missing = FALSE;
+		context = 0;
+		break;
 	    case '+':  case '!':
 		repl_could_be_missing = FALSE;
 	      change_line:
@@ -855,8 +858,16 @@ another_hunk (difftype, rev)
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
-		if (p_prefix_context == -1)
-		  p_prefix_context = context;
+		if (! repl_beginning)
+		  {
+		    if (ptrn_prefix_context == -1)
+		      ptrn_prefix_context = context;
+		  }
+		else
+		  {
+		    if (repl_prefix_context == -1)
+		      repl_prefix_context = context;
+		  }
 		chars_read -=
 		  (1 < chars_read
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
@@ -972,7 +983,14 @@ another_hunk (difftype, rev)
 	    p_ptrn_lines = 0;
 	}
 
-	p_suffix_context = context;
+	p_prefix_context = ((repl_prefix_context == -1
+			     || (ptrn_prefix_context != -1
+				 && ptrn_prefix_context < repl_prefix_context))
+			    ? ptrn_prefix_context : repl_prefix_context);
+	p_suffix_context = ((ptrn_suffix_context != -1
+			     && ptrn_suffix_context < context)
+			    ? ptrn_suffix_context : context);
+	assert (p_prefix_context != -1 && p_suffix_context != -1);
 
 	if (difftype == CONTEXT_DIFF
 	    && (fillcnt
@@ -1169,6 +1187,8 @@ another_hunk (difftype, rev)
 		context = 0;
 	    }
 	}/* while */
+	if (p_prefix_context == -1)
+	  malformed ();
 	p_suffix_context = context;
     }
     else {				/* normal diff--fake it up */
