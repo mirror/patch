@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.28 1999/09/03 08:35:57 eggert Exp $ */
+/* $Id: util.c,v 1.29 1999/10/13 06:20:29 eggert Exp $ */
 
 /* Copyright 1986 Larry Wall
    Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
