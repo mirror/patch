@@ -12,11 +12,9 @@ AC_DEFUN(PATCH_FUNC_MKDIR_TAKES_ONE_ARG,
         AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 	  ],
 	  [mkdir (".", 0);],
+	  ,
 	  AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/stat.h>
