@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.8 1997/04/07 04:33:52 eggert Exp $ */
+/* $Id: util.c,v 1.9 1997/04/14 05:32:30 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -519,6 +519,61 @@ mkdir (path, mode)
 }
 #endif
 
+/* Replace '/' with '\0' in FILENAME if it marks a place that
+   needs testing for the existence of directory.  Return the address
+   of the last location replaced, or FILENAME if none were replaced.  */
+static char *replace_slashes PARAMS ((char *));
+static char *
+replace_slashes (filename)
+     char *filename;
+{
+  char *f;
+  for (f = filename;  *f == '/';  f++)
+    continue;
+  for (; *f; f++)
+    if (*f == '/')
+      {
+	*f = '\0';
+	while (f[1] == '/')
+	  f++;
+      }
+  while (filename != f && *--f)
+    continue;
+  return f;
+}
+
+/* Count the number of path name components in the existing leading prefix
+   of `filename'.  Do not count the last element, or the root dir.  */
+int
+countdirs (filename)
+     char *filename;
+{
+  int count = 0;
+
+  if (*filename)
+    {
+      register char *f;
+      register char *flim = replace_slashes (filename);
+
+      /* Now turn the '\0's back to '/'s, calling stat as we go.  */
+      for (f = filename;  f <= flim;  f++)
+	if (!*f)
+	  {
+	    struct stat sbuf;
+	    if (stat (filename, &sbuf) != 0)
+	      break;
+	    count++;
+	    *f = '/';
+	  }
+
+      for (;  f <= flim;  f++)
+	if (!*f)
+	  *f = '/';
+    }
+
+  return count;
+}
+
 /* Make sure we'll have the directories to create a file.
    Ignore the last element of `filename'.  */
 
@@ -526,45 +581,39 @@ void
 makedirs (filename)
      register char *filename;
 {
-  register char *f;
-  register char *flim;
-  register bool skip_mkdir;
-  struct stat sbuf;
+  if (*filename)
+    {
+      register char *f;
+      register char *flim = replace_slashes (filename);
 
-  /* Replace '/'s with NULs in filename.  */
-  for (f = filename;  *f;  f++)
-    if (*f == '/')
-      *f = 0;
-  while (filename != f && *--f)
-    continue;
-  flim = f;
-  f = filename;
+      /* Now turn the NULs back to '/'s; stop when the path doesn't exist.  */
+      errno = 0;
+      for (f = filename;  f <= flim;  f++)
+	if (!*f)
+	  {
+	    struct stat sbuf;
+	    if (stat (filename, &sbuf) != 0)
+	      break;
+	    *f = '/';
+	  }
 
-  /* Now turn the NULs back to '/'s; stop when the path doesn't exist.  */
-  if (!*f || stat (f, &sbuf) == 0)
-    for (;  f < flim;  f++)
-      if (!*f)
-	{
+      /* Create the missing directories, replacing NULs by '/'s.  */
+      if (errno == ENOENT)
+	for (;  f <= flim;  f++)
+	  if (!*f)
+	    {
+	      if (mkdir (filename,
+			 S_IRUSR|S_IWUSR|S_IXUSR
+			 |S_IRGRP|S_IWGRP|S_IXGRP
+			 |S_IROTH|S_IWOTH|S_IXOTH) != 0)
+		break;
+	      *f = '/';
+	    }
+
+      for (;  f <= flim;  f++)
+	if (!*f)
 	  *f = '/';
-	  if (stat (filename, &sbuf) != 0)
-	    break;
-	}
-
-  skip_mkdir = f == flim || errno != ENOENT;
-
-  /* Create the missing directories, replacing NULs by '/'s.  */
-  for (;  f <= flim;  f++)
-    if (!*f)
-      {
-	if (!skip_mkdir
-	    && (f == filename || f[-1] != '/')
-	    && mkdir (filename,
-		      S_IRUSR|S_IWUSR|S_IXUSR
-		      |S_IRGRP|S_IWGRP|S_IXGRP
-		      |S_IROTH|S_IWOTH|S_IXOTH) != 0)
-	  skip_mkdir = TRUE;
-	*f = '/';
-      }
+    }
 }
 
 /* Make filenames more reasonable. */
