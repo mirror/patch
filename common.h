@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
+/* $Id: common.h,v 1.11 1997/05/05 07:31:21 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -137,6 +137,7 @@ XTERN int inerrno;
 XTERN struct stat instat;
 XTERN bool ok_to_create_file;
 XTERN bool dry_run;
+XTERN bool posixly_correct;
 
 XTERN char const *origprae;
 XTERN char const *origbase;
