@@ -38,7 +38,9 @@ extern char *simple_backup_suffix;
 #ifdef __STDC__
 char *find_backup_file_name (char *file);
 enum backup_type get_version (char *version);
+void addext (char *, char *, int);
 #else
 char *find_backup_file_name ();
 enum backup_type get_version ();
+void addext ();
 #endif
