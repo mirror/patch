@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.16 1997/05/30 08:03:48 eggert Exp $
+.Id $Id: patch.man,v 1.17 1997/06/09 05:36:28 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -309,19 +309,25 @@ Note that a larger fuzz factor increases the odds of a faulty patch.
 The default fuzz factor is 2, and it may not be set to more than
 the number of lines of context in the context diff, ordinarily 3.
 .TP
-\fB\-g\fP  or  \fB\*=get\fP
-If a file does not exist or is read-only and matches the default version,
-get it from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
-similarly for \s-1SCCS\s0.
-If the
+\fB\-g\fP \fInumber\fP  or  \fB\*=get=\fP\fInumber\fP
+This option controls
+.BR patch 's
+actions when a file is under \s-1RCS\s0 or \s-1SCCS\s0 control,
+and does not exist or is read-only and matches the default version.
+If
+.I number
+is positive,
+.B patch
+gets (or checks out) the file from the revision control system; if zero,
+.B patch
+does not get the file; and if negative,
+.B patch
+asks the user whether to get the file.
+The default value of this option is given by the value of the
 .B PATCH_GET
-environment variable is set, this is the default.
-.TP
-\fB\-G\fP  or  \fB\*=no\-get\fP
-Do not get files from \s-1RCS\s0 or \s-2SCCS\s0.
-This is the default unless the
-.B PATCH_GET
-environment variable is set.
+environment variable if it is set; if not, the default value is zero if 
+.B POSIXLY_CORRECT
+is set, negative otherwise.
 .TP
 .B "\*=help"
 Print a summary of options and exit.
@@ -449,6 +455,19 @@ line
 in the patch; and assume that patches are reversed if they look like
 they are.
 .TP
+\fB\-T\fP  or  \fB\*=set\-time\fP
+Set the modification and access times of patched files from timestamps
+given in context diff headers, assuming that the context diff headers
+use local time.  This option is not recommended, because patches using
+local time cannot easily be used by people in other time zones, and
+because local timestamps are ambiguous when local clocks move backwards
+during daylight-saving time adjustments.  Instead of using this option,
+generate patches with \s-1UTC\s0 and use the
+.B \-Z
+or
+.B \*=set\-utc
+option instead.
+.TP
 \fB\-u\fP  or  \fB\*=unified\fP
 Interpret the patch file as a unified context diff.
 .TP
@@ -551,14 +570,61 @@ as the simple backup suffix.
 The backup extension may also be specified by the
 .B SIMPLE_BACKUP_SUFFIX
 environment variable, which is overridden by this option.
+.TP
+\fB\-Z\fP  or  \fB\*=set\-utc\fP
+Set the modification and access times of patched files from timestamps
+given in context diff headers, assuming that the context diff headers
+use Coordinated Universal Time (\s-1UTC\s0, often known as \s-1GMT\s0).
+Also see the
+.B \-T
+or
+.B \*=set\-time
+option.
+.Sp
+The
+.B \-Z
+or
+.B \*=set\-utc
+and
+.B \-T
+or
+.B \*=set\-time
+options normally refrain from setting a file's time if its time
+does not match the time given in the patch header, or if its
+contents do not match the patch exactly.  However, if the
+.B \-f
+or
+.B \*=force
+option is given, the file time is set regardless.
+.Sp
+Due to the limitations of
+.B diff
+output format, these options cannot update the times of files whose
+contents have not changed.  Also, if you use these options, you should remove
+(e.g. with
+.BR "make\ clean" )
+all files that depend on the patched files, so that later invocations of
+.B make
+do not get confused by the patched files' times.
 .SH ENVIRONMENT
 .TP 3
+\fBPATCH_GET\fP
+This specifies whether
+.B patch
+gets missing or read-only files from \s-1RCS\s0 or \s-1SCCS\s0
+by default; see the
+.B \-g
+or
+.B \*=get
+option.
+.TP
 .B POSIXLY_CORRECT
 If set,
 .B patch
 conforms more strictly to the \s-1POSIX\s0 standard:
 it takes the first existing file when intuiting file names from diff headers,
 it does not remove files that are empty after patching,
+it does not ask whether to get files from \s-1RCS\s0 or \s-1SCCS\s0,
 and it requires that all options precede the
 files in the command line.
 .TP
@@ -575,26 +641,12 @@ it is normally
 .B /tmp
 on Unix hosts.
 .TP
-\fBPATCH_VERSION_CONTROL\fP or \fBVERSION_CONTROL\fP
+\fBVERSION_CONTROL\fP or \fBPATCH_VERSION_CONTROL\fP
 Selects version control style; see the
 .B \-v
 or
 .B \*=version\-control
 option.
-.TP
-\fBPATCH_GET\fP
-If set,
-.B patch
-gets missing or read-only files from \s-1RCS\s0 or \s-1SCCS\s0
-by default; see the
-.B \-g
-or
-.B \*= get
-and the
-.B \-G
-or
-.B \*= no\-get
-options.
 .SH FILES
 .TP 3
 .IB $TMPDIR "/p\(**"
@@ -622,9 +674,17 @@ The names
 and
 .I new
 should not contain any slashes.
-Here is an example:
+The
+.B diff
+command's time stamps should be in \s-1UTC\s0,
+so that patch recipients can use the
+.B \-Z
+or
+.B \*=set\-utc
+option.
+Here is an example, using Bourne shell syntax:
 .Sp
-	\fBdiff \-Naur version\-2.2 version\-2.3\fP
+	\fBTZ=UTC0 diff \-Naur version\-2.2 version\-2.3\fP
 .PP
 Tell your recipients how to apply the patch
 by telling them which directory to
@@ -723,49 +783,14 @@ where there is a line
 in your makefile), since the recipient should be
 able to regenerate the derived files anyway.
 If you must send diffs of derived files,
-ensure that the diffs for each derived file
-follow the diffs for the files that it depends on,
-so that the dependencies will be preserved as
-.B patch
-updates the files one by one.
-Here is a sample shell script that output patches in an order that
-should preserve dependencies:
-.nf
-.Sp
-.ft B
-.in +3n
-#! /bin/sh
-.Sp
-.ne 2
-old=${1?}
-new=${2?}
-.Sp
-.ne 10
-fs=
-for f in `
-  diff \-Nqr $old $new |
-  sed \-e "s,.\(** $new/,," \-e 's, differ$,,'`
-do
-  if [ \-f $new/$f ]
-  then fs="$fs $f"
-  else diff \-au $old/$f /dev/null
-  fi
-done
-.Sp
-.ne 10
-case $fs in
-?\(**)
-  for f in `cd $new; ls \-rt $fs`
-  do
-    if [ \-f $old/$f ]
-    then diff \-au $old/$f $new/$f
-    else diff \-au /dev/null $new/$f
-    fi
-  done
-esac
-.in
-.ft
-.fi
+generate the diffs using \s-1UTC\s0
+have the recipients apply the patch with the
+.B \-Z
+or
+.B \*=set\-utc
+option, and have them remove any unpatched files that depend on patched files
+(e.g. with
+.BR "make\ clean" ).
 .PP
 While you may be able to get away with putting 582 diff listings into
 one file, it may be wiser to group related patches into separate files in
