@@ -1,5 +1,5 @@
 char rcsid[] =
-	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.2 1993/06/25 14:27:00 eggert Exp $";
+	"$Header: /home/agruen/git/patch-h/cvsroot/patch/patch.c,v 1.3 1993/07/07 17:20:58 djm Exp $";
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,11 +9,11 @@ char rcsid[] =
  * money off of it, or pretend that you wrote it.
  *
  * $Log: patch.c,v $
- * Revision 1.2  1993/06/25 14:27:00  eggert
- * Formerly patch.c.~14~
+ * Revision 1.3  1993/07/07 17:20:58  djm
+ * Formerly patch.c.~15~
  *
- * Revision 1.2  1993/06/25 14:27:00  eggert
- * Formerly patch.c.~14~
+ * Revision 1.3  1993/07/07 17:20:58  djm
+ * Formerly patch.c.~15~
  *
  * Revision 2.0.2.0  90/05/01  22:17:50  davison
  * patch12u: unidiff support added
@@ -438,32 +438,56 @@ reinitialize_almost_everything()
 static char *shortopts = "-b:B:cd:D:eEfF:lnNo:p::r:RsStuvV:x:";
 static struct option longopts[] =
 {
-  {"suffix", 1, NULL, 'b'},
-  {"prefix", 1, NULL, 'B'},
-  {"context", 0, NULL, 'c'},
-  {"directory", 1, NULL, 'd'},
-  {"ifdef", 1, NULL, 'D'},
-  {"ed", 0, NULL, 'e'},
-  {"remove-empty-files", 0, NULL, 'E'},
-  {"force", 0, NULL, 'f'},
-  {"fuzz", 1, NULL, 'F'},
-  {"ignore-whitespace", 0, NULL, 'l'},
-  {"normal", 0, NULL, 'n'},
-  {"forward", 0, NULL, 'N'},
-  {"output", 1, NULL, 'o'},
-  {"strip", 2, NULL, 'p'},
-  {"reject-file", 1, NULL, 'r'},
-  {"reverse", 0, NULL, 'R'},
-  {"quiet", 0, NULL, 's'},
-  {"silent", 0, NULL, 's'},
-  {"skip", 0, NULL, 'S'},
-  {"batch", 0, NULL, 't'},
-  {"unified", 0, NULL, 'u'},
-  {"version", 0, NULL, 'v'},
-  {"version-control", 1, NULL, 'V'},
-  {"debug", 1, NULL, 'x'},
-  {0, 0, 0, 0}
+  {"suffix", required_argument, NULL, 'b'},
+  {"prefix", required_argument, NULL, 'B'},
+  {"context", no_argument, NULL, 'c'},
+  {"directory", required_argument, NULL, 'd'},
+  {"ifdef", required_argument, NULL, 'D'},
+  {"ed", no_argument, NULL, 'e'},
+  {"remove-empty-files", no_argument, NULL, 'E'},
+  {"force", no_argument, NULL, 'f'},
+  {"fuzz", required_argument, NULL, 'F'},
+  {"help", no_argument, NULL, 'h'},
+  {"ignore-whitespace", no_argument, NULL, 'l'},
+  {"normal", no_argument, NULL, 'n'},
+  {"forward", no_argument, NULL, 'N'},
+  {"output", required_argument, NULL, 'o'},
+  {"strip", optional_argument, NULL, 'p'},
+  {"reject-file", required_argument, NULL, 'r'},
+  {"reverse", no_argument, NULL, 'R'},
+  {"quiet", no_argument, NULL, 's'},
+  {"silent", no_argument, NULL, 's'},
+  {"skip", no_argument, NULL, 'S'},
+  {"batch", no_argument, NULL, 't'},
+  {"unified", no_argument, NULL, 'u'},
+  {"version", no_argument, NULL, 'v'},
+  {"version-control", required_argument, NULL, 'V'},
+  {"debug", required_argument, NULL, 'x'},
+  {NULL, no_argument, NULL, 0}
 };
+
+void
+usage (stream, status)
+     FILE *stream;
+     int status;
+{
+  fprintf(stream, "\
+Usage: %s [options] [origfile [patchfile]] [+ [options] [origfile]]...\n",
+	  Argv[0]);
+  fprintf(stream, "\
+Options:\n\
+       [-ceEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
+       [-D symbol] [-F max-fuzz] [-o out-file] [-p[strip-count]]\n\
+       [-r rej-name] [-V {numbered,existing,simple}] [--context]\n\
+       [--prefix=backup-prefix] [--suffix=backup-ext] [--ifdef=symbol]\n\
+       [--directory=directory] [--ed] [--fuzz=max-fuzz] [--force] [--batch]\n\
+       [--ignore-whitespace] [--forward] [--reverse] [--output=out-file]\n");
+  fprintf(stream, "\
+       [--strip[=strip-count]] [--normal] [--reject-file=rej-name] [--skip]\n\
+       [--remove-empty-files] [--quiet] [--silent] [--unified] [--version]\n\
+       [--version-control={numbered,existing,simple}] [--help]\n");
+  my_exit(status);
+}
 
 /* Process switches and filenames up to next '+' or end of list. */
 
@@ -520,6 +544,8 @@ get_some_switches()
 	    case 'F':
 		maxfuzz = atoi(optarg);
 		break;
+	    case 'h':
+		usage (stdout, 0);
 	    case 'l':
 		canonicalize = TRUE;
 		break;
@@ -571,22 +597,7 @@ get_some_switches()
 		break;
 #endif
 	    default:
-		fprintf(stderr, "\
-Usage: %s [options] [origfile [patchfile]] [+ [options] [origfile]]...\n",
-			Argv[0]);
-		fprintf(stderr, "\
-Options:\n\
-       [-ceEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
-       [-D symbol] [-F max-fuzz] [-o out-file] [-p[strip-count]]\n\
-       [-r rej-name] [-V {numbered,existing,simple}] [--context]\n\
-       [--prefix=backup-prefix] [--suffix=backup-ext] [--ifdef=symbol]\n\
-       [--directory=directory] [--ed] [--fuzz=max-fuzz] [--force] [--batch]\n\
-       [--ignore-whitespace] [--forward] [--reverse] [--output=out-file]\n");
-		fprintf(stderr, "\
-       [--strip[=strip-count]] [--normal] [--reject-file=rej-name] [--skip]\n\
-       [--remove-empty-files] [--quiet] [--silent] [--unified] [--version]\n\
-       [--version-control={numbered,existing,simple}]\n");
-		my_exit(1);
+		usage (stderr, 1);
 	    }
 	}
     }
