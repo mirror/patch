@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.24 1999/09/03 08:35:57 eggert Exp $ */
+/* $Id: common.h,v 1.25 1999/09/28 19:14:56 eggert Exp $ */
 
 /* Copyright 1986, 1988 Larry Wall
    Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
@@ -292,6 +292,13 @@ GENERIC_OBJECT *realloc ();
   typedef long file_offset;
 # define file_seek fseek
 # define file_tell ftell
+#endif
+#if ! (HAVE_GETEUID || defined geteuid)
+# if ! (HAVE_GETUID || defined getuid)
+#  define geteuid() (-1)
+# else
+#  define geteuid() getuid ()
+# endif
 #endif
 
 #if HAVE_FCNTL_H
