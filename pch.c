@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.20 1997/06/04 18:32:14 eggert Exp $ */
+/* $Id: pch.c,v 1.21 1997/06/09 05:36:28 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -229,7 +229,7 @@ there_is_another_patch()
 	    return TRUE;
 	}
 	ask ("File to patch: ");
-	inname = fetchname (buf, 0, (int *) 0);
+	inname = fetchname (buf, 0, (time_t *) 0);
 	if (inname)
 	  {
 	    if (stat (inname, &instat) == 0)
@@ -275,10 +275,9 @@ intuit_diff_type()
     struct stat st[3];
     int stat_errno[3];
     register enum diff retval;
-    int head_says_nonexistent[2];
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
-    head_says_nonexistent[OLD] = head_says_nonexistent[NEW] = 0;
+    timestamp[OLD] = timestamp[NEW] = (time_t) -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
@@ -319,14 +318,14 @@ intuit_diff_type()
 	    p_indent = indent;		/* assume this for now */
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
+	    name[OLD] = fetchname (s+4, strippath, &timestamp[OLD]);
 	else if (strnEQ(s, "--- ", 4))
-	    name[NEW] = fetchname (s+4, strippath, &head_says_nonexistent[NEW]);
+	    name[NEW] = fetchname (s+4, strippath, &timestamp[NEW]);
 	else if (strnEQ(s, "+++ ", 4))
 	    /* Swap with NEW below.  */
-	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
+	    name[OLD] = fetchname (s+4, strippath, &timestamp[OLD]);
 	else if (strnEQ(s, "Index:", 6))
-	    name[INDEX] = fetchname (s+6, strippath, (int *) 0);
+	    name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
 	else if (strnEQ(s, "Prereq:", 7)) {
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
 	      continue;
@@ -353,26 +352,30 @@ intuit_diff_type()
 	}
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
-	    s += 4;
-	    /* `name' and `head_says_nonexistent' are backwards.
-	       Swap the former, and interpret the latter backwards.  */
+
+	    /* `name' and `timestamp' are backwards; swap them.  */
+	    time_t ti = timestamp[OLD];
+	    timestamp[OLD] = timestamp[NEW];
+	    timestamp[NEW] = ti;
 	    t = name[OLD];
 	    name[OLD] = name[NEW];
 	    name[NEW] = t;
+
+	    s += 4;
 	    if (! atol (s))
-	      p_says_nonexistent[OLD] = head_says_nonexistent[NEW] + 1;
+	      p_says_nonexistent[OLD] = 1 + ! timestamp[OLD];
 	    while (*s != ' ' && *s != '\n')
 	      s++;
 	    while (*s == ' ')
 	      s++;
 	    if (! atol (s))
-	      p_says_nonexistent[NEW] = head_says_nonexistent[OLD] + 1;
+	      p_says_nonexistent[NEW] = 1 + ! timestamp[NEW];
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    if (! ((name[OLD] || head_says_nonexistent[OLD])
-		   && (name[NEW] || head_says_nonexistent[NEW])))
+	    if (! ((name[OLD] || ! timestamp[OLD])
+		   && (name[NEW] || ! timestamp[NEW])))
 	      fatal ("missing header for unified diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
@@ -384,7 +387,7 @@ intuit_diff_type()
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
 	    s += 4;
 	    if (! atol (s))
-	      p_says_nonexistent[OLD] = head_says_nonexistent[OLD] + 1;
+	      p_says_nonexistent[OLD] = 1 + ! timestamp[OLD];
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -403,12 +406,12 @@ intuit_diff_type()
 	      p_input_line -= 2;
 	      if (another_hunk (retval, 0)
 		  && ! p_repl_lines && p_newfirst == 1)
-		p_says_nonexistent[NEW] = head_says_nonexistent[NEW] + 1;
+		p_says_nonexistent[NEW] = 1 + ! timestamp[NEW];
 	      next_intuit_at (saved_p_base, saved_p_bline);
 	    }
 
-	    if (! ((name[OLD] || head_says_nonexistent[OLD])
-		   && (name[NEW] || head_says_nonexistent[NEW])))
+	    if (! ((name[OLD] || ! timestamp[OLD])
+		   && (name[NEW] || ! timestamp[NEW])))
 	      fatal ("missing header for context diff at line %ld of patch",
 		     p_sline);
 	    goto scan_exit;
