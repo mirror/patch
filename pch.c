@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.12 1997/05/15 18:58:04 eggert Exp $ */
+/* $Id: pch.c,v 1.13 1997/05/19 06:52:03 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -50,7 +50,7 @@ static LINENUM p_input_line;		/* current line # from patch file */
 static char **p_line;			/* the text of the hunk */
 static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
-static size_t hunkmax = INITHUNKMAX;	/* size of above arrays */
+static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
 static file_offset p_base;		/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
@@ -69,6 +69,7 @@ static size_t pget_line PARAMS ((int));
 static size_t get_line PARAMS ((void));
 static bool incomplete_line PARAMS ((void));
 static bool grow_hunkmax PARAMS ((void));
+static void malformed PARAMS ((void));
 static void next_intuit_at PARAMS ((file_offset, LINENUM));
 static void skip_to PARAMS ((file_offset, LINENUM));
 
@@ -185,6 +186,8 @@ there_is_another_patch()
 	       : "  I can't seem to find a patch in there anywhere.\n");
 	return FALSE;
     }
+    if (skip_rest_of_patch)
+	return TRUE;
     if (verbosity == VERBOSE)
 	say ("  %sooks like %s to me...\n",
 	    (p_base == 0 ? "L" : "The next patch l"),
@@ -372,7 +375,8 @@ intuit_diff_type()
 		LINENUM saved_p_bline = p_bline;
 		p_input_line = p_sline;
 		Fseek (pfp, previous_line, SEEK_SET);
-		if (another_hunk (retval) && ! p_ptrn_lines && p_first == 1)
+		if (another_hunk (retval, 0)
+		    && ! p_repl_lines && p_newfirst == 1)
 		  p_says_nonexistent[NEW] = 1;
 		next_intuit_at (saved_p_base, saved_p_bline);
 	      }
@@ -434,10 +438,23 @@ intuit_diff_type()
 	      i0 = i;
 	    }
 
-	if (i == NONE)
+	if (! posixly_correct)
 	  {
 	    i = best_name (name, stat_errno);
-	    if (i == NONE && !posixly_correct && p_says_nonexistent[reverse])
+
+	    if (p_says_nonexistent[reverse ^ (i == NONE)])
+	      {
+		assert (i0 != NONE);
+		if (ok_to_reverse
+		    ("The next patch%s would %s the file `%s',\nwhich %s!",
+		     reverse ? ", when reversed," : "",
+		     i == NONE ? "delete" : "create",
+		     name[i == NONE ? i0 : i],
+		     i == NONE ? "does not exist" : "already exists"))
+		  reverse ^= 1;
+	      }
+
+	    if (i == NONE && p_says_nonexistent[reverse])
 	      {
 		int newdirs[3];
 		int newdirs_min = INT_MAX;
@@ -456,7 +473,7 @@ intuit_diff_type()
 		  if (name[i])
 		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
 
-	        i = best_name (name, distance_from_minimum);
+		i = best_name (name, distance_from_minimum);
 	      }
 	  }
       }
@@ -616,8 +633,9 @@ malformed ()
    0 if not; -1 if ran out of memory. */
 
 int
-another_hunk (difftype)
+another_hunk (difftype, rev)
      enum diff difftype;
+     int rev;
 {
     register char *s;
     register LINENUM context = 0;
@@ -1264,7 +1282,7 @@ another_hunk (difftype)
 	    p_Char[i] = '+';
 	}
     }
-    if (reverse)			/* backwards patch? */
+    if (rev)				/* backwards patch? */
 	if (!pch_swap())
 	    say ("Not enough memory to swap next hunk!\n");
     if (debug & 2) {
@@ -1615,7 +1633,8 @@ do_ed_script (ofp)
     register size_t chars_read;
 
     if (!skip_rest_of_patch) {
-	copy_file (inname, &instat, TMPOUTNAME);
+	assert (! inerrno);
+	copy_file (inname, TMPOUTNAME, instat.st_mode);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
 	pipefp = popen(buf, binary_transput ? "wb" : "w");
