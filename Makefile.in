@@ -68,7 +68,7 @@ HDRS = argmatch.h backupfile.h common.h error.h getopt.h \
 	inp.h maketime.h partime.h pch.h quotearg.h quotesys.h \
 	util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
-	acconfig.h aclocal.m4 config.hin configure configure.in \
+	acconfig.h aclocal.m4 ansi2knr.c config.hin configure configure.in \
 	install-sh mkinstalldirs patch.man
 DISTFILES = $(MISC) $(SRCS) $(HDRS)
 DISTFILES_PC = pc/chdirsaf.c
