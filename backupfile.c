@@ -98,8 +98,8 @@ enum backup_type backup_type = none;
    to numbered) backup file name. */
 char const *simple_backup_suffix = ".orig";
 
-static int max_backup_version __P ((char const *, char const *));
-static int version_number __P ((char const *, char const *, size_t));
+static int max_backup_version __BACKUPFILE_P ((char const *, char const *));
+static int version_number __BACKUPFILE_P ((char const *, char const *, size_t));
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.

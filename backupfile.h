@@ -36,15 +36,15 @@ enum backup_type
 extern enum backup_type backup_type;
 extern char const *simple_backup_suffix;
 
-#ifndef __P
+#ifndef __BACKUPFILE_P
 # if defined __STDC__ || __GNUC__
-#  define __P(args) args
+#  define __BACKUPFILE_P(args) args
 # else
-#  define __P(args) ()
+#  define __BACKUPFILE_P(args) ()
 # endif
 #endif
 
-char *base_name __P ((char const *));
-char *find_backup_file_name __P ((char const *));
-enum backup_type get_version __P ((char const *));
-void addext __P ((char *, char const *, int));
+char *base_name __BACKUPFILE_P ((char const *));
+char *find_backup_file_name __BACKUPFILE_P ((char const *));
+enum backup_type get_version __BACKUPFILE_P ((char const *));
+void addext __BACKUPFILE_P ((char *, char const *, int));
