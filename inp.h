@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.h,v 1.4 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: inp.h,v 1.5 1999/10/11 03:33:08 eggert Exp $ */
 
 XTERN LINENUM input_lines;		/* how long is input file in lines */
 
