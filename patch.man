@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.13 1997/05/19 06:52:03 eggert Exp $
+.Id $Id: patch.man,v 1.14 1997/05/21 18:29:20 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -184,7 +184,7 @@ option)
 is set to
 .BR existing ,
 .B patch
-attempts to check out and lock the file.
+attempts to get and lock the file.
 \s-1SCCS\s0 is treated in a similar way.
 .PP
 The upshot of all this is that you should be able to say, while in a news
@@ -303,6 +303,20 @@ Note that a larger fuzz factor increases the odds of a faulty patch.
 The default fuzz factor is 2, and it may not be set to more than
 the number of lines of context in the context diff, ordinarily 3.
 .TP
+\fB\-g\fP  or  \fB\*=get\fP
+If a file does not exist or is read-only and matches the default version,
+get it from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
+similarly for \s-1SCCS\s0.
+If the
+.B PATCH_GET
+environment variable is set, this is the default.
+.TP
+\fB\-G\fP  or  \fB\*=no\-get\fP
+Do not get files from \s-1RCS\s0 or \s-2SCCS\s0.
+This is the default unless the
+.B PATCH_GET
+environment variable is set.
+.TP
 .B "\*=help"
 Print a summary of options and exit.
 .TP
@@ -329,7 +343,7 @@ Interpret the patch file as a normal diff.
 \fB\-N\fP  or  \fB\*=forward\fP
 Ignore patches that seem to be reversed or already applied.
 See also
-.B \-R .
+.BR \-R .
 .TP
 \fB\-o\fP \fIfile\fP  or  \fB\*=output=\fP\fIfile\fP
 Send output to
@@ -462,9 +476,6 @@ accepted):
 \fBexisting\fP  or  \fBnil\fP
 Make numbered backups of files that already have them,
 otherwise simple backups.
-If a file does not exist or is read-only and matches the default version,
-check it out from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
-similarly for \s-1SCCS\s0.
 .TP
 \fBnone\fP
 Do not make backups.
@@ -568,6 +579,20 @@ Selects version control style; see the
 or
 .B \*=version\-control
 option.
+.TP
+\fPPATCH_GET\fP
+If set,
+.B patch
+gets missing or read-only files from \s-1RCS\s0 or \s-1SCCS\s0
+by default; see the
+.B \-g
+or
+.B \*= get
+and the
+.B \-G
+or
+.B \*= no\-get
+options.
 .SH FILES
 .IB $TMPDIR "/p\(**"
 .SH "SEE ALSO"
@@ -579,7 +604,7 @@ be sending out patches.
 .PP
 Create your patches systematically.
 A good method is the command
-.BI "diff\ \-raNU2\ " "old\ new"
+.BI "diff\ \-Naur\ " "old\ new"
 where
 .I old
 and
@@ -592,7 +617,7 @@ and
 should not contain any slashes.
 Here is an example:
 .Sp
-	\fBdiff \-raNU2 version\-2.2 version\-2.3\fP
+	\fBdiff \-Naur version\-2.2 version\-2.3\fP
 .PP
 Tell your recipients how to apply the patches
 by telling them which directory to
@@ -645,7 +670,7 @@ If the recipient is supposed to use the
 option, do not send output that looks like this:
 .Sp
 .ft B
-	diff \-raNU2 v2.0.29/prog/README prog/README
+	diff \-Naur v2.0.29/prog/README prog/README
 .br
 	\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
 .br
@@ -659,7 +684,7 @@ interpret the file names differently.
 To avoid confusion, send output that looks like this instead:
 .Sp
 .ft B
-	diff \-raNU2 v2.0.29/prog/README v2.0.30/prog/README
+	diff \-Naur v2.0.29/prog/README v2.0.30/prog/README
 .br
 	\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
 .br
