@@ -1,4 +1,4 @@
-Changes in version 2.5.8: bug fixes only.
+Changes in versions 2.5.8 and 2.5.9: bug fixes only.
 
 Changes in version 2.5.7:
 
@@ -216,8 +216,8 @@ Changes in version 2.0.12g8:
 
 
 
-Copyright (C) 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002 Free
-Software Foundation, Inc.
+Copyright (C) 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+Free Software Foundation, Inc.
 
 This file is part of GNU Patch.
 
