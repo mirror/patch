@@ -39,7 +39,7 @@ extern char const *const quoting_style_args[];
 struct quoting_options;
 
 #ifndef PARAMS
-# if defined PROTOTYPES || (defined __STDC__ && __STDC__)
+# if defined PROTOTYPES || defined __STDC__
 #  define PARAMS(Args) Args
 # else
 #  define PARAMS(Args) ()
