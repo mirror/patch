@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.13 1997/05/21 18:29:20 eggert Exp $ */
+/* $Id: inp.c,v 1.14 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -85,13 +85,13 @@ re_input()
     }
 }
 
-/* Constuct the line index, somehow or other. */
+/* Construct the line index, somehow or other. */
 
 void
 scan_input(filename)
 char *filename;
 {
-    using_plan_a = plan_a (filename);
+    using_plan_a = ! (debug & 16) && plan_a (filename);
     if (!using_plan_a)
 	plan_b(filename);
     switch (verbosity)
