@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.6 1997/04/07 01:07:00 eggert Exp $ */
+/* $Id: pch.c,v 1.7 1997/04/14 05:32:30 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -232,6 +232,7 @@ intuit_diff_type()
     char *name[3];
     struct stat st[3];
     int stat_errno[3];
+    int dir_count[3];
     register enum diff retval;
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
@@ -375,7 +376,8 @@ intuit_diff_type()
        the name of the file to patch; except that if the patch syntactically
        can create a file, before asking the user for a file name
        redo the earlier steps in sequence, this time ignoring the
-       nonexistence of a file.  */
+       nonexistence of a file if the path length of the existing directory
+       in the file name is a maximum among all the candidate file names.  */
 
     for (i = OLD;  i <= INDEX;  i++)
       if (!inname && name[i])
@@ -389,10 +391,22 @@ intuit_diff_type()
 	    }
 	}
 
-    if (i == NONE && ok_to_create_file)
-      for (i = OLD;  i <= INDEX;  i++)
-	if (!inname && name[i])
-	  break;
+    if (i == NONE && !inname && ok_to_create_file)
+      {
+	int dir_count_max = 0;
+
+	for (i = OLD;  i <= INDEX;  i++)
+	  if (name[i])
+	    {
+	      dir_count[i] = countdirs (name[i]);
+	      if (dir_count_max < dir_count[i])
+		dir_count_max = dir_count[i];
+	    }
+
+	for (i = OLD;  i <= INDEX;  i++)
+	  if (name[i] && dir_count[i] == dir_count_max)
+	    break;
+      }
 
     if (i == NONE)
       inerrno = -1;
