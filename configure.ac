@@ -21,9 +21,9 @@ AC_INIT(patch, 2.5.6, bug-patch@gnu.org)
 AC_CONFIG_SRCDIR(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
-AC_CANONICAL_HOST
 
 AC_PROG_CC
+AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
@@ -57,10 +57,10 @@ jm_PREREQ_ERROR
 jm_PREREQ_MEMCHR
 jm_PREREQ_QUOTEARG
 
-AC_CHECK_DECLS([free, getenv, malloc])
+AC_CHECK_DECLS([free, getenv, malloc, mktemp])
 AC_CHECK_FUNCS(_doprintf geteuid getuid isascii memcmp mktemp \
   pathconf raise sigaction sigprocmask sigsetmask strerror)
-AC_REPLACE_FUNCS(memchr mkdir rename rmdir)
+AC_REPLACE_FUNCS(memchr mkdir rename rmdir strncasecmp)
 AC_FUNC_FSEEKO
 jm_FUNC_MALLOC
 jm_FUNC_REALLOC
