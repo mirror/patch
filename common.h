@@ -1,9 +1,11 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.30 1999/10/13 07:02:54 eggert Exp $ */
+/* $Id: common.h,v 1.31 2002/05/25 06:28:29 eggert Exp $ */
 
-/* Copyright 1986, 1988 Larry Wall
-   Copyright 1990, 1991-1993, 1997-1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1986, 1988 Larry Wall
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002 Free
+   Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -323,7 +325,7 @@ GENERIC_OBJECT *realloc ();
 #define O_TRUNC 0
 #endif
 
-#if HAVE_SETMODE && O_BINARY
+#if HAVE_SETMODE_DOS
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
