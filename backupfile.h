@@ -35,6 +35,6 @@ enum backup_type
 extern enum backup_type backup_type;
 extern char *simple_backup_suffix;
 
-char *find_backup_file_name PARAMS ((char *file));
-enum backup_type get_version PARAMS ((char *version));
+char *find_backup_file_name PARAMS ((char *));
+enum backup_type get_version PARAMS ((char *));
 void addext PARAMS ((char *, char *, int));
