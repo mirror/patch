@@ -1,11 +1,11 @@
-/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.1 1992/07/09 05:20:36 djm Exp $
+/* $Header: /home/agruen/git/patch-h/cvsroot/patch/util.h,v 1.2 1992/07/20 18:27:08 djm Exp $
  *
  * $Log: util.h,v $
- * Revision 1.1  1992/07/09 05:20:36  djm
- * Initial revision
+ * Revision 1.2  1992/07/20 18:27:08  djm
+ * Formerly util.h.~4~
  *
- * Revision 1.1  1992/07/09 05:20:36  djm
- * Initial revision
+ * Revision 1.2  1992/07/20 18:27:08  djm
+ * Formerly util.h.~4~
  *
  * Revision 2.0  86/09/17  15:40:06  lwall
  * Baseline for netwide release.
@@ -91,3 +91,4 @@ char *savestr();
 void set_signals();
 void ignore_signals();
 void makedirs();
+char *basename();
