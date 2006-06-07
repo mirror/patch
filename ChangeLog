@@ -14,6 +14,9 @@
 
 	* Makefile.in (MISC): Add config.guess and config.sub.
 
+	* src/partime.c (parse_pattern_letter): Fix for timestamps with
+	seconds > 59.5 from Christian Franke.
+
 2009-04-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* util.c (create_backup): We also need to create base directories

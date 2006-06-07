@@ -700,7 +700,6 @@ parse_pattern_letter (char const *s, int c, struct partime *t)
       {
 	int frac;
 	s = parse_decimal (s, 2, 0, 60, 1, &t->tm.tm_sec, &frac);
-	t->tm.tm_sec += frac;
       }
       break;
 
