@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
+/* $Id: common.h,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -33,6 +33,12 @@ If not, write to the Free Software Foundation,
 # define volatile
 # endif
 #endif
+
+/* Enable support for fseeko and ftello on hosts
+   where it is available but is turned off by default.
+   This must be defined before any system file is included.  */
+#define _LARGEFILE_SOURCE 1
+
 #include <config.h>
 
 #include <assert.h>
@@ -80,6 +86,9 @@ If not, write to the Free Software Foundation,
 #ifndef INT_MAX
 #define INT_MAX 2147483647
 #endif
+#ifndef LONG_MIN
+#define LONG_MIN (-1-2147483647L)
+#endif
 
 #include <ctype.h>
 /* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
@@ -89,15 +98,21 @@ If not, write to the Free Software Foundation,
 #else
 #define CTYPE_DOMAIN(c) ((unsigned) (c) <= 0177)
 #endif
-#ifndef ISLOWER
-#define ISLOWER(c) (CTYPE_DOMAIN (c) && islower (c))
-#endif
 #ifndef ISSPACE
 #define ISSPACE(c) (CTYPE_DOMAIN (c) && isspace (c))
 #endif
 
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
+#endif
+
+
+#ifndef FILESYSTEM_PREFIX_LEN
+#define FILESYSTEM_PREFIX_LEN(f) 0
+#endif
+
+#ifndef ISSLASH
+#define ISSLASH(c) ((c) == '/')
 #endif
 
 
@@ -135,8 +150,8 @@ XTERN bool using_plan_a;		/* try to keep everything in memory */
 XTERN char *inname;
 XTERN int inerrno;
 XTERN struct stat instat;
-XTERN bool ok_to_create_file;
 XTERN bool dry_run;
+XTERN bool posixly_correct;
 
 XTERN char const *origprae;
 XTERN char const *origbase;
@@ -152,11 +167,13 @@ XTERN int debug;
 #endif
 XTERN bool force;
 XTERN bool batch;
-XTERN bool reverse;
+XTERN bool noreverse;
+XTERN int reverse;
 XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
 XTERN int strippath;
 XTERN bool canonicalize;
+XTERN int patch_get;
 
 enum diff
   {
@@ -235,6 +252,15 @@ off_t lseek ();
 #ifndef STDERR_FILENO
 #define STDERR_FILENO 2
 #endif
+#if _LFS_LARGEFILE
+  typedef off_t file_offset;
+# define file_seek fseeko
+# define file_tell ftello
+#else
+  typedef long file_offset;
+# define file_seek fseek
+# define file_tell ftell
+#endif
 
 #if HAVE_FCNTL_H
 # include <fcntl.h>
@@ -242,6 +268,27 @@ off_t lseek ();
 #ifndef O_RDONLY
 #define O_RDONLY 0
 #endif
+#ifndef O_WRONLY
+#define O_WRONLY 1
+#endif
 #ifndef O_RDWR
 #define O_RDWR 2
+#endif
+#ifndef _O_BINARY
+#define _O_BINARY 0
+#endif
+#ifndef O_BINARY
+#define O_BINARY _O_BINARY
+#endif
+#ifndef O_CREAT
+#define O_CREAT 0
+#endif
+#ifndef O_TRUNC
+#define O_TRUNC 0
+#endif
+
+#if HAVE_SETMODE
+  XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
+#else
+# define binary_transput 0
 #endif

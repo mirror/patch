@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.9 1997/04/17 16:15:48 eggert Exp $ */
+/* $Id: inp.c,v 1.14 1997/05/26 05:34:43 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -26,20 +26,24 @@ If not, write to the Free Software Foundation,
 #include <common.h>
 #include <backupfile.h>
 #include <pch.h>
+#include <quotearg.h>
 #include <util.h>
 #undef XTERN
 #define XTERN
 #include <inp.h>
 
-#define SCCSPREFIX "s."
-#define GET "get '%s'"
-#define GET_LOCKED "get -e '%s'"
-#define SCCSDIFF "get -p '%s' | diff - '%s%s' >/dev/null"
+static char const SCCSPREFIX[] = "s.";
+static char const GET[] = "get ";
+static char const GET_LOCKED[] = "get -e ";
+static char const SCCSDIFF1[] = "get -p ";
+static char const SCCSDIFF2[] = "|diff - %s";
+static char const SCCSDIFF3[] = ">/dev/null";
 
-#define RCSSUFFIX ",v"
-#define CHECKOUT "co '%s%s'"
-#define CHECKOUT_LOCKED "co -l '%s%s'"
-#define RCSDIFF "rcsdiff '%s%s' > /dev/null"
+static char const RCSSUFFIX[] = ",v";
+static char const CHECKOUT[] = "co %s";
+static char const CHECKOUT_LOCKED[] = "co -l %s";
+static char const RCSDIFF1[] = "rcsdiff %s";
+#define RCSDIFF2 SCCSDIFF3
 
 /* Input-file-with-indexable-lines abstract type */
 
@@ -81,13 +85,13 @@ re_input()
     }
 }
 
-/* Constuct the line index, somehow or other. */
+/* Construct the line index, somehow or other. */
 
 void
 scan_input(filename)
 char *filename;
 {
-    using_plan_a = plan_a (filename);
+    using_plan_a = ! (debug & 16) && plan_a (filename);
     if (!using_plan_a)
 	plan_b(filename);
     switch (verbosity)
@@ -96,12 +100,12 @@ char *filename;
 	break;
 
       case VERBOSE:
-	say ("Patching file %s using Plan %s...\n",
+	say ("Patching file `%s' using Plan %s...\n",
 	     filename, using_plan_a ? "A" : "B");
 	break;
 
       case DEFAULT_VERBOSITY:
-	say ("patching file %s\n", filename);
+	say ("patching file `%s'\n", filename);
 	break;
       }
 }
@@ -120,17 +124,17 @@ report_revision (found_revision)
   else if (force)
     {
       if (verbosity != SILENT)
-	say ("Warning: this file doesn't appear to be the %s version--patching anyway.\n",
+	say ("Warning: this file doesn't appear to be the %s version -- patching anyway.\n",
 	     revision);
     }
   else if (batch)
     {
-      fatal ("this file doesn't appear to be the %s version--aborting.",
+      fatal ("This file doesn't appear to be the %s version -- aborting.",
 	     revision);
     }
   else
     {
-      ask ("This file doesn't appear to be the %s version--patch anyway? [n] ",
+      ask ("This file doesn't appear to be the %s version -- patch anyway? [n] ",
 	   revision);
       if (*buf != 'y')
 	fatal ("aborted");
@@ -144,59 +148,40 @@ get_input_file (filename, outname)
      char const *outname;
 {
     int elsewhere = strcmp (filename, outname);
-    char const *dotslash;
 
     if (inerrno == -1)
       inerrno = stat (inname, &instat) == 0 ? 0 : errno;
-    if (inerrno && ok_to_create_file) {
-      int fd;
-      if (verbosity == VERBOSE)
-	say ("(Creating file %s...)\n", inname);
-      if (dry_run) {
-	inerrno = 0;
-	instat.st_mode = 0;
-	instat.st_size = 0;
-	return;
-      }
-      makedirs (inname);
-      fd = creat (inname, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-      if (fd < 0)
-	inerrno = errno;
-      else {
-	inerrno = fstat (fd, &instat) == 0 ? 0 : errno;
-	if (close (fd) != 0)
-	  inerrno = errno;
-      }
-    }
 
-    /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
-    if (backup_type == numbered_existing
+    /* Perhaps look for RCS or SCCS versions.  */
+    if (patch_get
 	&& (inerrno
 	    || (! elsewhere
 		&& (/* No one can write to it.  */
 		    (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) == 0
-		    /* I can't write to it.  */
+		    /* Only the owner (who's not me) can write to it.  */
 		    || ((instat.st_mode & (S_IWGRP|S_IWOTH)) == 0
-			&& instat.st_uid != getuid ()))))) {
-	register char *s;
+			&& instat.st_uid != geteuid ()))))) {
 	struct stat cstat;
 	char const *cs = 0;
-	char const *filebase;
-	size_t dir_len;
-	char *lbuf = xmalloc (strlen (filename) + 100);
+	char const *filebase = base_name (filename);
+	char const *dotslash = *filename=='-' ? "./" : "";
+	size_t dir_len = filebase - filename;
+	size_t filenamelen = strlen (filename);
+	size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
+	size_t maxtrysize = filenamelen + maxfixlen + 1;
+	size_t quotelen = quote_system_arg (0, filename);
+	size_t maxgetsize = sizeof GET_LOCKED + quotelen + maxfixlen;
+	size_t maxdiffsize =
+	  (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof SCCSDIFF3 - 2
+	   + 2 * quotelen + maxfixlen);
+	char *trybuf = xmalloc (maxtrysize + maxgetsize + maxdiffsize);
+	char *getbuf = trybuf + maxtrysize;
+	char *diffbuf = getbuf + maxgetsize;
 
-	strcpy (lbuf, filename);
-	dir_len = base_name (lbuf) - lbuf;
-	filebase = filename + dir_len;
+	strcpy (trybuf, filename);
 
-	/* Put any leading path into `s'.
-	   Leave room in lbuf for the diff command.  */
-	s = lbuf + 20;
-	memcpy (s, filename, dir_len);
-	dotslash = *filename=='-' ? "./" : "";
-
-#define try1(f,a1)    (sprintf (s + dir_len, f, a1),    stat (s, &cstat) == 0)
-#define try2(f,a1,a2) (sprintf (s + dir_len, f, a1,a2), stat (s, &cstat) == 0)
+#define try1(f,a1)    (sprintf (trybuf + dir_len, f, a1),    stat (trybuf, &cstat) == 0)
+#define try2(f,a1,a2) (sprintf (trybuf + dir_len, f, a1,a2), stat (trybuf, &cstat) == 0)
 	if ((   try2 ("RCS/%s%s", filebase, RCSSUFFIX)
 	     || try1 ("RCS/%s"  , filebase)
 	     || try2 (    "%s%s", filebase, RCSSUFFIX))
@@ -204,35 +189,65 @@ get_input_file (filename, outname)
 	    /* Check that RCS file is not working file.
 	       Some hosts don't report file name length errors.  */
 	    (inerrno
-	     || (  (instat.st_dev ^ cstat.st_dev)
-		 | (instat.st_ino ^ cstat.st_ino)))) {
-	    sprintf (buf, elsewhere ? CHECKOUT : CHECKOUT_LOCKED,
-		     dotslash, filename);
-	    sprintf (lbuf, RCSDIFF, dotslash, filename);
+	     || instat.st_dev != cstat.st_dev
+	     || instat.st_ino != cstat.st_ino)) {
+
+	    char *p = getbuf;
+	    sprintf (p, elsewhere ? CHECKOUT : CHECKOUT_LOCKED, dotslash);
+	    p += strlen (p);
+	    p += quote_system_arg (p, filename);
+	    *p = '\0';
+
+	    p = diffbuf;
+	    sprintf (p, RCSDIFF1, dotslash);
+	    p += strlen (p);
+	    p += quote_system_arg (p, filename);
+	    strcpy (p, RCSDIFF2);
+
 	    cs = "RCS";
+
 	} else if (   try2 ("SCCS/%s%s", SCCSPREFIX, filebase)
 		   || try2 (     "%s%s", SCCSPREFIX, filebase)) {
-	    sprintf (buf, elsewhere ? GET : GET_LOCKED, s);
-	    sprintf (lbuf, SCCSDIFF, s, dotslash, filename);
+
+	    char *p = getbuf;
+	    sprintf (p, elsewhere ? GET : GET_LOCKED);
+	    p += strlen (p);
+	    p += quote_system_arg (p, trybuf);
+	    *p = '\0';
+
+	    p = diffbuf;
+	    strcpy (p, SCCSDIFF1);
+	    p += sizeof SCCSDIFF1 - 1;
+	    p += quote_system_arg (p, trybuf);
+	    sprintf (p, SCCSDIFF2, dotslash);
+	    p += strlen (p);
+	    p += quote_system_arg (p, filename);
+	    strcpy (p, SCCSDIFF3);
+
 	    cs = "SCCS";
-	} else if (inerrno)
-	    fatal ("can't find %s", filename);
+
+	} else if (inerrno && !pch_says_nonexistent (reverse))
+	  {
+	    errno = inerrno;
+	    pfatal ("can't find file `%s'", filename);
+	  }
 	/* else we can't write to it but it's not under a version
 	   control system, so just proceed.  */
 	if (cs) {
 	    if (!inerrno) {
-		if ((instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) != 0)
-		    /* The owner can write to it.  */
-		    fatal ("file %s seems to be locked by somebody else under %s",
+		if (!elsewhere
+		    && (instat.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH)) != 0)
+		    /* Somebody can write to it.  */
+		    fatal ("file `%s' seems to be locked by somebody else under %s",
 			   filename, cs);
 		/* It might be checked out unlocked.  See if it's safe to
 		   check out the default version locked.  */
 		if (verbosity == VERBOSE)
-		    say ("Comparing file %s to default %s version...\n",
+		    say ("Comparing file `%s' to default %s version...\n",
 			 filename, cs);
-		if (system (lbuf) != 0)
+		if (systemic (diffbuf) != 0)
 		  {
-		    say ("warning: patching file %s, which does not match default %s version\n",
+		    say ("warning: patching file `%s', which does not match default %s version\n",
 			 filename, cs);
 		    cs = 0;
 		  }
@@ -242,23 +257,30 @@ get_input_file (filename, outname)
 		if (dry_run)
 		  {
 		    if (inerrno)
-		      fatal ("Cannot dry run on nonexistent version-controlled file `%s'; invoke `%s' and try again.",
+		      fatal ("can't do dry run on nonexistent version-controlled file `%s'; invoke `%s' and try again",
 			     filename, buf);
 		  }
 		else
 		  {
 		    if (verbosity == VERBOSE)
-		      say ("Checking out file %s from %s...\n", filename, cs);
-		    if (system (buf) != 0  ||  stat (filename, &instat) != 0)
-		      fatal ("can't check out file %s from %s", filename, cs);
+		      say ("Getting file `%s' from %s...\n", filename, cs);
+		    if (systemic (getbuf) != 0
+			|| stat (filename, &instat) != 0)
+		      fatal ("can't get file `%s' from %s", filename, cs);
 		    inerrno = 0;
 		  }
 	      }
 	}
-	free (lbuf);
+	free (trybuf);
     }
-    if (!S_ISREG (instat.st_mode))
-	fatal ("%s is not a regular file--can't patch", filename);
+
+    if (inerrno)
+      {
+	instat.st_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	instat.st_size = 0;
+      }
+    else if (! S_ISREG (instat.st_mode))
+      fatal ("`%s' is not a regular file -- can't patch", filename);
 }
 
 
@@ -288,19 +310,30 @@ plan_a(filename)
   buffer = (char *) (ptr + (size + 2));
 
   /* Read the input file, but don't bother reading it if it's empty.
-     During dry runs, empty files may not actually exist.  */
+     When creating files, the files do not actually exist.  */
   if (size)
     {
-      int ifd = open (filename, O_RDONLY);
+      int ifd = open (filename, O_RDONLY|binary_transput);
+      size_t buffered = 0, n;
       if (ifd < 0)
-	pfatal ("can't open file %s", filename);
-      if (read (ifd, buffer, size) != size)
+	pfatal ("can't open file `%s'", filename);
+      while (size - buffered != 0
+	     && (n = read (ifd, buffer + buffered, size - buffered)) != 0)
 	{
-	  /* Perhaps size is too large for this host.  */
-	  close (ifd);
-	  free (ptr);
-	  return FALSE;
+	  if (n == -1)
+	    {
+	      /* Perhaps size is too large for this host.  */
+	      close (ifd);
+	      free (ptr);
+	      return FALSE;
+	    }
+	  buffered += n;
 	}
+
+      /* Some non-POSIX hosts exaggerate st_size in text mode;
+	 or the file may have shrunk!  */
+      size = buffered;
+
       if (close (ifd) != 0)
 	read_fatal ();
     }
@@ -363,13 +396,11 @@ plan_b(filename)
   register size_t revlen;
   register LINENUM line;
 
-  if (dry_run)
+  if (instat.st_size == 0)
     filename = "/dev/null";
-  if (! (ifp = fopen (filename, "r")))
-    pfatal ("can't open file %s", filename);
-  tifd = creat (TMPINNAME, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
-  if (tifd < 0)
-    pfatal ("can't open file %s", TMPINNAME);
+  if (! (ifp = fopen (filename, binary_transput ? "rb" : "r")))
+    pfatal ("can't open file `%s'", filename);
+  tifd = create_file (TMPINNAME, O_RDWR | O_BINARY, (mode_t) 0);
   i = 0;
   len = 0;
   maxlen = 1;
@@ -448,10 +479,6 @@ plan_b(filename)
     if (write (tifd, tibuf[0], tibufsize) != tibufsize)
       write_fatal ();
   input_lines = line - 1;
-  if (close (tifd) != 0)
-    write_fatal ();
-  if ((tifd = open (TMPINNAME, O_RDONLY)) < 0)
-    pfatal ("can't reopen file %s", TMPINNAME);
 }
 
 /* Fetch a line from the input file. */

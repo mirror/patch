@@ -22,11 +22,21 @@
 # include <config.h>
 #endif
 
+#ifndef HAVE_DOS_FILE_NAMES
+#define HAVE_DOS_FILE_NAMES 0
+#endif
 #ifndef HAVE_LONG_FILE_NAMES
 #define HAVE_LONG_FILE_NAMES 0
 #endif
 
 #include <backupfile.h>
+
+#if HAVE_LIMITS_H
+# include <limits.h>
+#endif
+#ifndef _POSIX_NAME_MAX
+#define _POSIX_NAME_MAX 14
+#endif
 
 #include <sys/types.h>
 #if HAVE_STRING_H
@@ -53,10 +63,7 @@ addext (filename, ext, e)
   long slen_max = -1;
 
 #if HAVE_PATHCONF && defined _PC_NAME_MAX
-#ifndef _POSIX_NAME_MAX
-#define _POSIX_NAME_MAX 14
-#endif
-  if (slen + extlen <= _POSIX_NAME_MAX)
+  if (slen + extlen <= _POSIX_NAME_MAX && ! HAVE_DOS_FILE_NAMES)
     /* The file name is so short there's no need to call pathconf.  */
     slen_max = _POSIX_NAME_MAX;
   else if (s == filename)
@@ -72,17 +79,27 @@ addext (filename, ext, e)
   if (slen_max < 0)
     slen_max = HAVE_LONG_FILE_NAMES ? 255 : 14;
 
+  if (HAVE_DOS_FILE_NAMES && slen_max <= 12)
+    {
+      /* Live within DOS's 8.3 limit.  */
+      char *dot = strchr (s, '.');
+      if (dot)
+	{
+	  slen -= dot + 1 - s;
+	  s = dot + 1;
+	  slen_max = 3;
+	}
+      else
+	slen_max = 8;
+      extlen = 9; /* Don't use EXT.  */
+    }
+
   if (slen + extlen <= slen_max)
     strcpy (s + slen, ext);
   else
     {
-      if (slen_max <= slen) {
-	/* Try to preserve difference between .h .c etc.  */
-	if (slen == slen_max && s[slen - 2] == '.')
-	  s[slen - 2] = s[slen - 1];
-
+      if (slen_max <= slen)
 	slen = slen_max - 1;
-      }
       s[slen] = e;
       s[slen + 1] = 0;
     }

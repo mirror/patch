@@ -1,3 +1,404 @@
+1997-05-30  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION), NEWS: Version 2.3 released.
+	* patch.man: Fix two font typos.
+	* util.c (doprogram): Fix misspelled decl.
+
+1997-05-26  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.2.93.
+
+	* pch.c (open_patch_file):
+	Fatal error if binary_transput and stdin is a tty.
+
+	* pc/djgpp/config.sed (chdirsaf.c):
+	Use sed instead of cp, since cp might not be installed.
+	* pc/djgpp/configure.bat:
+	Prepend %srcdir% to pathname of config.sed, for crosscompiles.
+
+1997-05-25  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.2.92.
+	(D_INO_IN_DIRENT): New macro.
+	* pc/djgpp/config.h, acconfig.h (D_INO_IN_DIRENT): New macro.
+	* backupfile.c (REAL_DIR_ENTRY):
+	Depend on D_INO_IN_DIRENT, not _POSIX_VERSION.
+
+	* addext.c (addext): Adjust slen when adjusting s for DOS 8.3 limit.
+	Do not use xxx.h -> xxxh~ hack.
+
+	* util.c: (move_file): Avoid makedirs test when possible even
+ 	if FILESYSTEM_PREFIX_LEN (p) is nonzero.  Don't play
+ 	case-changing tricks to come up with backup file name; it's
+ 	not portable to case-insensitive file systems.
+	* common.h (ISLOWER): Remove.
+
+	* inp.c (scan_input): Don't use Plan A if (debug & 16).
+
+	* patch.c (shortopts): Add -g, -G.
+	(longopts): --help now maps to 132, not 'h', to avoid confusion.
+	(get_some_switches): Likewise.
+	Don't invoke setmode on input if --binary; wait until needed.
+	Don't ever invoke setmode on stdout.
+	* pch.c (open_patch_file): Setmode stdin to binary if binary_transput.
+
+	* patch.man: Fix documentation of backup file name to match behavior.
+	Add advice for ordering of patches of derived files.
+	Add /dev/tty to list of files used.
+	* README: Adjust instructions for building on DOS.
+	* pc/djgpp/README: Remove tentative wording.
+	* NEWS: The DOS port is now tested.
+	Backup file names are no longer computed by switching case.
+
+	* pc/chdirsaf.c (ERANGE): Include <errno.h> to define it.
+	(restore_wd): chdir unconditionally.
+	(chdir_safer): Invoke atexit successfully at most once.
+	* pc/djgpp/config.sed: Use chdirsaf.o, not pc/chdirsaf.o.
+	Replace CONFIG_HDRS, don't append.
+	Use $(srcdir) in CONFIG_STATUS.
+	Don't apply $(SHELL) to $(CONFIG_STATUS).
+	Append rules for chdirsaf.o, chdirsaf.c; clean chdirsaf.c at the end.
+	* pc/djgpp/configure.bat: Append CR to each line; DOS needs this.
+	Don't use | as sed s delimiter; DOS can't handle it.
+
+1997-05-21  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.2.91.
+
+	* pch.c (another_hunk):
+	Fix bug with computing size of prefix and suffix context
+	with ordinary context diffs.  Report malformed patch if a unified diff
+	has nothing but context.
+
+	* inp.c (get_input_file):
+	Use patch_get, not backup_type, to decide whether to
+	get from RCS or SCCS.  Use the word `get' in diagnostics.
+	* patch.c (main): Initialize patch_get from PATCH_GET.
+	Omit DEFAULT_VERSION_CONTROL hook; it just leads to nonstandarization.
+	(longopts, option_help, get_some_switches): Add support for -g, -G.
+	(option_help): Add bug report address.
+	* common.h (patch_get): New decl.
+	* patch.man: Add -g and -G options; use `get' instead of `check out'.
+	Add PATCH_GET.  Recommend -Naur instead of -raNU2 for diff.
+	* NEWS: Describe -g, -G, PATCH_GET.
+
+	* version.c (copyright_string): Use only most recent copyright year,
+	as per GNU standards.
+
+	* Makefile.in (DISTFILES_PC): Remove pc/quotearg.c.
+	* pc/djgpp/config.sed: Remove unnecessary hooks for quotearg and SHELL.
+
+1997-05-18  Paul Eggert  <eggert@pogo.gnu.ai.mit.edu>
+
+	* configure.in (VERSION): Increase to 2.2.9.
+	(AC_TYPE_MODE_T): Add.
+
+	* pch.c (hunkmax): Now of type LINENUM.
+	(malformed): Add decl.
+	(there_is_another_patch): Skip inname-detection if skip_rest_of_patch.
+	(intuit_diff_type): To determine whether file appears to have been
+	deleted, look at replacement, not pattern.
+	If there is a mismatch between existence of file and whether the
+	patch claims to change whether the file exists, ask whether to
+	reverse the patch.
+	(another_hunk): New parameter REV specifying whether to reverse the
+	hunk.  All callers changed.
+	(do_ed_script): Add assertion to ensure input file exists.
+
+	* common.h (noreverse): New decl.
+	(ok_to_reverse): Remove decl.
+
+	* patch.c (noreverse): Now extern.
+	(main): New environment var PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
+	Don't assert(hunk) if we're skipping the patch; we may not have any hunks.
+	When removing a file, back it up if backups are desired.
+	Don't chmod output file if input file did not exist.
+	chmod rej file to input file's mode minus executable bits.
+	(locate_hunk): Go back to old way of a single fuzz parameter, but
+	handle it more precisely: context diffs with partial contexts
+	can only match file ends, since the partial context can occur
+	only at the start or end of file.
+	All callers changed.
+	(create_output_file): Use create_file to create files.
+	(ok_to_reverse): Move to util.c.
+
+	* inp.c (scan_input, get_input_file): Quote file names in diagnostics.
+	(get_input_file): Set inerrno if it's not already set.
+	Don't create file; it's now the caller's responsibility.
+	(plan_b): Use /dev/null if input size is zero, since it might not exist.
+	Use create_file to create temporary file.
+
+	* NEWS: Add PATCH_VERSION_CONTROL; DOS port is untested.
+
+	* patch.man: PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
+
+1997-05-18  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Increase to 2.2.9.
+	(AC_TYPE_MODE_T): Add.
+
+	* pch.h (another_hunk): New parameter REV.
+	* pch.c (hunkmax): Now of type LINENUM.
+	(malformed): Add decl.
+	(there_is_another_patch): Skip inname-detection if skip_rest_of_patch.
+	(intuit_diff_type): To determine whether file appears to have been
+	deleted, look at replacement, not pattern.
+	If there is a mismatch between existence of file and whether the
+	patch claims to change whether the file exists, ask whether to
+	reverse the patch.
+	(another_hunk): New parameter REV specifying whether to reverse the
+	hunk.  All callers changed.
+	(do_ed_script): Add assertion to ensure input file exists.
+
+	* util.h (create_file): New function.
+	(copy_file): Now takes mode, not struct stat.
+	(makedirs): No longer exported.
+	(move_file): Now takes mode, not struct stat.
+	* util.c (makedirs): No longer exported.
+	(move_file): Accept mode of destination, not struct stat.
+	All callers changed.
+	Quote file names in diagnostics.
+	Create parent dir of destination if necessary.
+	Don't use ENOTDIR.
+	Don't unlink source; it will be unlinked later.
+	Unlink destination if FROM is zero.
+	(create_file): New function.
+	(copy_file): Accept mode of destination, not struct stat.
+	All callers changed.
+	Use create_file to create file.
+	(ok_to_reverse): Moved here from patch.c.  Now accepts format and args;
+	all callers changed.
+	(mkdir): 2nd arg is now mode_t, for better compatibility.
+	(replace_slashes): Ignore slashes at the end of the filename.
+
+	* common.h (noreverse): New decl.
+	(ok_to_reverse): Remove decl.
+
+	* patch.c (noreverse): Now extern.
+	(main): New environment var PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
+	Don't assert(hunk) if we're skipping the patch; we may not have any hunks.
+	When removing a file, back it up if backups are desired.
+	Don't chmod output file if input file did not exist.
+	chmod rej file to input file's mode minus executable bits.
+	(locate_hunk): Go back to old way of a single fuzz parameter, but
+	handle it more precisely: context diffs with partial contexts
+	can only match file ends, since the partial context can occur
+	only at the start or end of file.
+	All callers changed.
+	(create_output_file): Use create_file to create files.
+	(ok_to_reverse): Move to util.c.
+
+	* inp.c (scan_input, get_input_file): Quote file names in diagnostics.
+	(get_input_file): Set inerrno if it's not already set.
+	Don't create file; it's now the caller's responsibility.
+	(plan_b): Use /dev/null if input size is zero, since it might not exist.
+	Use create_file to create temporary file.
+
+	* NEWS: Add PATCH_VERSION_CONTROL; DOS port is untested.
+
+	* pc/djgpp/config.h: Add comment for mode_t.
+
+	* pc/djgpp/README: Note that it's not tested.
+
+	* patch.man: PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
+
+1997-05-15  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in: Add AC_PREREQ(2.12).
+	(VERSION): Bump to 2.2.8.
+	(ed_PROGRAM): Rename from ED_PROGRAM.
+
+	* pch.c (prefix_components): Support DOS file names better.
+	Fix typo that caused fn to almost always yield 0.
+
+	* util.c (<time.h>, <maketime.h>): Include.
+	(move_file, copy_file): Add support for DOS filenames.
+	Preserve mode of input files when creating temp files.
+	Add binary file support.
+	(doprogram, rmdir): New functions.
+	(mkdir): Use doprogram.
+	(replace_slashes): Add support for DOS filenames.
+	(removedirs): New function.
+	(init_time)): New function.
+	(initial_time): New var.
+	(fetchname): Add support for deleted files, DOS filenames.
+
+	* basename.c (FILESYSTEM_PREFIX_LEN, ISSLASH):
+	New macros, for DOS port.
+	(base_name): Use them.
+
+	* addext.c (HAVE_DOS_FILE_NAMES): New macro.
+	<limits.h>: Include if HAVE_LIMITS_H.
+	(addext): Handle hosts with DOS file name limits.
+
+	* common.h (LONG_MIN): New macro.
+	(FILESYSTEM_PREFIX_LEN, ISSLASH): New macros, for DOS port.
+	(ok_to_create_file): Remove.
+	(reverse): Now int.
+	(ok_to_reverse): New function decl.
+	(O_WRONLY, _O_BINARY, O_BINARY, O_CREAT, O_TRUNC): New macros.
+	(binary_transput): New var decl.
+
+	* Makefile.in (ed_PROGRAM): Renamed from ED_PROGRAM.
+	(CONFIG_HDRS, CONFIG_STATUS): New vars.
+	(SRCS): Add maketime.c, partime.c.
+	(OBJS): Likewise.
+	(HDRS): Add maketime.h, partime.h.
+	(DISTFILES_PC, DISTFILES_PC_DJGPP): New vars.
+	(Makefile, config.status): Use CONFIG_STATUS, not config.status.
+	(clean): Remove */*.o.
+	(dist): Add pc and pc/djgpp subdirectories.
+	($(OBJS)): Depend on $(CONFIG_HDRS) instead of config.h.
+	(maketime.o, partime.o): New rules.
+	(util.o): Depend on maketime.h.
+
+	* patch.c (main):
+	Call init_time.  Add DEFAULT_VERSION_CONTROL hook for people who
+	prefer the old ways.  Build temp file names before we might invoke cleanup.
+	Add support for deleted files and clean up the patch-swapping code a bit.
+	Delete empty ancestors of deleted files.
+	When creating temporaries, use file modes of original files.
+	(longopts, get_some_switches): New option --binary.
+	(get_some_switches): Report non-errno errors with `fatal', not `pfatal'.
+	(create_output_file): New function, which preserves modes of original files
+	and supports binary transput.
+	(init_output, init_reject): Use it.
+	(ok_to_reverse): New function.
+	(TMPDIR): New macro.
+	(make_temp): Use $TMPDIR, $TMP, $TEMP, or TMPDIR, whichever comes first.
+
+	* pch.c (p_says_nonexistent): New var.
+	(open_patch_file): Add binary transput support.
+	Apply stat to file names retrieved from user.
+	Reject them if they don't exist.
+	(intuit_diff_type): Add support for deleting files.
+	Don't treat trivial directories any differently.
+	Avoid stating the same file twice in common case of context diffs.
+	(prefix_components): Don't treat trivial directories any differently.
+	Add support for DOS filenames.
+	(pch_says_nonexistent): New function.
+	(do_ed_script): Preserve mode of input files when creating temp files.
+	Add support for binary transput.
+
+	* pch.h (pch_says_nonexistent): New decl.
+
+	* util.h (replace_slashes): No longer exported.
+	(fetchname): Add support for deleted files.
+	(copy_file, move_file): Add support for preserving file modes.
+	(init_time, removedirs): New functions.
+
+	* argmatch.c: Converge with fileutils.
+
+	* backupfile.c: Converge with fileutils.
+	(find_backup_file_name): Treat .~N~ suffix just like any other suffix
+	when handling file names that are too long.
+
+	* inp.c:
+	In messages, put quotes around file names and spaces around "--".
+	(get_input_file): Allow files to be deleted.  Do the expense of
+	makedirs only if we can't create the file.
+	(plan_a, plan_b): Add support for binary transput.
+
+	* pc/chdirsaf.c, pc/djgpp/README, pc/djgpp/config.h, pc/djgpp/config.sed, pc/djgpp/configure.bat, pc/quotearg.c:
+	New file.
+
+	* NEWS:
+	New methods for removing files; adjust file name intuition again.
+	Add description of MS-DOS and MS-Windows ports.
+
+	* patch.man:
+	Simplify file name intuition slightly (no distinction for trivial dirs).
+	Add --binary.  Describe how files and directories are deleted.
+	Suggest diff -a.  Include caveats about what context diffs cannot represent.
+
+1997-05-06  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Now 2.2.7.
+	(CPPFLAGS, LDFLAGS, LIBS): If the user has not set any of these vars,
+	prefer support for large files if available.
+
+	* common.h (_LARGEFILE_SOURCE): Define.
+	(file_offset): New typedef.
+	(file_seek, file_tell): New macros.
+
+	* patch.c (main):
+	Remove empty files by default unless POSIXLY_CORRECT is set.
+
+	* util.c, util.h (Fseek):
+	Use file_offset instead of long, for portability to large-file hosts.
+
+	* pch.c: (p_base, p_start, next_intuit_at, skip_to, open_patch_file,
+	intuit_diff_type, another_hunk, incomplete_line, do_ed_script):
+	Use file_offset instead of long, for portability to large-file hosts.
+	(prefix_components): Renamed from path_name_components; count only
+	nontrivial prefix components, and take a 2nd EXISTING arg.
+	(existing_prefix_components): Remove; subsumed by prefix_components.
+	(intuit_diff_type): When creating files, try for the creation of the
+	fewest directories.
+
+	* configure.in (VERSION): Now 2.2.6.
+
+	* pch.c (existing_prefix_components): New function.
+	(intuit_diff_type): When creating a file, use a name whose existing
+ 	directory prefix contains the most nontrivial path name components.
+	(best_name): Don't check for null 2nd arg.
+
+	* util.h (replace_slashes): New decl.
+
+	* util.c (replace_slashes): Now external.
+	(fetchname): Don't assume chars are nonnegative.
+
+	* patch.man:
+	When creating a file, use a name whose existing directory prefix
+	contains the most nontrivial path name components.
+	Add advice for creating patches and applying them.
+
+1997-05-06  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Now 2.2.6.
+
+	* pch.c (existing_prefix_components): New function.
+	(intuit_diff_type): When creating a file, use a name whose existing
+ 	directory prefix contains the most nontrivial path name components.
+	(best_name): Don't check for null 2nd arg.
+
+	* util.h (replace_slashes): New decl.
+	* util.c (replace_slashes): Now external.
+	(fetchname): Don't assume chars are nonnegative.
+
+	* patch.man:  Describe above change to pch.c.
+	Add advice for creating patches and applying them.
+
+1997-05-05  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Update to 2.2.5.
+
+	* quotearg.h, quotearg.c: New files.
+	* Makefile.in (SRCS, OBJS, HDRS): Mention new files.
+	(inp.o, util.o): Now depends on quotearg.h.
+	(quotearg.o): New makefile rule.
+
+	* common.h (posixly_correct): New var.
+	* patch.c (main): Initialize it.
+	If ! posixly_correct, default backup type is now `existing'.
+	SIMPLE_BACKUP_SUFFIX no longer affects backup type.
+	(backup): Remove var.
+
+	* util.h: (countdirs): Remove.
+	(systemic): New decl.
+	* util.c (move_file): Try making the parent directory of TO
+	if backup prefix or suffix contain a slash.
+	(ask): Remove arbitrary limit on size of result.
+	(systemic): New function.
+	(mkdir): Work even if arg contains shell metacharacters.
+	(replace_slashes): Return 0 if none were replaced.
+	Don't replace slash after . or .. since it's redundant.
+	(countdirs): Remove.
+	(makedirs): Ignore mkdir failures.
+
+	* NEWS, patch.man: More POSIXLY_CORRECT adjustments.
+	Describe new rules for how file names are intuited.
+
 1997-04-17  Paul Eggert  <eggert@twinsun.com>
 
 	* configure.in (VERSION): Version 2.2 released.

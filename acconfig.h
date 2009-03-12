@@ -3,5 +3,9 @@
    the patch configure.in can define.
    autoheader copies the comments into config.hin.  */
 
+/* Define if there is a member named d_ino in the struct describing
+   directory headers.  */
+#undef D_INO_IN_DIRENT
+
 /* Define if memchr works.  */
 #undef HAVE_MEMCHR

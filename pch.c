@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.7 1997/04/14 05:32:30 eggert Exp $ */
+/* $Id: pch.c,v 1.16 1997/05/26 17:52:29 eggert Exp $ */
 
 /*
 Copyright 1986, 1987, 1988 Larry Wall
@@ -24,6 +24,7 @@ If not, write to the Free Software Foundation,
 
 #define XTERN extern
 #include <common.h>
+#include <backupfile.h>
 #include <inp.h>
 #include <util.h>
 #undef XTERN
@@ -35,6 +36,7 @@ If not, write to the Free Software Foundation,
 /* Patch (diff listing) abstract type. */
 
 static FILE *pfp;			/* patch file pointer */
+static int p_says_nonexistent[2];	/* [0] for old file, [1] for new */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
 static LINENUM p_newfirst;		/* 1st line number of replacement */
@@ -48,23 +50,28 @@ static LINENUM p_input_line;		/* current line # from patch file */
 static char **p_line;			/* the text of the hunk */
 static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
-static size_t hunkmax = INITHUNKMAX;	/* size of above arrays */
+static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
 static int p_indent;			/* indent to patch */
-static long p_base;			/* where to intuit this time */
+static file_offset p_base;		/* where to intuit this time */
 static LINENUM p_bline;			/* line # of p_base */
-static long p_start;			/* where intuit found a patch */
+static file_offset p_start;		/* where intuit found a patch */
 static LINENUM p_sline;			/* and the line number for it */
 static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
 
+enum nametype { OLD, NEW, INDEX, NONE };
+
 static enum diff intuit_diff_type PARAMS ((void));
+static enum nametype best_name PARAMS ((char * const *, int const *));
+static int prefix_components PARAMS ((char *, int));
 static size_t pget_line PARAMS ((int));
 static size_t get_line PARAMS ((void));
 static bool incomplete_line PARAMS ((void));
 static bool grow_hunkmax PARAMS ((void));
-static void next_intuit_at PARAMS ((long, LINENUM));
-static void skip_to PARAMS ((long, LINENUM));
+static void malformed PARAMS ((void));
+static void next_intuit_at PARAMS ((file_offset, LINENUM));
+static void skip_to PARAMS ((file_offset, LINENUM));
 
 /* Prepare to look for the next patch in the patch file. */
 
@@ -86,41 +93,49 @@ void
 open_patch_file(filename)
      char const *filename;
 {
-    long file_pos = 0;
+    file_offset file_pos = 0;
     struct stat st;
     if (!filename || !*filename || strEQ (filename, "-"))
       {
+#if HAVE_SETMODE
+	if (binary_transput)
+	  {
+	    if (isatty (STDIN_FILENO))
+	      fatal ("cannot read binary data from tty on this platform");
+	    setmode (STDIN_FILENO, O_BINARY);
+	  }
+#endif
 	if (fstat (STDIN_FILENO, &st) != 0)
 	  pfatal ("fstat");
 	if (S_ISREG (st.st_mode))
 	  {
 	    pfp = stdin;
-	    file_pos = ftell (stdin);
-	    filename = 0;
+	    file_pos = file_tell (stdin);
 	  }
 	else
 	  {
 	    size_t charsread;
-	    pfp = fopen (TMPPATNAME, "w");
+	    pfp = fopen (TMPPATNAME, "w+b");
 	    if (!pfp)
-	      pfatal ("can't create %s", TMPPATNAME);
+	      pfatal ("can't create `%s'", TMPPATNAME);
 	    while ((charsread = fread (buf, 1, bufsize, stdin)) != 0)
 	      if (fwrite (buf, 1, charsread, pfp) != charsread)
 		write_fatal ();
 	    if (ferror (stdin) || fclose (stdin) != 0)
 	      read_fatal ();
-	    if (fclose (pfp) != 0)
+	    if (fflush (pfp) != 0
+		|| file_seek (pfp, (file_offset) 0, SEEK_SET) != 0)
 	      write_fatal ();
-	    filename = TMPPATNAME;
 	  }
       }
-    if (filename) {
-	pfp = fopen (filename, "r");
+    else
+      {
+	pfp = fopen (filename, binary_transput ? "rb" : "r");
 	if (!pfp)
-	  pfatal ("patch file %s not found", filename);
+	  pfatal ("can't open patch file `%s'", filename);
 	if (fstat (fileno (pfp), &st) != 0)
 	  pfatal ("fstat");
-    }
+      }
     p_filesize = st.st_size;
     next_intuit_at (file_pos, (LINENUM) 1);
     set_hunkmax();
@@ -179,6 +194,8 @@ there_is_another_patch()
 	       : "  I can't seem to find a patch in there anywhere.\n");
 	return FALSE;
     }
+    if (skip_rest_of_patch)
+	return TRUE;
     if (verbosity == VERBOSE)
 	say ("  %sooks like %s to me...\n",
 	    (p_base == 0 ? "L" : "The next patch l"),
@@ -197,16 +214,26 @@ there_is_another_patch()
 	    return TRUE;
 	}
 	ask ("File to patch: ");
-	inname = fetchname (buf, 0);
+	inname = fetchname (buf, 0, (int *) 0);
+	if (inname)
+	  {
+	    if (stat (inname, &instat) == 0)
+	      inerrno = 0;
+	    else
+	      {
+		perror (inname);
+		free (inname);
+		inname = 0;
+	      }
+	  }
 	if (!inname) {
 	    ask ("Skip this patch? [y] ");
-	    if (*buf == 'n') {
-		continue;
+	    if (*buf != 'n') {
+		if (verbosity != SILENT)
+		    say ("Skipping patch...\n");
+		skip_rest_of_patch = TRUE;
+		return TRUE;
 	    }
-	    if (verbosity != SILENT)
-		say ("Skipping patch...\n");
-	    skip_rest_of_patch = TRUE;
-	    return TRUE;
 	}
     }
     return TRUE;
@@ -220,30 +247,31 @@ intuit_diff_type()
     register char *s;
     register char *t;
     register int indent;
-    register long this_line = 0;
-    register long previous_line;
-    register long first_command_line = -1;
+    register file_offset this_line = 0;
+    register file_offset previous_line;
+    register file_offset first_command_line = -1;
     LINENUM fcl_line = 0; /* Pacify `gcc -W'.  */
     register bool last_line_was_command = FALSE;
     register bool this_is_a_command = FALSE;
     register bool stars_last_line = FALSE;
     register bool stars_this_line = FALSE;
-    enum nametype { OLD, NEW, INDEX, NONE } i;
+    enum nametype i;
     char *name[3];
     struct stat st[3];
     int stat_errno[3];
-    int dir_count[3];
     register enum diff retval;
+    int head_says_nonexistent[2];
 
     name[OLD] = name[NEW] = name[INDEX] = 0;
-    ok_to_create_file = FALSE;
+    head_says_nonexistent[OLD] = head_says_nonexistent[NEW] = 0;
+    p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
     for (;;) {
 	previous_line = this_line;
 	last_line_was_command = this_is_a_command;
 	stars_last_line = stars_this_line;
-	this_line = ftell(pfp);
+	this_line = file_tell (pfp);
 	indent = 0;
 	if (! pget_line (0)) {
 	    if (first_command_line >= 0) {
@@ -276,13 +304,14 @@ intuit_diff_type()
 	    p_indent = indent;		/* assume this for now */
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    name[OLD] = fetchname (s+4, strippath);
+	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
 	else if (strnEQ(s, "--- ", 4))
-	    name[NEW] = fetchname (s+4, strippath);
+	    name[NEW] = fetchname (s+4, strippath, &head_says_nonexistent[NEW]);
 	else if (strnEQ(s, "+++ ", 4))
-	    name[OLD] = fetchname (s+4, strippath); /* Swap with NEW below.  */
+	    /* Swap with NEW below.  */
+	    name[OLD] = fetchname (s+4, strippath, &head_says_nonexistent[OLD]);
 	else if (strnEQ(s, "Index:", 6))
-	    name[INDEX] = fetchname (s+6, strippath);
+	    name[INDEX] = fetchname (s+6, strippath, (int *) 0);
 	else if (strnEQ(s, "Prereq:", 7)) {
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
 	      continue;
@@ -309,23 +338,24 @@ intuit_diff_type()
 	}
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
-	    s += 3;
-	    if (reverse)
-	      {
-		while (*s != ' ' && *s != '\n')
-		  s++;
-		while (*s == ' ')
-		  s++;
-	      }
-	    if (!atol(s))
-		ok_to_create_file = TRUE;
+	    s += 4;
+	    /* `name' and `head_says_nonexistent' are backwards.
+	       Swap the former, and interpret the latter backwards.  */
+	    t = name[OLD];
+	    name[OLD] = name[NEW];
+	    name[NEW] = t;
+	    if (head_says_nonexistent[NEW] && ! atol (s))
+	      p_says_nonexistent[OLD] = 1;
+	    while (*s != ' ' && *s != '\n')
+	      s++;
+	    while (*s == ' ')
+	      s++;
+	    if (head_says_nonexistent[OLD] && ! atol (s))
+	      p_says_nonexistent[NEW] = 1;
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    t = name[OLD];
-	    name[OLD] = name[NEW];
-	    name[NEW] = t;
 	    goto scan_exit;
 	}
 	stars_this_line = strnEQ(s, "********", 8);
@@ -333,9 +363,9 @@ intuit_diff_type()
 	     || diff_type == CONTEXT_DIFF
 	     || diff_type == NEW_CONTEXT_DIFF)
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
-	    if (! reverse)
-	      if (! atol (s + 4))
-		ok_to_create_file = TRUE;
+	    s += 4;
+	    if (head_says_nonexistent[OLD] && ! atol (s))
+	      p_says_nonexistent[OLD] = 1;
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -344,19 +374,21 @@ intuit_diff_type()
 	    p_start = previous_line;
 	    p_sline = p_input_line - 1;
 	    retval = (*(s-1) == '*' ? NEW_CONTEXT_DIFF : CONTEXT_DIFF);
-	    if (reverse)
+
+	    if (head_says_nonexistent[NEW])
 	      {
-		/* If the patch is a reversed context diff,
-		   scan the entire first hunk to see whether
-		   it's OK to create the file.  */
-		long saved_p_base = p_base;
+		/* Scan the first hunk to see whether the file appears to
+		   have been deleted.  */
+		file_offset saved_p_base = p_base;
 		LINENUM saved_p_bline = p_bline;
 		p_input_line = p_sline;
 		Fseek (pfp, previous_line, SEEK_SET);
-		if (another_hunk (retval) && ! p_ptrn_lines && p_first == 1)
-		  ok_to_create_file = TRUE;
+		if (another_hunk (retval, 0)
+		    && ! p_repl_lines && p_newfirst == 1)
+		  p_says_nonexistent[NEW] = 1;
 		next_intuit_at (saved_p_base, saved_p_bline);
 	      }
+
 	    goto scan_exit;
 	}
 	if ((diff_type == NO_DIFF || diff_type == NORMAL_DIFF) &&
@@ -372,40 +404,86 @@ intuit_diff_type()
 
   scan_exit:
 
-    /* Use algorithm specified by POSIX 1003.2b/D11 to deduce `inname',
-       the name of the file to patch; except that if the patch syntactically
-       can create a file, before asking the user for a file name
-       redo the earlier steps in sequence, this time ignoring the
-       nonexistence of a file if the path length of the existing directory
-       in the file name is a maximum among all the candidate file names.  */
+    /* To intuit `inname', the name of the file to patch,
+       use the algorithm specified by POSIX 1003.2b/D11 section 5.22.7.2
+       (with some modifications if posixly_correct is zero):
 
-    for (i = OLD;  i <= INDEX;  i++)
-      if (!inname && name[i])
-	{
-	  if (stat (name[i], &st[i]) != 0)
-	    stat_errno[i] = errno;
-	  else
-	    {
-	      stat_errno[i] = 0;
-	      break;
-	    }
-	}
+       - Take the old and new names from the context header if present,
+	 and take the index name from the `Index:' line if present.
+	 Consider the file names to be in the order (old, new, index).
+       - If some named files exist, use the first one if posixly_correct
+	 is nonzero, the best one otherwise.
+       - If no named files exist, some names are given, posixly_correct is
+	 zero, and the patch appears to create a file, then use the best name
+	 requiring the creation of the fewest directories.
+       - Otherwise, report failure by setting `inname' to 0;
+	 this causes our invoker to ask the user for a file name.  */
 
-    if (i == NONE && !inname && ok_to_create_file)
+    i = NONE;
+
+    if (!inname)
       {
-	int dir_count_max = 0;
+	enum nametype i0 = NONE;
 
 	for (i = OLD;  i <= INDEX;  i++)
 	  if (name[i])
 	    {
-	      dir_count[i] = countdirs (name[i]);
-	      if (dir_count_max < dir_count[i])
-		dir_count_max = dir_count[i];
+	      if (i0 != NONE && strcmp (name[i0], name[i]) == 0)
+		{
+		  /* It's the same name as before; reuse stat results.  */
+		  stat_errno[i] = stat_errno[i0];
+		  if (! stat_errno[i])
+		    st[i] = st[i0];
+		}
+	      else if (stat (name[i], &st[i]) != 0)
+		stat_errno[i] = errno;
+	      else
+		{
+		  stat_errno[i] = 0;
+		  if (posixly_correct)
+		    break;
+		}
+	      i0 = i;
 	    }
 
-	for (i = OLD;  i <= INDEX;  i++)
-	  if (name[i] && dir_count[i] == dir_count_max)
-	    break;
+	if (! posixly_correct)
+	  {
+	    i = best_name (name, stat_errno);
+
+	    if (p_says_nonexistent[reverse ^ (i == NONE)])
+	      {
+		assert (i0 != NONE);
+		if (ok_to_reverse
+		    ("The next patch%s would %s the file `%s',\nwhich %s!",
+		     reverse ? ", when reversed," : "",
+		     i == NONE ? "delete" : "create",
+		     name[i == NONE ? i0 : i],
+		     i == NONE ? "does not exist" : "already exists"))
+		  reverse ^= 1;
+	      }
+
+	    if (i == NONE && p_says_nonexistent[reverse])
+	      {
+		int newdirs[3];
+		int newdirs_min = INT_MAX;
+		int distance_from_minimum[3];
+
+		for (i = OLD;  i <= INDEX;  i++)
+		  if (name[i])
+		    {
+		      newdirs[i] = (prefix_components (name[i], 0)
+				    - prefix_components (name[i], 1));
+		      if (newdirs[i] < newdirs_min)
+			newdirs_min = newdirs[i];
+		    }
+
+		for (i = OLD;  i <= INDEX;  i++)
+		  if (name[i])
+		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
+
+		i = best_name (name, distance_from_minimum);
+	      }
+	  }
       }
 
     if (i == NONE)
@@ -425,11 +503,91 @@ intuit_diff_type()
     return retval;
 }
 
+/* Count the path name components in FILENAME's prefix.
+   If CHECKDIRS is nonzero, count only existing directories.  */
+static int
+prefix_components (filename, checkdirs)
+     char *filename;
+     int checkdirs;
+{
+  int count = 0;
+  struct stat stat_buf;
+  int stat_result;
+  char *f = filename + FILESYSTEM_PREFIX_LEN (filename);
+
+  if (*f)
+    while (*++f)
+      if (ISSLASH (f[0]) && ! ISSLASH (f[-1]))
+	{
+	  if (checkdirs)
+	    {
+	      *f = '\0';
+	      stat_result = stat (filename, &stat_buf);
+	      *f = '/';
+	      if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
+		break;
+	    }
+
+	  count++;
+	}
+
+  return count;
+}
+
+/* Return the index of the best of NAME[OLD], NAME[NEW], and NAME[INDEX].
+   Ignore null names, and ignore NAME[i] if IGNORE[i] is nonzero.
+   Return NONE if all names are ignored.  */
+static enum nametype
+best_name (name, ignore)
+     char *const *name;
+     int const *ignore;
+{
+  enum nametype i;
+  int components[3];
+  int components_min = INT_MAX;
+  size_t basename_len[3];
+  size_t basename_len_min = (size_t) -1;
+  size_t len[3];
+  size_t len_min = (size_t) -1;
+
+  for (i = OLD;  i <= INDEX;  i++)
+    if (name[i] && !ignore[i])
+      {
+	/* Take the names with the fewest prefix components.  */
+	components[i] = prefix_components (name[i], 0);
+	if (components_min < components[i])
+	  continue;
+	components_min = components[i];
+
+	/* Of those, take the names with the shortest basename.  */
+	basename_len[i] = strlen (base_name (name[i]));
+	if (basename_len_min < basename_len[i])
+	  continue;
+	basename_len_min = basename_len[i];
+
+	/* Of those, take the shortest names.  */
+	len[i] = strlen (name[i]);
+	if (len_min < len[i])
+	  continue;
+	len_min = len[i];
+      }
+
+  /* Of those, take the first name.  */
+  for (i = OLD;  i <= INDEX;  i++)
+    if (name[i] && !ignore[i]
+	&& components[i] == components_min
+	&& basename_len[i] == basename_len_min
+	&& len[i] == len_min)
+      break;
+
+  return i;
+}
+
 /* Remember where this patch ends so we know where to start up again. */
 
 static void
 next_intuit_at(file_pos,file_line)
-long file_pos;
+file_offset file_pos;
 LINENUM file_line;
 {
     p_base = file_pos;
@@ -440,7 +598,7 @@ LINENUM file_line;
 
 static void
 skip_to(file_pos,file_line)
-long file_pos;
+file_offset file_pos;
 LINENUM file_line;
 {
     register FILE *i = pfp;
@@ -452,7 +610,7 @@ LINENUM file_line;
 	Fseek (i, p_base, SEEK_SET);
 	say ("The text leading up to this was:\n--------------------------\n");
 
-	while (ftell (i) < file_pos)
+	while (file_tell (i) < file_pos)
 	  {
 	    putc ('|', o);
 	    do
@@ -483,8 +641,9 @@ malformed ()
    0 if not; -1 if ran out of memory. */
 
 int
-another_hunk (difftype)
+another_hunk (difftype, rev)
      enum diff difftype;
+     int rev;
 {
     register char *s;
     register LINENUM context = 0;
@@ -502,7 +661,7 @@ another_hunk (difftype)
 
     p_max = hunkmax;			/* gets reduced when --- found */
     if (difftype == CONTEXT_DIFF || difftype == NEW_CONTEXT_DIFF) {
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
 	LINENUM repl_beginning = 0;	/* index of --- line */
 	register LINENUM fillcnt = 0;	/* #lines of missing ptrn or repl */
@@ -512,10 +671,13 @@ another_hunk (difftype)
 	bool some_context = FALSE;	/* (perhaps internal) context seen */
 	register bool repl_could_be_missing = TRUE;
 	bool repl_missing = FALSE;	/* we are now backtracking */
-	long repl_backtrack_position = 0;
+	file_offset repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	LINENUM repl_patch_line;	/* input line number for same */
 	LINENUM repl_context;		/* context for same */
+	LINENUM ptrn_prefix_context = -1; /* lines in pattern prefix context */
+	LINENUM ptrn_suffix_context = -1; /* lines in pattern suffix context */
+	LINENUM repl_prefix_context = -1; /* lines in replac. prefix context */
 	register LINENUM ptrn_copiable = 0;
 					/* # of copiable lines in ptrn */
 
@@ -529,7 +691,6 @@ another_hunk (difftype)
 	    next_intuit_at(line_beginning,p_input_line);
 	    return chars_read == (size_t) -1 ? -1 : 0;
 	}
-	p_prefix_context = -1;
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
 	    chars_read = get_line ();
@@ -609,85 +770,86 @@ another_hunk (difftype)
 		p_max = hunkmax;
 		break;
 	    case '-':
-		if (buf[1] == '-') {
-		    if (p_prefix_context == -1)
-		      p_prefix_context = context;
-		    if (repl_beginning ||
-			(p_end != p_ptrn_lines + 1 + (p_Char[p_end-1] == '\n')))
-		    {
-			if (p_end == 1) {
-			    /* `old' lines were omitted - set up to fill */
-			    /* them in from 'new' context lines. */
-			    p_end = p_ptrn_lines + 1;
-			    fillsrc = p_end + 1;
-			    filldst = 1;
-			    fillcnt = p_ptrn_lines;
-			}
-			else {
-			    if (repl_beginning) {
-				if (repl_could_be_missing){
-				    repl_missing = TRUE;
-				    goto hunk_done;
-				}
-				fatal (
-"duplicate \"---\" at line %ld--check line numbers at line %ld",
-				    p_input_line, p_hunk_beg + repl_beginning);
-			    }
-			    else {
-				fatal (
-"%s \"---\" at line %ld--check line numbers at line %ld",
-				    (p_end <= p_ptrn_lines
-					? "Premature"
-					: "Overdue" ),
-				    p_input_line, p_hunk_beg);
-			    }
-			}
-		    }
-		    repl_beginning = p_end;
-		    repl_backtrack_position = ftell(pfp);
-		    repl_patch_line = p_input_line;
-		    repl_context = context;
-		    p_len[p_end] = strlen (buf);
-		    if (! (p_line[p_end] = savestr (buf))) {
-			p_end--;
-			return -1;
-		    }
-		    p_Char[p_end] = '=';
-		    for (s = buf;  *s && !ISDIGIT (*s);  s++)
-		      continue;
-		    if (!*s)
-			malformed ();
-		    p_newfirst = (LINENUM) atol(s);
-		    while (ISDIGIT (*s))
-		      s++;
-		    if (*s == ',') {
-			do
-			  {
-			    if (!*++s)
-			      malformed ();
-			  }
-			while (!ISDIGIT (*s));
-			p_repl_lines = ((LINENUM)atol(s)) - p_newfirst + 1;
-		    }
-		    else if (p_newfirst)
-			p_repl_lines = 1;
-		    else {
-			p_repl_lines = 0;
-			p_newfirst = 1;
-		    }
-		    p_max = p_repl_lines + p_end;
-		    while (p_max >= hunkmax)
-			if (! grow_hunkmax ())
-			    return -1;
-		    if (p_repl_lines != ptrn_copiable
-			&& (p_prefix_context != 0
-			    || context != 0
-			    || p_repl_lines != 1))
-			repl_could_be_missing = FALSE;
-		    context = 0;
-		    break;
-		}
-		goto change_line;
+		if (buf[1] != '-')
+		  goto change_line;
+		if (ptrn_prefix_context == -1)
+		  ptrn_prefix_context = context;
+		ptrn_suffix_context = context;
+		if (repl_beginning
+		    || (p_end
+			!= p_ptrn_lines + 1 + (p_Char[p_end - 1] == '\n')))
+		  {
+		    if (p_end == 1)
+		      {
+			/* `Old' lines were omitted.  Set up to fill
+			   them in from `new' context lines.  */
+			p_end = p_ptrn_lines + 1;
+			ptrn_prefix_context = ptrn_suffix_context = -1;
+			fillsrc = p_end + 1;
+			filldst = 1;
+			fillcnt = p_ptrn_lines;
+		      }
+		    else if (! repl_beginning)
+		      fatal ("%s `---' at line %ld; check line numbers at line %ld",
+			     (p_end <= p_ptrn_lines
+			      ? "Premature"
+			      : "Overdue"),
+			     p_input_line, p_hunk_beg);
+		    else if (! repl_could_be_missing)
+		      fatal ("duplicate `---' at line %ld; check line numbers at line %ld",
+			     p_input_line, p_hunk_beg + repl_beginning);
+		    else
+		      {
+			repl_missing = TRUE;
+			goto hunk_done;
+		      }
+		  }
+		repl_beginning = p_end;
+		repl_backtrack_position = file_tell (pfp);
+		repl_patch_line = p_input_line;
+		repl_context = context;
+		p_len[p_end] = strlen (buf);
+		if (! (p_line[p_end] = savestr (buf)))
+		  {
+		    p_end--;
+		    return -1;
+		  }
+		p_Char[p_end] = '=';
+		for (s = buf;  *s && ! ISDIGIT (*s);  s++)
+		  continue;
+		if (!*s)
+		  malformed ();
+		p_newfirst = (LINENUM) atol (s);
+		while (ISDIGIT (*s))
+		  s++;
+		if (*s == ',')
+		  {
+		    do
+		      {
+			if (!*++s)
+			  malformed ();
+		      }
+		    while (! ISDIGIT (*s));
+		    p_repl_lines = (LINENUM) atol (s) - p_newfirst + 1;
+		  }
+		else if (p_newfirst)
+		  p_repl_lines = 1;
+		else
+		  {
+		    p_repl_lines = 0;
+		    p_newfirst = 1;
+		  }
+		p_max = p_repl_lines + p_end;
+		while (p_max >= hunkmax)
+		  if (! grow_hunkmax ())
+		    return -1;
+		if (p_repl_lines != ptrn_copiable
+		    && (p_prefix_context != 0
+			|| context != 0
+			|| p_repl_lines != 1))
+		  repl_could_be_missing = FALSE;
+		context = 0;
+		break;
 	    case '+':  case '!':
 		repl_could_be_missing = FALSE;
 	      change_line:
@@ -704,8 +866,16 @@ another_hunk (difftype)
 		    repl_missing = TRUE;
 		    goto hunk_done;
 		}
-		if (p_prefix_context == -1)
-		  p_prefix_context = context;
+		if (! repl_beginning)
+		  {
+		    if (ptrn_prefix_context == -1)
+		      ptrn_prefix_context = context;
+		  }
+		else
+		  {
+		    if (repl_prefix_context == -1)
+		      repl_prefix_context = context;
+		  }
 		chars_read -=
 		  (1 < chars_read
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
@@ -785,7 +955,7 @@ another_hunk (difftype)
 
     hunk_done:
 	if (p_end >=0 && !repl_beginning)
-	    fatal ("no --- found in patch at line %ld", pch_hunk_beg ());
+	    fatal ("no `---' found in patch at line %ld", pch_hunk_beg ());
 
 	if (repl_missing) {
 
@@ -821,7 +991,14 @@ another_hunk (difftype)
 	    p_ptrn_lines = 0;
 	}
 
-	p_suffix_context = context;
+	p_prefix_context = ((repl_prefix_context == -1
+			     || (ptrn_prefix_context != -1
+				 && ptrn_prefix_context < repl_prefix_context))
+			    ? ptrn_prefix_context : repl_prefix_context);
+	p_suffix_context = ((ptrn_suffix_context != -1
+			     && ptrn_suffix_context < context)
+			    ? ptrn_suffix_context : context);
+	assert (p_prefix_context != -1 && p_suffix_context != -1);
 
 	if (difftype == CONTEXT_DIFF
 	    && (fillcnt
@@ -829,7 +1006,7 @@ another_hunk (difftype)
 		    && p_prefix_context + p_suffix_context < ptrn_copiable))) {
 	    if (verbosity == VERBOSE)
 		say ("%s\n%s\n%s\n",
-"(Fascinating--this is really a new-style context diff but without",
+"(Fascinating -- this is really a new-style context diff but without",
 "the telltale extra asterisks on the *** line that usually indicate",
 "the new style...)");
 	    diff_type = difftype = NEW_CONTEXT_DIFF;
@@ -866,7 +1043,7 @@ another_hunk (difftype)
 	}
     }
     else if (difftype == UNI_DIFF) {
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
 	register LINENUM fillsrc;	/* index of old lines */
 	register LINENUM filldst;	/* index of new lines */
@@ -1018,13 +1195,15 @@ another_hunk (difftype)
 		context = 0;
 	    }
 	}/* while */
+	if (p_prefix_context == -1)
+	  malformed ();
 	p_suffix_context = context;
     }
     else {				/* normal diff--fake it up */
 	char hunk_type;
 	register int i;
 	LINENUM min, max;
-	long line_beginning = ftell(pfp);
+	file_offset line_beginning = file_tell (pfp);
 
 	p_prefix_context = p_suffix_context = 0;
 	chars_read = get_line ();
@@ -1131,7 +1310,7 @@ another_hunk (difftype)
 	    p_Char[i] = '+';
 	}
     }
-    if (reverse)			/* backwards patch? */
+    if (rev)				/* backwards patch? */
 	if (!pch_swap())
 	    say ("Not enough memory to swap next hunk!\n");
     if (debug & 2) {
@@ -1237,7 +1416,7 @@ incomplete_line ()
 {
   register FILE *fp = pfp;
   register int c;
-  register long line_beginning = ftell (fp);
+  register file_offset line_beginning = file_tell (fp);
 
   if (getc (fp) == '\\')
     {
@@ -1354,6 +1533,15 @@ pch_swap()
     return TRUE;
 }
 
+/* Return whether file WHICH (0 = old, 1 = new) appears to be nonexistent.  */
+
+bool
+pch_says_nonexistent (which)
+     int which;
+{
+  return p_says_nonexistent[which];
+}
+
 /* Return the specified line position in the old file of the old context. */
 
 LINENUM
@@ -1464,24 +1652,25 @@ void
 do_ed_script (ofp)
      FILE *ofp;
 {
-    static char const ed_program[] = ED_PROGRAM;
+    static char const ed_program[] = ed_PROGRAM;
 
     register char *t;
-    register long beginning_of_this_line;
+    register file_offset beginning_of_this_line;
     register bool this_line_is_command = FALSE;
     register FILE *pipefp = 0;
     register size_t chars_read;
 
     if (!skip_rest_of_patch) {
-	copy_file (inname, TMPOUTNAME);
+	assert (! inerrno);
+	copy_file (inname, TMPOUTNAME, instat.st_mode);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
-	pipefp = popen(buf, "w");
+	pipefp = popen(buf, binary_transput ? "wb" : "w");
 	if (!pipefp)
-	  pfatal (buf);
+	  pfatal ("can't open pipe to `%s'", buf);
     }
     for (;;) {
-	beginning_of_this_line = ftell(pfp);
+	beginning_of_this_line = file_tell (pfp);
 	chars_read = get_line ();
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);
@@ -1520,10 +1709,10 @@ do_ed_script (ofp)
 
     if (ofp)
       {
-	FILE *ifp = fopen (TMPOUTNAME, "r");
+	FILE *ifp = fopen (TMPOUTNAME, binary_transput ? "rb" : "r");
 	int c;
 	if (!ifp)
-	  pfatal (TMPOUTNAME);
+	  pfatal ("can't open `%s'", TMPOUTNAME);
 	while ((c = getc (ifp)) != EOF)
 	  if (putc (c, ofp) == EOF)
 	    write_fatal ();
