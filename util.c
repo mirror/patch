@@ -1,10 +1,10 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.24 1997/07/10 08:16:12 eggert Exp $ */
+/* $Id: util.c,v 1.25 1998/03/15 14:44:47 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
-Copyright 1992, 1993, 1997 Free Software Foundation, Inc.
+Copyright 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,10 +26,12 @@ If not, write to the Free Software Foundation,
 #include <common.h>
 #include <backupfile.h>
 #include <quotearg.h>
+#include <quotesys.h>
 #include <version.h>
 #undef XTERN
 #define XTERN
 #include <util.h>
+#include <xalloc.h>
 
 #include <maketime.h>
 #include <partime.h>
@@ -38,7 +40,7 @@ If not, write to the Free Software Foundation,
 #if !defined SIGCHLD && defined SIGCLD
 #define SIGCHLD SIGCLD
 #endif
-#if ! HAVE_RAISE
+#if ! HAVE_RAISE && ! defined raise
 # define raise(sig) kill (getpid (), sig)
 #endif
 
@@ -60,19 +62,24 @@ If not, write to the Free Software Foundation,
 
 static void makedirs PARAMS ((char *));
 
-/* Move a file FROM to TO, renaming it if possible and copying it if necessary.
+/* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
+   needs removal when cleaning up at the end of execution)
+   to TO, renaming it if possible and copying it if necessary.
    If we must create TO, use MODE to create it.
    If FROM is null, remove TO (ignoring FROMSTAT).
+   FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
    Back up TO if BACKUP is nonzero.  */
 
 #ifdef __STDC__
 /* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
-move_file (char const *from, char *to, mode_t mode, int backup)
+move_file (char const *from, int volatile *from_needs_removal,
+	   char *to, mode_t mode, int backup)
 #else
 void
-move_file (from, to, mode, backup)
+move_file (from, from_needs_removal, to, mode, backup)
      char const *from;
+     int volatile *from_needs_removal;
      char *to;
      mode_t mode;
      int backup;
@@ -117,28 +124,32 @@ move_file (from, to, mode, backup)
       if (to_errno)
 	{
 	  int fd;
+
 	  if (debug & 4)
-	    say ("creating empty unreadable file `%s'\n", bakname);
+	    say ("Creating empty unreadable file %s\n", quotearg (bakname));
+
 	  try_makedirs_errno = ENOENT;
 	  unlink (bakname);
 	  while ((fd = creat (bakname, 0)) < 0)
 	    {
 	      if (errno != try_makedirs_errno)
-		pfatal ("can't create file `%s'", bakname);
+		pfatal ("Can't create file %s", quotearg (bakname));
 	      makedirs (bakname);
 	      try_makedirs_errno = 0;
 	    }
 	  if (close (fd) != 0)
-	    pfatal ("can't close `%s'", bakname);
+	    pfatal ("Can't close file %s", quotearg (bakname));
 	}
       else
 	{
 	  if (debug & 4)
-	    say ("renaming `%s' to `%s'\n", to, bakname);
+	    say ("Renaming file %s to %s\n",
+		 quotearg_n (0, to), quotearg_n (1, bakname));
 	  while (rename (to, bakname) != 0)
 	    {
 	      if (errno != try_makedirs_errno)
-		pfatal ("can't rename `%s' to `%s'", to, bakname);
+		pfatal ("Can't rename file %s to %s",
+			quotearg_n (0, to), quotearg_n (1, bakname));
 	      makedirs (bakname);
 	      try_makedirs_errno = 0;
 	    }
@@ -150,9 +161,12 @@ move_file (from, to, mode, backup)
   if (from)
     {
       if (debug & 4)
-	say ("renaming `%s' to `%s'\n", from, to);
+	say ("Renaming file %s to %s\n",
+	     quotearg_n (0, from), quotearg_n (1, to));
 
-      if (rename (from, to) != 0)
+      if (rename (from, to) == 0)
+	*from_needs_removal = 0;
+      else
 	{
 	  int to_dir_known_to_exist = 0;
 
@@ -162,7 +176,10 @@ move_file (from, to, mode, backup)
 	      makedirs (to);
 	      to_dir_known_to_exist = 1;
 	      if (rename (from, to) == 0)
-		return;
+		{
+		  *from_needs_removal = 0;
+		  return;
+		}
 	    }
 
 	  if (errno == EXDEV)
@@ -172,23 +189,24 @@ move_file (from, to, mode, backup)
 		  if (unlink (to) == 0)
 		    to_dir_known_to_exist = 1;
 		  else if (errno != ENOENT)
-		    pfatal ("can't remove `%s'", to);
+		    pfatal ("Can't remove file %s", quotearg (to));
 		}
 	      if (! to_dir_known_to_exist)
 		makedirs (to);
-	      copy_file (from, to, mode);
+	      copy_file (from, to, 0, mode);
 	      return;
 	    }
 
-	  pfatal ("can't rename `%s' to `%s'", from, to);
+	  pfatal ("Can't rename file %s to %s",
+		  quotearg_n (0, from), quotearg_n (1, to));
 	}
     }
   else if (! backup)
     {
       if (debug & 4)
-	say ("removing `%s'\n", to);
+	say ("Removing file %s\n", quotearg (to));
       if (unlink (to) != 0)
-	pfatal ("can't remove `%s'", to);
+	pfatal ("Can't remove file %s", quotearg (to));
     }
 }
 
@@ -214,7 +232,7 @@ create_file (file, open_flags, mode)
     close (creat (file, mode));
   fd = open (file, O_CREAT | O_TRUNC | open_flags, mode);
   if (fd < 0)
-    pfatal ("can't create `%s'", file);
+    pfatal ("Can't create file %s", quotearg (file));
   return fd;
 }
 
@@ -223,12 +241,13 @@ create_file (file, open_flags, mode)
 #ifdef __STDC__
 /* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
-copy_file (char const *from, char const *to, mode_t mode)
+copy_file (char const *from, char const *to, int to_flags, mode_t mode)
 #else
 void
-copy_file (from, to, mode)
+copy_file (from, to, to_flags, mode)
      char const *from;
      char const *to;
+     int to_flags;
      mode_t mode;
 #endif
 {
@@ -237,11 +256,11 @@ copy_file (from, to, mode)
   size_t i;
 
   if ((fromfd = open (from, O_RDONLY | O_BINARY)) < 0)
-    pfatal ("can't reopen `%s'", from);
-  tofd = create_file (to, O_WRONLY | O_BINARY, mode);
+    pfatal ("Can't reopen file %s", quotearg (from));
+  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode);
   while ((i = read (fromfd, buf, bufsize)) != 0)
     {
-      if (i == -1)
+      if (i == (size_t) -1)
 	read_fatal ();
       if (write (tofd, buf, i) != i)
 	write_fatal ();
@@ -254,23 +273,27 @@ copy_file (from, to, mode)
 
 static char const DEV_NULL[] = NULL_DEVICE;
 
+static char const RCSSUFFIX[] = ",v";
+static char const CHECKOUT[] = "co %s";
+static char const CHECKOUT_LOCKED[] = "co -l %s";
+static char const RCSDIFF1[] = "rcsdiff %s";
+
 static char const SCCSPREFIX[] = "s.";
 static char const GET[] = "get ";
 static char const GET_LOCKED[] = "get -e ";
 static char const SCCSDIFF1[] = "get -p ";
 static char const SCCSDIFF2[] = "|diff - %s";
 
-static char const RCSSUFFIX[] = ",v";
-static char const CHECKOUT[] = "co %s";
-static char const CHECKOUT_LOCKED[] = "co -l %s";
-static char const RCSDIFF1[] = "rcsdiff %s";
+static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
 
 /* Return "RCS" if FILENAME is controlled by RCS,
-   "SCCS" if it is controlled by SCCS, and 0 otherwise.
+   "SCCS" if it is controlled by SCCS,
+   "ClearCase" if it is controlled by Clearcase, and 0 otherwise.
    READONLY is nonzero if we desire only readonly access to FILENAME.
    FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
    If successful and if GETBUF is nonzero, set *GETBUF to a command
-   that gets the file; similarly for DIFFBUF and a command to diff the file.
+   that gets the file; similarly for DIFFBUF and a command to diff the file
+   (but set *DIFFBUF to 0 if the diff operation is meaningless).
    *GETBUF and *DIFFBUF must be freed by the caller.  */
 char const *
 version_controller (filename, readonly, filestat, getbuf, diffbuf)
@@ -288,7 +311,7 @@ version_controller (filename, readonly, filestat, getbuf, diffbuf)
   size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
   size_t maxtrysize = filenamelen + maxfixlen + 1;
   size_t quotelen = quote_system_arg (0, filename);
-  size_t maxgetsize = sizeof GET_LOCKED + quotelen + maxfixlen;
+  size_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
   size_t maxdiffsize =
     (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof DEV_NULL - 1
      + 2 * quotelen + maxfixlen);
@@ -358,6 +381,23 @@ version_controller (filename, readonly, filestat, getbuf, diffbuf)
 
       r = "SCCS";
     }
+  else if (!readonly && filestat
+	   && try1 ("%s@@", filebase) && S_ISDIR (cstat.st_mode))
+    {
+      if (getbuf)
+	{
+	  char *p = *getbuf = xmalloc (maxgetsize);
+	  strcpy (p, CLEARTOOL_CO);
+	  p += sizeof CLEARTOOL_CO - 1;
+	  p += quote_system_arg (p, filename);
+	  *p = '\0';
+	}
+
+      if (diffbuf)
+	*diffbuf = 0;
+
+      r = "ClearCase";
+    }
 
   free (trybuf);
   return r;
@@ -379,8 +419,8 @@ version_get (filename, cs, exists, readonly, getbuf, filestat)
 {
   if (patch_get < 0)
     {
-      ask ("Get file `%s' from %s%s? [y] ", filename,
-	   cs, readonly ? "" : " with lock");
+      ask ("Get file %s from %s%s? [y] ",
+	   quotearg (filename), cs, readonly ? "" : " with lock");
       if (*buf == 'n')
 	return 0;
     }
@@ -388,20 +428,20 @@ version_get (filename, cs, exists, readonly, getbuf, filestat)
   if (dry_run)
     {
       if (! exists)
-	fatal ("can't do dry run on nonexistent version-controlled file `%s'; invoke `%s' and try again",
-	       filename, getbuf);
+	fatal ("can't do dry run on nonexistent version-controlled file %s; invoke `%s' and try again",
+	       quotearg (filename), getbuf);
     }
   else
     {
       if (verbosity == VERBOSE)
-	say ("Getting file `%s' from %s%s...\n", filename,
+	say ("Getting file %s from %s%s...\n", quotearg (filename),
 	     cs, readonly ? "" : " with lock");
       if (systemic (getbuf) != 0)
-	fatal ("can't get file `%s' from %s", filename, cs);
+	fatal ("Can't get file %s from %s", quotearg (filename), cs);
       if (stat (filename, filestat) != 0)
-	pfatal ("%s", filename);
+	pfatal ("%s", quotearg (filename));
     }
-  
+
   return 1;
 }
 
@@ -443,6 +483,32 @@ remove_prefix (p, prefixlen)
   char const *s = p + prefixlen;
   while ((*p++ = *s++))
     continue;
+}
+
+char *
+format_linenum (numbuf, n)
+     char numbuf[LINENUM_LENGTH_BOUND + 1];
+     LINENUM n;
+{
+  char *p = numbuf + LINENUM_LENGTH_BOUND;
+  *p = '\0';
+
+  if (n < 0)
+    {
+      do
+	*--p = '0' - (int) (n % 10);
+      while ((n /= 10) != 0);
+
+      *--p = '-';
+    }
+  else
+    {
+      do
+	*--p = '0' + (int) (n % 10);
+      while ((n /= 10) != 0);
+    }
+	   
+  return p;
 }
 
 #if !HAVE_VPRINTF
@@ -977,7 +1043,7 @@ removedirs (filename)
       {
 	filename[i] = '\0';
 	if (rmdir (filename) == 0 && verbosity == VERBOSE)
-	  say ("Removed empty directory `%s'.\n", filename);
+	  say ("Removed empty directory %s\n", quotearg (filename));
 	filename[i] = '/';
       }
 }
@@ -1009,32 +1075,39 @@ time_t *pstamp;
 	say ("fetchname %s %d\n", at, strip_leading);
 
     name = at;
-    /* Strip off up to `sleading' leading slashes and null terminate.  */
+    /* Strip up to `strip_leading' leading slashes and null terminate.
+       If `strip_leading' is negative, strip all leading slashes.  */
     for (t = at;  *t;  t++)
       {
 	if (ISSLASH (*t))
 	  {
 	    while (ISSLASH (t[1]))
 	      t++;
-	    if (--sleading >= 0)
+	    if (strip_leading < 0 || --sleading >= 0)
 		name = t+1;
 	  }
 	else if (ISSPACE ((unsigned char) *t))
 	  {
+	    char const *u = t;
+
 	    if (set_time | set_utc)
-	      stamp = str2time (t, initial_time, set_utc ? 0L : TM_LOCAL_ZONE);
+	      stamp = str2time (&u, initial_time,
+				set_utc ? 0L : TM_LOCAL_ZONE);
 	    else
 	      {
 		/* The head says the file is nonexistent if the timestamp
 		   is the epoch; but the listed time is local time, not UTC,
-		   and POSIX.1 allows local time to be 24 hours away from UTC.
-		   So match any time within 24 hours of the epoch.
-		   Use a default time zone 24 hours behind UTC so that any
-		   non-zoned time within 24 hours of the epoch is valid.  */
-		stamp = str2time (t, initial_time, -24L * 60 * 60);
-		if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
+		   and POSIX.1 allows local time offset anywhere in the range
+		   -25:00 < offset < +26:00.  Match any time in that
+		   range by assuming local time is -25:00 and then matching
+		   any ``local'' time T in the range 0 < T < 25+26 hours.  */
+		stamp = str2time (&u, initial_time, -25L * 60 * 60);
+		if (0 < stamp && stamp < (25 + 26) * 60L * 60)
 		  stamp = 0;
 	      }
+
+	    if (*u && ! ISSPACE ((unsigned char) *u))
+	      stamp = (time_t) -1;
 
 	    *t = '\0';
 	    break;
@@ -1044,8 +1117,9 @@ time_t *pstamp;
     if (!*name)
       return 0;
 
-    /* Allow files to be created by diffing against /dev/null.  */
-    if (strcmp (at, "/dev/null") == 0)
+    /* Ignore the name if it doesn't have enough slashes to strip off,
+       or if it is "/dev/null".  */
+    if (0 < sleading || strcmp (at, "/dev/null") == 0)
       {
 	if (pstamp)
 	  *pstamp = 0;
@@ -1056,16 +1130,6 @@ time_t *pstamp;
       *pstamp = stamp;
 
     return savestr (name);
-}
-
-GENERIC_OBJECT *
-xmalloc (size)
-     size_t size;
-{
-  register GENERIC_OBJECT *p = malloc (size);
-  if (!p)
-    memory_fatal ();
-  return p;
 }
 
 void

@@ -42,6 +42,9 @@
 # ifndef LONG_MIN
 # define LONG_MIN (-1-2147483647L)
 # endif
+# if HAVE_STDDEF_H
+#  include <stddef.h>
+# endif
 # if STDC_HEADERS
 #  include <stdlib.h>
 # endif
@@ -51,6 +54,10 @@
 # else
 #  define P(x) ()
 # endif
+#endif
+
+#ifndef offsetof
+#define offsetof(aggregate, member) ((size_t) &((aggregate *) 0)->member)
 #endif
 
 #include <ctype.h>
@@ -67,8 +74,8 @@
 
 #include <partime.h>
 
-char const partimeId[] =
-  "$Id: partime.c,v 5.16 1997/05/19 06:33:53 eggert Exp $";
+char const partime_id[] =
+  "$Id: partime.c,v 5.18 1998/03/15 15:48:53 eggert Exp $";
 
 
 /* Lookup tables for names of months, weekdays, time zones.  */
@@ -85,8 +92,9 @@ struct name_val
 static char const *parse_decimal P ((char const *, int, int, int, int, int *, int *));
 static char const *parse_fixed P ((char const *, int, int *));
 static char const *parse_pattern_letter P ((char const *, int, struct partime *));
-static char const *parse_prefix P ((char const *, struct partime *, int *));
+static char const *parse_prefix P ((char const *, char const **, struct partime *));
 static char const *parse_ranged P ((char const *, int, int, int, int *));
+static char const *parse_varying P ((char const *, int *));
 static int lookup P ((char const *, struct name_val const[]));
 static int merge_partime P ((struct partime *, struct partime const *));
 static void undefine P ((struct partime *));
@@ -121,10 +129,39 @@ static struct name_val const weekday_names[] =
   {"", TM_UNDEFINED}
 };
 
-#define hr60nonnegative(t) ((t)/100 * 60  +  (t)%100)
-#define hr60(t) ((t)<0 ? -hr60nonnegative(-(t)) : hr60nonnegative(t))
-#define zs(t,s) {s, hr60(t)}
-#define zd(t,s,d) zs(t, s),  zs((t)+100, d)
+#define RELATIVE_CONS(member, multiplier)	\
+	(offsetof (struct tm, member) + (multiplier) * sizeof (struct tm))
+#define RELATIVE_OFFSET(c)	((c) % sizeof (struct tm))
+#define RELATIVE_MULTIPLIER(c)	((c) / sizeof (struct tm))
+static struct name_val const relative_units[] =
+{
+  {"year", RELATIVE_CONS (tm_year,  1) },
+  {"mont", RELATIVE_CONS (tm_mon ,  1) },
+  {"fort", RELATIVE_CONS (tm_mday, 14) },
+  {"week", RELATIVE_CONS (tm_mday,  7) },
+  {"day" , RELATIVE_CONS (tm_mday,  1) },
+  {"hour", RELATIVE_CONS (tm_hour,  1) },
+  {"min" , RELATIVE_CONS (tm_min ,  1) },
+  {"sec" , RELATIVE_CONS (tm_sec ,  1) },
+  {"", TM_UNDEFINED}
+};
+
+static struct name_val const ago[] =
+{
+  {"ago", 0},
+  {"", TM_UNDEFINED}
+};
+
+static struct name_val const dst_names[] =
+{
+  {"dst", 1},
+  {"", 0}
+};
+
+#define hr60nonnegative(t)	((t)/100 * 60  +  (t)%100)
+#define hr60(t)	((t) < 0 ? - hr60nonnegative (-(t)) : hr60nonnegative (t))
+#define zs(t, s)	{s, hr60 (t)}
+#define zd(t, s, d)	zs (t, s),  zs ((t) + 100, d)
 
 static struct name_val const zone_names[] =
 {
@@ -155,7 +192,8 @@ static struct name_val const zone_names[] =
   {"lt", 1},
 #if 0
   /* The following names are duplicates or are not well attested.
-     There are lots more where these came from.  */
+     It's not worth keeping a complete list, since alphabetic time zone names
+     are deprecated and there are lots more where these came from.  */
   zs (-1100, "sst" ),		/* Samoan */
   zd (- 900, "yst" , "ydt" ),	/* Yukon - name is no longer used */
   zd (- 500, "ast" , "adt" ),	/* Acre */
@@ -191,13 +229,15 @@ lookup (s, table)
 
   for (j = 0; j < NAME_LENGTH_MAXIMUM; j++)
     {
-      unsigned char c = *s++;
+      unsigned char c = *s;
       if (! ISALPHA (c))
 	{
 	  buf[j] = '\0';
 	  break;
 	}
       buf[j] = ISUPPER (c) ? tolower (c) : c;
+      s++;
+      s += *s == '.';
     }
 
   for (;; table++)
@@ -216,54 +256,109 @@ undefine (t)
 {
   t->tm.tm_sec = t->tm.tm_min = t->tm.tm_hour = t->tm.tm_mday = t->tm.tm_mon
     = t->tm.tm_year = t->tm.tm_wday = t->tm.tm_yday
-    = t->ymodulus = t->yweek
+    = t->wday_ordinal = t->ymodulus = t->yweek
     = TM_UNDEFINED;
+  t->tmr.tm_sec = t->tmr.tm_min = t->tmr.tm_hour =
+    t->tmr.tm_mday = t->tmr.tm_mon = t->tmr.tm_year = 0;
   t->zone = TM_UNDEFINED_ZONE;
 }
 
-/* Array of patterns to look for in a date string.
+/* Patterns to look for in a time string.
    Order is important: we look for the first matching pattern
    whose values do not contradict values that we already know about.
    See `parse_pattern_letter' below for the meaning of the pattern codes.  */
-static char const *const patterns[] =
+static char const time_patterns[] =
 {
-  /* These traditional patterns must come first,
+  /* Traditional patterns come first,
      to prevent an ISO 8601 format from misinterpreting their prefixes.  */
-  "E_n_y", "x", /* RFC 822 */
-  "E_n", "n_E", "n", "t:m:s_A", "t:m_A", "t_A", /* traditional */
-  "y/N/D$", /* traditional RCS */
+
+  /* RFC 822, extended */
+  'E', '_', 'N', '_', 'y', '$', 0,
+  'x', 0,
+
+  /* traditional */
+  '4', '_', 'M', '_', 'D', '_', 'h', '_', 'm', '_', 's', '$', 0,
+  'R', '_', 'M', '_', 'D', '_', 'h', '_', 'm', '_', 's', '$', 0,
+  'E', '_', 'N', 0,
+  'N', '_', 'E', '_', 'y', ';', 0,
+  'N', '_', 'E', ';', 0,
+  'N', 0,
+  't', ':', 'm', ':', 's', '_', 'A', 0,
+  't', ':', 'm', '_', 'A', 0,
+  't', '_', 'A', 0,
+
+  /* traditional get_date */
+  'i', '_', 'x', 0,
+  'Y', '/', 'n', '/', 'E', ';', 0,
+  'n', '/', 'E', '/', 'y', ';', 0,
+  'n', '/', 'E', ';', 0,
+  'u', 0,
 
   /* ISO 8601:1988 formats, generalized a bit.  */
-  "y-N-D$", "4ND$", "Y-N$",
-  "RND$", "-R=N$", "-R$", "--N=D$", "N=DT",
-  "--N$", "---D$", "DT",
-  "Y-d$", "4d$", "R=d$", "-d$", "dT",
-  "y-W-X", "yWX", "y=W",
-  "-r-W-X", "r-W-XT", "-rWX", "rWXT", "-W=X", "W=XT", "-W",
-  "-w-X", "w-XT", "---X$", "XT", "4$",
-  "T",
-  "h:m:s$", "hms$", "h:m$", "hm$", "h$", "-m:s$", "-ms$", "-m$", "--s$",
-  "Y", "Z",
+  'y', '-', 'M', '-', 'D', '$', 0,
+  '4', 'M', 'D', '$', 0,
+  'Y', '-', 'M', '$', 0,
+  'R', 'M', 'D', '$', 0,
+  '-', 'R', '=', 'M', '$', 0,
+  '-', 'R', '$', 0,
+  '-', '-', 'M', '=', 'D', '$', 0,
+  'M', '=', 'D', 'T', 0,
+  '-', '-', 'M', '$', 0,
+  '-', '-', '-', 'D', '$', 0,
+  'D', 'T', 0,
+  'Y', '-', 'd', '$', 0,
+  '4', 'd', '$', 0,
+  'R', '=', 'd', '$', 0,
+  '-', 'd', '$', 0,
+  'd', 'T', 0,
+  'y', '-', 'W', '-', 'X', 0,
+  'y', 'W', 'X', 0,
+  'y', '=', 'W', 0,
+  '-', 'r', '-', 'W', '-', 'X', 0,
+  'r', '-', 'W', '-', 'X', 'T', 0,
+  '-', 'r', 'W', 'X', 0,
+  'r', 'W', 'X', 'T', 0,
+  '-', 'W', '=', 'X', 0,
+  'W', '=', 'X', 'T', 0,
+  '-', 'W', 0,
+  '-', 'w', '-', 'X', 0,
+  'w', '-', 'X', 'T', 0,
+  '-', '-', '-', 'X', '$', 0,
+  'X', 'T', 0,
+  '4', '$', 0,
+  'T', 0,
+  'h', ':', 'm', ':', 's', '$', 0,
+  'h', 'm', 's', '$', 0,
+  'h', ':', 'L', '$', 0,
+  'h', 'L', '$', 0,
+  'H', '$', 0,
+  '-', 'm', ':', 's', '$', 0,
+  '-', 'm', 's', '$', 0,
+  '-', 'L', '$', 0,
+  '-', '-', 's', '$', 0,
+  'Y', 0,
+  'Z', 0,
 
   0
 };
 
-/* Parse an initial prefix of STR, setting *T accordingly.
+/* Parse an initial prefix of STR according to *PATTERNS, setting *T.
    Return the first character after the prefix, or 0 if it couldn't be parsed.
-   Start with pattern *PI; if success, set *PI to the next pattern to try.
-   Set *PI to -1 if we know there are no more patterns to try;
-   if *PI is initially negative, give up immediately.  */
+   *PATTERNS is a character array containing one pattern string after another;
+   it is terminated by an empty string.
+   If success, set *PATTERNS to the next pattern to try.
+   Set *PATTERNS to 0 if we know there are no more patterns to try;
+   if *PATTERNS is initially 0, give up immediately.  */
 static char const *
-parse_prefix (str, t, pi)
+parse_prefix (str, patterns, t)
      char const *str;
+     char const **patterns;
      struct partime *t;
-     int *pi;
 {
-  int i = *pi;
-  char const *pat;
+  char const *pat = *patterns;
   unsigned char c;
 
-  if (i < 0)
+  if (! pat)
     return 0;
 
   /* Remove initial noise.  */
@@ -272,26 +367,31 @@ parse_prefix (str, t, pi)
       if (! c)
 	{
 	  undefine (t);
-	  *pi = -1;
+	  *patterns = 0;
 	  return str;
 	}
+
       str++;
     }
 
   /* Try a pattern until one succeeds.  */
-  while ((pat = patterns[i++]) != 0)
+  while (*pat)
     {
       char const *s = str;
       undefine (t);
+
       do
 	{
 	  if (! (c = *pat++))
 	    {
-	      *pi = i;
+	      *patterns = pat;
 	      return s;
 	    }
 	}
       while ((s = parse_pattern_letter (s, c, t)) != 0);
+
+      while (*pat++)
+	continue;
     }
 
   return 0;
@@ -312,6 +412,27 @@ parse_fixed (s, digits, res)
       unsigned d = *s++ - '0';
       if (9 < d)
 	return 0;
+      n = 10 * n + d;
+    }
+  *res = n;
+  return s;
+}
+
+/* Parse a possibly empty initial prefix of S.
+   Store the parsed number into *RES.
+   Return the first character after the prefix.  */
+static char const *
+parse_varying (s, res)
+     char const *s;
+     int *res;
+{
+  int n = 0;
+  for (;;)
+    {
+      unsigned d = *s - '0';
+      if (9 < d)
+	break;
+      s++;
       n = 10 * n + d;
     }
   *res = n;
@@ -379,9 +500,11 @@ parzone (s, zone)
      char const *s;
      long *zone;
 {
+  char const *s1;
   char sign;
   int hh, mm, ss;
-  int minutesEastOfUTC;
+  int minutes_east_of_UTC;
+  int trailing_DST;
   long offset, z;
 
   /* The formats are LT, n, n DST, nDST, no, o
@@ -395,39 +518,51 @@ parzone (s, zone)
       break;
 
     default:
-      minutesEastOfUTC = lookup (s, zone_names);
-      if (minutesEastOfUTC == -1)
+      minutes_east_of_UTC = lookup (s, zone_names);
+      if (minutes_east_of_UTC == -1)
 	return 0;
 
-      /* Don't bother to check rest of spelling.  */
+      /* Don't bother to check rest of spelling,
+	 but look for an embedded "DST".  */
+      trailing_DST = 0;
       while (ISALPHA ((unsigned char) *s))
-	s++;
+	{
+	  if ((*s == 'D' || *s == 'd') && lookup (s, dst_names))
+	    trailing_DST = 1;
+	  s++;
+	  s += *s == '.';
+	}
 
       /* Don't modify LT.  */
-      if (minutesEastOfUTC == 1)
+      if (minutes_east_of_UTC == 1)
 	{
 	  *zone = TM_LOCAL_ZONE;
 	  return (char *) s;
 	}
 
-      z = minutesEastOfUTC * 60L;
+      z = minutes_east_of_UTC * 60L;
+      s1 = s;
 
-      /* Look for trailing " DST".  */
-      if ((s[-1] == 'T' || s[-1] == 't')
-	  && (s[-2] == 'S' || s[-2] == 's')
-	  && (s[-3] == 'D' || s[-3] == 'd'))
-	goto trailing_dst;
+      /* Look for trailing "DST" or " DST".  */
       while (ISSPACE ((unsigned char) *s))
 	s++;
-      if ((s[0] == 'D' || s[0] == 'd')
-	  && (s[1] == 'S' || s[1] == 's')
-	  && (s[2] == 'T' || s[2] == 't'))
+      if (lookup (s, dst_names))
 	{
-	  s += 3;
-	trailing_dst:
+	  while (ISALPHA ((unsigned char) *s))
+	    {
+	      s++;
+	      s += *s == '.';
+	    }
+	  trailing_DST = 1;
+	}
+
+      if (trailing_DST)
+	{
 	  *zone = z + 60*60;
 	  return (char *) s;
 	}
+
+      s = s1;
 
       switch (*s)
 	{
@@ -475,6 +610,8 @@ parse_pattern_letter (s, c, t)
      int c;
      struct partime *t;
 {
+  char const *s0 = s;
+
   switch (c)
     {
     case '$': /* The next character must be a non-digit.  */
@@ -494,15 +631,20 @@ parse_pattern_letter (s, c, t)
       s = parse_fixed (s, 4, &t->tm.tm_year);
       break;
 
+    case ';': /* The next character must be a non-digit, and cannot be ':'.  */
+      if (ISDIGIT (*s) || *s == ':')
+	return 0;
+      break;
+
     case '=': /* optional '-' */
       s += *s == '-';
       break;
 
     case 'A': /* AM or PM */
-      /* This matches the regular expression [AaPp][Mm]?.
+      /* This matches the regular expression [AaPp]\.?([Mm]\.?)?.
          It must not be followed by a letter or digit;
          otherwise it would match prefixes of strings like "PST".  */
-      switch (*s++)
+      switch (*s)
 	{
 	case 'A':
 	case 'a':
@@ -519,11 +661,14 @@ parse_pattern_letter (s, c, t)
 	default:
 	  return 0;
 	}
+      s++;
+      s += *s == '.';
       switch (*s)
 	{
 	case 'M':
 	case 'm':
 	  s++;
+	  s += *s == '.';
 	  break;
 	}
       if (ISALNUM ((unsigned char) *s))
@@ -539,12 +684,16 @@ parse_pattern_letter (s, c, t)
       t->tm.tm_yday--;
       break;
 
-    case 'E': /* extended day of month [1-9, 01-31] */
+    case 'E': /* traditional day of month [1-9, 01-31] */
       s = parse_ranged (s, (ISDIGIT (s[0]) && ISDIGIT (s[1])) + 1, 1, 31,
 			&t->tm.tm_mday);
       break;
 
-    case 'h': /* hour [00-23 followed by optional fraction] */
+    case 'h': /* hour [00-23] */
+      s = parse_ranged (s, 2, 0, 23, &t->tm.tm_hour);
+      break;
+
+    case 'H': /* hour [00-23 followed by optional fraction] */
       {
 	int frac;
 	s = parse_decimal (s, 2, 0, 23, 60 * 60, &t->tm.tm_hour, &frac);
@@ -553,21 +702,39 @@ parse_pattern_letter (s, c, t)
       }
       break;
 
-    case 'm': /* minute [00-59 followed by optional fraction] */
+    case 'i': /* ordinal day number, e.g. "3rd" */
+      s = parse_varying (s, &t->wday_ordinal);
+      if (s == s0)
+	return 0;
+      while (ISALPHA ((unsigned char) *s))
+	s++;
+      break;
+
+    case 'L': /* minute [00-59 followed by optional fraction] */
       s = parse_decimal (s, 2, 0, 59, 60, &t->tm.tm_min, &t->tm.tm_sec);
       break;
 
-    case 'n': /* month name [e.g. "Jan"] */
+    case 'm': /* minute [00-59] */
+      s = parse_ranged (s, 2, 0, 59, &t->tm.tm_min);
+      break;
+
+    case 'M': /* month [01-12] */
+      s = parse_ranged (s, 2, 1, 12, &t->tm.tm_mon);
+      t->tm.tm_mon--;
+      break;
+
+    case 'n': /* traditional month [1-9, 01-12] */
+      s = parse_ranged (s, (ISDIGIT (s[0]) && ISDIGIT (s[1])) + 1, 1, 12,
+			&t->tm.tm_mon);
+      t->tm.tm_mon--;
+      break;
+
+    case 'N': /* month name [e.g. "Jan"] */
       if (! TM_DEFINED (t->tm.tm_mon = lookup (s, month_names)))
 	return 0;
       /* Don't bother to check rest of spelling.  */
       while (ISALPHA ((unsigned char) *s))
 	s++;
-      break;
-
-    case 'N': /* month [01-12] */
-      s = parse_ranged (s, 2, 1, 12, &t->tm.tm_mon);
-      t->tm.tm_mon--;
       break;
 
     case 'r': /* year % 10 (remainder in origin-0 decade) [0-9] */
@@ -604,6 +771,50 @@ parse_pattern_letter (s, c, t)
       s = parse_ranged (s, (ISDIGIT (s[0]) && ISDIGIT (s[1])) + 1, 1, 12,
 			&t->tm.tm_hour);
       break;
+
+    case 'u': /* relative unit */
+      {
+	int i;
+	int n;
+	int negative = 0;
+	switch (*s)
+	  {
+	    case '-': negative = 1;
+	    /* Fall through.  */
+	    case '+': s++;
+	  }
+	if (ISDIGIT (*s))
+	  s = parse_varying (s, &n);
+	else if (s == s0)
+	  n = 1;
+	else
+	  return 0;
+	if (negative)
+	  n = -n;
+	while (!ISALNUM ((unsigned char) *s))
+	  s++;
+	i = lookup (s, relative_units);
+	if (!TM_DEFINED (i))
+	  return 0;
+	* (int *) ((char *) &t->tmr + RELATIVE_OFFSET (i))
+	  += n * RELATIVE_MULTIPLIER (i);
+	while (ISALPHA ((unsigned char) *s))
+	  s++;
+	while (! ISALNUM ((unsigned char) *s) && *s)
+	  s++;
+	if (TM_DEFINED (lookup (s, ago)))
+	  {
+	    t->tmr.tm_sec  = - t->tmr.tm_sec;
+	    t->tmr.tm_min  = - t->tmr.tm_min;
+	    t->tmr.tm_hour = - t->tmr.tm_hour;
+	    t->tmr.tm_mday = - t->tmr.tm_mday;
+	    t->tmr.tm_mon  = - t->tmr.tm_mon;
+	    t->tmr.tm_year = - t->tmr.tm_year;
+	    while (ISALPHA ((unsigned char) *s))
+	      s++;
+	  }
+	break;
+      }
 
     case 'w': /* 'W' or 'w' only (stands for current week) */
       switch (*s++)
@@ -646,14 +857,9 @@ parse_pattern_letter (s, c, t)
 	goto case_R;
       /* fall into */
     case 'Y': /* year in full [4 or more digits] */
-      {
-	int len = 0;
-	while (ISDIGIT (s[len]))
-	  len++;
-	if (len < 4)
-	  return 0;
-	s = parse_fixed (s, len, &t->tm.tm_year);
-      }
+      s = parse_varying (s, &t->tm.tm_year);
+      if (s - s0 < 4)
+	return 0;
       break;
 
     case 'Z': /* time zone */
@@ -686,7 +892,8 @@ merge_partime (t, u)
       || conflict (t->tm.tm_mday, u->tm.tm_mday)
       || conflict (t->tm.tm_mon, u->tm.tm_mon)
       || conflict (t->tm.tm_year, u->tm.tm_year)
-      || conflict (t->tm.tm_wday, u->tm.tm_yday)
+      || conflict (t->tm.tm_wday, u->tm.tm_wday)
+      || conflict (t->tm.tm_yday, u->tm.tm_yday)
       || conflict (t->ymodulus, u->ymodulus)
       || conflict (t->yweek, u->yweek)
       || (t->zone != u->zone
@@ -701,10 +908,17 @@ merge_partime (t, u)
   merge_ (t->tm.tm_mday, u->tm.tm_mday)
   merge_ (t->tm.tm_mon, u->tm.tm_mon)
   merge_ (t->tm.tm_year, u->tm.tm_year)
-  merge_ (t->tm.tm_wday, u->tm.tm_yday)
+  merge_ (t->tm.tm_wday, u->tm.tm_wday)
+  merge_ (t->tm.tm_yday, u->tm.tm_yday)
   merge_ (t->ymodulus, u->ymodulus)
   merge_ (t->yweek, u->yweek)
 # undef merge_
+  t->tmr.tm_sec += u->tmr.tm_sec;
+  t->tmr.tm_min += u->tmr.tm_min;
+  t->tmr.tm_hour += u->tmr.tm_hour;
+  t->tmr.tm_mday += u->tmr.tm_mday;
+  t->tmr.tm_mon += u->tmr.tm_mon;
+  t->tmr.tm_year += u->tmr.tm_year;
   if (u->zone != TM_UNDEFINED_ZONE)
     t->zone = u->zone;
   return 0;
@@ -725,12 +939,12 @@ partime (s, t)
 
   while (*s)
     {
-      int i = 0;
+      char const *patterns = time_patterns;
       char const *s1;
 
       do
 	{
-	  if (! (s1 = parse_prefix (s, &p, &i)))
+	  if (! (s1 = parse_prefix (s, &patterns, &p)))
 	    return (char *) s;
 	}
       while (merge_partime (t, &p) != 0);

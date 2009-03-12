@@ -1,6 +1,6 @@
 /* Print the version number.  */
 
-/* $Id: version.c,v 1.5 1997/05/21 18:29:20 eggert Exp $ */
+/* $Id: version.c,v 1.6 1998/03/15 14:44:47 eggert Exp $ */
 
 #define XTERN extern
 #include <common.h>
@@ -10,8 +10,8 @@
 #include <version.h>
 
 static char const copyright_string[] = "\
-Copyright 1988 Larry Wall\n\
-Copyright 1997 Free Software Foundation, Inc.";
+Copyright 1984-1988 Larry Wall\n\
+Copyright 1989-1998 Free Software Foundation, Inc.";
 
 static char const free_software_msgid[] = "\
 This program comes with NO WARRANTY, to the extent permitted by law.\n\

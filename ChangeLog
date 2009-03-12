@@ -1,3 +1,147 @@
+1998-03-20  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.5.3.
+	* quotearg.h (quotearg_quoting_options):
+	Remove; it ran afoul of the Borland C compiler.
+	Its address is now represented by the null pointer.
+	* quotearg.c (default_quoting_options):
+	Renamed from quotearg_quoting_options,
+	and now static instead of extern.
+	(clone_quoting_options, get_quoting_style, set_quoting_style,
+	set_char_quoting, quotearg_buffer):
+	Use default_quoting_options when passed a null pointer.
+	* patch.c (main, get_some_switches):
+	Pass a null pointer instead of address of quotearg_quoting_options.
+
+1998-03-17  Paul Eggert  <eggert@twinsun.com>
+
+	* patch.c (option_help): Update bug reporting address to gnu.org.
+	* patch.man: Fix copyright and bug reporting address.
+
+1998-03-16  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.5.2.
+	(AC_CHECK_FUNCS): Add strerror.
+	(jm_FUNC_MALLOC, jm_FUNC_REALLOC): Add.
+	(AM_C_PROTOTYPES): Add.
+
+	* NEWS, patch.c (longopts, get_some_switches), patch.man:
+	Add --quoting-style, --posix options.
+
+	* Makefile.in (LIBSRCS): Add malloc.c, realloc.c.
+	(SRCS): Add error.c, quotesys.c, xmalloc.c.
+	(OBJS): Likewise.
+	(HDRS): Add error.h, quotesys.h, xalloc.h.
+	(MISC): Add AUTHORS, aclocal.m4, ansi2knr.c.
+	(clean): Use mostlyclean rule.
+	(argmatch.o, inp.o, patch.o, pch.o): Now also depends on quotearg.h.
+	(inp.o, patch.o, util.o): Now also depends on xalloc.h.
+	(error.o, quotearg.o, quotesys.o, xmalloc.o,
+	ansi2knr.o, ansi2knr, quotearg_.c, .c_.c): New rules.
+	(U): New macro.
+	(OBJS, quotearg$U.o): Rename quotearg.o to quotearg$U.o.
+	(mostlyclean): Remove ansi2knr, *_.c.
+	(.SUFFIXES): Add _.c.
+
+	* acconfig.h (PROTOTYPES): New undef.
+
+	* acconfig.h, configure.in (HAVE_INTTYPES_H, malloc, realloc):
+	New macros.
+
+	* aclocal.m4, error.c, error.h, malloc.c,
+	quotearg.h, quotearg.c, realloc.c, xalloc.h, xmalloc.c: New files.
+
+	* argmatch.c: Include <sys/types.h> before <argmatch.h>.
+	Include <quotearg.h>.
+
+	* argmatch.c (invalid_arg),
+	inp.c (scan_input, report_revision, too_many_lines, get_input_file,
+	plan_a),
+	patch.c (main, get_some_switches, numeric_string),
+	pch.c (open_patch_file, intuit_diff_type, do_ed_script):
+	util.c (move_file, create_file, copy_file, version_get, removedirs):
+	Quote output operands properly.
+
+	* common.h: Include <inttypes.h> if available.
+	(CHAR_BIT, TYPE_SIGNED, TYPE_MINIMUM, TYPE_MAXIMUM,
+	CHAR_MAX, INT_MAX, LONG_MIN, SIZE_MAX, O_EXCL): New macros.
+	(TMPINNAME_needs_removal, TMPOUTNAME_needs_removal,
+	TMPPATNAME_needs_removal): New variables.
+	(xmalloc): Remove decl; now in xalloc.h.
+
+	* inp.c: Include <quotearg.h>, <xalloc.h>.
+
+	* inp.c (get_input_file),
+	pch.c (intuit_diff_type),
+	util.c (version_controller):
+	Don't do diff operation if diffbuf is null; used by ClearCase support.
+
+	* inp.c (plan_b),
+	patch.c (init_reject),
+	pch.c (open_patch_file, do_ed_script):
+	Create temporary file with O_EXCL to avoid races.
+
+	* patch.c: Include <quotearg.h>, <xalloc.h>.
+	(create_output_file, init_output): New open_flags arg.
+	All callers changed.
+	(init_reject): No longer takes filename arg.  All callers changed.
+	(remove_if_needed): New function.
+	(cleanup): Use it to remove temporary files only if needed.
+	(TMPREJNAME_needs_removal): New var.
+	(main): Set xalloc_fail_func to memory_fatal; needed for xalloc.
+	Initialize quoting style from QUOTING_STYLE.
+	(longopts, get_some_switches): Offset longarg options by CHAR_MAX,
+	not 128; this is needed for EBCDIC ports.
+
+	* patch.c (main, locate_hunk, abort_hunk, spew_output),
+	pch.c (there_is_another_patch, intuit_diff_type, malformed,
+	another_hunk):
+	The LINENUM type now might be longer than long,
+	so print and read line numbers more carefully.
+
+	* patch.c (main),
+	pch.c (there_is_another_patch):
+	util.c (fetchname):
+	strippath now defaults to -1, so that we can distinguish unset
+	value from largest possible.
+
+	* patch.man: Clarify how file name is chosen from candidates.
+
+	* pch.c: Include <quotearg.h>.
+	(p_strip_trailing_cr): New variable.
+	(scan_linenum): New function.
+	(pget_line, re_patch, there_is_another_patch, intuit_diff_type,
+	get_line): Strip trailing CRs from context diffs that need this.
+	(best_name): Use SIZE_MAX instead of (size_t) -1 for max size_t.
+
+	* quotesys.c, quotearg.h: Renamed from quotearg.c and quotearg.h.
+	All uses changed.
+	* quotesys.h (__QUOTESYS_P): Renamed from __QUOTEARG_P.
+
+	* util.c: Include <quotearg.h>, <xalloc.h>.
+	(raise): Don't define if already defined.
+	(move_file): New arg from_needs_removal.  All callers changed.
+	(copy_file): New arg to_flags.  All callers changed.
+	(CLEARTOOL_CO): New constant.
+	(version_controller): Add ClearCase support.
+	(format_linenum): New function.
+	(fetchname): Allow any POSIX.1 time zone spec, which means
+	any local time offset in the range -25:00 < offset < +26:00.
+	Ignore the name if it doesn't have enough slashes to strip off.
+	(xmalloc): Remove; now in xmalloc.c.
+
+	* util.h (LINENUM_LENGTH_BOUND): New macro.
+	(format_linenum): New decl.
+
+	* version.c (copyright_string): Update years of copyrights.
+
+1997-09-03  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.5.1.
+	* inp.c (re_input): Don't free buffers twice when input is garbled.
+	* patch.c (main): If skipping patch and Plan A fails, don't
+	bother trying Plan B.
+
 1997-08-31  Paul Eggert  <eggert@twinsun.com>
 
 	* configure.in (VERSION): Version 2.5 released.

@@ -51,11 +51,29 @@
    directory headers.  */
 #undef D_INO_IN_DIRENT
 
+/* Define if you have a working <inttypes.h> header file.  */
+#undef HAVE_INTTYPES_H
+
 /* Define if memchr works.  */
 #undef HAVE_MEMCHR
 
 /* Define if `struct utimbuf' is declared -- usually in <utime.h>.  */
 #undef HAVE_STRUCT_UTIMBUF
+
+/* Define to rpl_malloc if the replacement function should be used.  */
+#undef malloc
+
+/* Define to 1 if ANSI function prototypes are usable.  */
+#undef PROTOTYPES
+
+/* Define to rpl_realloc if the replacement function should be used.  */
+#undef realloc
+
+/* Define if you have the DONE_WORKING_MALLOC_CHECK function.  */
+#undef HAVE_DONE_WORKING_MALLOC_CHECK
+
+/* Define if you have the DONE_WORKING_REALLOC_CHECK function.  */
+#undef HAVE_DONE_WORKING_REALLOC_CHECK
 
 /* Define if you have the _doprintf function.  */
 #undef HAVE__DOPRINTF
@@ -92,6 +110,9 @@
 
 /* Define if you have the sigsetmask function.  */
 #undef HAVE_SIGSETMASK
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
 
 /* Define if you have the <dirent.h> header file.  */
 #undef HAVE_DIRENT_H

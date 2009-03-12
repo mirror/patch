@@ -3,6 +3,31 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+Changes since version 2.5:
+
+* A security hole has been closed.
+  It involved race conditions with temporary files.
+
+* The default quoting style is 'shell', which causes `patch' to quote
+  file names with funny characters like `$'.  This prevents their
+  misinterpretation if you cut them from its output and paste them into
+  the shell.
+
+* `patch' now works correctly with large files on Large File Summit
+  hosts like Solaris 2.6.
+
+* `patch' now ignores trailing carriage returns in lines of context diffs
+  if the context diff headers end in carriage return.
+
+* New options:
+  --posix
+  --quoting-style=WORD
+
+* New environment variables:
+  QUOTING_STYLE
+
+* `patch' now supports ClearCase version management.
+
 Changes in version 2.5:
 
 * Version control is now independent of whether backups are made.

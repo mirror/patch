@@ -36,19 +36,29 @@
 struct partime
   {
     /* This structure describes the parsed time.
-       Only the following tm_* values in it are used:
+       Only the following tm_* members are used:
 		sec, min, hour, mday, mon, year, wday, yday.
-       If TM_UNDEFINED (value), the parser never found the value.
+       If ! TM_DEFINED (value), the parser never found the value.
        The tm_year field is the actual year, not the year - 1900;
        but see ymodulus below.  */
     struct tm tm;
 
-    /* If !TM_UNDEFINED (ymodulus),
+    /* Like tm, but values are relative to the value in tm,
+       and values are initialized to 0 rather than to TM_UNDEFINED.
+       Only the following tm_* members are used:
+		sec, min, hour, mday, mon, year.  */
+    struct tm tmr;
+
+    /* If TM_DEFINED (wday_ordinal),
+       then day number (e.g. 3 in "3rd Sunday").  */
+    int wday_ordinal;
+
+    /* If TM_DEFINED (ymodulus),
        then tm.tm_year is actually modulo ymodulus.  */
     int ymodulus;
 
     /* Week of year, ISO 8601 style.
-       If TM_UNDEFINED (yweek), the parser never found yweek.
+       If ! TM_DEFINED (yweek), the parser never found yweek.
        Weeks start on Mondays.
        Week 1 includes Jan 4.  */
     int yweek;

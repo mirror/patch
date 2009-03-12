@@ -22,9 +22,10 @@
 # include <config.h>
 #endif
 
-#include <argmatch.h>
-
 #include <sys/types.h>
+
+#include <argmatch.h>
+#include <quotearg.h>
 
 #include <stdio.h>
 #if HAVE_STRING_H
@@ -83,10 +84,7 @@ invalid_arg (kind, value, problem)
      const char *value;
      int problem;
 {
-  fprintf (stderr, "%s: ", program_name);
-  if (problem == -1)
-    fprintf (stderr, "invalid");
-  else				/* Assume -2.  */
-    fprintf (stderr, "ambiguous");
-  fprintf (stderr, " %s `%s'\n", kind, value);
+  fprintf (stderr,
+	   problem == -1 ? "%s: invalid %s %s\n" : "%s: ambiguous %s %s\n",
+	   program_name, kind, quotearg (value));
 }
