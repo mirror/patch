@@ -36,6 +36,8 @@
 #   define const
 #  endif
 # endif
+  /* MIPS RISCOS4.52 defines time_t in <sys/types.h> not <time.h>.  */
+# include <sys/types.h>
 # if HAVE_LIMITS_H
 #  include <limits.h>
 # endif
@@ -57,7 +59,7 @@
 #include <maketime.h>
 
 char const maketId[] =
-  "$Id: maketime.c,v 5.13 1997/05/15 17:33:14 eggert Exp $";
+  "$Id: maketime.c,v 5.15 1997/06/17 16:54:36 eggert Exp $";
 
 static int isleap P ((int));
 static int month_days P ((struct tm const *));
@@ -101,10 +103,10 @@ time2tm (unixtime, localzone)
      int localzone;
 {
   struct tm *tm;
-#if TZ_must_be_set
+#ifdef TZ_is_unset
   static char const *TZ;
   if (!TZ && !(TZ = getenv ("TZ")))
-    faterror ("The TZ environment variable is not set; please set it to your timezone");
+    TZ_is_unset ("The TZ environment variable is not set; please set it to your timezone");
 #endif
   if (localzone || !(tm = gmtime (&unixtime)))
     tm = localtime (&unixtime);
@@ -114,7 +116,8 @@ time2tm (unixtime, localzone)
 /* Yield A - B, measured in seconds.  */
 time_t
 difftm (a, b)
-     struct tm const *a, *b;
+     struct tm const *a;
+     struct tm const *b;
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
   int by = b->tm_year + (TM_YEAR_ORIGIN - 1);

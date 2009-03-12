@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.h,v 1.7 1997/05/19 06:52:03 eggert Exp $ */
+/* $Id: pch.h,v 1.8 1997/06/13 06:28:37 eggert Exp $ */
 
 LINENUM pch_end PARAMS ((void));
 LINENUM pch_first PARAMS ((void));
@@ -18,6 +18,7 @@ char pch_char PARAMS ((LINENUM));
 int another_hunk PARAMS ((enum diff, int));
 int pch_says_nonexistent PARAMS ((int));
 size_t pch_line_len PARAMS ((LINENUM));
+time_t pch_timestamp PARAMS ((int));
 void do_ed_script PARAMS ((FILE *));
 void open_patch_file PARAMS ((char const *));
 void re_patch PARAMS ((void));

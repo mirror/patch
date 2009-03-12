@@ -3,6 +3,46 @@ Known problems:
 * The diffutils 2.7 documentation for `patch' is obsolete; this should be
   fixed in diffutils 2.8.  Until then, see `patch --help' or `man patch'.
 
+Change in version 2.4:
+
+* New options:
+  -Z or --set-utc sets times of patched files, assuming diff uses UTC (GMT).
+  -T or --set-time is similar, assuming local time (not recommended).
+  --backup-if-mismatch makes a backup if the patch does not match exactly
+  --no-backup-if-mismatch makes a backup only if otherwise requested
+
+* The default is now --backup-if-mismatch unless POSIXLY_CORRECT is set.
+
+* The -B or --prefix, -Y or --basename-prefix, and -z or --suffix options
+  no longer affect whether backups are made (as they did in patch 2.2 and 2.3);
+  they now merely specify the file names used when simple backups are made.
+
+* When patching a nonexistent file and making backups, an empty backup file
+  is now made (just as with traditional patch); but the backup file is
+  unreadable, as a way of indicating that it represents a nonexistent file.
+
+* `patch' now matches against empty and nonexistent files more generously.
+  A patch against an empty file applies to a nonexistent file, and vice versa.
+
+* -g or --get and PATCH_GET now have a numeric value that specifies
+  whether `patch' is getting files.
+  If the value is positive, working files are gotten from RCS or SCCS files;
+  if zero, `patch' ignores RCS and SCCS and working files are not gotten;
+  and if negative, `patch' asks the user whether to get each file.
+  The default is normally negative, but it is zero if POSIXLY_CORRECT is set.
+
+* The -G or --no-get option introduced in GNU patch 2.3 has been removed;
+  use -g0 instead.
+
+* The method used to intuit names of files to be patched is changed again:
+  `Index:' lines are normally ignored for context diffs,
+  and RCS and SCCS files are normally looked for when files do not exist.
+  The complete new method is described in the man page.
+
+* By default, `patch' is now more verbose when patches do not match exactly.
+
+* The manual page has a new COMPATIBILITY ISSUES section.
+
 Changes in version 2.3:
 
 * Unless the POSIXLY_CORRECT environment variable is set:
@@ -11,35 +51,19 @@ Changes in version 2.3:
     nonexistent files if the input is a context diff.
     A file is assumed to not exist if its context diff header
     suggests that it is empty, and if the header timestamp
-    is within 24 hours of 1970-01-01 00:00:00 UTC.
+    looks like it might be equivalent to 1970-01-01 00:00:00 UTC.
   - Files that ``become nonexistent'' after patching are now removed.
     When a file is removed, any empty ancestor directories are also removed.
 
 * Files are now automatically gotten from RCS and SCCS
-  if the -g or --get option is specified,
-  or if the PATCH_GET environment variable is set
-  and the -G or --no-get option is not specified.
+  if the -g or --get option is specified.
+  (The -G or --no-get option, also introduced in 2.3, was withdrawn in 2.4.)
 
 * If the PATCH_VERSION_CONTROL environment variable is set,
   it overrides the VERSION_CONTROL environment variable.
 
-* The method used to intuit names of files to be patched is now as follows:
-
-  - Take the old and new names from the context header if present,
-    and take the index name from the `Index:' line if present.
-    Consider the file names to be in the order (old, new, index).
-  - If some named files exist, use the first one if POSIXLY_CORRECT is set,
-    the best one otherwise.
-  - If no named files exist, some names are given, POSIXLY_CORRECT is not set,
-    and the patch appears to create a file, then use the best name
-    requiring the creation of the fewest directories.
-  - Otherwise, ask the user for a file name.
-
-  The ``best'' of a nonempty list of file names is defined as follows:
-    - Take the names with the fewest path name components;
-      of those, take the names with the shortest basename;
-      of those, take the shortest names;
-      of those, take the first name.
+* The method used to intuit names of files to be patched is changed.
+  (It was further revised in 2.4; see above.)
 
 * The new --binary option makes `patch' read and write files in binary mode.
   This option has no effect on POSIX-compliant hosts;
@@ -73,8 +97,8 @@ Changes in version 2.2:
 * Patch now complies better with POSIX.2 if your host complies with POSIX.1.
 
   Therefore:
-  - By default, no backups are made.  Set the VERSION_CONTROL environment
-    variable to "existing" if you prefer patch's traditional behavior.
+  - By default, no backups are made.
+    (But this was changed again in patch 2.4; see above.)
   - The simple backup file name for F defaults to F.orig
     regardless of whether the file system supports long file names,
     and F~ is used only if F.orig is too long for that particular file.
@@ -89,6 +113,7 @@ Changes in version 2.2:
     consulted if none of the above files exist.  However, if the patch
     appears to create a file, the file does not have to exist: instead,
     the first name with the longest existing directory prefix is taken.
+    (These rules were changed again in patch 2.3 and 2.4; see above.)
   - Exit status 0 means success, 1 means hunks were rejected, 2 means trouble.
   - `-l' ignores changes only in spaces and tabs, not in other white space.
   - If no `-p' option is given, `-pINFINITY' is assumed, instead of trying
@@ -107,6 +132,7 @@ Changes in version 2.2:
 
 * RCS is used only if the version control method is `existing'
   and there is already an RCS file.  Similarly for SCCS.
+  (But this was changed again in patch 2.3 and 2.4; see above.)
 
 * Copyright notices have been clarified.  Every file in this version of `patch'
   can be distributed under the GNU General Public License.  See README for

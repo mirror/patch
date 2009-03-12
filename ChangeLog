@@ -1,3 +1,222 @@
+1997-06-19  Paul Eggert  <eggert@pogo.gnu.ai.mit.edu>
+
+	* configure.in (VERSION): Version 2.4 released.
+	* NEWS: Patch is now verbose when patches do not match exactly.
+
+1997-06-17  Paul Eggert  <eggert@twinsun.com>
+
+	* pc/djgpp/configure.sed (config.h): Remove redundant $(srcdir).
+
+	* configure.in (VERSION): Bump to 2.3.9.
+	* patch.c (main): By default, warn about hunks that succeed
+	with nonzero offset.
+	* patch.man: Add LC_ALL=C advice for making patches.
+	* pc/djgpp/configure.sed (config.h): Fix paths to dependent files.
+
+1997-06-17  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.8.
+
+	* pch.c (open_patch_file): Test stdin for fseekability.
+	(intuit_diff_type): Missing context diff headers are now warnings,
+	not errors; some people use patches with them (e.g. when retrying
+	rejects).
+
+	* patch.c (struct outstate):
+	New type, collecting together some output state vars.
+	(apply_hunk, copy_till, spew_output, init_output): Use it.
+	Keep track of whether some output has been generated.
+	(backup_if_mismatch): New var.
+	(ofp): Remove, in favor of local struct outstate vars.
+	(main): Use struct outstate.  Initialize backup_if_mismatch to
+	be the inverse of posixly_correct.  Keep track of whether mismatches
+	occur, and use this to implement backup_if_mismatch.
+	Report files that are not empty after patching, but should be.
+	(longopts, option_help, get_some_switches): New options
+	--backup-if-mismatch, --no-backup-if-mismatch.
+	(get_some_switches): -B, -Y, -z no longer set backup_type.
+	* backupfile.c (find_backup_file_name):
+	Treat backup_type == none like simple.
+
+	* Makefile.in (CONFIG_HDRS):
+	Remove var; no longer needed by djgpp port.
+	(DISTFILES_PC_DJGPP): Rename pc/djgpp/config.sed to
+	pc/djgpp/configure.sed; remove pc/djgpp/config.h in favor of
+	new file that edits it, called pc/djgpp/config.sed.
+	* pc/djgpp/configure.bat: Rename config.sed to configure.sed.
+	* pc/djgpp/configure.sed (CONFIG_HDRS): Remove.
+	(config.h): Add rule to build this from config.hin and
+	pc/djgpp/config.sed.
+	* pc/djgpp/config.sed:
+	Convert from .h file to .sed script that generates .h file.
+
+	* NEWS: Describe --backup-if-mismatch, --no-backup-if-mismatch.
+	* patch.man:
+	Describe new options --backup-if-mismatch, --no-backup-if-mismatch
+	and their ramifications.  Use unreadable backup to represent
+	nonexistent file.
+
+1997-06-12  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.7.
+	(AC_CHECK_FUNCS): Add `raise'.
+
+	* Makefile.in (inp.o): No longer depends on quotearg.h.
+
+	* common.h (outfile): New decl (was private var named `output').
+	(invc): New decl.
+	(GENERIC_OBJECT): Renamed from VOID.
+	(NULL_DEVICE, TTY_DEVICE): New macros.
+
+	* patch.c (output): Remove; renamed to `outfile' and moved to common.h.
+	(main): `failed' is count, not boolean.
+	Say "Skipping patch." when deciding to skip patch.
+	(get_some_switches): Set invc when setting inname.
+
+	* inp.c: Do not include <quotearg.h>.
+	(SCCSPREFIX, GET, GET_LOCKED, SCCSDIFF1, SCCSDIFF2, SCCSDIFF3,
+	RCSSUFFIX, CHECKOUT, CHECKOUT_LOCKED, RCSDIFF1, RCSDIFF2):
+	Move to util.c.
+	(get_input_file): Invoke new functions version_controller and
+	version_get to simplify this code.
+	(plan_b): "/dev/tty" -> NULL_DEVICE
+
+	* pch.h (pch_timestamp): New decl.
+	* pch.c (p_timestamp): New var; takes over from global timestamp array.
+	(pch_timestamp): New function to export p_timestamp.
+	(there_is_another_patch): Use blander wording when you can't intuit
+	the file name.
+	Say "Skipping patch." when deciding to skip patch.
+	(intuit_diff_type): Look for version-controlled but nonexistent files
+	when intuiting file names; set invc accordingly.
+	Ignore Index: line if either old or new line is present, and if
+	POSIXLY_CORRECT is not set.
+	(do_ed_script): Flush stdout before invoking popen, since it may
+	send output to stdout.
+
+	* util.h (version_controller, version_get): New decls.
+	* util.c: Include <quotearg.h> earlier.
+	(raise): New macro, if ! HAVE_RAISE.
+	(move_file): Create empty unreadable file when backing up a nonexistent
+	file.
+	(DEV_NULL): New constant.
+	(SCCSPREFIX, GET. GET_LOCKED, SCCSDIFF1, SCCSDIFF2,
+ 	RCSSUFFIX, CHECKOUT, CHECKOUT_LOCKED, RCSDIFF1): Moved here from inp.c.
+	(version_controller, version_get): New functions.
+	(ask): Look only at /dev/tty for answers; and when standard output is
+	not a terminal and ! posixly_correct, don't even look there.
+	Remove unnecessary fflushes of stdout.
+	(ok_to_reverse): Say "Skipping patch." when deciding to skip patch..
+	(sigs): SIGPIPE might not be defined.
+	(exit_with_signal): Use `raise' instead of `kill'.
+	(systemic): fflush stdout before invoking subsidiary command.
+
+	* patch.man: Document recent changes.
+	Add "COMPATIBILITY ISSUES" section.
+
+	* NEWS: New COMPATIBILITY ISSUES for man page.
+	Changed verbosity when fuzz is found.
+	File name intuition is changed, again.
+	Backups are made unreadable when the file did not exist.
+
+	* pc/djgpp/config.h (HAVE_STRUCT_UTIMBUF): Define.
+	(HAVE_RAISE): New macro.
+	(HAVE_UTIME_H): Define.
+	(TZ_is_unset): Do not define; it's not a serious problem with `patch'
+	to have TZ be unset in DOS.
+
+1997-06-08  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.6.
+	(AC_CHECK_HEADERS): Add utime.h.
+	* acconfig.h, configure.in, pc/djgpp/config.h (HAVE_STRUCT_UTIMBUF):
+ 	New macro.
+	* pc/djgpp/config.h (HAVE_UTIME_H, TZ_is_unset): New macros.
+
+	* NEWS, patch.man: Describe new -Z, -T options, new numeric
+ 	option for -G, retired -G, and more verbose default behavior
+ 	with fuzz.
+
+	* pch.c (intuit_diff_type): Record times reported for files in headers.
+	Remove head_says_nonexistent[x], since it's now equivalent to
+	!timestamp[x].
+	* util.h (fetchname): Change argument head_says_nonexistent to
+ 	timestamp.
+	* util.c: #include <partime.h> for TM_LOCAL_ZONE.
+	Don't include <time.h> since common.h now includes it.
+	(ok_to_reverse): noreverse and batch cases now output regardless of
+	verbosity.
+	(fetchname): Change argument head_says_nonexistent to pstamp, and
+	store header timestamp into *pstamp.
+	If -T or -Z option is given, match time stamps more precisely.
+	(ask): Remove unnecessary close of ttyfd.
+	When there is no terminal at all, output a newline to make the
+	output look nicer.  After reporting EOF, flush stdout;
+	when an input error, report the error type.
+
+	* inp.c (get_input_file):
+	Ask user whether to get file if patch_get is negative.
+
+	* Makefile.in (clean): Don't clean */*.o; clean core* and *core.
+
+1997-06-04  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.5.
+
+	* util.c (ok_to_reverse):
+	Be less chatty if verbosity is SILENT and we don't
+	have to ask the user.  If force is nonzero, apply the patch anyway.
+
+	* pch.c (there_is_another_patch):
+	Before skipping rest of patch, skip to
+	the patch start, so that another_hunk can skip it properly.
+	(intuit_diff_type): Slight wording change for missing headers, to
+	regularize with other diagnostics.  Fix off-by-one error when setting
+	p_input_line when scanning the first hunk to check for deleted files.
+
+1997-06-03  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.4.
+
+	* NEWS: Now matches more generously against nonexistent or empty files.
+
+	* pch.c (there_is_another_patch): Move warning about not being
+	able to intuit file names here from skip_to.
+	(intuit_diff_type): Fatal error if we find a headless unified
+	or context diff.
+
+	* util.c (ask): Null-terminate buffer properly even if it grew.
+	(fetchname): No need to test for null first argument.
+
+1997-06-02  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.3.
+	* pch.c (p_says_nonexistent, pch_says_nonexistent): Is now 1 for empty,
+	2 for nonexistent.
+	(intuit_diff_type): Set p_says_nonexistent according to new meaning.
+	Treat empty files like nonexistent files when reversing.
+	(skip_to): Output better diagnostic when we can't intuit a file name.
+	* patch.c (main):
+	Count bytes, not lines, when testing whether a file is empty,
+	since it may contain only non-newline chars.
+	pch_says_nonexistent now returns 2 for nonexistent files.
+
+1997-06-01  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.2.
+	* pch.c (open_patch_file):
+	Fix bug when computing size of patch read from a pipe.
+
+1997-05-30  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.in (VERSION): Bump to 2.3.1.
+
+	* Makefile.in (transform, patch_name): New vars,
+	for proper implementation of AC_ARG_PROGRAM.
+	(install, uninstall): Use them.
+	(install-strip): New rule.
+	* pc/djgpp/config.sed (program_transform_name): Set to empty.
+
 1997-05-30  Paul Eggert  <eggert@twinsun.com>
 
 	* configure.in (VERSION), NEWS: Version 2.3 released.
@@ -87,50 +306,6 @@
 
 	* Makefile.in (DISTFILES_PC): Remove pc/quotearg.c.
 	* pc/djgpp/config.sed: Remove unnecessary hooks for quotearg and SHELL.
-
-1997-05-18  Paul Eggert  <eggert@pogo.gnu.ai.mit.edu>
-
-	* configure.in (VERSION): Increase to 2.2.9.
-	(AC_TYPE_MODE_T): Add.
-
-	* pch.c (hunkmax): Now of type LINENUM.
-	(malformed): Add decl.
-	(there_is_another_patch): Skip inname-detection if skip_rest_of_patch.
-	(intuit_diff_type): To determine whether file appears to have been
-	deleted, look at replacement, not pattern.
-	If there is a mismatch between existence of file and whether the
-	patch claims to change whether the file exists, ask whether to
-	reverse the patch.
-	(another_hunk): New parameter REV specifying whether to reverse the
-	hunk.  All callers changed.
-	(do_ed_script): Add assertion to ensure input file exists.
-
-	* common.h (noreverse): New decl.
-	(ok_to_reverse): Remove decl.
-
-	* patch.c (noreverse): Now extern.
-	(main): New environment var PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
-	Don't assert(hunk) if we're skipping the patch; we may not have any hunks.
-	When removing a file, back it up if backups are desired.
-	Don't chmod output file if input file did not exist.
-	chmod rej file to input file's mode minus executable bits.
-	(locate_hunk): Go back to old way of a single fuzz parameter, but
-	handle it more precisely: context diffs with partial contexts
-	can only match file ends, since the partial context can occur
-	only at the start or end of file.
-	All callers changed.
-	(create_output_file): Use create_file to create files.
-	(ok_to_reverse): Move to util.c.
-
-	* inp.c (scan_input, get_input_file): Quote file names in diagnostics.
-	(get_input_file): Set inerrno if it's not already set.
-	Don't create file; it's now the caller's responsibility.
-	(plan_b): Use /dev/null if input size is zero, since it might not exist.
-	Use create_file to create temporary file.
-
-	* NEWS: Add PATCH_VERSION_CONTROL; DOS port is untested.
-
-	* patch.man: PATCH_VERSION_CONTROL overrides VERSION_CONTROL.
 
 1997-05-18  Paul Eggert  <eggert@twinsun.com>
 

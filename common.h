@@ -1,6 +1,6 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.16 1997/05/26 05:34:43 eggert Exp $ */
+/* $Id: common.h,v 1.18 1997/06/13 06:28:37 eggert Exp $ */
 
 /*
 Copyright 1986, 1988 Larry Wall
@@ -44,6 +44,7 @@ If not, write to the Free Software Foundation,
 #include <assert.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
 
 #include <sys/stat.h>
 #if ! defined S_ISDIR && defined S_IFDIR
@@ -148,7 +149,9 @@ XTERN size_t bufsize;			/* allocated size of buf */
 XTERN bool using_plan_a;		/* try to keep everything in memory */
 
 XTERN char *inname;
+XTERN char *outfile;
 XTERN int inerrno;
+XTERN int invc;
 XTERN struct stat instat;
 XTERN bool dry_run;
 XTERN bool posixly_correct;
@@ -174,6 +177,8 @@ XTERN bool skip_rest_of_patch;
 XTERN int strippath;
 XTERN bool canonicalize;
 XTERN int patch_get;
+XTERN int set_time;
+XTERN int set_utc;
 
 enum diff
   {
@@ -190,9 +195,9 @@ XTERN enum diff diff_type;
 XTERN char *revision;			/* prerequisite revision, if any */
 
 #ifdef __STDC__
-# define VOID void
+# define GENERIC_OBJECT void
 #else
-# define VOID char
+# define GENERIC_OBJECT char
 #endif
 
 #if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6) || __STRICT_ANSI__
@@ -207,7 +212,7 @@ XTERN char *revision;			/* prerequisite revision, if any */
 # endif
 #endif
 
-VOID *xmalloc PARAMS ((size_t));
+GENERIC_OBJECT *xmalloc PARAMS ((size_t));
 void fatal_exit PARAMS ((int)) __attribute__ ((noreturn));
 
 #include <errno.h>
@@ -221,7 +226,7 @@ extern int errno;
 # if !HAVE_MEMCHR
 #  define memcmp(s1, s2, n) bcmp (s1, s2, n)
 #  define memcpy(d, s, n) bcopy (s, d, n)
-VOID *memchr ();
+GENERIC_OBJECT *memchr ();
 # endif
 #endif
 
@@ -230,8 +235,8 @@ VOID *memchr ();
 #else
 long atol ();
 char *getenv ();
-VOID *malloc ();
-VOID *realloc ();
+GENERIC_OBJECT *malloc ();
+GENERIC_OBJECT *realloc ();
 #endif
 
 #if HAVE_UNISTD_H
@@ -291,4 +296,12 @@ off_t lseek ();
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
+#endif
+
+#ifndef NULL_DEVICE
+#define NULL_DEVICE "/dev/null"
+#endif
+
+#ifndef TTY_DEVICE
+#define TTY_DEVICE "/dev/tty"
 #endif

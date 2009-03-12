@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.17 1997/05/30 08:03:48 eggert Exp $ */
+/* $Id: util.c,v 1.22 1997/06/13 06:28:37 eggert Exp $ */
 
 /*
 Copyright 1986 Larry Wall
@@ -25,17 +25,21 @@ If not, write to the Free Software Foundation,
 #define XTERN extern
 #include <common.h>
 #include <backupfile.h>
+#include <quotearg.h>
 #include <version.h>
 #undef XTERN
 #define XTERN
 #include <util.h>
 
-#include <time.h>
 #include <maketime.h>
+#include <partime.h>
 
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
 #define SIGCHLD SIGCLD
+#endif
+#if ! HAVE_RAISE
+# define raise(sig) kill (getpid (), sig)
 #endif
 
 #ifdef __STDC__
@@ -77,7 +81,7 @@ move_file (from, to, mode, backup)
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
 
-  if (! to_errno)
+  if (backup)
     {
       int try_makedirs_errno = 0;
       char *bakname;
@@ -110,15 +114,36 @@ move_file (from, to, mode, backup)
 	    memory_fatal ();
 	}
 
-      if (debug & 4)
-	say ("renaming `%s' to `%s'\n", to, bakname);
-      while (rename (to, bakname) != 0)
+      if (to_errno)
 	{
-	  if (errno != try_makedirs_errno)
-	    pfatal ("can't rename `%s' to `%s'", to, bakname);
-	  makedirs (bakname);
-	  try_makedirs_errno = 0;
+	  int fd;
+	  if (debug & 4)
+	    say ("creating empty unreadable file `%s'\n", bakname);
+	  try_makedirs_errno = ENOENT;
+	  unlink (bakname);
+	  while ((fd = creat (bakname, 0)) < 0)
+	    {
+	      if (errno != try_makedirs_errno)
+		pfatal ("can't create file `%s'", bakname);
+	      makedirs (bakname);
+	      try_makedirs_errno = 0;
+	    }
+	  if (close (fd) != 0)
+	    pfatal ("can't close `%s'", bakname);
 	}
+      else
+	{
+	  if (debug & 4)
+	    say ("renaming `%s' to `%s'\n", to, bakname);
+	  while (rename (to, bakname) != 0)
+	    {
+	      if (errno != try_makedirs_errno)
+		pfatal ("can't rename `%s' to `%s'", to, bakname);
+	      makedirs (bakname);
+	      try_makedirs_errno = 0;
+	    }
+	}
+
       free (bakname);
     }
 
@@ -216,6 +241,159 @@ copy_file (from, to, mode)
     read_fatal ();
   if (close (tofd) != 0)
     write_fatal ();
+}
+
+static char const DEV_NULL[] = NULL_DEVICE;
+
+static char const SCCSPREFIX[] = "s.";
+static char const GET[] = "get ";
+static char const GET_LOCKED[] = "get -e ";
+static char const SCCSDIFF1[] = "get -p ";
+static char const SCCSDIFF2[] = "|diff - %s";
+
+static char const RCSSUFFIX[] = ",v";
+static char const CHECKOUT[] = "co %s";
+static char const CHECKOUT_LOCKED[] = "co -l %s";
+static char const RCSDIFF1[] = "rcsdiff %s";
+
+/* Return "RCS" if FILENAME is controlled by RCS,
+   "SCCS" if it is controlled by SCCS, and 0 otherwise.
+   READONLY is nonzero if we desire only readonly access to FILENAME.
+   FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
+   If successful and if GETBUF is nonzero, set *GETBUF to a command
+   that gets the file; similarly for DIFFBUF and a command to diff the file.
+   *GETBUF and *DIFFBUF must be freed by the caller.  */
+char const *
+version_controller (filename, readonly, filestat, getbuf, diffbuf)
+     char const *filename;
+     int readonly;
+     struct stat const *filestat;
+     char **getbuf;
+     char **diffbuf;
+{
+  struct stat cstat;
+  char const *filebase = base_name (filename);
+  char const *dotslash = *filename == '-' ? "./" : "";
+  size_t dir_len = filebase - filename;
+  size_t filenamelen = strlen (filename);
+  size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
+  size_t maxtrysize = filenamelen + maxfixlen + 1;
+  size_t quotelen = quote_system_arg (0, filename);
+  size_t maxgetsize = sizeof GET_LOCKED + quotelen + maxfixlen;
+  size_t maxdiffsize =
+    (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof DEV_NULL - 1
+     + 2 * quotelen + maxfixlen);
+  char *trybuf = xmalloc (maxtrysize);
+  char const *r = 0;
+
+  strcpy (trybuf, filename);
+
+#define try1(f,a1)    (sprintf (trybuf + dir_len, f, a1),    stat (trybuf, &cstat) == 0)
+#define try2(f,a1,a2) (sprintf (trybuf + dir_len, f, a1,a2), stat (trybuf, &cstat) == 0)
+
+  /* Check that RCS file is not working file.
+     Some hosts don't report file name length errors.  */
+
+  if ((try2 ("RCS/%s%s", filebase, RCSSUFFIX)
+       || try1 ("RCS/%s", filebase)
+       || try2 ("%s%s", filebase, RCSSUFFIX))
+      && ! (filestat
+	    && filestat->st_dev == cstat.st_dev
+	    && filestat->st_ino == cstat.st_ino))
+    {
+      if (getbuf)
+	{
+	  char *p = *getbuf = xmalloc (maxgetsize);
+	  sprintf (p, readonly ? CHECKOUT : CHECKOUT_LOCKED, dotslash);
+	  p += strlen (p);
+	  p += quote_system_arg (p, filename);
+	  *p = '\0';
+	}
+
+      if (diffbuf)
+	{
+	  char *p = *diffbuf = xmalloc (maxdiffsize);
+	  sprintf (p, RCSDIFF1, dotslash);
+	  p += strlen (p);
+	  p += quote_system_arg (p, filename);
+	  *p++ = '>';
+	  strcpy (p, DEV_NULL);
+	}
+
+      r = "RCS";
+    }
+  else if (try2 ("SCCS/%s%s", SCCSPREFIX, filebase)
+	   || try2 ("%s%s", SCCSPREFIX, filebase))
+    {
+      if (getbuf)
+	{
+	  char *p = *getbuf = xmalloc (maxgetsize);
+	  sprintf (p, readonly ? GET : GET_LOCKED);
+	  p += strlen (p);
+	  p += quote_system_arg (p, trybuf);
+	  *p = '\0';
+	}
+
+      if (diffbuf)
+	{
+	  char *p = *diffbuf = xmalloc (maxdiffsize);
+	  strcpy (p, SCCSDIFF1);
+	  p += sizeof SCCSDIFF1 - 1;
+	  p += quote_system_arg (p, trybuf);
+	  sprintf (p, SCCSDIFF2, dotslash);
+	  p += strlen (p);
+	  p += quote_system_arg (p, filename);
+	  *p++ = '>';
+	  strcpy (p, DEV_NULL);
+	}
+
+      r = "SCCS";
+    }
+
+  free (trybuf);
+  return r;
+}
+
+/* Get FILENAME from version control system CS.  The file already exists if
+   EXISTS is nonzero.  Only readonly access is needed if READONLY is nonzero.
+   Use the command GETBUF to actually get the named file.
+   Store the resulting file status into *FILESTAT.
+   Return nonzero if successful.  */
+int
+version_get (filename, cs, exists, readonly, getbuf, filestat)
+     char const *filename;
+     char const *cs;
+     int exists;
+     int readonly;
+     char const *getbuf;
+     struct stat *filestat;
+{
+  if (patch_get < 0)
+    {
+      ask ("Get file `%s' from %s%s? [y] ", filename,
+	   cs, readonly ? "" : " with lock");
+      if (*buf == 'n')
+	return 0;
+    }
+
+  if (dry_run)
+    {
+      if (! exists)
+	fatal ("can't do dry run on nonexistent version-controlled file `%s'; invoke `%s' and try again",
+	       filename, getbuf);
+    }
+  else
+    {
+      if (verbosity == VERBOSE)
+	say ("Getting file `%s' from %s%s...\n", filename,
+	     cs, readonly ? "" : " with lock");
+      if (systemic (getbuf) != 0)
+	fatal ("can't get file `%s' from %s", filename, cs);
+      if (stat (filename, filestat) != 0)
+	pfatal ("%s", filename);
+    }
+  
+  return 1;
 }
 
 /* Allocate a unique area for a string. */
@@ -339,7 +517,7 @@ pfatal (format, va_alist)
   vararg_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
-  fflush (stderr);
+  fflush (stderr); /* perror bypasses stdio on some hosts.  */
   errno = errnum;
   perror (" ");
   fflush (stderr);
@@ -388,21 +566,22 @@ ask (format, va_alist)
 
   if (ttyfd == -2)
     {
-      ttyfd = open ("/dev/tty", O_RDONLY);
-      if (ttyfd < 0)
-	{
-	  close (ttyfd);
-	  for (ttyfd = STDERR_FILENO;  0 <= ttyfd;  ttyfd--)
-	    if (isatty (ttyfd))
-	      break;
-	}
+      /* If standard output is not a tty, don't bother opening /dev/tty,
+	 since it's unlikely that stdout will be seen by the tty user.
+	 The isatty test also works around a bug in GNU Emacs 19.34 under Linux
+	 which makes a call-process `patch' hang when it reads from /dev/tty.
+	 POSIX.2 requires that we read /dev/tty, though.  */
+      ttyfd = (posixly_correct || isatty (STDOUT_FILENO)
+	       ? open (TTY_DEVICE, O_RDONLY)
+	       : -1);
     }
 
   if (ttyfd < 0)
     {
       /* No terminal at all -- default it.  */
+      printf ("\n");
       buf[0] = '\n';
-      r = 1;
+      buf[1] = '\0';
     }
   else
     {
@@ -420,13 +599,14 @@ ask (format, va_alist)
 	printf ("EOF\n");
       else if (r < 0)
 	{
+	  perror ("tty read");
+	  fflush (stderr);
 	  close (ttyfd);
 	  ttyfd = -1;
 	  r = 0;
 	}
+      buf[s + r] = '\0';
     }
-
-  buf[r] = '\0';
 }
 
 /* Return nonzero if it OK to reverse a patch.  */
@@ -442,7 +622,7 @@ ok_to_reverse (format, va_alist)
 {
   int r = 0;
 
-  if (noreverse || ! batch || verbosity != SILENT)
+  if (noreverse || ! (force && verbosity == SILENT))
     {
       va_list args;
       vararg_start (args, format);
@@ -452,14 +632,19 @@ ok_to_reverse (format, va_alist)
 
   if (noreverse)
     {
-      printf ("  Ignoring it.\n");
+      printf ("  Skipping patch.\n");
       skip_rest_of_patch = TRUE;
+      r = 0;
+    }
+  else if (force)
+    {
+      if (verbosity != SILENT)
+	printf ("  Applying it anyway.\n");
       r = 0;
     }
   else if (batch)
     {
-      if (verbosity != SILENT)
-	say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
+      say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
       r = 1;
     }
   else
@@ -470,7 +655,11 @@ ok_to_reverse (format, va_alist)
 	{
 	  ask ("Apply anyway? [n] ");
 	  if (*buf != 'y')
-	    skip_rest_of_patch = TRUE;
+	    {
+	      if (verbosity != SILENT)
+		say ("Skipping patch.\n");
+	      skip_rest_of_patch = TRUE;
+	    }
 	}
     }
 
@@ -484,6 +673,9 @@ static int const sigs[] = {
 #ifdef SIGHUP
        SIGHUP,
 #endif
+#ifdef SIGPIPE
+       SIGPIPE,
+#endif
 #ifdef SIGTERM
        SIGTERM,
 #endif
@@ -493,8 +685,7 @@ static int const sigs[] = {
 #ifdef SIGXFSZ
        SIGXFSZ,
 #endif
-       SIGINT,
-       SIGPIPE
+       SIGINT
 };
 
 #if !HAVE_SIGPROCMASK
@@ -616,7 +807,7 @@ exit_with_signal (sig)
   sigemptyset (&s);
   sigaddset (&s, sig);
   sigprocmask (SIG_UNBLOCK, &s, (sigset_t *) 0);
-  kill (getpid (), sig);
+  raise (sig);
   exit (2);
 }
 
@@ -626,6 +817,7 @@ systemic (command)
 {
   if (debug & 8)
     say ("+ %s\n", command);
+  fflush (stdout);
   return system (command);
 }
 
@@ -633,7 +825,6 @@ systemic (command)
 /* These mkdir and rmdir substitutes are good enough for `patch';
    they are not general emulators.  */
 
-#include <quotearg.h>
 static int doprogram PARAMS ((char const *, char const *));
 static int mkdir PARAMS ((char const *, mode_t));
 static int rmdir PARAMS ((char const *));
@@ -793,18 +984,16 @@ init_time ()
 /* Make filenames more reasonable. */
 
 char *
-fetchname (at, strip_leading, head_says_nonexistent)
+fetchname (at, strip_leading, pstamp)
 char *at;
 int strip_leading;
-int *head_says_nonexistent;
+time_t *pstamp;
 {
     char *name;
     register char *t;
     int sleading = strip_leading;
-    int says_nonexistent = 0;
+    time_t stamp = (time_t) -1;
 
-    if (!at)
-	return 0;
     while (ISSPACE ((unsigned char) *at))
 	at++;
     if (debug & 128)
@@ -823,15 +1012,21 @@ int *head_says_nonexistent;
 	  }
 	else if (ISSPACE ((unsigned char) *t))
 	  {
-	    /* The head says the file is nonexistent if the timestamp
-	       is the epoch; but the listed time is local time, not UTC,
-	       and POSIX.1 allows local time to be 24 hours away from UTC.
-	       So match any time within 24 hours of the epoch.
-	       Use a default time zone 24 hours behind UTC so that any
-	       non-zoned time within 24 hours of the epoch is valid.  */
-	    time_t stamp = str2time (t, initial_time, -24L * 60 * 60);
-	    if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
-	      says_nonexistent = 1;
+	    if (set_time | set_utc)
+	      stamp = str2time (t, initial_time, set_utc ? 0L : TM_LOCAL_ZONE);
+	    else
+	      {
+		/* The head says the file is nonexistent if the timestamp
+		   is the epoch; but the listed time is local time, not UTC,
+		   and POSIX.1 allows local time to be 24 hours away from UTC.
+		   So match any time within 24 hours of the epoch.
+		   Use a default time zone 24 hours behind UTC so that any
+		   non-zoned time within 24 hours of the epoch is valid.  */
+		stamp = str2time (t, initial_time, -24L * 60 * 60);
+		if (0 <= stamp && stamp <= 2 * 24L * 60 * 60)
+		  stamp = 0;
+	      }
+
 	    *t = '\0';
 	    break;
 	  }
@@ -843,22 +1038,22 @@ int *head_says_nonexistent;
     /* Allow files to be created by diffing against /dev/null.  */
     if (strcmp (at, "/dev/null") == 0)
       {
-	if (head_says_nonexistent)
-	  *head_says_nonexistent = 1;
+	if (pstamp)
+	  *pstamp = 0;
 	return 0;
       }
 
-    if (head_says_nonexistent)
-      *head_says_nonexistent = says_nonexistent;
+    if (pstamp)
+      *pstamp = stamp;
 
     return savestr (name);
 }
 
-VOID *
+GENERIC_OBJECT *
 xmalloc (size)
      size_t size;
 {
-  register VOID *p = malloc (size);
+  register GENERIC_OBJECT *p = malloc (size);
   if (!p)
     memory_fatal ();
   return p;
