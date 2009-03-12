@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.25 1998/03/17 18:35:38 eggert Exp $
+.Id $Id: patch.man,v 1.26 1998/03/21 15:48:43 eggert Exp $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -375,7 +375,7 @@ and does not get the file; and if negative,
 asks the user whether to get the file.
 The default value of this option is given by the value of the
 .B PATCH_GET
-environment variable if it is set; if not, the default value is zero if 
+environment variable if it is set; if not, the default value is zero if
 .B patch
 is conforming to \s-1POSIX\s0, negative otherwise.
 .TP

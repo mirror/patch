@@ -1,26 +1,24 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.27 1998/03/20 22:42:54 eggert Exp $ */
+/* $Id: patch.c,v 1.28 1999/08/30 06:20:08 eggert Exp $ */
 
-/*
-Copyright 1984, 1985, 1986, 1987, 1988 Larry Wall
-Copyright 1989, 1990-1993, 1997, 1998 Free Software Foundation, Inc.
+/* Copyright 1984, 1985-1987, 1988 Larry Wall
+   Copyright 1989, 1990-1993, 1997-1998, 1999 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.
-If not, write to the Free Software Foundation,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define XTERN
 #include <common.h>
@@ -79,6 +77,7 @@ static void usage PARAMS ((FILE *, int)) __attribute__((noreturn));
 static int make_backups;
 static int backup_if_mismatch;
 static char const *version_control;
+static char const *version_control_context;
 static int remove_empty_files;
 
 /* TRUE if -R was specified on command line.  */
@@ -115,9 +114,7 @@ char const program_name[] = "patch";
 int main PARAMS ((int, char **));
 
 int
-main(argc,argv)
-int argc;
-char **argv;
+main (int argc, char **argv)
 {
     char const *val;
     bool somefailed = FALSE;
@@ -136,7 +133,7 @@ char **argv;
 
     val = getenv ("QUOTING_STYLE");
     {
-      int i = val ? argmatch (val, quoting_style_args) : -1;
+      int i = val ? argmatch (val, quoting_style_args, 0, 0) : -1;
       set_quoting_style ((struct quoting_options *) 0,
 			 i < 0 ? shell_quoting_style : (enum quoting_style) i);
     }
@@ -151,9 +148,10 @@ char **argv;
     if (val && *val)
       simple_backup_suffix = val;
 
-    version_control = getenv ("PATCH_VERSION_CONTROL");
-    if (! version_control)
-      version_control = getenv ("VERSION_CONTROL");
+    if ((version_control = getenv ("PATCH_VERSION_CONTROL")))
+      version_control_context = "$PATCH_VERSION_CONTROL";
+    else if ((version_control = getenv ("VERSION_CONTROL")))
+      version_control_context = "$VERSION_CONTROL";
 
     /* Cons up the names of the global temporary files.
        Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
@@ -168,7 +166,7 @@ char **argv;
     get_some_switches();
 
     if (make_backups | backup_if_mismatch)
-      backup_type = get_version (version_control);
+      backup_type = get_version (version_control_context, version_control);
 
     init_output (outfile, 0, &outstate);
 
@@ -290,7 +288,7 @@ char **argv;
 		       format_linenum (numbuf, newwhere));
 	    }
 	    else if (!where
-		     || (where == 1 && pch_says_nonexistent (reverse)
+		     || (where == 1 && pch_says_nonexistent (reverse) == 2
 			 && instat.st_size)) {
 
 		if (where)
@@ -397,7 +395,7 @@ char **argv;
 		      utimbuf.actime = utimbuf.modtime = t;
 
 		      if (! force && ! inerrno
-			  && ! pch_says_nonexistent (reverse)
+			  && pch_says_nonexistent (reverse) != 2
 			  && (t = pch_timestamp (reverse)) != (time_t) -1
 			  && t != instat.st_mtime)
 			say ("Not setting time of file %s (time mismatch)\n",
@@ -461,7 +459,7 @@ char **argv;
 /* Prepare to find the next patch to do in the patch file. */
 
 static void
-reinitialize_almost_everything()
+reinitialize_almost_everything (void)
 {
     re_patch();
     re_input();
@@ -601,9 +599,7 @@ static char const *const option_help[] =
 };
 
 static void
-usage (stream, status)
-     FILE *stream;
-     int status;
+usage (FILE *stream, int status)
 {
   char const * const *p;
 
@@ -626,7 +622,7 @@ usage (stream, status)
 /* Process switches and filenames.  */
 
 static void
-get_some_switches()
+get_some_switches (void)
 {
     register int optc;
 
@@ -731,6 +727,7 @@ get_some_switches()
 		break;
 	    case 'V':
 		version_control = optarg;
+		version_control_context = "--version-control or -V option";
 		break;
 #if DEBUGGING
 	    case 'x':
@@ -775,7 +772,7 @@ get_some_switches()
 		break;
 	    case CHAR_MAX + 8:
 		{
-		  int i = argmatch (optarg, quoting_style_args);
+		  int i = argmatch (optarg, quoting_style_args, 0, 0);
 		  if (i < 0)
 		    {
 		      invalid_arg ("quoting style", optarg, i);
@@ -812,10 +809,9 @@ get_some_switches()
    of type ARGTYPE_MSGID by converting it to an integer,
    returning the result.  */
 static int
-numeric_string (string, negative_allowed, argtype_msgid)
-     char const *string;
-     int negative_allowed;
-     char const *argtype_msgid;
+numeric_string (char const *string,
+		int negative_allowed,
+		char const *argtype_msgid)
 {
   int value = 0;
   char const *p = string;
@@ -849,8 +845,7 @@ numeric_string (string, negative_allowed, argtype_msgid)
 /* Attempt to find the right place to apply this hunk of patch. */
 
 static LINENUM
-locate_hunk(fuzz)
-LINENUM fuzz;
+locate_hunk (LINENUM fuzz)
 {
     register LINENUM first_guess = pch_first () + last_offset;
     register LINENUM offset;
@@ -938,7 +933,7 @@ LINENUM fuzz;
 /* We did not find the pattern, dump out the hunk so they can handle it. */
 
 static void
-abort_hunk()
+abort_hunk (void)
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end ();
@@ -996,9 +991,7 @@ abort_hunk()
 /* We found where to apply it (we hope), so do it. */
 
 static bool
-apply_hunk (outstate, where)
-     struct outstate *outstate;
-     LINENUM where;
+apply_hunk (struct outstate *outstate, LINENUM where)
 {
     register LINENUM old = 1;
     register LINENUM lastline = pch_ptrn_lines ();
@@ -1159,9 +1152,7 @@ apply_hunk (outstate, where)
 /* Create an output file.  */
 
 static FILE *
-create_output_file (name, open_flags)
-     char const *name;
-     int open_flags;
+create_output_file (char const *name, int open_flags)
 {
   int fd = create_file (name, O_WRONLY | binary_transput | open_flags,
 			instat.st_mode);
@@ -1174,10 +1165,7 @@ create_output_file (name, open_flags)
 /* Open the new file. */
 
 static void
-init_output (name, open_flags, outstate)
-     char const *name;
-     int open_flags;
-     struct outstate *outstate;
+init_output (char const *name, int open_flags, struct outstate *outstate)
 {
   outstate->ofp = name ? create_output_file (name, open_flags) : (FILE *) 0;
   outstate->after_newline = 1;
@@ -1187,7 +1175,7 @@ init_output (name, open_flags, outstate)
 /* Open a file to put hunks we can't locate. */
 
 static void
-init_reject ()
+init_reject (void)
 {
   int exclusive = TMPREJNAME_needs_removal ? 0 : O_EXCL;
   TMPREJNAME_needs_removal = 1;
@@ -1197,9 +1185,7 @@ init_reject ()
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 static bool
-copy_till (outstate, lastline)
-     register struct outstate *outstate;
-     register LINENUM lastline;
+copy_till (register struct outstate *outstate, register LINENUM lastline)
 {
     register LINENUM R_last_frozen_line = last_frozen_line;
     register FILE *fp = outstate->ofp;
@@ -1230,8 +1216,7 @@ copy_till (outstate, lastline)
 /* Finish copying the input file to the output file. */
 
 static bool
-spew_output (outstate)
-     struct outstate *outstate;
+spew_output (struct outstate *outstate)
 {
     if (debug & 256)
       {
@@ -1259,11 +1244,8 @@ spew_output (outstate)
 /* Does the patch pattern match at line base+offset? */
 
 static bool
-patch_match (base, offset, prefix_fuzz, suffix_fuzz)
-LINENUM base;
-LINENUM offset;
-LINENUM prefix_fuzz;
-LINENUM suffix_fuzz;
+patch_match (LINENUM base, LINENUM offset,
+	     LINENUM prefix_fuzz, LINENUM suffix_fuzz)
 {
     register LINENUM pline = 1 + prefix_fuzz;
     register LINENUM iline;
@@ -1289,11 +1271,8 @@ LINENUM suffix_fuzz;
 /* Do two lines match with canonicalized white space? */
 
 static bool
-similar (a, alen, b, blen)
-     register char const *a;
-     register size_t alen;
-     register char const *b;
-     register size_t blen;
+similar (register char const *a, register size_t alen,
+	 register char const *b, register size_t blen)
 {
   /* Ignore presence or absence of trailing newlines.  */
   alen  -=  alen && a[alen - 1] == '\n';
@@ -1333,8 +1312,7 @@ char *mktemp PARAMS ((char *));
 #endif
 
 static char const *
-make_temp (letter)
-     int letter;
+make_temp (int letter)
 {
   char *r;
 #if HAVE_MKTEMP
@@ -1358,8 +1336,7 @@ make_temp (letter)
 /* Fatal exit with cleanup. */
 
 void
-fatal_exit (sig)
-     int sig;
+fatal_exit (int sig)
 {
   cleanup ();
 
@@ -1370,9 +1347,7 @@ fatal_exit (sig)
 }
 
 static void
-remove_if_needed (name, needs_removal)
-     char const *name;
-     int volatile *needs_removal;
+remove_if_needed (char const *name, int volatile *needs_removal)
 {
   if (*needs_removal)
     {
@@ -1382,7 +1357,7 @@ remove_if_needed (name, needs_removal)
 }
 
 static void
-cleanup ()
+cleanup (void)
 {
   remove_if_needed (TMPINNAME, &TMPINNAME_needs_removal);
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);

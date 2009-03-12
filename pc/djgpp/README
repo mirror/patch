@@ -7,7 +7,7 @@ To configure `patch' for DJGPP, issue these commands from the
 To build `patch' in a directory other than where the sources are,
 add a parameter that specifies the source directory, e.g.:
 
-    e:\gnu\patch-2.3\pc\djgpp\configure e:/gnu/patch-2.3
+    e:\src\patch\pc\djgpp\configure e:/src/patch
 
 You MUST use forward slashes to specify the source directory.
 

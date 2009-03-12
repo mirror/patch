@@ -1,5 +1,5 @@
 /* quotearg.h - quote arguments for output
-   Copyright (C) 1998 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,17 +24,18 @@ enum quoting_style
     shell_quoting_style,	/* --quoting-style=shell */
     shell_always_quoting_style,	/* --quoting-style=shell-always */
     c_quoting_style,		/* --quoting-style=c */
-    escape_quoting_style	/* --quoting-style=escape */
+    escape_quoting_style,	/* --quoting-style=escape */
+    locale_quoting_style	/* --quoting-style=locale */
   };
 
-/* For now, --quoting-style=literal is the default, but
-   this is planned to change to --quoting-style=shell in the future.  */
+/* For now, --quoting-style=literal is the default, but this may change.  */
 #ifndef DEFAULT_QUOTING_STYLE
-#define DEFAULT_QUOTING_STYLE literal_quoting_style
+# define DEFAULT_QUOTING_STYLE literal_quoting_style
 #endif
 
-/* Names of quoting styles.  */
+/* Names of quoting styles and their corresponding values.  */
 extern char const *const quoting_style_args[];
+extern enum quoting_style const quoting_style_vals[];
 
 struct quoting_options;
 
@@ -69,7 +70,7 @@ void set_quoting_style PARAMS ((struct quoting_options *o,
    0 (the default) and 1 (which means to quote the character even if
    it would not otherwise be quoted).  */
 int set_char_quoting PARAMS ((struct quoting_options *o, char c, int i));
-   
+
 /* Place into buffer BUFFER (of size BUFFERSIZE) a quoted version of
    argument ARG (of size ARGSIZE), using O to control quoting.
    If O is null, use the default.
@@ -87,10 +88,19 @@ size_t quotearg_buffer PARAMS ((char *buffer, size_t buffersize,
    The returned value points to static storage that can be
    reused by the next call to this function with the same value of N.
    N must be nonnegative.  */
-char *quotearg_n PARAMS ((int n, char const *arg));
+char *quotearg_n PARAMS ((unsigned int n, char const *arg));
 
-/* Equivalent to quotearg_n (ARG, 0).  */
+/* Equivalent to quotearg_n (0, ARG).  */
 char *quotearg PARAMS ((char const *arg));
+
+/* Use style S and storage slot N to return a quoted version of the string ARG.
+   This is like quotearg_n (N, ARG), except that it uses S with no other
+   options to specify the quoting method.  */
+char *quotearg_n_style PARAMS ((unsigned int n, enum quoting_style s,
+				char const *arg));
+
+/* Equivalent to quotearg_n_style (0, S, ARG).  */
+char *quotearg_style PARAMS ((enum quoting_style s, char const *arg));
 
 /* Like quotearg (ARG), except also quote any instances of CH.  */
 char *quotearg_char PARAMS ((char const *arg, char ch));

@@ -1,26 +1,24 @@
 /* inputting files to be patched */
 
-/* $Id: inp.c,v 1.20 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: inp.c,v 1.21 1999/08/30 06:20:08 eggert Exp $ */
 
-/*
-Copyright 1986, 1988 Larry Wall
-Copyright 1991, 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
+/* Copyright 1986, 1988 Larry Wall
+   Copyright 1991, 1992-1993, 1997-1998, 1999 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.
-If not, write to the Free Software Foundation,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define XTERN extern
 #include <common.h>
@@ -57,7 +55,7 @@ static void too_many_lines PARAMS ((char const *)) __attribute__((noreturn));
 /* New patch--prepare to edit another file. */
 
 void
-re_input()
+re_input (void)
 {
     if (using_plan_a) {
       if (i_buffer)
@@ -83,8 +81,7 @@ re_input()
 /* Construct the line index, somehow or other. */
 
 void
-scan_input(filename)
-char *filename;
+scan_input (char *filename)
 {
     using_plan_a = ! (debug & 16) && plan_a (filename);
     if (!using_plan_a)
@@ -105,8 +102,7 @@ char *filename;
 /* Report whether a desired revision was found.  */
 
 static void
-report_revision (found_revision)
-     int found_revision;
+report_revision (int found_revision)
 {
   revision = quotearg (revision);
 
@@ -135,17 +131,14 @@ report_revision (found_revision)
 
 
 static void
-too_many_lines (filename)
-     char const *filename;
+too_many_lines (char const *filename)
 {
   fatal ("File %s has too many lines", quotearg (filename));
 }
 
 
 void
-get_input_file (filename, outname)
-     char const *filename;
-     char const *outname;
+get_input_file (char const *filename, char const *outname)
 {
     int elsewhere = strcmp (filename, outname);
     char const *cs;
@@ -222,8 +215,7 @@ get_input_file (filename, outname)
 /* Try keeping everything in memory. */
 
 static bool
-plan_a(filename)
-     char const *filename;
+plan_a (char const *filename)
 {
   register char const *s;
   register char const *lim;
@@ -328,8 +320,7 @@ plan_a(filename)
 /* Keep (virtually) nothing in memory. */
 
 static void
-plan_b(filename)
-     char const *filename;
+plan_b (char const *filename)
 {
   register FILE *ifp;
   register int c;
@@ -431,13 +422,11 @@ plan_b(filename)
   input_lines = line - 1;
 }
 
-/* Fetch a line from the input file. */
+/* Fetch a line from the input file.
+   WHICHBUF is ignored when the file is in memory.  */
 
 char const *
-ifetch (line, whichbuf, psize)
-register LINENUM line;
-int whichbuf;				/* ignored when file in memory */
-size_t *psize;
+ifetch (LINENUM line, int whichbuf, size_t *psize)
 {
     register char const *q;
     register char const *p;

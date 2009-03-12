@@ -64,7 +64,7 @@
 #include <maketime.h>
 
 char const maket_id[] =
-  "$Id: maketime.c,v 5.16 1997/12/04 07:49:27 eggert Exp $";
+  "$Id: maketime.c,v 5.17 1999/08/29 11:12:37 eggert Exp $";
 
 static int isleap P ((int));
 static int month_days P ((struct tm const *));
@@ -79,8 +79,8 @@ static time_t maketime P ((struct partime const *, time_t));
 
 /* Quotient and remainder when dividing A by B,
    truncating towards minus infinity, where B is positive.  */
-#define div(a, b) ((a) / (b) - ((a) % (b) < 0))
-#define mod(a, b) ((a) % (b) + (b) * ((a) % (b) < 0))
+#define DIV(a, b) ((a) / (b) - ((a) % (b) < 0))
+#define MOD(a, b) ((a) % (b) + (b) * ((a) % (b) < 0))
 
 /* Number of days in 400 consecutive Gregorian years.  */
 #define Y400_DAYS (365 * 400L + 100 - 4 + 1)
@@ -137,8 +137,8 @@ difftm (a, b)
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
   int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
-  int ac = div (ay, 100);
-  int bc = div (by, 100);
+  int ac = DIV (ay, 100);
+  int bc = DIV (by, 100);
   int difference_in_day_of_year = a->tm_yday - b->tm_yday;
   int intervening_leap_days = (((ay >> 2) - (by >> 2))
 			       - (ac - bc)
@@ -210,10 +210,10 @@ adjzone (t, seconds)
 	}
     }
   if (TM_DEFINED (t->tm_wday))
-    t->tm_wday = mod (t->tm_wday + days, 7);
-  t->tm_hour = mod (t->tm_hour, 24);
-  t->tm_min = mod (t->tm_min, 60);
-  t->tm_sec = (int) mod (sec, 60) + leap_second;
+    t->tm_wday = MOD (t->tm_wday + days, 7);
+  t->tm_hour = MOD (t->tm_hour, 24);
+  t->tm_min = MOD (t->tm_min, 60);
+  t->tm_sec = (int) MOD (sec, 60) + leap_second;
 }
 
 /* Convert TM to time_t, using localtime if LOCALZONE and gmtime otherwise.
@@ -330,7 +330,7 @@ maketime (pt, default_time)
     {
       /* Yield a year closest to the default that has the given modulus.  */
       int year0 = tm0->tm_year + TM_YEAR_ORIGIN;
-      int y0 = mod (year0, pt->ymodulus);
+      int y0 = MOD (year0, pt->ymodulus);
       int d = 2 * (year - y0);
       year += (((year0 - y0) / pt->ymodulus
 	        + (pt->ymodulus < d ? -1 : d < -pt->ymodulus))
@@ -391,21 +391,21 @@ maketime (pt, default_time)
       int hours = tm.tm_hour + pt->tmr.tm_hour;
       int mins = tm.tm_min + pt->tmr.tm_min;
 
-      int carried_hours = div (mins, 60);
+      int carried_hours = DIV (mins, 60);
       int hours1 = hours + carried_hours;
-      int carried_days = div (hours1, 24);
+      int carried_days = DIV (hours1, 24);
       int mdays1 = mdays + carried_days;
 
-      int mon0 = mod (mons, 12);
-      int carried_years0 = div (mons, 12);
+      int mon0 = MOD (mons, 12);
+      int carried_years0 = DIV (mons, 12);
       int year0 = years + carried_years0;
       int yday0 = (month_yday[mon0]
 		   - (mon0 < 2 || !isleap (year0 + TM_YEAR_ORIGIN)));
 
       int yday1 = yday0 + mdays1;
-      int carried_years1 = div (yday1, Y400_DAYS) * 400;
+      int carried_years1 = DIV (yday1, Y400_DAYS) * 400;
       int year1 = year0 + carried_years1;
-      int yday2 = mod (yday1, Y400_DAYS);
+      int yday2 = MOD (yday1, Y400_DAYS);
       int leap;
 
       if (overflow_sum_sign (tm.tm_year, pt->tmr.tm_year, years)
@@ -440,8 +440,8 @@ maketime (pt, default_time)
 	tm.tm_mon = mon;
       }
 
-      tm.tm_hour = mod (hours1, 24);
-      tm.tm_min = mod (mins, 60);
+      tm.tm_hour = MOD (hours1, 24);
+      tm.tm_min = MOD (mins, 60);
 
       r = tm2time (&tm, localzone);
       if (r == -1)

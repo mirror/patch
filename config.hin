@@ -31,6 +31,9 @@
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
 
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
 /* Define if the system does not provide POSIX.1 features except
    with this defined.  */
 #undef _POSIX_1_SOURCE
@@ -47,36 +50,14 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-/* Define if there is a member named d_ino in the struct describing
-   directory headers.  */
-#undef D_INO_IN_DIRENT
-
-/* Define if you have a working <inttypes.h> header file.  */
-#undef HAVE_INTTYPES_H
-
-/* Define if memchr works.  */
-#undef HAVE_MEMCHR
-
-/* Define if `struct utimbuf' is declared -- usually in <utime.h>.  */
-#undef HAVE_STRUCT_UTIMBUF
-
-/* Define to rpl_malloc if the replacement function should be used.  */
-#undef malloc
-
-/* Define to 1 if ANSI function prototypes are usable.  */
-#undef PROTOTYPES
-
-/* Define to rpl_realloc if the replacement function should be used.  */
-#undef realloc
-
-/* Define if you have the DONE_WORKING_MALLOC_CHECK function.  */
-#undef HAVE_DONE_WORKING_MALLOC_CHECK
-
-/* Define if you have the DONE_WORKING_REALLOC_CHECK function.  */
-#undef HAVE_DONE_WORKING_REALLOC_CHECK
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
 
 /* Define if you have the _doprintf function.  */
 #undef HAVE__DOPRINTF
+
+/* Define if you have the fseeko function.  */
+#undef HAVE_FSEEKO
 
 /* Define if you have the isascii function.  */
 #undef HAVE_ISASCII
@@ -101,6 +82,12 @@
 
 /* Define if you have the rename function.  */
 #undef HAVE_RENAME
+
+/* Define if you have the rmdir function.  */
+#undef HAVE_RMDIR
+
+/* Define if you have the setmode function.  */
+#undef HAVE_SETMODE
 
 /* Define if you have the sigaction function.  */
 #undef HAVE_SIGACTION
@@ -143,3 +130,40 @@
 
 /* Define if you have the <varargs.h> header file.  */
 #undef HAVE_VARARGS_H
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define to make fseeko etc. visible, on some hosts. */
+#undef _LARGEFILE_SOURCE
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define if compiler has function prototypes */
+#undef PROTOTYPES
+
+/* Define if <inttypes.h> exists, doesn't clash with <sys/types.h>,
+   and declares uintmax_t.  */
+#undef HAVE_INTTYPES_H
+
+/* Define if struct utimbuf is declared -- usually in <utime.h>.
+   Some systems have utime.h but don't declare the struct anywhere.  */
+#undef HAVE_STRUCT_UTIMBUF
+
+/* Define if the malloc check has been performed.  */
+#undef HAVE_DONE_WORKING_MALLOC_CHECK
+
+/* Define to rpl_malloc if the replacement function should be used. */
+#undef malloc
+
+/* Define if the realloc check has been performed.  */
+#undef HAVE_DONE_WORKING_REALLOC_CHECK
+
+/* Define to rpl_realloc if the replacement function should be used. */
+#undef realloc
+
+/* Define if there is a member named d_ino in the struct describing
+   directory headers. */
+#undef D_INO_IN_DIRENT
+

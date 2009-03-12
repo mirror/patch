@@ -1,5 +1,5 @@
 /* backupfile.c -- make Emacs style backup file names
-   Copyright (C) 1990,1991,1992,1993,1995,1997 Free Software Foundation, Inc.
+   Copyright (C) 1990-1997, 1998, 1999 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -64,6 +64,12 @@
 char *malloc ();
 #endif
 
+#ifndef HAVE_DECL_GETENV
+char *getenv ();
+#endif
+
+char *base_name PARAMS ((char const *));
+
 #if HAVE_DIRENT_H || HAVE_NDIR_H || HAVE_SYS_DIR_H || HAVE_SYS_NDIR_H
 # define HAVE_DIR 1
 #else
@@ -74,7 +80,7 @@ char *malloc ();
 # include <limits.h>
 #endif
 #ifndef CHAR_BIT
-#define CHAR_BIT 8
+# define CHAR_BIT 8
 #endif
 /* Upper bound on the string length of an integer converted to string.
    302 / 1000 is ceil (log10 (2.0)).  Subtract 1 for the sign bit;
@@ -97,15 +103,12 @@ char *malloc ();
 # define REAL_DIR_ENTRY(dp) 1
 #endif
 
-/* Which type of backup file names are generated. */
-enum backup_type backup_type = none;
-
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-const char *simple_backup_suffix = ".orig";
+const char *simple_backup_suffix = "~";
 
-static int max_backup_version __BACKUPFILE_P ((const char *, const char *));
-static int version_number __BACKUPFILE_P ((const char *, const char *, size_t));
+static int max_backup_version PARAMS ((const char *, const char *));
+static int version_number PARAMS ((const char *, const char *, size_t));
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.
@@ -113,8 +116,7 @@ static int version_number __BACKUPFILE_P ((const char *, const char *, size_t));
    Do not call this function if backup_type == none. */
 
 char *
-find_backup_file_name (file)
-     const char *file;
+find_backup_file_name (const char *file, enum backup_type backup_type)
 {
   size_t backup_suffix_size_max;
   size_t file_len = strlen (file);
@@ -163,9 +165,7 @@ find_backup_file_name (file)
    */
 
 static int
-max_backup_version (file, dir)
-     const char *file;
-     const char *dir;
+max_backup_version (const char *file, const char *dir)
 {
   DIR *dirp;
   struct dirent *dp;
@@ -199,10 +199,7 @@ max_backup_version (file, dir)
    */
 
 static int
-version_number (base, backup, base_length)
-     const char *base;
-     const char *backup;
-     size_t base_length;
+version_number (const char *base, const char *backup, size_t base_length)
 {
   int version;
   const char *p;
@@ -223,30 +220,49 @@ version_number (base, backup, base_length)
 
 static const char * const backup_args[] =
 {
-  "never", "simple", "nil", "existing", "t", "numbered", 0
+  /* In a series of synonyms, present the most meaning full first, so
+     that argmatch_valid be more readable. */
+  "none", "off",
+  "simple", "never",
+  "existing", "nil",
+  "numbered", "t",
+  0
 };
 
 static const enum backup_type backup_types[] =
 {
-  simple, simple, numbered_existing, numbered_existing, numbered, numbered
+  none, none,
+  simple, simple,
+  numbered_existing, numbered_existing,
+  numbered, numbered
 };
 
-/* Return the type of backup indicated by VERSION.
-   Unique abbreviations are accepted. */
+/* Return the type of backup specified by VERSION.
+   If VERSION is NULL or the empty string, return numbered_existing.
+   If VERSION is invalid or ambiguous, fail with a diagnostic appropriate
+   for the specified CONTEXT.  Unambiguous abbreviations are accepted.  */
 
 enum backup_type
-get_version (version)
-     const char *version;
+get_version (const char *context, const char *version)
 {
-  int i;
-
   if (version == 0 || *version == 0)
     return numbered_existing;
-  i = argmatch (version, backup_args);
-  if (i < 0)
-    {
-      invalid_arg ("version control type", version, i);
-      exit (2);
-    }
-  return backup_types[i];
+  else
+    return XARGMATCH (context, version, backup_args, backup_types);
+}
+
+
+/* Return the type of backup specified by VERSION.
+   If VERSION is NULL, use the value of the envvar VERSION_CONTROL.
+   If the specified string is invalid or ambiguous, fail with a diagnostic
+   appropriate for the specified CONTEXT.
+   Unambiguous abbreviations are accepted.  */
+
+enum backup_type
+xget_version (const char *context, const char *version)
+{
+  if (version && *version)
+    return get_version (context, version);
+  else
+    return get_version ("$VERSION_CONTROL", getenv ("VERSION_CONTROL"));
 }

@@ -1,3 +1,73 @@
+1999-08-30  Paul Eggert  <eggert@twinsun.com>
+
+	Version 2.5.4 fixes a few minor bugs, converts C sources to
+	ANSI prototypes, and modernizes auxiliary sources and autoconf
+	scripts.
+
+	* configure.in (VERSION): Version 2.5.4 released.
+	(AC_CANONICAL_HOST): Add.
+	(AC_SYS_LARGEFILE): Add, replacing inline code.
+	(AC_EXEEXT): Add.
+	(jm_AC_HEADER_INTTYPES_H): Add, replacing inline code.
+	(AC_TYPE_PID_T): Add.
+	(jm_STRUCT_UTIMBUF): Add, replacing inline code.
+	(HAVE_MEMCHR): Remove obsolescent test; nobody uses NetBSD 1.0 now.
+	(getopt_long): Append $U to object file basenames.
+	(AC_CHECK_FUNCS): Add fseeko, setmode.  Remove mkdir.
+	(AC_REPLACE_FUNCS): Add mkdir, rmdir.
+	(jm_STRUCT_DIRENT_D_INO): Add, replacing inline code.
+
+	* Makefile.in (EXEEXT): New macro.
+	(mandir): New macro.
+	(man1dir): Define in terms of mandir.
+	(SRCS): Add mkdir.c, rmdir.c.
+	(OBJS): Change .o to $U.o for addext, argmatch, backupfile, basename,
+	error, inp, patch ,,pch, quotearg, util, version, xmalloc.
+	(HDRS): Add basename.h, patchlevel.h.
+	(MISC): Add ansi2knr.1, config.guess, config.sub.
+	(MISC, config.hin): Remove acconfig.h; no longer needed.
+	(DISTFILES_M4): New macro.
+	(all): patch -> patch$(EXEEXT).
+	(patch$(EXEEXT)): Renamed from patch.  All uses changed.
+	(uninstall): Remove manual page.
+	(configure): Depend on aclocal.m4.
+	(M4DIR, ACINCLUDE_INPUTS): New macros.
+	($(srcdir)/aclocal.m4): New rule.
+	(patchlevel.h): Depend on configure.in, not Makefile,
+	since we now distribute it.
+	(distclean): Don't remove patchlevel.h.
+	(dist): Distribute $(DISTFILES_M4).
+	(addext_.c argmatch_.c backupfile_.c basename_.c error_.c
+	getopt_.c getopt1_.c inp_.c malloc_.c mkdir_.c patch_.c pch_.c
+	rename_.c util_.c version_.c xmalloc_.c): Depend on ansi2knr.
+	Update dependencies to match sources.
+
+	* common.h (_LARGEFILE_SOURCE): Remove; now autoconfigured.
+	(file_offset): Depend on HAVE_FSEEKO, not _LFS_LARGEFILE.
+
+	* patch.c (version_control_context): New variable.
+	Convert to ANSI prototypes.
+	Adjust to new argmatch calling convention.
+	Similarly for get_version.
+	Complain about creating an existing file only if
+	pch_says_nonexistent returns 2 (not merely nonzero).
+	Similarly for time mismatch check.
+	(get_some_switches): Adjust to new get_version calling convention.
+	Similarly for argmatch.
+
+	* pch.c (<basename.h>): Include.
+	(intuit_diff_type): Improve quality of test for empty file.
+	(another_hunk): Don't assume off_t is no longer than long.
+
+	* util.h (backup_type): New decl.
+	* util.c (<basename.h>): Include.
+	(move_file): Adjust to new find_backup_file_name convention.
+	(doprogram, mkdir, rmdir): Remove; now in separate files.
+	(fetchame): Match "/dev/null", not NULL_DEVICE.
+	Ignore names that don't have enough slashes to strip off.
+
+	* version.c: Update copyright notice.
+
 1998-03-20  Paul Eggert  <eggert@twinsun.com>
 
 	* configure.in (VERSION): Bump to 2.5.3.

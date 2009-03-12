@@ -1,30 +1,29 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.25 1998/03/15 14:44:47 eggert Exp $ */
+/* $Id: util.c,v 1.27 1999/08/30 06:20:08 eggert Exp $ */
 
-/*
-Copyright 1986 Larry Wall
-Copyright 1992, 1993, 1997, 1998 Free Software Foundation, Inc.
+/* Copyright 1986 Larry Wall
+   Copyright 1992, 1993, 1997-1998, 1999 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.
-If not, write to the Free Software Foundation,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.
+   If not, write to the Free Software Foundation,
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define XTERN extern
 #include <common.h>
 #include <backupfile.h>
+#include <basename.h>
 #include <quotearg.h>
 #include <quotesys.h>
 #include <version.h>
@@ -70,20 +69,9 @@ static void makedirs PARAMS ((char *));
    FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
    Back up TO if BACKUP is nonzero.  */
 
-#ifdef __STDC__
-/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
 move_file (char const *from, int volatile *from_needs_removal,
 	   char *to, mode_t mode, int backup)
-#else
-void
-move_file (from, from_needs_removal, to, mode, backup)
-     char const *from;
-     int volatile *from_needs_removal;
-     char *to;
-     mode_t mode;
-     int backup;
-#endif
 {
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
@@ -116,7 +104,7 @@ move_file (from, from_needs_removal, to, mode, backup)
 	}
       else
 	{
-	  bakname = find_backup_file_name (to);
+	  bakname = find_backup_file_name (to, backup_type);
 	  if (!bakname)
 	    memory_fatal ();
 	}
@@ -213,17 +201,8 @@ move_file (from, from_needs_removal, to, mode, backup)
 /* Create FILE with OPEN_FLAGS, and with MODE adjusted so that
    we can read and write the file and that the file is not executable.
    Return the file descriptor.  */
-#ifdef __STDC__
-/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 int
 create_file (char const *file, int open_flags, mode_t mode)
-#else
-int
-create_file (file, open_flags, mode)
-     char const *file;
-     int open_flags;
-     mode_t mode;
-#endif
 {
   int fd;
   mode |= S_IRUSR | S_IWUSR;
@@ -238,18 +217,8 @@ create_file (file, open_flags, mode)
 
 /* Copy a file. */
 
-#ifdef __STDC__
-/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
 void
 copy_file (char const *from, char const *to, int to_flags, mode_t mode)
-#else
-void
-copy_file (from, to, to_flags, mode)
-     char const *from;
-     char const *to;
-     int to_flags;
-     mode_t mode;
-#endif
 {
   int tofd;
   int fromfd;
@@ -296,12 +265,8 @@ static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
    (but set *DIFFBUF to 0 if the diff operation is meaningless).
    *GETBUF and *DIFFBUF must be freed by the caller.  */
 char const *
-version_controller (filename, readonly, filestat, getbuf, diffbuf)
-     char const *filename;
-     int readonly;
-     struct stat const *filestat;
-     char **getbuf;
-     char **diffbuf;
+version_controller (char const *filename, int readonly,
+		    struct stat const *filestat, char **getbuf, char **diffbuf)
 {
   struct stat cstat;
   char const *filebase = base_name (filename);
@@ -409,13 +374,8 @@ version_controller (filename, readonly, filestat, getbuf, diffbuf)
    Store the resulting file status into *FILESTAT.
    Return nonzero if successful.  */
 int
-version_get (filename, cs, exists, readonly, getbuf, filestat)
-     char const *filename;
-     char const *cs;
-     int exists;
-     int readonly;
-     char const *getbuf;
-     struct stat *filestat;
+version_get (char const *filename, char const *cs, int exists, int readonly,
+	     char const *getbuf, struct stat *filestat)
 {
   if (patch_get < 0)
     {
@@ -448,9 +408,7 @@ version_get (filename, cs, exists, readonly, getbuf, filestat)
 /* Allocate a unique area for a string. */
 
 char *
-savebuf (s, size)
-     register char const *s;
-     register size_t size;
+savebuf (register char const *s, register size_t size)
 {
   register char *rv;
 
@@ -469,16 +427,13 @@ savebuf (s, size)
 }
 
 char *
-savestr(s)
-     char const *s;
+savestr (char const *s)
 {
   return savebuf (s, strlen (s) + 1);
 }
 
 void
-remove_prefix (p, prefixlen)
-     char *p;
-     size_t prefixlen;
+remove_prefix (char *p, size_t prefixlen)
 {
   char const *s = p + prefixlen;
   while ((*p++ = *s++))
@@ -486,9 +441,7 @@ remove_prefix (p, prefixlen)
 }
 
 char *
-format_linenum (numbuf, n)
-     char numbuf[LINENUM_LENGTH_BOUND + 1];
-     LINENUM n;
+format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], LINENUM n)
 {
   char *p = numbuf + LINENUM_LENGTH_BOUND;
   *p = '\0';
@@ -513,12 +466,8 @@ format_linenum (numbuf, n)
 
 #if !HAVE_VPRINTF
 #define vfprintf my_vfprintf
-static int vfprintf PARAMS ((FILE *, char const *, va_list));
 static int
-vfprintf (stream, format, args)
-     FILE *stream;
-     char const *format;
-     va_list args;
+vfprintf (FILE *stream, char const *format, va_list args)
 {
 #if !HAVE_DOPRNT && HAVE__DOPRINTF
 # define _doprnt _doprintf
@@ -536,15 +485,8 @@ vfprintf (stream, format, args)
 
 /* Terminal output, pun intended. */
 
-#ifdef __STDC__
 void
 fatal (char const *format, ...)
-#else
-/*VARARGS1*/ void
-fatal (format, va_alist)
-     char const *format;
-     va_dcl
-#endif
 {
   va_list args;
   fprintf (stderr, "%s: **** ", program_name);
@@ -557,34 +499,27 @@ fatal (format, va_alist)
 }
 
 void
-memory_fatal ()
+memory_fatal (void)
 {
   fatal ("out of memory");
 }
 
 void
-read_fatal ()
+read_fatal (void)
 {
   pfatal ("read error");
 }
 
 void
-write_fatal ()
+write_fatal (void)
 {
   pfatal ("write error");
 }
 
 /* Say something from patch, something from the system, then silence . . . */
 
-#ifdef __STDC__
 void
 pfatal (char const *format, ...)
-#else
-/*VARARGS1*/ void
-pfatal (format, va_alist)
-     char const *format;
-     va_dcl
-#endif
 {
   int errnum = errno;
   va_list args;
@@ -601,15 +536,8 @@ pfatal (format, va_alist)
 
 /* Tell the user something.  */
 
-#ifdef __STDC__
 void
 say (char const *format, ...)
-#else
-/*VARARGS1*/ void
-say (format, va_alist)
-     char const *format;
-     va_dcl
-#endif
 {
   va_list args;
   vararg_start (args, format);
@@ -620,15 +548,8 @@ say (format, va_alist)
 
 /* Get a response from the user, somehow or other. */
 
-#ifdef __STDC__
 void
 ask (char const *format, ...)
-#else
-/*VARARGS1*/ void
-ask (format, va_alist)
-     char const *format;
-     va_dcl
-#endif
 {
   static int ttyfd = -2;
   int r;
@@ -686,14 +607,8 @@ ask (format, va_alist)
 
 /* Return nonzero if it OK to reverse a patch.  */
 
-#ifdef __STDC__
 int
 ok_to_reverse (char const *format, ...)
-#else
-ok_to_reverse (format, va_alist)
-     char const *format;
-     va_dcl
-#endif
 {
   int r = 0;
 
@@ -798,8 +713,7 @@ static sigset_t signals_to_block;
 #if ! HAVE_SIGACTION
 static RETSIGTYPE fatal_exit_handler PARAMS ((int)) __attribute__ ((noreturn));
 static RETSIGTYPE
-fatal_exit_handler (sig)
-     int sig;
+fatal_exit_handler (int sig)
 {
   signal (sig, SIG_IGN);
   fatal_exit (sig);
@@ -807,8 +721,7 @@ fatal_exit_handler (sig)
 #endif
 
 void
-set_signals(reset)
-int reset;
+set_signals (int reset)
 {
   int i;
 #if HAVE_SIGACTION
@@ -861,7 +774,7 @@ int reset;
 /* How to handle certain events when in a critical region. */
 
 void
-ignore_signals()
+ignore_signals (void)
 {
 #if HAVE_SIGPROCMASK || HAVE_SIGSETMASK
   sigprocmask (SIG_BLOCK, &signals_to_block, &initial_signal_mask);
@@ -874,8 +787,7 @@ ignore_signals()
 }
 
 void
-exit_with_signal (sig)
-     int sig;
+exit_with_signal (int sig)
 {
   sigset_t s;
   signal (sig, SIG_DFL);
@@ -887,8 +799,7 @@ exit_with_signal (sig)
 }
 
 int
-systemic (command)
-     char const *command;
+systemic (char const *command)
 {
   if (debug & 8)
     say ("+ %s\n", command);
@@ -896,66 +807,11 @@ systemic (command)
   return system (command);
 }
 
-#if !HAVE_MKDIR
-/* These mkdir and rmdir substitutes are good enough for `patch';
-   they are not general emulators.  */
-
-static int doprogram PARAMS ((char const *, char const *));
-static int mkdir PARAMS ((char const *, mode_t));
-static int rmdir PARAMS ((char const *));
-
-static int
-doprogram (program, arg)
-     char const *program;
-     char const *arg;
-{
-  int result;
-  static char const DISCARD_OUTPUT[] = " 2>/dev/null";
-  size_t program_len = strlen (program);
-  char *cmd = xmalloc (program_len + 1 + quote_system_arg (0, arg)
-		       + sizeof DISCARD_OUTPUT);
-  char *p = cmd;
-  strcpy (p, program);
-  p += program_len;
-  *p++ = ' ';
-  p += quote_system_arg (p, arg);
-  strcpy (p, DISCARD_OUTPUT);
-  result = systemic (cmd);
-  free (cmd);
-  return result;
-}
-
-#ifdef __STDC__
-/* If mode_t doesn't promote to itself, we can't use old-style definition.  */
-static int
-mkdir (char const *path, mode_t mode)
-#else
-static int
-mkdir (path, mode)
-     char const *path;
-     mode_t mode; /* ignored */
-#endif
-{
-  return doprogram ("mkdir", path);
-}
-
-static int
-rmdir (path)
-     char const *path;
-{
-  int result = doprogram ("rmdir", path);
-  errno = EEXIST;
-  return result;
-}
-#endif
-
 /* Replace '/' with '\0' in FILENAME if it marks a place that
    needs testing for the existence of directory.  Return the address
    of the last location replaced, or 0 if none were replaced.  */
-static char *replace_slashes PARAMS ((char *));
 static char *
-replace_slashes (filename)
-     char *filename;
+replace_slashes (char *filename)
 {
   char *f;
   char *last_location_replaced = 0;
@@ -997,8 +853,7 @@ replace_slashes (filename)
    Ignore the last element of `filename'.  */
 
 static void
-makedirs (filename)
-     register char *filename;
+makedirs (register char *filename)
 {
   register char *f;
   register char *flim = replace_slashes (filename);
@@ -1026,8 +881,7 @@ makedirs (filename)
    Ignore errors, since the path may contain ".."s, and when there
    is an EEXIST failure the system may return some other error number.  */
 void
-removedirs (filename)
-     char *filename;
+removedirs (char *filename)
 {
   size_t i;
 
@@ -1051,7 +905,7 @@ removedirs (filename)
 static time_t initial_time;
 
 void
-init_time ()
+init_time (void)
 {
   time (&initial_time);
 }
@@ -1059,10 +913,7 @@ init_time ()
 /* Make filenames more reasonable. */
 
 char *
-fetchname (at, strip_leading, pstamp)
-char *at;
-int strip_leading;
-time_t *pstamp;
+fetchname (char *at, int strip_leading, time_t *pstamp)
 {
     char *name;
     register char *t;
@@ -1117,14 +968,19 @@ time_t *pstamp;
     if (!*name)
       return 0;
 
-    /* Ignore the name if it doesn't have enough slashes to strip off,
-       or if it is "/dev/null".  */
-    if (0 < sleading || strcmp (at, "/dev/null") == 0)
+    /* If the name is "/dev/null", ignore the name and mark the file
+       as being nonexistent.  The name "/dev/null" appears in patches
+       regardless of how NULL_DEVICE is spelled.  */
+    if (strcmp (at, "/dev/null") == 0)
       {
 	if (pstamp)
 	  *pstamp = 0;
 	return 0;
       }
+
+    /* Ignore the name if it doesn't have enough slashes to strip off.  */
+    if (0 < sleading)
+      return 0;
 
     if (pstamp)
       *pstamp = stamp;
@@ -1133,10 +989,7 @@ time_t *pstamp;
 }
 
 void
-Fseek (stream, offset, ptrname)
-     FILE *stream;
-     file_offset offset;
-     int ptrname;
+Fseek (FILE *stream, file_offset offset, int ptrname)
 {
   if (file_seek (stream, offset, ptrname) != 0)
     pfatal ("fseek");
