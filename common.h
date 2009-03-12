@@ -1,50 +1,105 @@
-/* $Header: common.h,v 2.0.1.2 88/06/22 20:44:53 lwall Locked $
- *
- * $Log:	common.h,v $
- * Revision 2.0.1.2  88/06/22  20:44:53  lwall
- * patch12: sprintf was declared wrong
- * 
- * Revision 2.0.1.1  88/06/03  15:01:56  lwall
- * patch10: support for shorter extensions.
- * 
- * Revision 2.0  86/09/17  15:36:39  lwall
- * Baseline for netwide release.
- * 
- */
+/* common definitions for `patch' */
 
-#define DEBUGGING
+/* $Id: common.h,v 1.10 1997/04/10 05:09:53 eggert Exp $ */
 
-#define VOIDUSED 7
-#include "config.h"
+/*
+Copyright 1986, 1988 Larry Wall
+Copyright 1990, 1991, 1992, 1993, 1997 Free Software Foundation, Inc.
 
-/* shut lint up about the following when return value ignored */
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
 
-#define Signal (void)signal
-#define Unlink (void)unlink
-#define Lseek (void)lseek
-#define Fseek (void)fseek
-#define Fstat (void)fstat
-#define Pclose (void)pclose
-#define Close (void)close
-#define Fclose (void)fclose
-#define Fflush (void)fflush
-#define Sprintf (void)sprintf
-#define Mktemp (void)mktemp
-#define Strcpy (void)strcpy
-#define Strcat (void)strcat
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
 
-/* NeXT declares malloc and realloc incompatibly from us in some of
-   these files.  Temporarily redefine them to prevent errors.  */
-#define malloc system_malloc
-#define realloc system_realloc
-#include <stdio.h>
+You should have received a copy of the GNU General Public License
+along with this program; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
+
+#ifndef DEBUGGING
+#define DEBUGGING 1
+#endif
+
+/* We must define `volatile' and `const' first (the latter inside config.h),
+   so that they're used consistently in all system includes.  */
+#ifndef __STDC__
+# ifndef volatile
+# define volatile
+# endif
+#endif
+#include <config.h>
+
 #include <assert.h>
+#include <stdio.h>
 #include <sys/types.h>
+
 #include <sys/stat.h>
+#if ! defined S_ISDIR && defined S_IFDIR
+# define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
+#if ! defined S_ISREG && defined S_IFREG
+# define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
+#ifndef S_IXOTH
+#define S_IXOTH 1
+#endif
+#ifndef S_IWOTH
+#define S_IWOTH 2
+#endif
+#ifndef S_IROTH
+#define S_IROTH 4
+#endif
+#ifndef S_IXGRP
+#define S_IXGRP (S_IXOTH << 3)
+#endif
+#ifndef S_IWGRP
+#define S_IWGRP (S_IWOTH << 3)
+#endif
+#ifndef S_IRGRP
+#define S_IRGRP (S_IROTH << 3)
+#endif
+#ifndef S_IXUSR
+#define S_IXUSR (S_IXOTH << 6)
+#endif
+#ifndef S_IWUSR
+#define S_IWUSR (S_IWOTH << 6)
+#endif
+#ifndef S_IRUSR
+#define S_IRUSR (S_IROTH << 6)
+#endif
+
+#if HAVE_LIMITS_H
+# include <limits.h>
+#endif
+#ifndef INT_MAX
+#define INT_MAX 2147483647
+#endif
+
 #include <ctype.h>
-#include <signal.h>
-#undef malloc
-#undef realloc
+/* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
+   as an argument to <ctype.h> macros like `isspace'.  */
+#if STDC_HEADERS
+#define CTYPE_DOMAIN(c) 1
+#else
+#define CTYPE_DOMAIN(c) ((unsigned) (c) <= 0177)
+#endif
+#ifndef ISLOWER
+#define ISLOWER(c) (CTYPE_DOMAIN (c) && islower (c))
+#endif
+#ifndef ISSPACE
+#define ISSPACE(c) (CTYPE_DOMAIN (c) && isspace (c))
+#endif
+
+#ifndef ISDIGIT
+#define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
+#endif
+
 
 /* constants */
 
@@ -55,136 +110,138 @@
 #ifdef FALSE
 #undef FALSE
 #endif
-#define TRUE (1)
-#define FALSE (0)
-
-#define MAXHUNKSIZE 100000		/* is this enough lines? */
-#define INITHUNKMAX 125			/* initial dynamic allocation size */
-#define MAXLINELEN 1024
-#define BUFFERSIZE 1024
-
-#define SCCSPREFIX "s."
-#define GET "get %s"
-#define GET_LOCKED "get -e %s"
-#define SCCSDIFF "get -p %s | diff - %s >/dev/null"
-
-#define RCSSUFFIX ",v"
-#define CHECKOUT "co %s"
-#define CHECKOUT_LOCKED "co -l %s"
-#define RCSDIFF "rcsdiff %s > /dev/null"
+#define TRUE 1
+#define FALSE 0
 
 /* handy definitions */
 
-#define Null(t) ((t)0)
-#define Nullch Null(char *)
-#define Nullfp Null(FILE *)
-#define Nulline Null(LINENUM)
-
-#define Ctl(ch) ((ch) & 037)
-
-#define strNE(s1,s2) (strcmp(s1, s2))
 #define strEQ(s1,s2) (!strcmp(s1, s2))
-#define strnNE(s1,s2,l) (strncmp(s1, s2, l))
 #define strnEQ(s1,s2,l) (!strncmp(s1, s2, l))
 
 /* typedefs */
 
-typedef char bool;
+typedef int bool;			/* must promote to itself */
 typedef long LINENUM;			/* must be signed */
-typedef unsigned MEM;			/* what to feed malloc */
 
 /* globals */
 
-EXT int Argc;				/* guess */
-EXT char **Argv;
-EXT int optind_last;			/* for restarting plan_b */
+extern char const program_name[];
 
-EXT struct stat filestat;		/* file statistics area */
-EXT int filemode INIT(0644);
+XTERN char *buf;			/* general purpose buffer */
+XTERN size_t bufsize;			/* allocated size of buf */
 
-EXT char buf[MAXLINELEN];		/* general purpose buffer */
-EXT FILE *ofp INIT(Nullfp);		/* output file pointer */
-EXT FILE *rejfp INIT(Nullfp);		/* reject file pointer */
+XTERN bool using_plan_a;		/* try to keep everything in memory */
 
-EXT int myuid;				/* cache getuid return value */
+XTERN char *inname;
+XTERN int inerrno;
+XTERN struct stat instat;
+XTERN bool ok_to_create_file;
+XTERN bool dry_run;
 
-EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
-EXT bool out_of_mem INIT(FALSE);	/* ran out of memory in plan a */
+XTERN char const *origprae;
+XTERN char const *origbase;
 
-#define MAXFILEC 2
-EXT int filec INIT(0);			/* how many file arguments? */
-EXT char *filearg[MAXFILEC];
-EXT bool ok_to_create_file INIT(FALSE);
-EXT char *bestguess INIT(Nullch);	/* guess at correct filename */
+XTERN char const * volatile TMPOUTNAME;
+XTERN char const * volatile TMPINNAME;
+XTERN char const * volatile TMPPATNAME;
 
-EXT char *outname INIT(Nullch);
-EXT char rejname[128];
-
-EXT char *origprae INIT(Nullch);
-
-EXT char *TMPOUTNAME;
-EXT char *TMPINNAME;
-EXT char *TMPREJNAME;
-EXT char *TMPPATNAME;
-EXT bool toutkeep INIT(FALSE);
-EXT bool trejkeep INIT(FALSE);
-
-EXT LINENUM last_offset INIT(0);
 #ifdef DEBUGGING
-EXT int debug INIT(0);
+XTERN int debug;
+#else
+# define debug 0
 #endif
-EXT LINENUM maxfuzz INIT(2);
-EXT bool force INIT(FALSE);
-EXT bool batch INIT(FALSE);
-EXT bool verbose INIT(TRUE);
-EXT bool reverse INIT(FALSE);
-EXT bool noreverse INIT(FALSE);
-EXT bool skip_rest_of_patch INIT(FALSE);
-EXT int strippath INIT(957);
-EXT bool canonicalize INIT(FALSE);
+XTERN bool force;
+XTERN bool batch;
+XTERN bool reverse;
+XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
+XTERN bool skip_rest_of_patch;
+XTERN int strippath;
+XTERN bool canonicalize;
 
-#define CONTEXT_DIFF 1
-#define NORMAL_DIFF 2
-#define ED_DIFF 3
-#define NEW_CONTEXT_DIFF 4
-#define UNI_DIFF 5
-EXT int diff_type INIT(0);
+enum diff
+  {
+    NO_DIFF,
+    CONTEXT_DIFF,
+    NORMAL_DIFF,
+    ED_DIFF,
+    NEW_CONTEXT_DIFF,
+    UNI_DIFF
+  };
 
-EXT bool do_defines INIT(FALSE);	/* patch using ifdef, ifndef, etc. */
-EXT char if_defined[128];		/* #ifdef xyzzy */
-EXT char not_defined[128];		/* #ifndef xyzzy */
-EXT char else_defined[] INIT("#else\n");/* #else */
-EXT char end_defined[128];		/* #endif xyzzy */
+XTERN enum diff diff_type;
 
-EXT char *revision INIT(Nullch);	/* prerequisite revision, if any */
+XTERN char *revision;			/* prerequisite revision, if any */
+
+#ifdef __STDC__
+# define VOID void
+#else
+# define VOID char
+#endif
+
+#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6) || __STRICT_ANSI__
+# define __attribute__(x)
+#endif
+
+#ifndef PARAMS
+# ifdef __STDC__
+#  define PARAMS(args) args
+# else
+#  define PARAMS(args) ()
+# endif
+#endif
+
+VOID *xmalloc PARAMS ((size_t));
+void fatal_exit PARAMS ((int)) __attribute__ ((noreturn));
 
 #include <errno.h>
-#ifdef STDC_HEADERS
-#include <stdlib.h>
-#include <string.h>
-#else
+#if !STDC_HEADERS && !defined errno
 extern int errno;
-FILE *popen();
-char *malloc();
-char *realloc();
-long atol();
-char *getenv();
-char *strcpy();
-char *strcat();
-#endif
-char *mktemp();
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#else
-long lseek();
-#endif
-#if defined(_POSIX_VERSION) || defined(HAVE_FCNTL_H)
-#include <fcntl.h>
 #endif
 
-#if !defined(S_ISDIR) && defined(S_IFDIR)
-#define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#if STDC_HEADERS || HAVE_STRING_H
+# include <string.h>
+#else
+# if !HAVE_MEMCHR
+#  define memcmp(s1, s2, n) bcmp (s1, s2, n)
+#  define memcpy(d, s, n) bcopy (s, d, n)
+VOID *memchr ();
+# endif
 #endif
-#if !defined(S_ISREG) && defined(S_IFREG)
-#define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+
+#if STDC_HEADERS
+# include <stdlib.h>
+#else
+long atol ();
+char *getenv ();
+VOID *malloc ();
+VOID *realloc ();
+#endif
+
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifndef lseek
+off_t lseek ();
+#endif
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
+
+#if HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifndef O_RDONLY
+#define O_RDONLY 0
+#endif
+#ifndef O_RDWR
+#define O_RDWR 2
 #endif

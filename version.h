@@ -1,9 +1,5 @@
-/* $Header: version.h,v 2.0 86/09/17 15:40:14 lwall Exp $
- *
- * $Log:	version.h,v $
- * Revision 2.0  86/09/17  15:40:14  lwall
- * Baseline for netwide release.
- * 
- */
+/* Print the version number.  */
 
-void version();
+/* $Id: version.h,v 1.3 1997/04/07 01:07:00 eggert Exp $ */
+
+void version PARAMS ((void));

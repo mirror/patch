@@ -1,18 +1,10 @@
-/* $Header: inp.h,v 2.0 86/09/17 15:37:25 lwall Exp $
- *
- * $Log:	inp.h,v $
- * Revision 2.0  86/09/17  15:37:25  lwall
- * Baseline for netwide release.
- * 
- */
+/* inputting files to be patched */
 
-EXT LINENUM input_lines INIT(0);	/* how long is input file in lines */
-EXT LINENUM last_frozen_line INIT(0);	/* how many input lines have been */
-					/* irretractibly output */
+/* $Id: inp.h,v 1.4 1997/04/07 01:07:00 eggert Exp $ */
 
-bool rev_in_string();
-void scan_input();
-bool plan_a();			/* returns false if insufficient memory */
-void plan_b();
-char *ifetch();
+XTERN LINENUM input_lines;		/* how long is input file in lines */
 
+char const *ifetch PARAMS ((LINENUM, int, size_t *));
+void get_input_file PARAMS ((char const *, char const *));
+void re_input PARAMS ((void));
+void scan_input PARAMS ((char *));

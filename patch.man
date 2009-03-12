@@ -1,159 +1,85 @@
-.\" -*- nroff -*-
-.rn '' }`
-'\" $Header: patch.man,v 2.0.1.2 88/06/22 20:47:18 lwall Locked $
-'\" 
-'\" $Log:	patch.man,v $
-'\" Revision 2.0.1.2  88/06/22  20:47:18  lwall
-'\" patch12: now avoids Bell System Logo
-'\" 
-'\" Revision 2.0.1.1  88/06/03  15:12:51  lwall
-'\" patch10: -B switch was contributed.
-'\" 
-'\" Revision 2.0  86/09/17  15:39:09  lwall
-'\" Baseline for netwide release.
-'\" 
-'\" Revision 1.4  86/08/01  19:23:22  lwall
-'\" Documented -v, -p, -F.
-'\" Added notes to patch senders.
-'\" 
-'\" Revision 1.3  85/03/26  15:11:06  lwall
-'\" Frozen.
-'\" 
-'\" Revision 1.2.1.4  85/03/12  16:14:27  lwall
-'\" Documented -p.
-'\" 
-'\" Revision 1.2.1.3  85/03/12  16:09:41  lwall
-'\" Documented -D.
-'\" 
-'\" Revision 1.2.1.2  84/12/05  11:06:55  lwall
-'\" Added -l switch, and noted bistability bug.
-'\" 
-'\" Revision 1.2.1.1  84/12/04  17:23:39  lwall
-'\" Branch for sdcrdcf changes.
-'\" 
-'\" Revision 1.2  84/12/04  17:22:02  lwall
-'\" Baseline version.
-'\" 
-.de Sh
-.br
-.ne 5
-.PP
-\fB\\$1\fR
-.PP
+.\" patch man page
+.de Id
+.ds Dt \\$4
 ..
+.Id $Id: patch.man,v 1.8 1997/04/17 17:08:15 eggert Exp $
+.ds = \-\^\-
 .de Sp
-.if t .sp .5v
+.if t .sp .3
 .if n .sp
 ..
-'\"
-'\"     Set up \*(-- to give an unbreakable dash;
-'\"     string Tr holds user defined translation string.
-'\"     Bell System Logo is used as a dummy character.
-'\"
-.ie n \{\
-.tr \(*W-\*(Tr
-.ds -- \(*W-
-.if (\n(.H=4u)&(1m=24u) .ds -- \(*W\h'-12u'\(*W\h'-12u'-\" diablo 10 pitch
-.if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
-.ds L" ""
-.ds R" ""
-.ds L' '
-.ds R' '
-'br \}
-.el \{\
-.ds -- \(em\|
-.tr \*(Tr
-.ds L" ``
-.ds R" ''
-.ds L' `
-.ds R' '
-'br\}
-.TH PATCH 1 LOCAL
+.TH PATCH 1 \*(Dt GNU
+.ta 3n
 .SH NAME
-patch - apply a diff file to an original
+patch \- apply a diff file to an original
 .SH SYNOPSIS
 .B patch
-[options] [origfile [patchfile]] [+ [options] [origfile]]...
-.sp
+.RI [ options ]
+.RI [ originalfile
+.RI [ patchfile ]]
+.Sp
 but usually just
-.sp
-.B patch
-<patchfile
+.Sp
+.BI "patch \-p" number
+.BI < patchfile
 .SH DESCRIPTION
-.I Patch
-will take a patch file containing any of the four forms of difference
-listing produced by the
-.I diff
-program and apply those differences to an original file, producing a patched
-version.
-By default, the patched version is put in place of the original, with
-the original file backed up to the same name with the
-extension \*(L".orig\*(R" (\*(L"~\*(R" on systems that do not
-support long file names), or as specified by the
-\fB\-b\fP (\fB\-\-suffix\fP),
-\fB\-B\fP (\fB\-\-prefix\fP),
-or
-\fB\-V\fP (\fB\-\-version\-control\fP)
-options.
-The extension used for making backup files may also be specified in the
-.B SIMPLE_BACKUP_SUFFIX
-environment variable, which is overridden by the above options.
-.PP
-If the backup file already exists,
 .B patch
-creates a new backup file name by changing the first lowercase letter
-in the last component of the file's name into uppercase.  If there are
-no more lowercase letters in the name, it removes the first character
-from the name.  It repeats this process until it comes up with a
-backup file that does not already exist.
-.PP
-You may also specify where you want the output to go with a
-\fB\-o\fP (\fB\-\-output\fP)
-option; if that file already exists, it is backed up first.
-.PP
-If
+takes a patch file
 .I patchfile
-is omitted, or is a hyphen, the patch will be read from standard input.
-.PP
-Upon startup, patch will attempt to determine the type of the diff listing,
-unless over-ruled by a
-\fB\-c\fP (\fB\-\-context\fP),
-\fB\-e\fP (\fB\-\-ed\fP),
-\fB\-n\fP (\fB\-\-normal\fP),
+containing a difference listing produced by the
+.B diff
+program and applies those differences to one or more original files,
+producing patched versions.
+Normally the patched versions are put in place of the originals.
+Backups can be made; see the
+.B \-V
 or
-\fB\-u\fP (\fB\-\-unified\fP)
+.B \*=version\-control
+option.
+The names of the files to be patched are usually taken from the patch file,
+but if there's just one file to be patched it can specified on the
+command line as
+.IR originalfile .
+.PP
+Upon startup, patch attempts to determine the type of the diff listing,
+unless overruled by a
+\fB\-c\fP (\fB\*=context\fP),
+\fB\-e\fP (\fB\*=ed\fP),
+\fB\-n\fP (\fB\*=normal\fP),
+or
+\fB\-u\fP (\fB\*=unified\fP)
 option.
 Context diffs (old-style, new-style, and unified) and
 normal diffs are applied by the
-.I patch
+.B patch
 program itself, while
-.I ed
+.B ed
 diffs are simply fed to the
-.I ed
+.BR ed (1)
 editor via a pipe.
 .PP
-.I Patch
-will try to skip any leading garbage, apply the diff,
+.B patch
+tries to skip any leading garbage, apply the diff,
 and then skip any trailing garbage.
 Thus you could feed an article or message containing a
 diff listing to
-.IR patch ,
+.BR patch ,
 and it should work.
 If the entire diff is indented by a consistent amount,
-this will be taken into account.
+this is taken into account.
 .PP
 With context diffs, and to a lesser extent with normal diffs,
-.I patch
+.B patch
 can detect when the line numbers mentioned in the patch are incorrect,
-and will attempt to find the correct place to apply each hunk of the patch.
+and attempts to find the correct place to apply each hunk of the patch.
 As a first guess, it takes the line number mentioned for the hunk, plus or
 minus any offset used in applying the previous hunk.
 If that is not the correct place,
-.I patch
-will scan both forwards and backwards for a set of lines matching the context
+.B patch
+scans both forwards and backwards for a set of lines matching the context
 given in the hunk.
 First
-.I patch
+.B patch
 looks for a place where all lines of the context match.
 If no such place is found, and it's a context diff, and the maximum fuzz factor
 is set to 1 or more, then another scan takes place ignoring the first and last
@@ -163,408 +89,617 @@ the first two and last two lines of context are ignored,
 and another scan is made.
 (The default maximum fuzz factor is 2.)
 If
-.I patch
-cannot find a place to install that hunk of the patch, it will put the
+.B patch
+cannot find a place to install that hunk of the patch, it puts the
 hunk out to a reject file, which normally is the name of the output file
-plus \*(L".rej\*(R" (\*(L"#\*(R" on systems that do not support
-long file names).
-(Note that the rejected hunk will come out in context diff form whether the
-input patch was a context diff or a normal diff.
-If the input was a normal diff, many of the contexts will simply be null.)
+plus a
+.B \&.rej
+suffix
+(or
+.B #
+if
+.B \&.rej
+would generate a file name that is too long).
+(The rejected hunk comes out in ordinary context diff form regardless of
+the input patch's form.
+If the input was a normal diff, many of the contexts are simply null.)
 The line numbers on the hunks in the reject file may be different than
 in the patch file: they reflect the approximate location patch thinks the
 failed hunks belong in the new file rather than the old one.
 .PP
-As each hunk is completed, you will be told whether the hunk succeeded or
-failed, and which line (in the new file)
-.I patch
+As each hunk is completed, you are told if the hunk
+failed, and if so which line (in the new file)
+.B patch
 thought the hunk should go on.
-If this is different from the line number specified in the diff you will
-be told the offset.
-A single large offset MAY be an indication that a hunk was installed in the
+If the
+.B \*=verbose
+option is given, you are also told about hunks that succeeded.
+If the hunk is installed at a different line
+from the line number specified in the diff you
+are told the offset.
+A single large offset
+.I may
+indicate that a hunk was installed in the
 wrong place.
-You will also be told if a fuzz factor was used to make the match, in which
+You are also told if a fuzz factor was used to make the match, in which
 case you should also be slightly suspicious.
 .PP
-If no original file is specified on the command line,
-.I patch
-will try to figure out from the leading garbage what the name of the file
+If no original file
+.I origfile
+is specified on the command line,
+.B patch
+tries to figure out from the leading garbage what the name of the file
 to edit is.
-In the header of a context diff, the file name is found from lines beginning
-with \*(L"***\*(R" or \*(L"---\*(R", with the shortest name of an existing
-file winning.
-Only context diffs have lines like that, but if there is an \*(L"Index:\*(R"
+If the header is that of a context diff,
+.B patch
+tests for the existence of the old and new files named in the header.
+If there is an
+.B Index:
 line in the leading garbage,
-.I patch
-will try to use the file name from that line.
-The context diff header takes precedence over an Index line.
-If no file name can be intuited from the leading garbage, you will be asked
+.B patch
+tests for the existence of the file named in that line.
+If none of the file names refer to existing files, but the patch appears
+to create a file, then
+.B patch
+tries the same file names again, this time testing only for the
+existence of the file names' directory prefix;
+.B patch
+uses the first name with the longest existing prefix.
+If no file name can be intuited from the leading garbage, you are asked
 for the name of the file to patch.
 .PP
-If the original file cannot be found or is read-only, but a suitable
-SCCS or RCS file is handy,
-.I patch
-will attempt to get or check out the file.
-.PP
-Additionally, if the leading garbage contains a \*(L"Prereq: \*(R" line,
-.I patch
-will take the first word from the prerequisites line (normally a version
-number) and check the input file to see if that word can be found.
+Additionally, if the leading garbage contains a
+.B Prereq:
+line,
+.B patch
+takes the first word from the prerequisites line (normally a version
+number) and checks the original file to see if that word can be found.
 If not,
-.I patch
-will ask for confirmation before proceeding.
+.B patch
+asks for confirmation before proceeding.
+.PP
+If the original file cannot be found or is read-only, but a suitable
+\s-1RCS\s0 file is handy,
+and if version control
+(see the
+.B \-V
+or
+.B \*=version\-control
+option)
+is set to
+.BR existing ,
+.B patch
+attempts to check out and lock the file.
+\s-1SCCS\s0 is treated in a similar way.
 .PP
 The upshot of all this is that you should be able to say, while in a news
-interface, the following:
+interface, something like the following:
 .Sp
-	| patch -d /usr/src/local/blurfl
+	\fB| patch \-d /usr/src/local/blurfl\fP
 .Sp
-and patch a file in the blurfl directory directly from the article containing
+and patch a file in the
+.B blurfl
+directory directly from the article containing
 the patch.
 .PP
 If the patch file contains more than one patch,
-.I patch
-will try to apply each of them as if they came from separate patch files.
+.B patch
+tries to apply each of them as if they came from separate patch files.
 This means, among other things, that it is assumed that the name of the file
 to patch must be determined for each diff listing,
-and that the garbage before each diff listing will
-be examined for interesting things such as file names and revision level, as
+and that the garbage before each diff listing
+contains interesting things such as file names and revision level, as
 mentioned previously.
-You can give options (and another original file name) for the second and
-subsequent patches by separating the corresponding argument lists
-by a \*(L'+\*(R'.
-(The argument list for a second or subsequent patch may not specify a new
-patch file, however.)
-.PP
-.I Patch
-recognizes the following options:
-.TP 5
-.B "\-b suff, \-\-suffix=suff"
-causes
-.B suff
-to be interpreted as the backup extension, to be
-used in place of \*(L".orig\*(R" or \*(L"~\*(R".
-.TP 5
-.B "\-B pref, \-\-prefix=pref"
-causes
-.B pref
-to be interpreted as a prefix to the backup file
-name. If this argument is specified, any argument from
-.B \-b
-will be ignored.
-.TP 5
-.B "\-c, \-\-context"
-forces
-.I patch
-to interpret the patch file as a context diff.
-.TP 5
-.B "\-d dir, \-\-directory=dir"
-causes
-.I patch
-to interpret
-.B dir
-as a directory, and cd to it before doing
+.SH OPTIONS
+.TP 3
+\fB\-b\fP  or  \fB\*=backup\fP
+Make backup files.
+This option is equivalent to
+.BR \*=version\-control=simple ;
+see the
+.B \-V
+or
+.B \*=version\-control
+option for details.
+In older versions of
+.BR patch ,
+this option had an argument specifying the simple backup suffix;
+this argument has been moved to the
+.B \-z
+option.
+.TP
+\fB\-B\fP \fIpref\fP  or  \fB\*=prefix=\fP\fIpref\fP
+Prefix simple backup file names with
+.IR pref .
+For example, with
+.B "\-B /junk/"
+the simple backup file name for
+.B src/patch/util.c
+is
+.BR /junk/src/patch/util.c .
+.TP
+\fB\-c\fP  or  \fB\*=context\fP
+Interpret the patch file as a ordinary context diff.
+.TP
+\fB\*=verbose\fP
+Output extra information about the work being done.
+.TP
+\fB\-d\fP \fIdir\fP  or  \fB\*=directory=\fP\fIdir\fP
+Change to the directory
+.I dir
+immediately, before doing
 anything else.
-.TP 5
-.B "\-D sym, \-\-ifdef=sym"
-causes
-.I patch
-to use the "#ifdef...#endif" construct to mark changes.
-.B sym
-will be used as the differentiating symbol.
-.TP 5
-.B "\-e, \-\-ed"
-forces
-.I patch
-to interpret the patch file as an
-.I ed
+.TP
+\fB\-D\fP \fIsym\fP  or  \fB\*=ifdef=\fP\fIsym\fP
+Use the
+.B "#ifdef .\|.\|. #endif"
+construct to mark changes, with
+.I sym
+as the differentiating symbol.
+.TP
+.B "\*=dry\-run"
+Print the results of applying the patches without actually changing any files.
+.TP
+\fB\-e\fP  or  \fB\*=ed\fP
+Interpret the patch file as an
+.B ed
 script.
-.TP 5
-.B "\-E, \-\-remove\-empty\-files"
-causes
-.I patch
-to remove output files that are empty after the patches have been applied.
-.TP 5
-.B "\-f, \-\-force"
-forces
-.I patch
-to assume that the user knows exactly what he or she is doing, and to not
-ask any questions.  It assumes the following: skip patches for which a
-file to patch can't be found; patch files even though they have the
-wrong version for the ``Prereq:'' line in the patch; and assume that
+.TP
+\fB\-E\fP  or  \fB\*=remove\-empty\-files\fP
+Remove output files that are empty after the patches have been applied.
+.TP
+\fB\-f\fP  or  \fB\*=force\fP
+Assume that the user knows exactly what he or she is doing, and do not
+ask any questions.  Skip patches whose headers
+do not say which file is to be patched; patch files even though they have the
+wrong version for the
+.B Prereq:
+line in the patch; and assume that
 patches are not reversed even if they look like they are.
 This option does not suppress commentary; use
 .B \-s
 for that.
-.TP 5
-.B "\-t, \-\-batch"
-similar to
-.BR \-f ,
-in that it suppresses questions, but makes some different assumptions:
-skip patches for which a file to patch can't be found (the same as \fB\-f\fP);
-skip patches for which the file has the wrong version for the ``Prereq:'' line
-in the patch; and assume that patches are reversed if they look like
-they are.
-.TP 5
-.B "\-F number, \-\-fuzz=number"
-sets the maximum fuzz factor.
-This option only applies to context diffs, and causes
-.I patch
+.TP
+\fB\-F\fP \fInumber\fP  or  \fB\*=fuzz=\fP\fInumber\fP
+Set the maximum fuzz factor.
+This option only applies to diffs that have context, and causes
+.B patch
 to ignore up to that many lines in looking for places to install a hunk.
 Note that a larger fuzz factor increases the odds of a faulty patch.
 The default fuzz factor is 2, and it may not be set to more than
 the number of lines of context in the context diff, ordinarily 3.
-.TP 5
-.B "\-l, \-\-ignore\-whitespace"
-causes the pattern matching to be done loosely, in case the tabs and
-spaces have been munged in your input file.
-Any sequence of whitespace in the pattern line will match any sequence
-in the input file.
+.TP
+.B "\*=help"
+Print a summary of options and exit.
+.TP
+\fB\-i\fP \fIpatchfile\fP  or  \fB\*=input=\fP\fIpatchfile\fP
+Read the patch from
+.IR patchfile .
+If
+.I patchfile
+is
+.BR \- ,
+read from standard input, the default.
+.TP
+\fB\-l\fP  or  \fB\*=ignore\-whitespace\fP
+Match patterns loosely, in case tabs or spaces
+have been munged in your files.
+Any sequence of one or more blanks in the patch file matches any sequence
+in the original file, and sequences of blanks at the ends of lines are ignored.
 Normal characters must still match exactly.
-Each line of the context must still match a line in the input file.
-.TP 5
-.B "\-n, \-\-normal"
-forces
-.I patch
-to interpret the patch file as a normal diff.
-.TP 5
-.B "\-N, \-\-forward"
-causes
-.I patch
-to ignore patches that it thinks are reversed or already applied.
+Each line of the context must still match a line in the original file.
+.TP
+\fB\-n\fP  or  \fB\*=normal\fP
+Interpret the patch file as a normal diff.
+.TP
+\fB\-N\fP  or  \fB\*=forward\fP
+Ignore patches that seem to be reversed or already applied.
 See also
 .B \-R .
-.TP 5
-.B "\-o file, \-\-output=file"
-causes
-.B file
-to be interpreted as the output file name.
-.TP 5
-.B "\-p[number], \-\-strip[=number]"
-sets the pathname strip count,
-which controls how pathnames found in the patch file are treated, in case
-the you keep your files in a different directory than the person who sent
+.TP
+\fB\-o\fP \fIfile\fP  or  \fB\*=output=\fP\fIfile\fP
+Send output to
+.I file
+instead of patching files in place.
+.TP
+\fB\-p\fP\fInumber\fP  or  \fB\*=strip\fP\fB=\fP\fInumber\fP
+Strip the smallest prefix containing
+.I number
+leading slashes from each file name found in the patch file.
+A sequence of one or more adjacent slashes is counted as a single slash.
+This controls how file names found in the patch file are treated, in case
+you keep your files in a different directory than the person who sent
 out the patch.
-The strip count specifies how many slashes are to be stripped from
-the front of the pathname.
-(Any intervening directory names also go away.)
 For example, supposing the file name in the patch file was
-.sp
-	/u/howard/src/blurfl/blurfl.c
-.sp
+.Sp
+	\fB/u/howard/src/blurfl/blurfl.c\fP
+.Sp
 setting
-.B \-p
-or
 .B \-p0
-gives the entire pathname unmodified,
+gives the entire file name unmodified,
 .B \-p1
 gives
-.sp
-	u/howard/src/blurfl/blurfl.c
-.sp
+.Sp
+	\fBu/howard/src/blurfl/blurfl.c\fP
+.Sp
 without the leading slash,
 .B \-p4
 gives
-.sp
-	blurfl/blurfl.c
-.sp
+.Sp
+	\fBblurfl/blurfl.c\fP
+.Sp
 and not specifying
 .B \-p
-at all just gives you "blurfl.c", unless all of the directories in the
-leading path (u/howard/src/blurfl) exist and that path is relative,
-in which case you get the entire pathname unmodified.
+at all just gives you \fBblurfl.c\fP.
 Whatever you end up with is looked for either in the current directory,
 or the directory specified by the
 .B \-d
 option.
-.TP 5
-.B "\-r file, \-\-reject\-file=file"
-causes
-.B file
-to be interpreted as the reject file name.
-.TP 5
-.B "\-R, \-\-reverse"
-tells
-.I patch
-that this patch was created with the old and new files swapped.
+With GNU
+.BR patch ,
+the two-argument
+.BI "\-p " N
+form of this option is equivalent to one-argument
+.BI \-p N
+form, but this is not true of traditional
+.BR patch ,
+so the one-argument form is recommended for portability.
+.TP
+\fB\-r\fP \fIfile\fP  or  \fB\*=reject\-file=\fP\fIfile\fP
+Put rejects into
+.I file
+instead of the default
+.B \&.rej
+file.
+.TP
+\fB\-R\fP  or  \fB\*=reverse\fP
+Assume that this patch was created with the old and new files swapped.
 (Yes, I'm afraid that does happen occasionally, human nature being what it
 is.)
-.I Patch
-will attempt to swap each hunk around before applying it.
-Rejects will come out in the swapped format.
+.B patch
+attempts to swap each hunk around before applying it.
+Rejects come out in the swapped format.
 The
 .B \-R
-option will not work with
-.I ed
+option does not work with
+.B ed
 diff scripts because there is too little
 information to reconstruct the reverse operation.
 .Sp
 If the first hunk of a patch fails,
-.I patch
-will reverse the hunk to see if it can be applied that way.
-If it can, you will be asked if you want to have the
+.B patch
+reverses the hunk to see if it can be applied that way.
+If it can, you are asked if you want to have the
 .B \-R
 option set.
-If it can't, the patch will continue to be applied normally.
+If it can't, the patch continues to be applied normally.
 (Note: this method cannot detect a reversed patch if it is a normal diff
 and if the first command is an append (i.e. it should have been a delete)
-since appends always succeed, due to the fact that a null context will match
+since appends always succeed, due to the fact that a null context matches
 anywhere.
 Luckily, most patches add or change lines rather than delete them, so most
-reversed normal diffs will begin with a delete, which will fail, triggering
+reversed normal diffs begin with a delete, which fails, triggering
 the heuristic.)
-.TP 5
-.B "\-s, \-\-silent, \-\-quiet"
-makes
-.I patch
-do its work silently, unless an error occurs.
-.TP 5
-.B "\-S, \-\-skip"
-causes
-.I patch
-to ignore this patch from the patch file, but continue on looking
-for the next patch in the file.
-Thus
-.sp
-	patch -S + -S + <patchfile
-.sp
-will ignore the first and second of three patches.
-.TP 5
-.B "\-u, \-\-unified"
-forces
-.I patch
-to interpret the patch file as a unified context diff (a unidiff).
-.TP 5
-.B "\-v, \-\-version"
-causes
-.I patch
-to print out its revision header and patch level.
-.TP 5
-.B "\-V method, \-\-version\-\-control=method"
-causes
-.B method
-to be interpreted as a method for creating
+.TP
+\fB\-s\fP  or  \fB\*=silent\fP  or  \fB\*=quiet\fP
+Work silently, unless an error occurs.
+.TP
+\fB\-t\fP  or  \fB\*=batch\fP
+Suppress questions like
+.BR \-f ,
+but make some different assumptions:
+skip patches whose headers do not contain file names (the same as \fB\-f\fP);
+skip patches for which the file has the wrong version for the
+.B Prereq:
+line
+in the patch; and assume that patches are reversed if they look like
+they are.
+.TP
+\fB\-u\fP  or  \fB\*=unified\fP
+Interpret the patch file as a unified context diff.
+.TP
+\fB\-v\fP  or  \fB\*=version\fP
+Print out
+.BR patch 's
+revision header and patch level, and exit.
+.TP
+\fB\-V\fP \fImethod\fP  or  \fB\*=version\-control=\fP\fImethod\fP
+Use
+.I method
+when creating
 backup file names.  The type of backups made can also be given in the
 .B VERSION_CONTROL
 environment variable, which is overridden by this option.
-The
-.B -B
-option overrides this option, causing the prefix to always be used for
-making backup file names.
-The value of the
-.B VERSION_CONTROL
-environment variable and the argument to the
-.B -V
-option are like the GNU
-Emacs `version-control' variable; they also recognize synonyms that
-are more descriptive.  The valid values are (unique abbreviations are
+.Sp
+The value of
+.I method
+is like the GNU
+Emacs `version-control' variable;
+.B patch
+also recognizes synonyms that
+are more descriptive.  The valid values for
+.I method
+are (unique abbreviations are
 accepted):
 .RS
+.TP 3
+\fBexisting\fP  or  \fBnil\fP
+Make numbered backups of files that already have them,
+otherwise simple backups.
+If a file is read-only or does not exist,
+check it out from \s-1RCS\s0 if it is under \s-2RCS\s0 control;
+similarly for \s-1SCCS\s0.
 .TP
-`t' or `numbered'
-Always make numbered backups.
-.TP
-`nil' or `existing'
-Make numbered backups of files that already
-have them, simple backups of the others.
+\fBnone\fP
+Do not make backups.
 This is the default.
 .TP
-`never' or `simple'
-Always make simple backups.
+\fBnumbered\fP  or  \fBt\fP
+Make numbered backups.  The numbered backup file name for
+.I F
+is
+.IB F .~ N ~
+where
+.I N
+is the version number.
+.TP
+\fBsimple\fP  or  \fBnever\fP
+Make simple backups.  That is, when patching a file
+.IR F ,
+rename or copy the original instead of removing it.
+The
+.B \-B
+or
+.BR \*=prefix ,
+.B \-y
+or
+.BR \*=basename\-prefix ,
+and
+.B \-z
+or
+.BR \*=suffix
+options specify the simple backup file name.
+If none of these options are given, then a simple backup suffix is used;
+it is the value of the
+.B SIMPLE_BACKUP_SUFFIX
+environment variable if set, and is
+.B \&.orig
+otherwise.
+.PP
+With numbered or simple backups,
+if the backup file name is just another name for the original file,
+.B patch
+creates a new backup file name by changing the first lowercase letter
+in the last component of the file's name into uppercase.  If there are
+no more lowercase letters in the name, it removes the first character
+from the name.  It repeats this process until it fails, or comes up with a
+backup file that is not just another name for the original file.
 .RE
-.TP 5
-.B "\-x number, \-\-debug=number"
-sets internal debugging flags, and is of interest only to
-.I patch
+.TP
+\fB\-x\fP \fInumber\fP  or  \fB\*=debug=\fP\fInumber\fP
+Set internal debugging flags of interest only to
+.B patch
 patchers.
-.SH AUTHOR
-Larry Wall <lwall@netlabs.com>
-.br
-with many other contributors.
+.TP
+\fB\-y\fP \fIpref\fP  or  \fB\*=basename\-prefix=\fP\fIpref\fP
+Prefix the basename of the simple backup file name with
+.IR pref .
+For example, with
+.B "\-y .del/"
+the backup file name for
+.B src/patch/util.c
+is
+.BR src/patch/.del/util.c .
+.TP
+\fB\-z\fP \fIsuff\fP  or  \fB\*=suffix=\fP\fIsuff\fP
+Use
+.I suff
+as the simple backup suffix.
+The backup extension may also be specified by the
+.B SIMPLE_BACKUP_SUFFIX
+environment variable, which is overridden by this option.
+If the backup suffix would create a file name that is too long,
+the backup suffix
+.B ~
+is used instead.
 .SH ENVIRONMENT
+.TP 3
+.B POSIXLY_CORRECT
+If set,
+.B patch
+conforms more strictly to the Posix standard:
+i.e. it requires that all options precede the
+files in the command line.
 .TP
 .B TMPDIR
-Directory to put temporary files in; default is /tmp.
+Directory to put temporary files in; default is
+.BR /tmp .
 .TP
 .B SIMPLE_BACKUP_SUFFIX
-Extension to use for backup file names instead of \*(L".orig\*(R" or
-\*(L"~\*(R".
+Extension to use for simple backup file names instead of
+.BR \&.orig .
 .TP
 .B VERSION_CONTROL
-Selects when numbered backup files are made.
+Selects version control style; see the
+.B \-v
+or
+.B \*=version_control
+option.
 .SH FILES
-$TMPDIR/patch*
-.SH SEE ALSO
-diff(1)
-.SH NOTES FOR PATCH SENDERS
+.IB $TMPDIR "/patch\(**"
+.SH "SEE ALSO"
+.BR diff (1),
+.BR ed (1)
+.SH "NOTES FOR PATCH SENDERS"
 There are several things you should bear in mind if you are going to
 be sending out patches.
-First, you can save people a lot of grief by keeping a patchlevel.h file
-which is patched to increment the patch level as the first diff in the
-patch file you send out.
-If you put a Prereq: line in with the patch, it won't let them apply
+.PP
+Tell your recipients how to apply the patches.
+This should include which directory to
+.B cd
+to, and which
+.B patch
+options to use.  Normally you should specify the
+.BI \-p N
+option with the proper value of
+.IR N .
+The
+.B \-E
+and
+.B \-N
+options are also common.
+Test your procedure by pretending to be a recipient and applying
+your patches to a copy of the original files.
+.PP
+You can save people a lot of grief by keeping a
+.B patchlevel.h
+file which is patched to increment the patch level
+as the first diff in the patch file you send out.
+If you put a
+.B Prereq:
+line in with the patch, it won't let them apply
 patches out of order without some warning.
-Second, make sure you've specified the file names right, either in a
-context diff header, or with an Index: line.
-If you are patching something in a subdirectory, be sure to tell the patch
-user to specify a 
-.B \-p
-option as needed.
-Third, you can create a file by sending out a diff that compares a
-null file to the file you want to create.
-This will only work if the file you want to create doesn't exist already in
+.PP
+Make sure you've specified the file names right, either in a
+context diff header, or with an
+.B Index:
+line.
+.PP
+You can create a file by sending out a diff that compares an
+empty file (such as
+.BR /dev/null )
+to the file you want to create.
+This only works if the file you want to create doesn't exist already in
 the target directory.
-Fourth, take care not to send out reversed patches, since it makes people wonder
+Conversely, you can remove a file by sending out a diff that compares the
+file to be deleted with an empty file.
+The file will be left empty, but not actually be removed unless the
+.B \-E
+or
+.B \*=remove\-empty\-files
+option is given.
+An easy way to generate patches that create and remove files is to use GNU
+.BR diff 's
+.B \*=new\-file
+option.
+.PP
+If the recipient is supposed to use the
+.BI \-p N
+option, do not send output that looks like this:
+.Sp
+.ft B
+	diff \-uNR v2.0.29/prog/README prog/README
+.br
+	\-\-\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+.br
+	+++ prog/README   Mon Mar 17 14:58:22 1997
+.ft
+.Sp
+because the two file names have different numbers of slashes,
+and different versions of
+.B patch
+interpret the file names differently.
+To avoid confusion, send output that looks like this instead:
+.Sp
+.ft B
+	diff \-uNR v2.0.29/prog/README v2.0.30/prog/README
+.br
+	\-\-\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+.br
+	+++ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
+.ft
+.Sp
+.PP
+Take care not to send out reversed patches, since it makes people wonder
 whether they already applied the patch.
-Fifth, while you may be able to get away with putting 582 diff listings into
+.PP
+While you may be able to get away with putting 582 diff listings into
 one file, it is probably wiser to group related patches into separate files in
 case something goes haywire.
 .SH DIAGNOSTICS
-Too many to list here, but generally indicative that
-.I patch
+Diagnostics generally indicate that
+.B patch
 couldn't parse your patch file.
 .PP
-The message \*(L"Hmm...\*(R" indicates that there is unprocessed text in
+If the
+.B \*=verbose
+option is given, the message
+.B Hmm.\|.\|.\&
+indicates that there is unprocessed text in
 the patch file and that
-.I patch
+.B patch
 is attempting to intuit whether there is a patch in that text and, if so,
 what kind of patch it is.
 .PP
-.I Patch
-will exit with a non-zero status if any reject files were created.
+.BR patch 's
+exit status is
+0 if all hunks are applied successfully,
+1 if some hunks cannot be applied,
+and 2 if there is more serious trouble.
 When applying a set of patches in a loop it behooves you to check this
 exit status so you don't apply a later patch to a partially patched file.
 .SH CAVEATS
-.I Patch
+.B patch
 cannot tell if the line numbers are off in an
-.I ed
-script, and can only detect
-bad line numbers in a normal diff when it finds a \*(L"change\*(R" or
-a \*(L"delete\*(R" command.
+.B ed
+script, and can detect
+bad line numbers in a normal diff only when it finds a change or deletion.
 A context diff using fuzz factor 3 may have the same problem.
 Until a suitable interactive interface is added, you should probably do
 a context diff in these cases to see if the changes made sense.
 Of course, compiling without errors is a pretty good indication that the patch
 worked, but not always.
 .PP
-.I Patch
+.B patch
 usually produces the correct results, even when it has to do a lot of
 guessing.
 However, the results are guaranteed to be correct only when the patch is
 applied to exactly the same version of the file that the patch was
 generated from.
 .SH BUGS
-Could be smarter about partial matches, excessively \&deviant offsets and
+.B patch
+could be smarter about partial matches, excessively deviant offsets and
 swapped code, but that would take an extra pass.
 .PP
-If code has been duplicated (for instance with #ifdef OLDCODE ... #else ...
-#endif),
-.I patch
+If code has been duplicated (for instance with
+.BR "#ifdef OLDCODE .\|.\|. #else .\|.\|. #endif" ),
+.B patch
 is incapable of patching both versions, and, if it works at all, will likely
 patch the wrong one, and tell you that it succeeded to boot.
 .PP
 If you apply a patch you've already applied,
-.I patch
-will think it is a reversed patch, and offer to un-apply the patch.
+.B patch
+thinks it is a reversed patch, and offers to un-apply the patch.
 This could be construed as a feature.
-.rn }` ''
+.SH COPYING
+Copyright
+.if t \(co
+1984, 1985, 1986, 1988 Larry Wall.
+.br
+Copyright
+.if t \(co
+1997 Free Software Foundation, Inc.
+.PP
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+.PP
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+.PP
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the copyright holders instead of in
+the original English.
+.SH AUTHORS
+Larry Wall wrote the original version of
+.BR patch .
+Paul Eggert removed
+.BR patch 's
+arbitrary limits, added support for binary files,
+and made it conform better to Posix.
+Other contributors include Wayne Davison, who added unidiff support,
+and David MacKenzie, who added configuration and backup support.
