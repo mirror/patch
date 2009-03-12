@@ -540,7 +540,7 @@ test "$program_transform_name" = "" && program_transform_name="s,x,x,"
 
 
 PACKAGE=patch
-VERSION=2.4
+VERSION=2.5
 
 
 

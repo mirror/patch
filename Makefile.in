@@ -136,9 +136,9 @@ PV = $(PACKAGE)-$(VERSION)
 dist:: $(DISTFILES) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
 	rm -rf $(PV)
 	mkdir $(PV) $(PV)/pc $(PV)/pc/djgpp
-	ln $(DISTFILES) $(PV)
-	ln $(DISTFILES_PC) $(PV)/pc
-	ln $(DISTFILES_PC_DJGPP) $(PV)/pc/djgpp
+	cp -p $(DISTFILES) $(PV)
+	cp -p $(DISTFILES_PC) $(PV)/pc
+	cp -p $(DISTFILES_PC_DJGPP) $(PV)/pc/djgpp
 	tar -chf - $(PV) | gzip -9 >$(PV).tar.gz
 	rm -rf $(PV)
 
