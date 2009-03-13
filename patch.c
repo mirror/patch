@@ -948,8 +948,9 @@ abort_hunk (void)
       (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ****" : "";
     char const *minuses =
       (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ----" : " -----";
+    char const *c_function = pch_c_function();
 
-    fprintf(rejfp, "***************\n");
+    fprintf(rejfp, "***************%s\n", c_function ? c_function : "");
     for (i=0; i<=pat_end; i++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
 	char numbuf1[LINENUM_LENGTH_BOUND + 1];

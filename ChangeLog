@@ -29,6 +29,13 @@
 	* Makefile.in (TESTS): New variable.  Add test cases.
 	(check): Replace the dummy test target with running all TESTS.
 
+	* pch.c, pch.h (pch_c_function): New function.
+	* pch.c (p_c_function): New variable.
+	(another_hunk): Preserve the "diff -p" output.
+	* patch.c (abort_hunk): Use pch_c_function().
+	* tests/preserve-c-function-names: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:

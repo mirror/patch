@@ -25,6 +25,7 @@
 LINENUM pch_end (void);
 LINENUM pch_first (void);
 LINENUM pch_hunk_beg (void);
+char const *pch_c_function (void);
 LINENUM pch_newfirst (void);
 LINENUM pch_prefix_context (void);
 LINENUM pch_ptrn_lines (void);

@@ -68,6 +68,7 @@ static LINENUM p_sline;			/* and the line number for it */
 static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
+static char *p_c_function;		/* the C function a hunk is in */
 
 enum nametype { OLD, NEW, INDEX, NONE };
 
@@ -856,6 +857,12 @@ another_hunk (enum diff difftype, bool rev)
     assert(p_end == -1);
     p_efake = -1;
 
+    if (p_c_function)
+      {
+	free (p_c_function);
+	p_c_function = NULL;
+      }
+
     p_max = hunkmax;			/* gets reduced when --- found */
     if (difftype == CONTEXT_DIFF || difftype == NEW_CONTEXT_DIFF) {
 	file_offset line_beginning = file_tell (pfp);
@@ -889,6 +896,17 @@ another_hunk (enum diff difftype, bool rev)
 	    next_intuit_at(line_beginning,p_input_line);
 	    return chars_read == (size_t) -1 ? -1 : 0;
 	}
+	s = buf;
+	while (*s == '*')
+	    s++;
+	if (*s == ' ')
+	  {
+	    p_c_function = s;
+	    while (*s != '\n')
+		s++;
+	    *s = '\0';
+	    p_c_function = savestr (p_c_function);
+	  }
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
 	    chars_read = get_line ();
@@ -1278,8 +1296,16 @@ another_hunk (enum diff difftype, bool rev)
 	else
 	    p_repl_lines = 1;
 	if (*s == ' ') s++;
-	if (*s != '@')
+	if (*s++ != '@')
 	    malformed ();
+	if (*s++ == '@' && *s == ' ' && *s != '\0')
+	  {
+	    p_c_function = s;
+	    while (*s != '\n')
+		s++;
+	    *s = '\0';
+	    p_c_function = savestr (p_c_function);
+	  }
 	if (!p_ptrn_lines)
 	    p_first++;			/* do append rather than insert */
 	if (!p_repl_lines)
@@ -1883,6 +1909,12 @@ LINENUM
 pch_hunk_beg (void)
 {
     return p_hunk_beg;
+}
+
+char const *
+pch_c_function (void)
+{
+    return p_c_function;
 }
 
 /* Is the newline-terminated line a valid `ed' command for patch
