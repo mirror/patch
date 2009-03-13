@@ -1094,10 +1094,11 @@ another_hunk (enum diff difftype, bool rev)
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
 		   && incomplete_line ());
 		p_len[p_end] = chars_read;
-		if (! (p_line[p_end] = savebuf (s, chars_read))) {
+		p_line[p_end] = savebuf (s, chars_read);
+		if (chars_read && ! p_line[p_end]) {
 		    p_end--;
 		    return -1;
-		}
+	        }
 		context = 0;
 		break;
 	    case '\t': case '\n':	/* assume spaces got eaten */
@@ -1116,7 +1117,8 @@ another_hunk (enum diff difftype, bool rev)
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
 		   && incomplete_line ());
 		p_len[p_end] = chars_read;
-		if (! (p_line[p_end] = savebuf (buf, chars_read))) {
+		p_line[p_end] = savebuf (buf, chars_read);
+		if (chars_read && ! p_line[p_end]) {
 		    p_end--;
 		    return -1;
 		}
@@ -1156,7 +1158,8 @@ another_hunk (enum diff difftype, bool rev)
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
 		   && incomplete_line ());
 		p_len[p_end] = chars_read;
-		if (! (p_line[p_end] = savebuf (buf + 2, chars_read))) {
+		p_line[p_end] = savebuf (buf + 2, chars_read);
+		if (chars_read && ! p_line[p_end]) {
 		    p_end--;
 		    return -1;
 		}
@@ -1357,12 +1360,13 @@ another_hunk (enum diff difftype, bool rev)
 		ch = *buf;
 		s = savebuf (buf+1, --chars_read);
 	    }
-	    if (!s) {
+	    if (chars_read && ! s)
+	      {
 		while (--filldst > p_ptrn_lines)
 		    free(p_line[filldst]);
 		p_end = fillsrc-1;
 		return -1;
-	    }
+	      }
 	    switch (ch) {
 	    case '-':
 		if (fillsrc > p_ptrn_lines) {
@@ -1392,7 +1396,7 @@ another_hunk (enum diff difftype, bool rev)
 		p_line[fillsrc] = s;
 		p_len[fillsrc++] = chars_read;
 		s = savebuf (s, chars_read);
-		if (!s) {
+		if (chars_read && ! s) {
 		    while (--filldst > p_ptrn_lines)
 			free(p_line[filldst]);
 		    p_end = fillsrc-1;
@@ -1488,7 +1492,8 @@ another_hunk (enum diff difftype, bool rev)
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_ptrn_lines && incomplete_line ());
 	    p_len[i] = chars_read;
-	    if (! (p_line[i] = savebuf (buf + 2, chars_read))) {
+	    p_line[i] = savebuf (buf + 2, chars_read);
+	    if (chars_read && ! p_line[i]) {
 		p_end = i-1;
 		return -1;
 	    }
@@ -1532,7 +1537,8 @@ another_hunk (enum diff difftype, bool rev)
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_end && incomplete_line ());
 	    p_len[i] = chars_read;
-	    if (! (p_line[i] = savebuf (buf + 2, chars_read))) {
+	    p_line[i] = savebuf (buf + 2, chars_read);
+	    if (chars_read && ! p_line[i]) {
 		p_end = i-1;
 		return -1;
 	    }

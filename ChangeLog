@@ -36,6 +36,12 @@
 	* tests/preserve-c-function-names: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* util.c (savebuf): Return NULL if size == 0.
+	* pch.c (another_hunk): Check size for size != 0 before checking
+	savebuf()'s return value.
+	* tests/no-newline-triggers-assert: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:

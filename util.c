@@ -514,7 +514,9 @@ savebuf (register char const *s, register size_t size)
 {
   register char *rv;
 
-  assert (s && size);
+  if (! size)
+    return NULL;
+
   rv = malloc (size);
 
   if (! rv)
