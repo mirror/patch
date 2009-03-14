@@ -438,13 +438,7 @@ main (int argc, char **argv)
 		if (! dry_run)
 		  {
 		    move_file (TMPREJNAME, &TMPREJNAME_needs_removal, 0,
-			       rej, instat.st_mode, false);
-		    if (! inerrno
-			&& (chmod (rej, (instat.st_mode
-					 & ~(S_IXUSR|S_IXGRP|S_IXOTH)))
-			    != 0))
-		      pfatal ("can't set permissions on file %s",
-			      quotearg (rej));
+			       rej, 0666, false);
 		  }
 		if (!rejname)
 		    free (rej);

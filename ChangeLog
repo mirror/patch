@@ -21,6 +21,13 @@
 	* tests/corrupt-reject-files, tests/preserve-c-function-names,
 	tests/reject-format: Update.
 
+	* patch.c (main): No longer set reject file modes to the modes of the
+	files they are assiciated with: the previous behavior is inconsistent
+	with global reject files (-r), which are not associated with any
+	particular file.
+	* tests/preserve-mode-and-timestamp: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (DISTFILES): Add the files from DISTFILES_M4,

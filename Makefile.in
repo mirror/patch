@@ -90,6 +90,7 @@ MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	mkinstalldirs patch.man stdbool_.h timespec.h
 TESTS = tests/corrupt-reject-files tests/crlf-handling \
 	tests/no-newline-triggers-assert tests/preserve-c-function-names \
+	tests/preserve-mode-and-timestamp \
 	tests/reject-format tests/remember-backup-files
 DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) $(TESTS) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
