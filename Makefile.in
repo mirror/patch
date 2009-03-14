@@ -88,7 +88,8 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	aclocal.m4 config.hin configure configure.ac install-sh \
 	mkinstalldirs patch.man stdbool_.h timespec.h
-TESTS = tests/no-newline-triggers-assert tests/preserve-c-function-names \
+TESTS = tests/corrupt-reject-files tests/no-newline-triggers-assert \
+	tests/preserve-c-function-names \
 	tests/remember-backup-files tests/crlf-handling
 DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) $(TESTS) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \

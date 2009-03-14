@@ -1158,7 +1158,7 @@ another_hunk (enum diff difftype, bool rev)
 		   && p_end == (repl_beginning ? p_max : p_ptrn_lines)
 		   && incomplete_line ());
 		p_len[p_end] = chars_read;
-		p_line[p_end] = savebuf (buf + 2, chars_read);
+		p_line[p_end] = savebuf (s, chars_read);
 		if (chars_read && ! p_line[p_end]) {
 		    p_end--;
 		    return -1;

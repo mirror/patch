@@ -42,6 +42,10 @@
 	* tests/no-newline-triggers-assert: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* tests/corrupt-reject-files: new test case for Jim Meyering's
+	2007-08-26 fix.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:
@@ -63,6 +67,11 @@
 	(NUM_SIGS): Cast to int in.
 	(fatal_exit_handler): Replace obsolescent AC_RETSIGTYPE.
 	* Various files: Update copyright notices.
+
+2007-08-26  Jim Meyering  <jim@meyering.net>
+
+	* pch.c (another_hunk): Avoid an off-by-one error that would
+	result in NUL bytes in .rej files.
 
 2004-07-21  Paul Eggert  <eggert@twinsun.com>
 
