@@ -514,7 +514,7 @@ Put rejects into
 .I rejectfile
 instead of the default
 .B \&.rej
-file.
+file.  When \fIrejectfile\fP is \fB\-\fP, discard rejects.
 .TP
 \fB\-R\fP  or  \fB\*=reverse\fP
 Assume that this patch was created with the old and new files swapped.

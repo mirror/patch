@@ -124,6 +124,7 @@ main (int argc, char **argv)
     struct outstate outstate;
     struct stat outst;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
+    bool written_to_rejname = false;
 
     exit_failure = 2;
     program_name = argv[0];
@@ -427,7 +428,7 @@ main (int argc, char **argv)
 	    somefailed = true;
 	    say ("%d out of %d hunk%s %s", failed, hunk, "s" + (hunk == 1),
 		 skip_rest_of_patch ? "ignored" : "FAILED");
-	    if (outname) {
+	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
 		char *rej = rejname;
 		if (!rejname) {
 		    rej = xmalloc (strlen (outname) + 5);
@@ -437,8 +438,19 @@ main (int argc, char **argv)
 		say (" -- saving rejects to file %s", quotearg (rej));
 		if (! dry_run)
 		  {
-		    move_file (TMPREJNAME, &TMPREJNAME_needs_removal, 0,
-			       rej, 0666, false);
+		    if (rejname)
+		      {
+			if (! written_to_rejname)
+			  {
+			    copy_file (TMPREJNAME, rejname, 0, 0, 0666);
+			    written_to_rejname = true;
+			  }
+			else
+			  append_to_file (TMPREJNAME, rejname);
+		      }
+		    else
+		      move_file (TMPREJNAME, &TMPREJNAME_needs_removal, 0,
+				 rej, 0666, false);
 		  }
 		if (!rejname)
 		    free (rej);

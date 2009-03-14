@@ -1,3 +1,16 @@
+2009-03-21  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.c (main): With -r, instead of moving the global reject
+	file into place, copy the first reject into the file, and
+	append all the rest.  Discard rejects with -r -.
+	* patch.man: Document the latter.
+	* util.c (copy_to_fd): New function.
+	(copy_file): Use that.
+	(append_to_file): New function.
+	* util.h (append_to_file): Add function declaration.
+	* tests/global-reject-files: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-20  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c: New option --reject-format=FORMAT.

@@ -294,19 +294,14 @@ create_file (char const *file, int open_flags, mode_t mode)
   return fd;
 }
 
-/* Copy a file. */
-
-void
-copy_file (char const *from, char const *to, struct stat *tost,
-	   int to_flags, mode_t mode)
+static void
+copy_to_fd (const char *from, int tofd)
 {
-  int tofd;
   int fromfd;
   size_t i;
 
   if ((fromfd = open (from, O_RDONLY | O_BINARY)) < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
-  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode);
   while ((i = read (fromfd, buf, bufsize)) != 0)
     {
       if (i == (size_t) -1)
@@ -316,8 +311,34 @@ copy_file (char const *from, char const *to, struct stat *tost,
     }
   if (close (fromfd) != 0)
     read_fatal ();
+}
+
+/* Copy a file. */
+
+void
+copy_file (char const *from, char const *to, struct stat *tost,
+	   int to_flags, mode_t mode)
+{
+  int tofd;
+
+  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode);
+  copy_to_fd (from, tofd);
   if ((tost && fstat (tofd, tost) != 0)
       || close (tofd) != 0)
+    write_fatal ();
+}
+
+/* Append to file. */
+
+void
+append_to_file (char const *from, char const *to)
+{
+  int tofd;
+
+  if ((tofd = open (to, O_WRONLY | O_BINARY | O_APPEND)) < 0)
+    pfatal ("Can't reopen file %s", quotearg (to));
+  copy_to_fd (from, tofd);
+  if (close (tofd) != 0)
     write_fatal ();
 }
 
