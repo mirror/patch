@@ -10,6 +10,17 @@
 	* Makefile.in (TESTS): Add test case.
 	* tests/preserve-c-function-names: Update.
 
+	* pch.c (p_name): New variable.
+	(intuit_diff_type): Save the old, new, and index filenames.
+	(pch_char): Return either of the saved filenames.
+	* pch.h: Move enum nametype here from pch.c.  Declare pch_name().
+	* patch.c (abort_hunk, abort_hunk_unified, abort_hunk_context):
+	New HEADER and REVERSE arguments.
+	(print_header_line): New function.
+	(abort_hunk_unified, abort_hunk_context): Use it.
+	* tests/corrupt-reject-files, tests/preserve-c-function-names,
+	tests/reject-format: Update.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (DISTFILES): Add the files from DISTFILES_M4,

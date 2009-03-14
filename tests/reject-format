@@ -38,6 +38,8 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+*** f.orig
+--- f
 *************** a() {
 *** 2,7 ****
   2
@@ -66,6 +68,8 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+--- f.orig
++++ f
 @@ -2,6 +2,6 @@
  2
  3
@@ -87,6 +91,8 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+--- f.orig
++++ f
 @@ -2,6 +2,6 @@
  2
  3
@@ -108,6 +114,8 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+*** f.orig
+--- f
 *************** a() {
 *** 2,7 ****
   2

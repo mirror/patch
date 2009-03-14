@@ -3,6 +3,7 @@ Changes in version 2.6:
 * If the input patch is in unified format, any .rej output is now
   in unified format as well.  Formerly it was in context format.
   This can be overridden with --reject-format=FORMAT.
+* Reject files new have patch headers.
 * Changed lines in reject files in context format will now be indicated
   with '!' as per the definition of the format instead of '+' and '-'.
 

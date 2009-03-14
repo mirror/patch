@@ -76,9 +76,9 @@ static void reinitialize_almost_everything (void);
 static void remove_if_needed (char const *, int volatile *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
-static void abort_hunk (void);
-static void abort_hunk_context (void);
-static void abort_hunk_unified (void);
+static void abort_hunk (bool, bool);
+static void abort_hunk_context (bool, bool);
+static void abort_hunk_unified (bool, bool);
 
 static enum diff reject_format = NO_DIFF;  /* automatic */
 static bool make_backups;
@@ -287,7 +287,7 @@ main (int argc, char **argv)
 
 	    newwhere = pch_newfirst() + last_offset;
 	    if (skip_rest_of_patch) {
-		abort_hunk();
+		abort_hunk (! failed, reverse);
 		failed++;
 		if (verbosity == VERBOSE)
 		  say ("Hunk #%d ignored at %s.\n", hunk,
@@ -301,14 +301,14 @@ main (int argc, char **argv)
 		  say ("Patch attempted to create file %s, which already exists.\n",
 		       quotearg (inname));
 
-		abort_hunk();
+		abort_hunk (! failed, reverse);
 		failed++;
 		if (verbosity != SILENT)
 		  say ("Hunk #%d FAILED at %s.\n", hunk,
 		       format_linenum (numbuf, newwhere));
 	    }
 	    else if (! apply_hunk (&outstate, where)) {
-		abort_hunk ();
+		abort_hunk (! failed, reverse);
 		failed++;
 		if (verbosity != SILENT)
 		  say ("Hunk #%d FAILED at %s.\n", hunk,
@@ -986,15 +986,30 @@ print_unidiff_range (FILE *fp, LINENUM start, LINENUM count)
     }
 }
 
+static void
+print_header_line (FILE *fp, const char *tag, bool reverse)
+{
+  const char *name = pch_name (reverse);
+
+  /* FIXME: include timestamp as well. */
+  fprintf (fp, "%s %s\n", tag, name ? name : "/dev/null");
+}
+
 /* Produce unified reject files */
 
 static void
-abort_hunk_unified (void)
+abort_hunk_unified (bool header, bool reverse)
 {
   FILE *fp = rejfp;
   register LINENUM old = 1;
   register LINENUM lastline = pch_ptrn_lines ();
   register LINENUM new = lastline + 1;
+
+  if (header)
+    {
+      print_header_line (rejfp, "---", reverse);
+      print_header_line (rejfp, "+++", ! reverse);
+    }
 
   /* Add last_offset to guess the same as the previous successful hunk.  */
   fprintf (fp, "@@ -");
@@ -1038,7 +1053,7 @@ abort_hunk_unified (void)
 /* Output the rejected patch in context format.  */
 
 static void
-abort_hunk_context (void)
+abort_hunk_context (bool header, bool reverse)
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end ();
@@ -1056,6 +1071,10 @@ abort_hunk_context (void)
     if (diff_type == UNI_DIFF)
       pch_normalize (NEW_CONTEXT_DIFF);
 
+    if (header) {
+	print_header_line (rejfp, "***", reverse);
+	print_header_line (rejfp, "---", ! reverse);
+    }
     fprintf(rejfp, "***************%s\n", c_function ? c_function : "");
     for (i=0; i<=pat_end; i++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
@@ -1100,13 +1119,13 @@ abort_hunk_context (void)
 /* Output the rejected hunk.  */
 
 static void
-abort_hunk (void)
+abort_hunk (bool header, bool reverse)
 {
   if (reject_format == UNI_DIFF
       || (reject_format == NO_DIFF && diff_type == UNI_DIFF))
-    abort_hunk_unified ();
+    abort_hunk_unified (header, reverse);
   else
-    abort_hunk_context ();
+    abort_hunk_context (header, reverse);
 }
 
 /* We found where to apply it (we hope), so do it. */

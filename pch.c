@@ -43,6 +43,7 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 		1 for existent and probably (but not necessarily) empty,
 		2 for nonexistent */
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
+static char *p_name[3];			/* filenames in patch headers */
 static time_t p_timestamp[2];		/* timestamps in patch headers */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
@@ -69,8 +70,6 @@ static LINENUM p_hunk_beg;		/* line number of current hunk */
 static LINENUM p_efake = -1;		/* end of faked up lines--don't free */
 static LINENUM p_bfake = -1;		/* beg of faked up lines */
 static char *p_c_function;		/* the C function a hunk is in */
-
-enum nametype { OLD, NEW, INDEX, NONE };
 
 static char *scan_linenum (char *, LINENUM *);
 static enum diff intuit_diff_type (void);
@@ -301,13 +300,17 @@ intuit_diff_type (void)
     register bool this_is_a_command = false;
     register bool stars_this_line = false;
     enum nametype i;
-    char *name[3];
     struct stat st[3];
     int stat_errno[3];
     int version_controlled[3];
     register enum diff retval;
 
-    name[OLD] = name[NEW] = name[INDEX] = 0;
+    for (i = OLD;  i <= INDEX;  i++)
+      if (p_name[i]) {
+	free (p_name[i]);
+	p_name[i] = 0;
+      }
+
     version_controlled[OLD] = -1;
     version_controlled[NEW] = -1;
     version_controlled[INDEX] = -1;
@@ -366,16 +369,16 @@ intuit_diff_type (void)
 	    p_strip_trailing_cr = strip_trailing_cr;
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
-	    name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
+	    p_name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Prereq:", 7)) {
@@ -411,7 +414,7 @@ intuit_diff_type (void)
 	    if (strnEQ(t, "--- ", 4))
 	      {
 		time_t timestamp = (time_t) -1;
-		name[NEW] = fetchname (t+4, strippath, &timestamp);
+		p_name[NEW] = fetchname (t+4, strippath, &timestamp);
 		if (timestamp != (time_t) -1)
 		  {
 		    p_timestamp[NEW] = timestamp;
@@ -431,13 +434,13 @@ intuit_diff_type (void)
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
 
-	    /* `name' and `p_timestamp' are backwards; swap them.  */
+	    /* `p_name' and `p_timestamp' are backwards; swap them.  */
 	    time_t ti = p_timestamp[OLD];
 	    p_timestamp[OLD] = p_timestamp[NEW];
 	    p_timestamp[NEW] = ti;
-	    t = name[OLD];
-	    name[OLD] = name[NEW];
-	    name[NEW] = t;
+	    t = p_name[OLD];
+	    p_name[OLD] = p_name[NEW];
+	    p_name[NEW] = t;
 
 	    s += 4;
 	    if (s[0] == '0' && !ISDIGIT (s[1]))
@@ -452,9 +455,9 @@ intuit_diff_type (void)
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    if (! ((name[OLD] || ! p_timestamp[OLD])
-		   && (name[NEW] || ! p_timestamp[NEW]))
-		&& ! name[INDEX])
+	    if (! ((p_name[OLD] || ! p_timestamp[OLD])
+		   && (p_name[NEW] || ! p_timestamp[NEW]))
+		&& ! p_name[INDEX])
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
 		say ("missing header for unified diff at line %s of patch\n",
@@ -493,9 +496,9 @@ intuit_diff_type (void)
 	      next_intuit_at (saved_p_base, saved_p_bline);
 	    }
 
-	    if (! ((name[OLD] || ! p_timestamp[OLD])
-		   && (name[NEW] || ! p_timestamp[NEW]))
-		&& ! name[INDEX])
+	    if (! ((p_name[OLD] || ! p_timestamp[OLD])
+		   && (p_name[NEW] || ! p_timestamp[NEW]))
+		&& ! p_name[INDEX])
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
 		say ("missing header for context diff at line %s of patch\n",
@@ -544,23 +547,23 @@ intuit_diff_type (void)
       {
 	enum nametype i0 = NONE;
 
-	if (! posixly_correct && (name[OLD] || name[NEW]) && name[INDEX])
+	if (! posixly_correct && (p_name[OLD] || p_name[NEW]) && p_name[INDEX])
 	  {
-	    free (name[INDEX]);
-	    name[INDEX] = 0;
+	    free (p_name[INDEX]);
+	    p_name[INDEX] = 0;
 	  }
 
 	for (i = OLD;  i <= INDEX;  i++)
-	  if (name[i])
+	  if (p_name[i])
 	    {
-	      if (i0 != NONE && strcmp (name[i0], name[i]) == 0)
+	      if (i0 != NONE && strcmp (p_name[i0], p_name[i]) == 0)
 		{
 		  /* It's the same name as before; reuse stat results.  */
 		  stat_errno[i] = stat_errno[i0];
 		  if (! stat_errno[i])
 		    st[i] = st[i0];
 		}
-	      else if (stat (name[i], &st[i]) != 0)
+	      else if (stat (p_name[i], &st[i]) != 0)
 		stat_errno[i] = errno;
 	      else
 		{
@@ -575,30 +578,30 @@ intuit_diff_type (void)
 	  {
 	    bool is_empty;
 
-	    i = best_name (name, stat_errno);
+	    i = best_name (p_name, stat_errno);
 
 	    if (i == NONE && patch_get)
 	      {
 		enum nametype nope = NONE;
 
 		for (i = OLD;  i <= INDEX;  i++)
-		  if (name[i])
+		  if (p_name[i])
 		    {
 		      char const *cs;
 		      char *getbuf;
 		      char *diffbuf;
 		      bool readonly = (outfile
-				       && strcmp (outfile, name[i]) != 0);
+				       && strcmp (outfile, p_name[i]) != 0);
 
-		      if (nope == NONE || strcmp (name[nope], name[i]) != 0)
+		      if (nope == NONE || strcmp (p_name[nope], p_name[i]) != 0)
 			{
 			  cs = (version_controller
-			        (name[i], readonly, (struct stat *) 0,
+			        (p_name[i], readonly, (struct stat *) 0,
 				 &getbuf, &diffbuf));
 			  version_controlled[i] = !! cs;
 			  if (cs)
 			    {
-			      if (version_get (name[i], cs, false, readonly,
+			      if (version_get (p_name[i], cs, false, readonly,
 					       getbuf, &st[i]))
 				stat_errno[i] = 0;
 			      else
@@ -628,7 +631,7 @@ intuit_diff_type (void)
 		     (i == NONE ? "delete"
 		      : st[i].st_size == 0 ? "empty out"
 		      : "create"),
-		     quotearg (name[i == NONE || st[i].st_size == 0 ? i0 : i]),
+		     quotearg (p_name[i == NONE || st[i].st_size == 0 ? i0 : i]),
 		     (i == NONE ? "does not exist"
 		      : st[i].st_size == 0 ? "is already empty"
 		      : "already exists"));
@@ -641,19 +644,19 @@ intuit_diff_type (void)
 		int distance_from_minimum[3];
 
 		for (i = OLD;  i <= INDEX;  i++)
-		  if (name[i])
+		  if (p_name[i])
 		    {
-		      newdirs[i] = (prefix_components (name[i], false)
-				    - prefix_components (name[i], true));
+		      newdirs[i] = (prefix_components (p_name[i], false)
+				    - prefix_components (p_name[i], true));
 		      if (newdirs[i] < newdirs_min)
 			newdirs_min = newdirs[i];
 		    }
 
 		for (i = OLD;  i <= INDEX;  i++)
-		  if (name[i])
+		  if (p_name[i])
 		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
 
-		i = best_name (name, distance_from_minimum);
+		i = best_name (p_name, distance_from_minimum);
 	      }
 	  }
       }
@@ -662,16 +665,11 @@ intuit_diff_type (void)
       inerrno = -1;
     else
       {
-	inname = name[i];
-	name[i] = 0;
+	inname = savestr(p_name[i]);
 	inerrno = stat_errno[i];
 	invc = version_controlled[i];
 	instat = st[i];
       }
-
-    for (i = OLD;  i <= INDEX;  i++)
-      if (name[i])
-	free (name[i]);
 
     return retval;
 }
@@ -1807,6 +1805,12 @@ int
 pch_says_nonexistent (bool which)
 {
   return p_says_nonexistent[which];
+}
+
+const char *
+pch_name (enum nametype type)
+{
+  return type == NONE ? NULL : p_name[type];
 }
 
 /* Return timestamp of patch header for file WHICH (false = old, true = new),

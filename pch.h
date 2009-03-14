@@ -22,6 +22,8 @@
    If not, write to the Free Software Foundation,
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
+enum nametype { OLD, NEW, INDEX, NONE };
+
 LINENUM pch_end (void);
 LINENUM pch_first (void);
 LINENUM pch_hunk_beg (void);
@@ -39,6 +41,7 @@ char pch_char (LINENUM);
 int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool);
 size_t pch_line_len (LINENUM);
+const char *pch_name(enum nametype);
 time_t pch_timestamp (bool);
 void do_ed_script (FILE *);
 void open_patch_file (char const *);

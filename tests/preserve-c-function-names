@@ -39,6 +39,8 @@ check 'patch c < ab.diff || cat c.rej' <<EOF
 patching file c
 Hunk #1 FAILED at 2.
 1 out of 1 hunk FAILED -- saving rejects to file c.rej
+*** a
+--- b
 *************** int foo()
 *** 2,6 ****
     {

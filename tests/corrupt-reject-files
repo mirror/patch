@@ -50,6 +50,8 @@ Status: 1
 EOF
 
 check 'cat -A a.rej' <<EOF
+*** a$
+--- b$
 ***************$
 *** 1,7 ****$
   1$
