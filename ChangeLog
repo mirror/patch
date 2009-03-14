@@ -11,6 +11,8 @@
 	* tests/global-reject-files: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* patch.man: Minor fix.
+
 2009-03-20  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c: New option --reject-format=FORMAT.
@@ -40,8 +42,6 @@
 	particular file.
 	* tests/preserve-mode-and-timestamp: New test case.
 	* Makefile.in (TESTS): Add test case.
-
-2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (DISTFILES): Add the files from DISTFILES_M4,
 	DISTFILES_PC, DISTFILES_PC_DJGPP.

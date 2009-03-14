@@ -770,7 +770,7 @@ or
 option.
 .SH FILES
 .TP 3
-.IB $TMPDIR "/p\(**"
+.IB $TMPDIR "/p*"
 temporary files
 .TP
 .B /dev/tty
