@@ -974,7 +974,7 @@ another_hunk (enum diff difftype, bool rev)
 		    p_first = 1;
 		}
 		p_max = p_ptrn_lines + 6;	/* we need this much at least */
-		while (p_max >= hunkmax)
+		while (p_max + 1 >= hunkmax)
 		    if (! grow_hunkmax ())
 			return -1;
 		p_max = hunkmax;
@@ -1051,7 +1051,7 @@ another_hunk (enum diff difftype, bool rev)
 		    p_newfirst = 1;
 		  }
 		p_max = p_repl_lines + p_end;
-		while (p_max >= hunkmax)
+		while (p_max + 1 >= hunkmax)
 		  if (! grow_hunkmax ())
 		    return -1;
 		if (p_repl_lines != ptrn_copiable
@@ -1312,7 +1312,7 @@ another_hunk (enum diff difftype, bool rev)
 	if (!p_repl_lines)
 	    p_newfirst++;
 	p_max = p_ptrn_lines + p_repl_lines + 1;
-	while (p_max >= hunkmax)
+	while (p_max + 1 >= hunkmax)
 	    if (! grow_hunkmax ())
 		return -1;
 	fillsrc = 1;
@@ -1458,7 +1458,7 @@ another_hunk (enum diff difftype, bool rev)
 	if (hunk_type == 'd')
 	    min++;
 	p_end = p_ptrn_lines + 1 + max - min + 1;
-	while (p_end >= hunkmax)
+	while (p_end + 1 >= hunkmax)
 	  if (! grow_hunkmax ())
 	    {
 	      p_end = -1;
@@ -1561,8 +1561,8 @@ another_hunk (enum diff difftype, bool rev)
 	    fflush (stderr);
 	}
     }
-    if (p_end+1 < hunkmax)	/* paranoia reigns supreme... */
-	p_Char[p_end+1] = '^';  /* add a stopper for apply_hunk */
+    assert (p_end + 1 < hunkmax);
+    p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     return 1;
 }
 
@@ -1789,6 +1789,7 @@ pch_swap (void)
     i = p_ptrn_lines;
     p_ptrn_lines = p_repl_lines;
     p_repl_lines = i;
+    p_Char[p_end + 1] = '^';
     if (tp_line)
       free (tp_line);
     if (tp_len)
@@ -1886,7 +1887,9 @@ pch_line_len (LINENUM line)
     return p_len[line];
 }
 
-/* Return the control character (+, -, *, !, etc) for a patch line. */
+/* Return the control character (+, -, *, !, etc) for a patch line.  A '\n'
+   indicates an empty line in a hunk.  (The empty line is not part of the
+   old or new context.  For some reson, the context format allows that.)  */
 
 char
 pch_char (LINENUM line)

@@ -30,7 +30,6 @@
 #include <quotearg.h>
 #include <quotesys.h>
 #include <timespec.h>
-#include <version.h>
 #undef XTERN
 #define XTERN
 #include <util.h>

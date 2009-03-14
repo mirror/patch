@@ -13,6 +13,11 @@
 
 	* patch.man: Minor fix.
 
+	* pch.c (another_hunk, pch_swap): Always add the '^' hunk end
+	marker: apply_hunk() and abort_hunk_unified() rely on it.
+	(pch_char): Explain when this returns '\n'.
+	* util.c: Remove unused include <version.h>.
+
 2009-03-20  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c: New option --reject-format=FORMAT.
