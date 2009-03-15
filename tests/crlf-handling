@@ -44,3 +44,39 @@ EOF
 diff -e a b > ab.ed | lf2crlf > ab.ed
 printf "1\n" > c
 ncheck 'patch c < ab.ed'
+
+# ==============================================================
+
+printf "1\n" | lf2crlf > a
+printf "1b\n" | lf2crlf > b
+diff -u a b > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+printf "1\n" > a
+printf "1b\n" > b
+diff -u a b | lf2crlf > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+(Stripping trailing CRs from patch.)
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b$
+EOF
+
+printf "1\n" | lf2crlf > c
+check 'patch --binary c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF

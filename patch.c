@@ -611,11 +611,7 @@ static char const *const option_help[] =
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
 "  --reject-format=FORMAT  Create 'context' or 'unified' rejects.",
-#if HAVE_SETMODE_DOS
 "  --binary  Read and write data in binary mode.",
-#else
-"  --binary  Read and write data in binary mode (no effect on this platform).",
-#endif
 "",
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
@@ -781,6 +777,7 @@ get_some_switches (void)
 		verbosity = VERBOSE;
 		break;
 	    case CHAR_MAX + 3:
+		no_strip_trailing_cr = true;
 #if HAVE_SETMODE_DOS
 		binary_transput = O_BINARY;
 #endif

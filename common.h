@@ -254,6 +254,9 @@ extern int errno;
 # define binary_transput 0
 #endif
 
+/* Disable the CR stripping heuristic?  */
+XTERN bool no_strip_trailing_cr;
+
 #ifndef NULL_DEVICE
 #define NULL_DEVICE "/dev/null"
 #endif
