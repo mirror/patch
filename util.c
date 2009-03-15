@@ -1,11 +1,11 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.37 2003/09/11 18:36:17 eggert Exp $ */
+/* $Id: util.c,v 1.37 2003/09/11 18:36:17 eggert Exp eggert $ */
 
 /* Copyright (C) 1986 Larry Wall
 
-   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free
-   Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN extern
 #include <common.h>
@@ -53,8 +53,8 @@ static void makedirs (char *);
 
 typedef struct
 {
-  dev_t	dev;
-  ino_t	ino;
+  dev_t dev;
+  ino_t ino;
   struct timespec mtime;
 } file_id;
 
@@ -566,25 +566,6 @@ format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], LINENUM n)
   return p;
 }
 
-#if !HAVE_VPRINTF
-#define vfprintf my_vfprintf
-static int
-vfprintf (FILE *stream, char const *format, va_list args)
-{
-#if !HAVE_DOPRNT && HAVE__DOPRINTF
-# define _doprnt _doprintf
-#endif
-#if HAVE_DOPRNT || HAVE__DOPRINTF
-  _doprnt (format, args, stream);
-  return ferror (stream) ? -1 : 0;
-#else
-  int *a = (int *) args;
-  return fprintf (stream, format,
-		  a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9]);
-#endif
-}
-#endif /* !HAVE_VPRINTF */
-
 /* Terminal output, pun intended. */
 
 void
@@ -759,7 +740,7 @@ ok_to_reverse (char const *format, ...)
 
 /* How to handle certain events when not in a critical region. */
 
-#define NUM_SIGS (sizeof (sigs) / sizeof (*sigs))
+#define NUM_SIGS ((int) (sizeof (sigs) / sizeof (*sigs)))
 static int const sigs[] = {
 #ifdef SIGHUP
        SIGHUP,
@@ -812,8 +793,8 @@ static sigset_t initial_signal_mask;
 static sigset_t signals_to_block;
 
 #if ! HAVE_SIGACTION
-static RETSIGTYPE fatal_exit_handler (int) __attribute__ ((noreturn));
-static RETSIGTYPE
+static void fatal_exit_handler (int) __attribute__ ((noreturn));
+static void
 fatal_exit_handler (int sig)
 {
   signal (sig, SIG_IGN);

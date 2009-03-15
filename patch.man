@@ -2,7 +2,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id $Id: patch.man,v 1.31 2002/05/25 10:36:44 eggert Exp $
+.Id $Id: patch.man,v 1.31 2002/05/25 10:36:44 eggert Exp eggert $
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
@@ -111,8 +111,8 @@ would generate a file name that is too long
 makes the file name too long, then
 .B #
 replaces the file name's last character).
-(The rejected hunk comes out in ordinary context diff form regardless of
-the input patch's form.
+(The rejected hunk comes out in unified diff format if the input patch
+was of that format, otherwise in ordinary context diff form.
 If the input was a normal diff, many of the contexts are simply null.)
 The line numbers on the hunks in the reject file may be different than
 in the patch file: they reflect the approximate location patch thinks the
@@ -459,10 +459,12 @@ Conform more strictly to the \s-1POSIX\s0 standard, as follows.
 .TP 3
 .B " \(bu"
 Take the first existing file from the list (old, new, index)
-when intuiting file names from diff headers.
+when intuiting file names from diff headers that are not in
+unified format.
 .TP
 .B " \(bu"
-Do not remove files that are empty after patching.
+Do not remove files that are empty after patching from a diff
+that is not in unified format.
 .TP
 .B " \(bu"
 Do not ask whether to get files from \s-1RCS\s0, ClearCase, Perforce,
@@ -1132,7 +1134,7 @@ Copyright
 .ie t \(co
 .el (C)
 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002 Free Software Foundation, Inc.
+2000, 2001, 2002, 2006 Free Software Foundation, Inc.
 .PP
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice

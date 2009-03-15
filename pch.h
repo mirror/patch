@@ -1,6 +1,6 @@
 /* reading patches */
 
-/* $Id: pch.h,v 1.11 2003/05/20 13:56:03 eggert Exp $ */
+/* $Id: pch.h,v 1.11 2003/05/20 13:56:03 eggert Exp eggert $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 LINENUM pch_end (void);
 LINENUM pch_first (void);

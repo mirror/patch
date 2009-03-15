@@ -1,10 +1,10 @@
 /* common definitions for `patch' */
 
-/* $Id: common.h,v 1.35 2003/09/11 18:36:17 eggert Exp $ */
+/* $Id: common.h,v 1.35 2003/09/11 18:36:17 eggert Exp eggert $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003
+   Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003, 2006
    Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #ifndef DEBUGGING
 #define DEBUGGING 1
@@ -68,40 +68,16 @@
 #ifndef S_IRUSR
 #define S_IRUSR (S_IROTH << 6)
 #endif
-#ifdef MKDIR_TAKES_ONE_ARG
-# define mkdir(name, mode) ((mkdir) (name))
-#endif
 
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
-#ifndef CHAR_BIT
-#define CHAR_BIT 8
-#endif
-/* The extra casts work around common compiler bugs,
-   e.g. Cray C 5.0.3.0 time_t.  */
-#define TYPE_SIGNED(t) ((t) -1 < (t) 0)
-#define TYPE_MINIMUM(t) ((t) (TYPE_SIGNED (t) \
-			      ? (t) (~ (t) 0 << (sizeof (t) * CHAR_BIT - 1)) \
-			      : (t) 0))
-#define TYPE_MAXIMUM(t) ((t) ((t) ~ (t) 0 - TYPE_MINIMUM (t)))
-#ifndef CHAR_MAX
-#define CHAR_MAX TYPE_MAXIMUM (char)
-#endif
-#ifndef INT_MAX
-#define INT_MAX TYPE_MAXIMUM (int)
-#endif
-#ifndef LONG_MIN
-#define LONG_MIN TYPE_MINIMUM (long)
-#endif
+#include <limits.h>
 
 #if HAVE_INTTYPES_H
 # include <inttypes.h>
+#elif HAVE_STDINT_H
+# include <stdint.h>
 #endif
 #ifndef SIZE_MAX
-/* On some nonstandard hosts, size_t is signed,
-   so SIZE_MAX != (size_t) -1.  */
-#define SIZE_MAX TYPE_MAXIMUM (size_t)
+# define SIZE_MAX ((size_t) -1)
 #endif
 
 #include <ctype.h>
@@ -265,6 +241,11 @@ extern int errno;
 #endif
 #ifndef O_TRUNC
 #define O_TRUNC 0
+#endif
+
+#if MKDIR_TAKES_ONE_ARG
+# undef mkdir
+# define mkdir(name, mode) ((mkdir) (name))
 #endif
 
 #if HAVE_SETMODE_DOS

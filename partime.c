@@ -1,6 +1,6 @@
 /* Parse a string, yielding a struct partime that describes it.  */
 
-/* Copyright (C) 1993, 1994, 1995, 1997, 2002 Paul Eggert
+/* Copyright (C) 1993, 1994, 1995, 1997, 2002, 2003, 2006 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
    This file is part of RCS.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with RCS; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
    Report problems and direct all questions to:
 
@@ -26,39 +26,16 @@
 
  */
 
-#if has_conf_h
-# include <conf.h>
-#else
-# if HAVE_CONFIG_H
-#  include <config.h>
-# else
-#  ifndef __STDC__
-#   define const
-#  endif
-# endif
-# if HAVE_LIMITS_H
-#  include <limits.h>
-# endif
-# ifndef LONG_MIN
-# define LONG_MIN (-1-2147483647L)
-# endif
-# if HAVE_STDDEF_H
-#  include <stddef.h>
-# endif
-# if STDC_HEADERS
-#  include <stdlib.h>
-# endif
-# include <time.h>
-# ifdef __STDC__
-#  define P(x) x
-# else
-#  define P(x) ()
-# endif
+#if HAVE_CONFIG_H
+# include <config.h>
 #endif
 
-#ifndef offsetof
-#define offsetof(aggregate, member) ((size_t) &((aggregate *) 0)->member)
-#endif
+#include <partime.h>
+
+#include <limits.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include <ctype.h>
 #if STDC_HEADERS
@@ -72,10 +49,8 @@
 #define ISUPPER(c)	(CTYPE_DOMAIN (c) && isupper (c))
 #define ISDIGIT(c)	((unsigned) (c) - '0' <= 9)
 
-#include <partime.h>
-
 char const partime_id[] =
-  "$Id: partime.c,v 1.2 2002/02/18 07:42:58 eggert Exp $";
+  "$Id: partime.c,v 1.2 2002/02/18 07:42:58 eggert Exp eggert $";
 
 
 /* Lookup tables for names of months, weekdays, time zones.  */
@@ -89,15 +64,7 @@ struct name_val
   };
 
 
-static char const *parse_decimal P ((char const *, int, int, int, int, int *, int *));
-static char const *parse_fixed P ((char const *, int, int *));
-static char const *parse_pattern_letter P ((char const *, int, struct partime *));
-static char const *parse_prefix P ((char const *, char const **, struct partime *));
-static char const *parse_ranged P ((char const *, int, int, int, int *));
-static char const *parse_varying P ((char const *, int *));
-static int lookup P ((char const *, struct name_val const[]));
-static int merge_partime P ((struct partime *, struct partime const *));
-static void undefine P ((struct partime *));
+static char const *parse_pattern_letter (char const *, int, struct partime *);
 
 
 static struct name_val const month_names[] =
@@ -220,9 +187,7 @@ static struct name_val const zone_names[] =
 
 /* Look for a prefix of S in TABLE, returning val for first matching entry.  */
 static int
-lookup (s, table)
-     char const *s;
-     struct name_val const table[];
+lookup (char const *s, struct name_val const table[])
 {
   int j;
   char buf[NAME_LENGTH_MAXIMUM];
@@ -251,8 +216,7 @@ lookup (s, table)
 
 /* Set *T to ``undefined'' values.  */
 static void
-undefine (t)
-     struct partime *t;
+undefine (struct partime *t)
 {
   t->tm.tm_sec = t->tm.tm_min = t->tm.tm_hour = t->tm.tm_mday = t->tm.tm_mon
     = t->tm.tm_year = t->tm.tm_wday = t->tm.tm_yday
@@ -350,10 +314,7 @@ static char const time_patterns[] =
    Set *PATTERNS to 0 if we know there are no more patterns to try;
    if *PATTERNS is initially 0, give up immediately.  */
 static char const *
-parse_prefix (str, patterns, t)
-     char const *str;
-     char const **patterns;
-     struct partime *t;
+parse_prefix (char const *str, char const **patterns, struct partime *t)
 {
   char const *pat = *patterns;
   unsigned char c;
@@ -401,9 +362,7 @@ parse_prefix (str, patterns, t)
    Store the parsed number into *RES.
    Return the first character after the prefix, or 0 if it wasn't parsed.  */
 static char const *
-parse_fixed (s, digits, res)
-     char const *s;
-     int digits, *res;
+parse_fixed (char const *s, int digits, int *res)
 {
   int n = 0;
   char const *lim = s + digits;
@@ -422,9 +381,7 @@ parse_fixed (s, digits, res)
    Store the parsed number into *RES.
    Return the first character after the prefix.  */
 static char const *
-parse_varying (s, res)
-     char const *s;
-     int *res;
+parse_varying (char const *s, int *res)
 {
   int n = 0;
   for (;;)
@@ -444,9 +401,7 @@ parse_varying (s, res)
    Store the parsed number into *RES.
    Return the first character after the prefix, or 0 if it wasn't parsed.  */
 static char const *
-parse_ranged (s, digits, lo, hi, res)
-     char const *s;
-     int digits, lo, hi, *res;
+parse_ranged (char const *s, int digits, int lo, int hi, int *res)
 {
   s = parse_fixed (s, digits, res);
   return s && lo <= *res && *res <= hi ? s : 0;
@@ -459,9 +414,8 @@ parse_ranged (s, digits, lo, hi, res)
    rounded to the nearest integer, into *FRES.
    Return the first character after the prefix, or 0 if it wasn't parsed.  */
 static char const *
-parse_decimal (s, digits, lo, hi, resolution, res, fres)
-     char const *s;
-     int digits, lo, hi, resolution, *res, *fres;
+parse_decimal (char const *s, int digits, int lo, int hi, int resolution,
+	       int *res, int *fres)
 {
   s = parse_fixed (s, digits, res);
   if (s && lo <= *res && *res <= hi)
@@ -605,10 +559,7 @@ parzone (s, zone)
    Set *T accordingly.
    Return the first character after the prefix, or 0 if it wasn't parsed.  */
 static char const *
-parse_pattern_letter (s, c, t)
-     char const *s;
-     int c;
-     struct partime *t;
+parse_pattern_letter (char const *s, int c, struct partime *t)
 {
   char const *s0 = s;
 
@@ -881,9 +832,7 @@ parse_pattern_letter (s, c, t)
 /* If there is no conflict, merge into *T the additional information in *U
    and return 0.  Otherwise do nothing and return -1.  */
 static int
-merge_partime (t, u)
-     struct partime *t;
-     struct partime const *u;
+merge_partime (struct partime *t, struct partime const *u)
 {
 # define conflict(a,b) ((a) != (b)  &&  TM_DEFINED (a)  &&  TM_DEFINED (b))
   if (conflict (t->tm.tm_sec, u->tm.tm_sec)

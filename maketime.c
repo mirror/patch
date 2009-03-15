@@ -1,6 +1,6 @@
 /* Convert struct partime into time_t.  */
 
-/* Copyright 1992, 1993, 1994, 1995, 1997 Paul Eggert
+/* Copyright (C) 1992, 1993, 1994, 1995, 1997, 2003, 2006 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
    This file is part of RCS.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with RCS; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
    Report problems and direct all questions to:
 
@@ -31,44 +31,19 @@
    Avoid mktime because it's not universal and because there's no easy,
    portable way for mktime to yield the inverse of gmtime.  */
 
-#if has_conf_h
-# include <conf.h>
-#else
-# if HAVE_CONFIG_H
-#  include <config.h>
-# else
-#  ifndef __STDC__
-#   define const
-#  endif
-# endif
-  /* MIPS RISCOS4.52 defines time_t in <sys/types.h> not <time.h>.  */
-# include <sys/types.h>
-# if HAVE_LIMITS_H
-#  include <limits.h>
-# endif
-# ifndef LONG_MIN
-# define LONG_MIN (-1-2147483647L)
-# endif
-# if STDC_HEADERS
-#  include <stdlib.h>
-# endif
-# include <time.h>
-# ifdef __STDC__
-#  define P(x) x
-# else
-#  define P(x) ()
-# endif
+#if HAVE_CONFIG_H
+# include <config.h>
 #endif
 
-#include <partime.h>
 #include <maketime.h>
 
-char const maket_id[] =
-  "$Id: maketime.c,v 1.1 1999/08/29 11:12:37 eggert Exp $";
+#include <limits.h>
+#include <partime.h>
+#include <stdlib.h>
+#include <time.h>
 
-static int isleap P ((int));
-static int month_days P ((struct tm const *));
-static time_t maketime P ((struct partime const *, time_t));
+char const maket_id[] =
+  "$Id: maketime.c,v 1.1 1999/08/29 11:12:37 eggert Exp eggert $";
 
 /* Suppose A1 + B1 = SUM1, using 2's complement arithmetic ignoring overflow.
    Suppose A, B and SUM have the same respective signs as A1, B1, and SUM1.
@@ -89,8 +64,7 @@ static time_t maketime P ((struct partime const *, time_t));
 #define TM_YEAR_ORIGIN 1900
 
 static int
-isleap (y)
-     int y;
+isleap (int y)
 {
   return (y & 3) == 0 && (y % 100 != 0 || y % 400 == 0);
 }
@@ -103,8 +77,7 @@ static int const month_yday[] =
 
 /* Yield the number of days in TM's month.  */
 static int
-month_days (tm)
-     struct tm const *tm;
+month_days (struct tm const *tm)
 {
   int m = tm->tm_mon;
   return (month_yday[m + 1] - month_yday[m]
@@ -114,9 +87,7 @@ month_days (tm)
 /* Convert UNIXTIME to struct tm form.
    Use gmtime if available and if !LOCALZONE, localtime otherwise.  */
 struct tm *
-time2tm (unixtime, localzone)
-     time_t unixtime;
-     int localzone;
+time2tm (time_t unixtime, int localzone)
 {
   struct tm *tm;
 #ifdef TZ_is_unset
@@ -131,9 +102,7 @@ time2tm (unixtime, localzone)
 
 /* Yield A - B, measured in seconds.  */
 time_t
-difftm (a, b)
-     struct tm const *a;
-     struct tm const *b;
+difftm (struct tm const *a, struct tm const *b)
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
   int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
@@ -162,9 +131,7 @@ difftm (a, b)
    Adjust only T's year, mon, mday, hour, min and sec members;
    plus adjust wday if it is defined.  */
 void
-adjzone (t, seconds)
-     register struct tm *t;
-     long seconds;
+adjzone (register struct tm *t, long seconds)
 {
   int days = 0;
 
@@ -223,9 +190,7 @@ adjzone (t, seconds)
    POSIX 1003.1 doesn't allow leap seconds, but some implementations
    have them anyway, so allow them if localtime/gmtime does.  */
 time_t
-tm2time (tm, localzone)
-     struct tm *tm;
-     int localzone;
+tm2time (struct tm *tm, int localzone)
 {
   /* Cache the most recent t,tm pairs; 1 for gmtime, 1 for localtime.  */
   static time_t t_cache[2];
@@ -294,9 +259,7 @@ tm2time (tm, localzone)
    Yield -1 on failure.
    ISO 8601 day-of-year and week numbers are not yet supported.  */
 static time_t
-maketime (pt, default_time)
-     struct partime const *pt;
-     time_t default_time;
+maketime (struct partime const *pt, time_t default_time)
 {
   int localzone, wday, year;
   struct tm tm;
@@ -465,10 +428,7 @@ maketime (pt, default_time)
    time and zone is used.
    Return (time_t) -1 if the time is invalid or cannot be represented.  */
 time_t
-str2time (source, default_time, default_zone)
-     char const **source;
-     time_t default_time;
-     long default_zone;
+str2time (char const **source, time_t default_time, long default_zone)
 {
   struct partime pt;
 
@@ -481,11 +441,9 @@ str2time (source, default_time, default_zone)
 #ifdef TEST
 #include <stdio.h>
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
-  time_t default_time = time ((time_t *) 0);
+  time_t default_time = time (0);
   long default_zone = argv[1] ? atol (argv[1]) : TM_LOCAL_ZONE;
   char buf[1000];
   while (fgets (buf, sizeof (buf), stdin))

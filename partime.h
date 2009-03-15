@@ -1,6 +1,6 @@
 /* Parse a string, yielding a struct partime that describes it.  */
 
-/* Copyright 1993, 1994, 1995, 1997 Paul Eggert
+/* Copyright (C) 1993, 1994, 1995, 1997, 2003, 2006 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
    This file is part of RCS.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with RCS; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
    Report problems and direct all questions to:
 
@@ -26,10 +26,12 @@
 
  */
 
+#include <limits.h>
+#include <time.h>
+
 #define TM_UNDEFINED (-1)
 #define TM_DEFINED(x) (0 <= (x))
 
-/* #include <limits.h> if you want to use these symbols.  */
 #define TM_LOCAL_ZONE LONG_MIN
 #define TM_UNDEFINED_ZONE (LONG_MIN + 1)
 
@@ -67,11 +69,5 @@ struct partime
     long zone;
   };
 
-#if defined __STDC__ || has_prototypes
-# define __PARTIME_P(x) x
-#else
-# define __PARTIME_P(x) ()
-#endif
-
-char *partime __PARTIME_P ((char const *, struct partime *));
-char *parzone __PARTIME_P ((char const *, long *));
+char *partime (char const *, struct partime *);
+char *parzone (char const *, long *);

@@ -1,5 +1,5 @@
 /* Work around bug on some systems where malloc (0) fails.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,16 +22,13 @@
 #endif
 #undef malloc
 
-#include <sys/types.h>
-
-char *malloc ();
+#include <stdlib.h>
 
 /* Allocate an N-byte block of memory from the heap.
    If N is zero, allocate a 1-byte block.  */
 
-char *
-rpl_malloc (n)
-     size_t n;
+void *
+rpl_malloc (size_t n)
 {
   if (n == 0)
     n = 1;

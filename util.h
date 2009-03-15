@@ -1,6 +1,6 @@
 /* utility functions for `patch' */
 
-/* $Id: util.h,v 1.21 2003/09/11 18:36:17 eggert Exp $ */
+/* $Id: util.h,v 1.21 2003/09/11 18:36:17 eggert Exp eggert $ */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */

@@ -1,11 +1,11 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.45 2003/09/11 18:36:17 eggert Exp $ */
+/* $Id: patch.c,v 1.45 2003/09/11 18:36:17 eggert Exp eggert $ */
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002,
-   2003 Free Software Foundation, Inc.
+   2003, 2006 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN
 #include <common.h>
@@ -357,7 +357,7 @@ main (int argc, char **argv)
 	  if (outstate.zero_output
 	      && (remove_empty_files
 		  || (pch_says_nonexistent (! reverse) == 2
-		      && ! posixly_correct)))
+		      && (!posixly_correct || diff_type == UNI_DIFF))))
 	    {
 	      if (verbosity == VERBOSE)
 		say ("Removing file %s%s\n", quotearg (outname),
@@ -932,10 +932,76 @@ locate_hunk (LINENUM fuzz)
     return 0;
 }
 
-/* We did not find the pattern, dump out the hunk so they can handle it. */
+/* Output a line number range in unified format.  */
 
 static void
-abort_hunk (void)
+print_unidiff_range (FILE *fp, LINENUM start, LINENUM count)
+{
+  char numbuf0[LINENUM_LENGTH_BOUND + 1];
+  char numbuf1[LINENUM_LENGTH_BOUND + 1];
+
+  switch (count)
+    {
+    case 0:
+      fprintf (fp, "%s,0", format_linenum (numbuf0, start - 1));
+      break;
+
+    case 1:
+      fprintf (fp, "%s", format_linenum (numbuf0, start));
+      break;
+
+    default:
+      fprintf (fp, "%s,%s",
+	       format_linenum (numbuf0, start),
+	       format_linenum (numbuf1, count));
+      break;
+    }
+}
+
+/* Output the rejected patch in unified format.  */
+
+static void
+abort_hunk_unified (void)
+{
+  FILE *fp = rejfp;
+  LINENUM old;
+  LINENUM new;
+  LINENUM lastline = pch_ptrn_lines ();
+  LINENUM pat_end = pch_end ();
+
+  /* Add last_offset to guess the same as the previous successful hunk.  */
+  fprintf (fp, "@@ -");
+  print_unidiff_range (fp, pch_first () + last_offset, lastline);
+  fprintf (fp, " +");
+  print_unidiff_range (fp, pch_newfirst () + last_offset, pch_repl_lines ());
+  fprintf (fp, " @@\n");
+
+  for (old = 1, new = lastline + 2;  ;  old++, new++)
+    {
+      for (;  old <= lastline && pch_char (old) == '-';  old++)
+	{
+	  fputc ('-', fp);
+	  pch_write_line (old, fp);
+	}
+
+      for (;  new <= pat_end && pch_char (new) == '+';  new++)
+	{
+	  fputc ('+', fp);
+	  pch_write_line (new, fp);
+	}
+
+      if (! (old <= lastline))
+	break;
+
+      fputc (' ', fp);
+      pch_write_line (old, fp);
+    }
+}
+
+/* Output the rejected patch in context format.  */
+
+static void
+abort_hunk_context (void)
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end ();
@@ -988,6 +1054,17 @@ abort_hunk (void)
 	if (ferror (rejfp))
 	  write_fatal ();
     }
+}
+
+/* Output the rejected hunk.  */
+
+static void
+abort_hunk (void)
+{
+  if (diff_type == UNI_DIFF)
+    abort_hunk_unified ();
+  else
+    abort_hunk_context ();
 }
 
 /* We found where to apply it (we hope), so do it. */

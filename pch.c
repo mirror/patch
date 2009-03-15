@@ -1,11 +1,11 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.46 2003/09/11 18:36:17 eggert Exp $ */
+/* $Id: pch.c,v 1.46 2003/09/11 18:36:17 eggert Exp eggert $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2006 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN extern
 #include <common.h>
@@ -58,7 +58,7 @@ static char **p_line;			/* the text of the hunk */
 static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
 static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
-static int p_indent;			/* indent to patch */
+static size_t p_indent;			/* indent to patch */
 static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
 static bool p_pass_comments_through;	/* true if not ignoring # lines */
 static file_offset p_base;		/* where to intuit this time */
@@ -235,7 +235,8 @@ there_is_another_patch (void)
     if (verbosity != SILENT)
       {
 	if (p_indent)
-	  say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
+	  say ("(Patch is indented %lu space%s.)\n",
+	       (unsigned long int) p_indent, p_indent==1?"":"s");
 	if (p_strip_trailing_cr)
 	  say ("(Stripping trailing CRs from patch.)\n");
 	if (! inname)
@@ -320,7 +321,7 @@ intuit_diff_type (void)
 	register file_offset previous_line = this_line;
 	register bool last_line_was_command = this_is_a_command;
 	register bool stars_last_line = stars_this_line;
-	register int indent = 0;
+	register size_t indent = 0;
 	char ed_command_letter;
 	bool strip_trailing_cr;
 	size_t chars_read;
@@ -522,15 +523,15 @@ intuit_diff_type (void)
        - Take the old and new names from the context header if present,
 	 and take the index name from the `Index:' line if present and
 	 if either the old and new names are both absent
-	 or posixly_correct is nonzero.
+	 or if conforming to POSIX.
 	 Consider the file names to be in the order (old, new, index).
-       - If some named files exist, use the first one if posixly_correct
-	 is nonzero, the best one otherwise.
+       - If some named files exist, use the first one if conforming
+	 to POSIX, the best one otherwise.
        - If patch_get is nonzero, and no named files exist,
 	 but an RCS or SCCS master file exists,
 	 use the first named file with an RCS or SCCS master.
        - If no named files exist, no RCS or SCCS master was found,
-	 some names are given, posixly_correct is zero,
+	 some names are given, we are conforming to POSIX,
 	 and the patch appears to create a file, then use the best name
 	 requiring the creation of the fewest directories.
        - Otherwise, report failure by setting `inname' to 0;
@@ -563,13 +564,13 @@ intuit_diff_type (void)
 	      else
 		{
 		  stat_errno[i] = 0;
-		  if (posixly_correct)
+		  if (posixly_correct && retval != UNI_DIFF)
 		    break;
 		}
 	      i0 = i;
 	    }
 
-	if (! posixly_correct)
+	if (!posixly_correct || retval == UNI_DIFF)
 	  {
 	    bool is_empty;
 
@@ -1554,12 +1555,12 @@ get_line (void)
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (int indent, int rfc934_nesting, bool strip_trailing_cr,
+pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	   bool pass_comments_through)
 {
   register FILE *fp = pfp;
   register int c;
-  register int i;
+  register size_t i;
   register char *b;
   register size_t s;
 
@@ -1895,18 +1896,21 @@ get_ed_command_letter (char const *line)
   char const *p = line;
   char letter;
   bool pair = false;
-  if (! ISDIGIT (*p))
-    return 0;
-  while (ISDIGIT (*++p))
-    continue;
-  if (*p == ',')
+
+  if (ISDIGIT (*p))
     {
-      if (! ISDIGIT (*++p))
-	return 0;
       while (ISDIGIT (*++p))
 	continue;
-      pair = true;
+      if (*p == ',')
+	{
+	  if (! ISDIGIT (*++p))
+	    return 0;
+	  while (ISDIGIT (*++p))
+	    continue;
+	  pair = true;
+	}
     }
+
   letter = *p++;
 
   switch (letter)

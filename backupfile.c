@@ -1,5 +1,7 @@
 /* backupfile.c -- make Emacs style backup file names
-   Copyright (C) 1990,1991,1992,1993,1995,1997 Free Software Foundation, Inc.
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,16 +25,9 @@
 # include <config.h>
 #endif
 
-#include <argmatch.h>
-#include <backupfile.h>
-
+#include <stddef.h>
 #include <stdio.h>
-#include <sys/types.h>
-#if HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <string.h>
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
@@ -58,11 +53,7 @@
 # define CLOSEDIR(d) closedir (d)
 #endif
 
-#if STDC_HEADERS
-# include <stdlib.h>
-#else
-char *malloc ();
-#endif
+#include <stdlib.h>
 
 #if HAVE_DIRENT_H || HAVE_NDIR_H || HAVE_SYS_DIR_H || HAVE_SYS_NDIR_H
 # define HAVE_DIR 1
@@ -70,12 +61,8 @@ char *malloc ();
 # define HAVE_DIR 0
 #endif
 
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
-#ifndef CHAR_BIT
-#define CHAR_BIT 8
-#endif
+#include <limits.h>
+
 /* Upper bound on the string length of an integer converted to string.
    302 / 1000 is ceil (log10 (2.0)).  Subtract 1 for the sign bit;
    add 1 for integer division truncation; add 1 more for a minus sign.  */
@@ -85,10 +72,9 @@ char *malloc ();
    - Its arg may be any int or unsigned int; it need not be an unsigned char.
    - It's guaranteed to evaluate its argument exactly once.
    - It's typically faster.
-   Posix 1003.2-1992 section 2.5.2.1 page 50 lines 1556-1558 says that
-   only '0' through '9' are digits.  Prefer ISDIGIT to isdigit unless
-   it's important to use the locale's definition of `digit' even when the
-   host does not conform to Posix.  */
+   POSIX says that only '0' through '9' are digits.  Prefer ISDIGIT to
+   ISDIGIT_LOCALE unless it's important to use the locale's definition
+   of `digit' even when the host does not conform to POSIX.  */
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
 
 #if D_INO_IN_DIRENT
@@ -97,15 +83,16 @@ char *malloc ();
 # define REAL_DIR_ENTRY(dp) 1
 #endif
 
-/* Which type of backup file names are generated. */
-enum backup_type backup_type = none;
+#include "argmatch.h"
+#include "backupfile.h"
+#include "dirname.h"
 
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-const char *simple_backup_suffix = ".orig";
+const char *simple_backup_suffix = "~";
 
-static int max_backup_version __BACKUPFILE_P ((const char *, const char *));
-static int version_number __BACKUPFILE_P ((const char *, const char *, size_t));
+static int max_backup_version (const char *, const char *);
+static int version_number (const char *, const char *, size_t);
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.  Return 0 if out of memory.
@@ -113,8 +100,7 @@ static int version_number __BACKUPFILE_P ((const char *, const char *, size_t));
    Do not call this function if backup_type == none. */
 
 char *
-find_backup_file_name (file)
-     const char *file;
+find_backup_file_name (const char *file, enum backup_type backup_type)
 {
   size_t backup_suffix_size_max;
   size_t file_len = strlen (file);
@@ -127,29 +113,31 @@ find_backup_file_name (file)
   if (HAVE_DIR && backup_suffix_size_max < numbered_suffix_size_max)
     backup_suffix_size_max = numbered_suffix_size_max;
 
-  s = malloc (file_len + backup_suffix_size_max + numbered_suffix_size_max);
+  s = malloc (file_len + 1
+	      + backup_suffix_size_max + numbered_suffix_size_max);
   if (s)
     {
-      strcpy (s, file);
-
 #if HAVE_DIR
       if (backup_type != simple)
 	{
 	  int highest_backup;
-	  size_t dir_len = base_name (s) - s;
+	  size_t dirlen = dir_len (file);
 
-	  strcpy (s + dir_len, ".");
-	  highest_backup = max_backup_version (file + dir_len, s);
+	  memcpy (s, file, dirlen);
+	  if (dirlen == FILESYSTEM_PREFIX_LEN (file))
+	    s[dirlen++] = '.';
+	  s[dirlen] = '\0';
+	  highest_backup = max_backup_version (base_name (file), s);
 	  if (! (backup_type == numbered_existing && highest_backup == 0))
 	    {
 	      char *numbered_suffix = s + (file_len + backup_suffix_size_max);
 	      sprintf (numbered_suffix, ".~%d~", highest_backup + 1);
 	      suffix = numbered_suffix;
 	    }
-	  strcpy (s, file);
 	}
 #endif /* HAVE_DIR */
 
+      strcpy (s, file);
       addext (s, suffix, '~');
     }
   return s;
@@ -163,9 +151,7 @@ find_backup_file_name (file)
    */
 
 static int
-max_backup_version (file, dir)
-     const char *file;
-     const char *dir;
+max_backup_version (const char *file, const char *dir)
 {
   DIR *dirp;
   struct dirent *dp;
@@ -178,7 +164,7 @@ max_backup_version (file, dir)
     return 0;
 
   highest_version = 0;
-  file_name_length = strlen (file);
+  file_name_length = base_len (file);
 
   while ((dp = readdir (dirp)) != 0)
     {
@@ -199,10 +185,7 @@ max_backup_version (file, dir)
    */
 
 static int
-version_number (base, backup, base_length)
-     const char *base;
-     const char *backup;
-     size_t base_length;
+version_number (const char *base, const char *backup, size_t base_length)
 {
   int version;
   const char *p;
@@ -223,30 +206,49 @@ version_number (base, backup, base_length)
 
 static const char * const backup_args[] =
 {
-  "never", "simple", "nil", "existing", "t", "numbered", 0
+  /* In a series of synonyms, present the most meaning full first, so
+     that argmatch_valid be more readable. */
+  "none", "off",
+  "simple", "never",
+  "existing", "nil",
+  "numbered", "t",
+  0
 };
 
 static const enum backup_type backup_types[] =
 {
-  simple, simple, numbered_existing, numbered_existing, numbered, numbered
+  none, none,
+  simple, simple,
+  numbered_existing, numbered_existing,
+  numbered, numbered
 };
 
-/* Return the type of backup indicated by VERSION.
-   Unique abbreviations are accepted. */
+/* Return the type of backup specified by VERSION.
+   If VERSION is NULL or the empty string, return numbered_existing.
+   If VERSION is invalid or ambiguous, fail with a diagnostic appropriate
+   for the specified CONTEXT.  Unambiguous abbreviations are accepted.  */
 
 enum backup_type
-get_version (version)
-     const char *version;
+get_version (const char *context, const char *version)
 {
-  int i;
-
   if (version == 0 || *version == 0)
     return numbered_existing;
-  i = argmatch (version, backup_args);
-  if (i < 0)
-    {
-      invalid_arg ("version control type", version, i);
-      exit (2);
-    }
-  return backup_types[i];
+  else
+    return XARGMATCH (context, version, backup_args, backup_types);
+}
+
+
+/* Return the type of backup specified by VERSION.
+   If VERSION is NULL, use the value of the envvar VERSION_CONTROL.
+   If the specified string is invalid or ambiguous, fail with a diagnostic
+   appropriate for the specified CONTEXT.
+   Unambiguous abbreviations are accepted.  */
+
+enum backup_type
+xget_version (const char *context, const char *version)
+{
+  if (version && *version)
+    return get_version (context, version);
+  else
+    return get_version ("$VERSION_CONTROL", getenv ("VERSION_CONTROL"));
 }

@@ -1,6 +1,6 @@
 /* inputting files to be patched */
 
-/* $Id: inp.h,v 1.7 2003/05/20 14:05:22 eggert Exp $ */
+/* $Id: inp.h,v 1.7 2003/05/20 14:05:22 eggert Exp eggert $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
    Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 XTERN LINENUM input_lines;		/* how long is input file in lines */
 

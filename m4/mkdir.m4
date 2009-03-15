@@ -1,4 +1,4 @@
-#serial 1
+#serial 2
 
 dnl From Mumit Khan and Paul Eggert
 dnl Determine whether mkdir accepts only one argument instead of the usual two.
@@ -12,12 +12,18 @@ AC_DEFUN([PATCH_FUNC_MKDIR_TAKES_ONE_ARG],
         AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/stat.h>
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 	  ],
 	  [mkdir (".", 0);],
 	  ,
 	  [AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/stat.h>
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 	     ],
 	     [mkdir (".");],
 	     patch_cv_mkdir_takes_one_arg=yes

@@ -1,5 +1,7 @@
 /* addext.c -- add an extension to a file name
-   Copyright (C) 1990, 1997 Free Software Foundation, Inc.
+
+   Copyright (C) 1990, 1997, 1998, 1999, 2001, 2003 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,61 +25,67 @@
 #endif
 
 #ifndef HAVE_DOS_FILE_NAMES
-#define HAVE_DOS_FILE_NAMES 0
+# define HAVE_DOS_FILE_NAMES 0
 #endif
 #ifndef HAVE_LONG_FILE_NAMES
-#define HAVE_LONG_FILE_NAMES 0
+# define HAVE_LONG_FILE_NAMES 0
 #endif
 
-#include <backupfile.h>
-
-#if HAVE_LIMITS_H
-# include <limits.h>
-#endif
+#include <limits.h>
 #ifndef _POSIX_NAME_MAX
-#define _POSIX_NAME_MAX 14
+# define _POSIX_NAME_MAX 14
 #endif
 
-#include <sys/types.h>
-#if HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <stddef.h>
+#include <string.h>
 
 #if HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+#include <errno.h>
+#ifndef errno
+extern int errno;
+#endif
+
+#include "backupfile.h"
+#include "dirname.h"
+
 /* Append to FILENAME the extension EXT, unless the result would be too long,
    in which case just append the character E.  */
 
 void
-addext (filename, ext, e)
-     char *filename;
-     char const *ext;
-     int e;
+addext (char *filename, char const *ext, int e)
 {
   char *s = base_name (filename);
-  size_t slen = strlen (s), extlen = strlen (ext);
-  long slen_max = -1;
+  size_t slen = base_len (s);
+  size_t extlen = strlen (ext);
+  size_t slen_max = HAVE_LONG_FILE_NAMES ? 255 : _POSIX_NAME_MAX;
 
 #if HAVE_PATHCONF && defined _PC_NAME_MAX
-  if (slen + extlen <= _POSIX_NAME_MAX && ! HAVE_DOS_FILE_NAMES)
-    /* The file name is so short there's no need to call pathconf.  */
-    slen_max = _POSIX_NAME_MAX;
-  else if (s == filename)
-    slen_max = pathconf (".", _PC_NAME_MAX);
-  else
+  if (_POSIX_NAME_MAX < slen + extlen || HAVE_DOS_FILE_NAMES)
     {
-      char c = *s;
-      *s = 0;
-      slen_max = pathconf (filename, _PC_NAME_MAX);
-      *s = c;
+      /* The new base name is long enough to require a pathconf check.  */
+      long name_max;
+      errno = 0;
+      if (s == filename)
+	name_max = pathconf (".", _PC_NAME_MAX);
+      else
+	{
+	  char c = *s;
+	  if (! ISSLASH (c))
+	    *s = 0;
+	  name_max = pathconf (filename, _PC_NAME_MAX);
+	  *s = c;
+	}
+      if (0 <= name_max || errno == 0)
+	{
+	  long size = slen_max = name_max;
+	  if (name_max != size)
+	    slen_max = -1;
+	}
     }
 #endif
-  if (slen_max < 0)
-    slen_max = HAVE_LONG_FILE_NAMES ? 255 : 14;
 
   if (HAVE_DOS_FILE_NAMES && slen_max <= 12)
     {
