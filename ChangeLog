@@ -16,6 +16,9 @@
 	* pch.c (there_is_another_patch): Check no_strip_trailing_cr.
 	* tests/crlf-handling: Add --binary tests here.
 
+	* patch.c (apply_hunk): Use fputs() in simple fprintf()
+	situations.
+
 2009-03-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (main): With -r, instead of moving the global reject

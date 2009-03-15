@@ -1172,7 +1172,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 		    def_state = IN_IFNDEF;
 		}
 		else if (def_state == IN_IFDEF) {
-		    fprintf (fp, outstate->after_newline + else_defined);
+		    fputs (outstate->after_newline + else_defined, fp);
 		    def_state = IN_ELSE;
 		}
 		if (ferror (fp))
@@ -1191,7 +1191,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 		return false;
 	    if (R_do_defines) {
 		if (def_state == IN_IFNDEF) {
-		    fprintf (fp, outstate->after_newline + else_defined);
+		    fputs (outstate->after_newline + else_defined, fp);
 		    def_state = IN_ELSE;
 		}
 		else if (def_state == OUTSIDE) {
@@ -1231,7 +1231,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	    while (pch_char (old) == '!');
 
 	    if (R_do_defines) {
-		fprintf (fp, outstate->after_newline + else_defined);
+		fputs (outstate->after_newline + else_defined, fp);
 		if (ferror (fp))
 		  write_fatal ();
 		def_state = IN_ELSE;
@@ -1250,7 +1250,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	    old++;
 	    new++;
 	    if (R_do_defines && def_state != OUTSIDE) {
-		fprintf (fp, outstate->after_newline + end_defined);
+		fputs (outstate->after_newline + end_defined, fp);
 		if (ferror (fp))
 		  write_fatal ();
 		outstate->after_newline = true;
@@ -1268,7 +1268,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 		def_state = IN_IFDEF;
 	    }
 	    else if (def_state == IN_IFNDEF) {
-		fprintf (fp, outstate->after_newline + else_defined);
+		fputs (outstate->after_newline + else_defined, fp);
 		def_state = IN_ELSE;
 	    }
 	    if (ferror (fp))
@@ -1287,7 +1287,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	while (new <= pat_end && pch_char (new) == '+');
     }
     if (R_do_defines && def_state != OUTSIDE) {
-	fprintf (fp, outstate->after_newline + end_defined);
+	fputs (outstate->after_newline + end_defined, fp);
 	if (ferror (fp))
 	  write_fatal ();
 	outstate->after_newline = true;
