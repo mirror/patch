@@ -172,11 +172,9 @@ main (int argc, char **argv)
     get_some_switches();
 
     if (make_backups | backup_if_mismatch)
-      {
-	backup_type = get_version (version_control_context, version_control);
-	init_backup_hash_table ();
-      }
+      backup_type = get_version (version_control_context, version_control);
 
+    init_backup_hash_table ();
     init_output (outfile, 0, &outstate);
 
     /* Make sure we clean up in case of disaster.  */
@@ -422,7 +420,10 @@ main (int argc, char **argv)
 	    }
       }
       if (diff_type != ED_DIFF) {
-	if (fclose (rejfp) != 0)
+	struct stat rejst;
+
+	if ((failed && fstat (fileno (rejfp), &rejst) != 0)
+	    || fclose (rejfp) != 0)
 	    write_fatal ();
 	if (failed) {
 	    somefailed = true;
@@ -446,11 +447,22 @@ main (int argc, char **argv)
 			    written_to_rejname = true;
 			  }
 			else
-			  append_to_file (TMPREJNAME, rejname);
+			  append_to_file (TMPREJNAME, rejname, false);
 		      }
 		    else
-		      move_file (TMPREJNAME, &TMPREJNAME_needs_removal, 0,
-				 rej, 0666, false);
+		      {
+			struct stat tost;
+			int rej_errno;
+
+			rej_errno = stat (rej, &tost) ? errno : 0;
+			if (rej_errno && rej_errno != ENOENT)
+			  write_fatal ();
+		        if (! rej_errno && file_already_seen (&tost))
+			  append_to_file (TMPREJNAME, rej, true);
+			else
+			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
+				     &rejst, rej, 0666, false);
+		      }
 		  }
 		if (!rejname)
 		    free (rej);

@@ -117,7 +117,7 @@ insert_file (struct stat const *st)
 /* Has the file identified by ST already been inserted into the hash
    table?  */
 
-static bool
+bool
 file_already_seen (struct stat const *st)
 {
   file_id f;
@@ -247,9 +247,8 @@ move_file (char const *from, int volatile *from_needs_removal,
 		}
 	      if (! to_dir_known_to_exist)
 		makedirs (to);
-	      copy_file (from, to, backup ? &tost : 0, 0, mode);
-	      if (backup)
-		insert_file (&tost);
+	      copy_file (from, to, &tost, 0, mode);
+	      insert_file (&tost);
 	      return;
 	    }
 
@@ -258,7 +257,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	}
 
     rename_succeeded:
-      if (backup)
+      if (fromst)
 	insert_file (fromst);
       /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
 	 rename returned zero because FROM and TO are hard links to
@@ -330,13 +329,20 @@ copy_file (char const *from, char const *to, struct stat *tost,
 /* Append to file. */
 
 void
-append_to_file (char const *from, char const *to)
+append_to_file (char const *from, char const *to, bool remember)
 {
   int tofd;
 
   if ((tofd = open (to, O_WRONLY | O_BINARY | O_APPEND)) < 0)
     pfatal ("Can't reopen file %s", quotearg (to));
   copy_to_fd (from, tofd);
+  if (remember)
+    {
+      struct stat newst;
+      if (fstat (tofd, &newst) != 0)
+	write_fatal ();
+      insert_file (&newst);
+    }
   if (close (tofd) != 0)
     write_fatal ();
 }
