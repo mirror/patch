@@ -1,10 +1,10 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.34 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: util.c,v 1.36 2003/05/20 14:04:53 eggert Exp $ */
 
 /* Copyright (C) 1986 Larry Wall
 
-   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002 Free
+   Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -55,11 +55,11 @@ static void makedirs (char *);
    If we must create TO, use MODE to create it.
    If FROM is null, remove TO (ignoring FROMSTAT).
    FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
-   Back up TO if BACKUP is nonzero.  */
+   Back up TO if BACKUP is true.  */
 
 void
 move_file (char const *from, int volatile *from_needs_removal,
-	   char *to, mode_t mode, int backup)
+	   char *to, mode_t mode, bool backup)
 {
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
@@ -140,11 +140,9 @@ move_file (char const *from, int volatile *from_needs_removal,
 	say ("Renaming file %s to %s\n",
 	     quotearg_n (0, from), quotearg_n (1, to));
 
-      if (rename (from, to) == 0)
-	*from_needs_removal = 0;
-      else
+      if (rename (from, to) != 0)
 	{
-	  int to_dir_known_to_exist = 0;
+	  bool to_dir_known_to_exist = false;
 
 	  if (errno == ENOENT
 	      && (to_errno == -1 || to_errno == ENOENT))
@@ -152,10 +150,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	      makedirs (to);
 	      to_dir_known_to_exist = 1;
 	      if (rename (from, to) == 0)
-		{
-		  *from_needs_removal = 0;
-		  return;
-		}
+		goto rename_succeeded;
 	    }
 
 	  if (errno == EXDEV)
@@ -163,7 +158,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	      if (! backup)
 		{
 		  if (unlink (to) == 0)
-		    to_dir_known_to_exist = 1;
+		    to_dir_known_to_exist = true;
 		  else if (errno != ENOENT)
 		    pfatal ("Can't remove file %s", quotearg (to));
 		}
@@ -176,6 +171,14 @@ move_file (char const *from, int volatile *from_needs_removal,
 	  pfatal ("Can't rename file %s to %s",
 		  quotearg_n (0, from), quotearg_n (1, to));
 	}
+
+    rename_succeeded:
+      /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
+	 rename returned zero because FROM and TO are hard links to
+	 the same file.  */
+      if (0 < to_errno
+	  || (to_errno == 0 && to_st.st_nlink <= 1))
+	*from_needs_removal = 0;
     }
   else if (! backup)
     {
@@ -250,14 +253,14 @@ static char const PERFORCE_CO[] = "p4 edit ";
    "ClearCase" if it is controlled by Clearcase,
    "Perforce" if it is controlled by Perforce,
    and 0 otherwise.
-   READONLY is nonzero if we desire only readonly access to FILENAME.
+   READONLY is true if we desire only readonly access to FILENAME.
    FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
    If successful and if GETBUF is nonzero, set *GETBUF to a command
    that gets the file; similarly for DIFFBUF and a command to diff the file
    (but set *DIFFBUF to 0 if the diff operation is meaningless).
    *GETBUF and *DIFFBUF must be freed by the caller.  */
 char const *
-version_controller (char const *filename, int readonly,
+version_controller (char const *filename, bool readonly,
 		    struct stat const *filestat, char **getbuf, char **diffbuf)
 {
   struct stat cstat;
@@ -378,12 +381,12 @@ version_controller (char const *filename, int readonly,
 }
 
 /* Get FILENAME from version control system CS.  The file already exists if
-   EXISTS is nonzero.  Only readonly access is needed if READONLY is nonzero.
+   EXISTS.  Only readonly access is needed if READONLY.
    Use the command GETBUF to actually get the named file.
    Store the resulting file status into *FILESTAT.
-   Return nonzero if successful.  */
-int
-version_get (char const *filename, char const *cs, int exists, int readonly,
+   Return true if successful.  */
+bool
+version_get (char const *filename, char const *cs, bool exists, bool readonly,
 	     char const *getbuf, struct stat *filestat)
 {
   if (patch_get < 0)
@@ -617,10 +620,10 @@ ask (char const *format, ...)
 
 /* Return nonzero if it OK to reverse a patch.  */
 
-int
+bool
 ok_to_reverse (char const *format, ...)
 {
-  int r = 0;
+  bool r = false;
 
   if (noreverse || ! (force && verbosity == SILENT))
     {
@@ -633,19 +636,17 @@ ok_to_reverse (char const *format, ...)
   if (noreverse)
     {
       printf ("  Skipping patch.\n");
-      skip_rest_of_patch = TRUE;
-      r = 0;
+      skip_rest_of_patch = true;
     }
   else if (force)
     {
       if (verbosity != SILENT)
 	printf ("  Applying it anyway.\n");
-      r = 0;
     }
   else if (batch)
     {
       say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
-      r = 1;
+      r = true;
     }
   else
     {
@@ -658,7 +659,7 @@ ok_to_reverse (char const *format, ...)
 	    {
 	      if (verbosity != SILENT)
 		say ("Skipping patch.\n");
-	      skip_rest_of_patch = TRUE;
+	      skip_rest_of_patch = true;
 	    }
 	}
     }
@@ -731,7 +732,7 @@ fatal_exit_handler (int sig)
 #endif
 
 void
-set_signals (int reset)
+set_signals (bool reset)
 {
   int i;
 #if HAVE_SIGACTION
@@ -753,7 +754,7 @@ set_signals (int reset)
       sigemptyset (&signals_to_block);
       for (i = 0;  i < NUM_SIGS;  i++)
 	{
-	  int ignoring_signal;
+	  bool ignoring_signal;
 #if HAVE_SIGACTION
 	  if (sigaction (sigs[i], (struct sigaction *) 0, &initial_act) != 0)
 	    continue;
@@ -947,12 +948,15 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
 	    if (strip_leading < 0 || --sleading >= 0)
 		name = t+1;
 	  }
-	/* Allow file names with internal spaces,
-	   but only if a tab separates the file name from the date.  */
-	else if (*t == '\t'
-		 || (ISSPACE ((unsigned char) *t) && ! strchr (t + 1, '\t')))
+	else if (ISSPACE ((unsigned char) *t))
 	  {
+	    /* Allow file names with internal spaces,
+	       but only if a tab separates the file name from the date.  */
 	    char const *u = t;
+	    while (*u != '\t' && ISSPACE ((unsigned char) u[1]))
+	      u++;
+	    if (*u != '\t' && strchr (u + 1, '\t'))
+	      continue;
 
 	    if (set_time | set_utc)
 	      stamp = str2time (&u, initial_time,

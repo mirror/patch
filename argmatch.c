@@ -1,5 +1,7 @@
 /* argmatch.c -- find a match for a string in an array
-   Copyright (C) 1990, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
+
+   Copyright (C) 1990, 1998, 1999, 2001, 2002, 2003 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,24 +20,19 @@
 /* Written by David MacKenzie <djm@ai.mit.edu>
    Modified by Akim Demaille <demaille@inf.enst.fr> */
 
+#if HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+/* Specification.  */
 #include "argmatch.h"
 
 #include <stdio.h>
-#ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <string.h>
-#endif
+#include <stdlib.h>
+#include <string.h>
 
-#if HAVE_LOCALE_H
-# include <locale.h>
-#endif
-
-#if ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-#else
-# define _(Text) Text
-#endif
+#include "gettext.h"
+#define _(msgid) gettext (msgid)
 
 #include "error.h"
 #include "quotearg.h"
@@ -49,11 +46,7 @@
 # define ARGMATCH_QUOTING_STYLE locale_quoting_style
 #endif
 
-/* The following test is to work around the gross typo in
-   systems like Sony NEWS-OS Release 4.0C, whereby EXIT_FAILURE
-   is defined to 0, not 1.  */
-#if !EXIT_FAILURE
-# undef EXIT_FAILURE
+#ifndef EXIT_FAILURE
 # define EXIT_FAILURE 1
 #endif
 
@@ -81,7 +74,6 @@ argmatch_exit_fn argmatch_die = __argmatch_die;
    null-terminated array ARGLIST, return the index in ARGLIST
    of the matched element, else -1 if it does not match any element
    or -2 if it is ambiguous (is a prefix of more than one element).
-   If SENSITIVE, comparison is case sensitive.
 
    If VALLIST is none null, use it to resolve ambiguities limited to
    synonyms, i.e., for
@@ -89,10 +81,9 @@ argmatch_exit_fn argmatch_die = __argmatch_die;
      "no", "nope" -> 1
    "y" is a valid argument, for `0', and "n" for `1'.  */
 
-static int
-__argmatch_internal (const char *arg, const char *const *arglist,
-		     const char *vallist, size_t valsize,
-		     int case_sensitive)
+int
+argmatch (const char *arg, const char *const *arglist,
+	  const char *vallist, size_t valsize)
 {
   int i;			/* Temporary index in ARGLIST.  */
   size_t arglen;		/* Length of ARG.  */
@@ -104,9 +95,7 @@ __argmatch_internal (const char *arg, const char *const *arglist,
   /* Test all elements for either exact match or abbreviated matches.  */
   for (i = 0; arglist[i]; i++)
     {
-      if (case_sensitive
-	  ? !strncmp (arglist[i], arg, arglen)
-	  : !strncasecmp (arglist[i], arg, arglen))
+      if (!strncmp (arglist[i], arg, arglen))
 	{
 	  if (strlen (arglist[i]) == arglen)
 	    /* Exact match found.  */
@@ -132,22 +121,6 @@ __argmatch_internal (const char *arg, const char *const *arglist,
     return -2;
   else
     return matchind;
-}
-
-/* argmatch - case sensitive version */
-int
-argmatch (const char *arg, const char *const *arglist,
-	  const char *vallist, size_t valsize)
-{
-  return __argmatch_internal (arg, arglist, vallist, valsize, 1);
-}
-
-/* argcasematch - case insensitive version */
-int
-argcasematch (const char *arg, const char *const *arglist,
-	      const char *vallist, size_t valsize)
-{
-  return __argmatch_internal (arg, arglist, vallist, valsize, 0);
 }
 
 /* Error reporting for argmatch.
@@ -204,12 +177,9 @@ int
 __xargmatch_internal (const char *context,
 		      const char *arg, const char *const *arglist,
 		      const char *vallist, size_t valsize,
-		      int case_sensitive,
 		      argmatch_exit_fn exit_fn)
 {
-  int res = __argmatch_internal (arg, arglist,
-				 vallist, valsize,
-				 case_sensitive);
+  int res = argmatch (arg, arglist, vallist, valsize);
   if (res >= 0)
     /* Success. */
     return res;
@@ -295,12 +265,12 @@ main (int argc, const char *const *argv)
     }
 
   if ((cp = getenv ("VERSION_CONTROL")))
-    backup_type = XARGCASEMATCH ("$VERSION_CONTROL", cp,
-				 backup_args, backup_vals);
+    backup_type = XARGMATCH ("$VERSION_CONTROL", cp,
+			     backup_args, backup_vals);
 
   if (argc == 2)
-    backup_type = XARGCASEMATCH (program_name, argv[1],
-				 backup_args, backup_vals);
+    backup_type = XARGMATCH (program_name, argv[1],
+			     backup_args, backup_vals);
 
   printf ("The version control is `%s'\n",
 	  ARGMATCH_TO_ARGUMENT (backup_type, backup_args, backup_vals));

@@ -1,11 +1,11 @@
 /* reading patches */
 
-/* $Id: pch.h,v 1.10 2002/05/28 07:12:03 eggert Exp $ */
+/* $Id: pch.h,v 1.11 2003/05/20 13:56:03 eggert Exp $ */
 
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -35,10 +35,10 @@ bool pch_write_line (LINENUM, FILE *);
 bool there_is_another_patch (void);
 char *pfetch (LINENUM);
 char pch_char (LINENUM);
-int another_hunk (enum diff, int);
-int pch_says_nonexistent (int);
+int another_hunk (enum diff, bool);
+int pch_says_nonexistent (bool);
 size_t pch_line_len (LINENUM);
-time_t pch_timestamp (int);
+time_t pch_timestamp (bool);
 void do_ed_script (FILE *);
 void open_patch_file (char const *);
 void re_patch (void);

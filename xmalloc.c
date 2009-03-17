@@ -30,30 +30,30 @@ void *realloc ();
 void free ();
 #endif
 
-#if ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-#else
-# define textdomain(Domain)
-# define _(Text) Text
-#endif
-#define N_(Text) Text
+#include "gettext.h"
+#define _(msgid) gettext (msgid)
+#define N_(msgid) msgid
 
 #include "error.h"
-#include "exitfail.h"
 #include "xalloc.h"
 
 #ifndef EXIT_FAILURE
 # define EXIT_FAILURE 1
 #endif
 
-#ifndef HAVE_DONE_WORKING_MALLOC_CHECK
-"you must run the autoconf test for a properly working malloc -- see malloc.m4"
+/* The following tests require AC_PREREQ(2.54).  */
+
+#ifndef HAVE_MALLOC
+"you must run the autoconf test for a GNU libc compatible malloc"
 #endif
 
-#ifndef HAVE_DONE_WORKING_REALLOC_CHECK
-"you must run the autoconf test for a properly working realloc --see realloc.m4"
+#ifndef HAVE_REALLOC
+"you must run the autoconf test for a GNU libc compatible realloc"
 #endif
+
+/* Exit value when the requested amount of memory is not available.
+   The caller may set it to some other value.  */
+int xalloc_exit_failure = EXIT_FAILURE;
 
 /* If non NULL, call this function when memory is exhausted. */
 void (*xalloc_fail_func) PARAMS ((void)) = 0;
@@ -67,7 +67,7 @@ xalloc_die (void)
 {
   if (xalloc_fail_func)
     (*xalloc_fail_func) ();
-  error (exit_failure, 0, "%s", _(xalloc_msg_memory_exhausted));
+  error (xalloc_exit_failure, 0, "%s", _(xalloc_msg_memory_exhausted));
   /* The `noreturn' cannot be given to error, since it may return if
      its first argument is 0.  To help compilers understand the
      xalloc_die does terminate, call exit. */

@@ -13,15 +13,19 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "getopt.h"
+#ifdef _LIBC
+# include <getopt.h>
+#else
+# include "getopt.h"
+#endif
 
 #if !defined __STDC__ || !__STDC__
 /* This is a separate conditional since some stdc systems
@@ -89,6 +93,10 @@ getopt_long_only (argc, argv, options, long_options, opt_index)
   return _getopt_internal (argc, argv, options, long_options, opt_index, 1);
 }
 
+# ifdef _LIBC
+libc_hidden_def (getopt_long)
+libc_hidden_def (getopt_long_only)
+# endif
 
 #endif	/* Not ELIDE_CODE.  */
 

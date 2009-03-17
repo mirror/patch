@@ -1,8 +1,5 @@
 /* Error handler for noninteractive utilities
-   Copyright (C) 1990-1998, 2000, 2001 Free Software Foundation, Inc.
-   This file is part of the GNU C Library.  Its master source is NOT part of
-   the C library, however.  The master source lives in /gd/gnu/lib.
-
+   Copyright (C) 1990-1998, 2000, 2001, 2002 Free Software Foundation, Inc.
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2, or (at your option)
@@ -13,8 +10,8 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Written by David MacKenzie <djm@gnu.ai.mit.edu>.  */
@@ -24,9 +21,13 @@
 #endif
 
 #include <stdio.h>
-#if HAVE_LIBINTL_H
+
+#ifdef _LIBC
 # include <libintl.h>
+#else
+# include "gettext.h"
 #endif
+
 #ifdef _LIBC
 # include <wchar.h>
 # define mbsrtowcs __mbsrtowcs
@@ -53,7 +54,10 @@ void exit ();
 #endif
 
 #include "error.h"
-#include "unlocked-io.h"
+
+#if !_LIBC
+# include "unlocked-io.h"
+#endif
 
 #ifndef _
 # define _(String) String
@@ -76,6 +80,7 @@ unsigned int error_message_count;
 
 # define program_name program_invocation_name
 # include <errno.h>
+# include <libio/libioP.h>
 
 /* In GNU libc we want do not want to use the common name `error' directly.
    Instead make it a weak alias.  */
@@ -90,7 +95,9 @@ extern void __error_at_line (int status, int errnum, const char *file_name,
 
 # ifdef USE_IN_LIBIO
 #  include <libio/iolibio.h>
-#  define fflush(s) _IO_fflush (s)
+#  define fflush(s) INTUSE(_IO_fflush) (s)
+#  undef putc
+#  define putc(c, fp) INTUSE(_IO_putc) (c, fp)
 # endif
 
 #else /* not _LIBC */

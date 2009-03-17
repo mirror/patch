@@ -1,3 +1,126 @@
+2003-05-20  Paul Eggert  <eggert@twinsun.com>
+
+	* NEWS, configure.ac (AC_INIT): Version 2.5.9 released.
+
+	* Makefile.in (HDRS): Add gettext.h.
+
+	Use bool, not int, for booleans.
+
+	* pch.c (pch_says_nonexistent): Returns int, not bool.
+
+	* configure.ac: Add AM_STDBOOL_H.
+
+	* Makefile.in (MISC): Add stdbool.h.in.
+	(stdbool.h): New rule.
+	(ACINCLUDE_INPUTS): Add stdbool.m4.
+	(mostlyclean): Remove stdbool.h.
+	(COMMON): New macro; use it instead of common.h for dependencies.
+
+	* common.h: Include <stdbool.h>.
+	Remove TRUE, FALSE, bool.  All uses changed to standard names.
+
+	* common.h (reverse, set_time, set_utc):
+	Use bool, not int, for booleans.
+	* pch.c (p_strip_trailing_cr, p_pass_comments_through,
+	prefix_components, pget_line, re_patch,
+	there_is_another_patch, intuit_diff_type, scan_linenum,
+	another_hunk, pget_line, pch_timestamp): Likewise.
+	* inp.h (ifetch): Likewise.
+	* util.c (move_file, version_controller, version_get, ok_to_reverse,
+	set_signals): Likewise.
+	* inp.c (report_revision, get_input_file, plan_a, plan_b, ifetch):
+	Likewise.
+	* util.h (ok_to_reverse, version_controller, version_get,
+	move_file, set_signals): Likewise.
+	* pch.h (another_hunk, pch_says_nonexistent, pch_timestamp):
+	Likewise.
+	* patch.c (struct outstate, numeric_string, make_backups,
+	backup_if_mismatch, remove_empty_files,
+	reverse_flag_specified, main, reinitialize_almost_everything,
+	get_some_switches, apply_hunk, init_output, copy_till):
+	Likewise.
+
+2003-05-18  Paul Eggert  <eggert@twinsun.com>
+
+	* pch.c (p_pass_comments_through): New var.
+	(pget_line): Accept new arg for pass_comments_through.
+	All callers changed.
+	(there_is_another_patch): Do not suggest -p for ed diffs.
+	(intuit_diff_type): Check ed command for correct syntax.
+	Do not set p_strip_trailing_cr merely because a -p line contains a CR.
+	(get_ed_command_letter): New function.
+	(do_ed_script): Use it.  Do not treat '#' data lines as comments in ed
+	scripts.
+
+	* util.c (move_file):
+	Don't assume that when 'rename(A,B)' succeeds then A no
+	longer exists.  This is not true of POSIX 1003.1-2001 rename when A
+	and B are links to the same file.
+	(fetchname): Fix test for file names with internal spaces.
+
+	* version.c: Don't include patchlevel.h.
+	(version): Use PACKAGE_NAME and PACKAGE_VERSION instead of obsolete
+	PROGRAM_NAME and PATCH_VERSION.
+	(copyright_string): Bump to 2003.
+
+	* common.h (FILESYSTEM_PREFIX_LEN, ISSLASH):
+	Remove; now done by 'configure'.
+	(PROGRAM_NAME): Remove; now done by 'configure' as PACKAGE_NAME.
+
+	* patch.c: Do not include <exitfail.h>.
+	(main): Set xalloc_exit_failure, not exit_failure.
+	Add "&& !skip_rest_of_patch" when deciding to continue ed scripts.
+	(option_help): Use PACKAGE_BUGREPORT rather than hardcoding.
+
+	* configure.ac (AC_PREREQ): Bump to 2.57.
+	(AC_GNU_SOURCE): Add, early on.
+	(gl_BACKUPFILE, gl_DIRNAME, gl_ERROR, gl_FUNC_MEMCHR, gl_FUNC_RMDIR,
+	gl_GETOPT, gl_PREREQ_XMALLOC, gl_QUOTE, gl_QUOTEARG): Add.
+	(jm_PREREQ_ADDEXT): Add, with definition.
+	(jm_PREREQ_DIRNAME, jm_PREREQ_ERROR, jm_PREREQ_MEMCHR,
+	jm_PREREQ_QUOTEARG): Remove.
+	(AC_REPLACE_FUNCS): Remove memchr, rename, rmdir).
+	(jm_FUNC_GLIBC_UNLOCKED_IO, jm_AC_DOS): Add.
+	(jm_CHECK_TYPE_STRUCT_DIRENT_D_INO): Do not call directly.
+	(AC_OUTPUT): Use new style, with AC_CONFIG_FILES.
+
+	Update to current CVS gnulib.
+
+	* exitfail.c, exitfail.h, patchlevel.h, rename.c, m4/c-bs-a.m4,
+	m4/jm-glibc-io.m4, m4/prereq.m4: Remove.
+	* m4/backupfile.m4, m4/dirname.m4, m4/dos.m4, m4/getopt.m4,
+	m4/memchr.m4, m4/onceonly.m4, m4/quote.m4, m4/quotearg.m4,
+	m4/rmdir.m4, m4/unlocked-io.m4, m4/xalloc.m4: New files.
+	* Makefile.in (LIBSRCS): Move error.c here from SRCS.
+	Remove rename.c.
+	(OBJS): Remove error.$(OBJEXT).
+	(HDRS): Remove exitfail.h, patchlevel.h.
+	(ACINCLUDE_INPUTS): Remove c-bs-a.m4, jm-glibc-io.m4, prereq.m4.
+	Add backupfile.m4, dirname.m4, dos.m4, getopt.m4, memchr.m4,
+	onceonly.m4, quote.m4, quotearg.m4, rmdir.m4, unlocked-io.m4,
+	xalloc.m4.
+	(patchlevel.h): Remove.  All uses removed.
+	(argmatch.$(OBJEXT), error.$(OBJEXT), quotesys.$(OBJEXT)),
+	xmalloc.$(OBJEXT)): Depend on gettext.h.
+	(dirname.$(OBJEXT), quote.$(OBJEXT), strncasecmp.$(OBJEXT)): New rules.
+	(patch.$(OBJEXT), xmalloc.$(OBJEXT)): Remove exitfail.h.
+	(rename.$(OBJEXT)): Remove.
+	(version.$(OBJEXT)): Remove util.h.
+	(xmalloc.$(OBJEXT)): Add error.h.
+
+2002-11-23  Paul Eggert  <eggert@twinsun.com>
+
+	* patch.c (main): Don't check for zero-sized file after 'ed'
+	when skipping patch.  From Michael Fedrowitz.
+
+2002-06-03  Paul Eggert  <eggert@twinsun.com>
+
+	* configure.ac (AC_OUTPUT): Use new form, with AC_CONFIG_FILES,
+	instead of obsolescent form.  Patch from Art Haas.
+
+	* pch.c (intuit_diff_type): Do not warn about trailing white space
+	after Prereq: word.  Bug reported by Mike Castle.
+
 2002-06-02  Paul Eggert  <eggert@twinsun.com>
 
 	* NEWS, configure.ac (AC_INIT): Version 2.5.8 released.
