@@ -1,6 +1,6 @@
 /* Parse a string, yielding a struct partime that describes it.  */
 
-/* Copyright 1993, 1994, 1995, 1997 Paul Eggert
+/* Copyright (C) 1993, 1994, 1995, 1997, 2002 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
    This file is part of RCS.
@@ -75,7 +75,7 @@
 #include <partime.h>
 
 char const partime_id[] =
-  "$Id: partime.c,v 5.18 1998/03/15 15:48:53 eggert Exp $";
+  "$Id: partime.c,v 1.2 2002/02/18 07:42:58 eggert Exp $";
 
 
 /* Lookup tables for names of months, weekdays, time zones.  */
@@ -791,7 +791,7 @@ parse_pattern_letter (s, c, t)
 	  return 0;
 	if (negative)
 	  n = -n;
-	while (!ISALNUM ((unsigned char) *s))
+	while (! ISALNUM ((unsigned char) *s) && *s)
 	  s++;
 	i = lookup (s, relative_units);
 	if (!TM_DEFINED (i))
