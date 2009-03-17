@@ -17,7 +17,7 @@
 # 02111-1307, USA.
 
 AC_PREREQ(2.53)
-AC_INIT(patch, 2.5.7, bug-patch@gnu.org)
+AC_INIT(patch, 2.5.8, bug-patch@gnu.org)
 AC_CONFIG_SRCDIR(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM

@@ -1,1 +1,1 @@
-#define PATCH_VERSION "2.5.7"
+#define PATCH_VERSION "2.5.8"
