@@ -3,8 +3,8 @@
 /* $Id: inp.c,v 1.26 2003/09/11 18:36:17 eggert Exp $ */
 
 /* Copyright (C) 1986, 1988 Larry Wall
-   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003 Free
-   Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN extern
 #include <common.h>
@@ -380,7 +380,7 @@ plan_b (char const *filename)
 
   if (revision)
     report_revision (found_revision);
-  Fseek (ifp, (off_t) 0, SEEK_SET);		/* rewind file */
+  Fseek (ifp, 0, SEEK_SET);		/* rewind file */
   for (tibufsize = TIBUFSIZE_MINIMUM;  tibufsize < maxlen;  tibufsize <<= 1)
     continue;
   lines_per_buf = tibufsize / maxlen;
@@ -452,8 +452,8 @@ ifetch (LINENUM line, bool whichbuf, size_t *psize)
 	    whichbuf = true;
 	else {
 	    tiline[whichbuf] = baseline;
-	    if (lseek (tifd, (off_t) (baseline/lines_per_buf * tibufsize),
-		       SEEK_SET) == -1
+	    if ((lseek (tifd, baseline/lines_per_buf * tibufsize, SEEK_SET)
+		 == -1)
 		|| read (tifd, tibuf[whichbuf], tibufsize) < 0)
 	      read_fatal ();
 	}

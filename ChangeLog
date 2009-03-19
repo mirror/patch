@@ -1,3 +1,25 @@
+2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
+
+	Imported from Paul Eggert's working directory:
+	* exitfail.c, exitfail, m4/exitfail.m4: Import from gnulib.
+	* hash.c, hash.h, m4/hash.m4: Likewise.
+	* m4/extensions.m4: Likewise.
+	* timespec.h, m4/timespec.m4: Likewise.
+	* m4/st_mtim.m4: New file.
+	* configure.ac: Update.
+	* common.h: Include <limits.h> unconditionally.  Include <stdint.h>
+	if we have it.
+	* inp.c (plan_b, ifetch): Remove unnecessary casts.
+	* maketime.c, partime.c: Include <limits.h>, <stdlib.h>, <time.h>
+	unconditionally.  Convert from K&R to ANSI C.
+	* maketime.h, partime.h: Convert from K&R to ANSI C.
+	* pch.c (p_indent, pget_line, intuit_diff_type): Use size_t for
+	indents.
+	* util.c: Assume we have vfprintf().
+	(NUM_SIGS): Cast to int in.
+	(fatal_exit_handler): Replace obsolescent AC_RETSIGTYPE.
+	* Various files: Update copyright notices.
+
 2004-07-21  Paul Eggert  <eggert@twinsun.com>
 
 	* Makefile.in (SRCS): Move hash.c here from LIBSRCS.

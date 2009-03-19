@@ -1,6 +1,6 @@
 /* Yield time_t from struct partime yielded by partime.  */
 
-/* Copyright 1993, 1994, 1995 Paul Eggert
+/* Copyright (C) 1993, 1994, 1995, 2003, 2006 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
    This file is part of RCS.
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with RCS; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
    Report problems and direct all questions to:
 
@@ -26,14 +26,10 @@
 
  */
 
-#if defined __STDC__ || has_prototypes
-# define __MAKETIME_P(x) x
-#else
-# define __MAKETIME_P(x) ()
-#endif
+#include <time.h>
 
-struct tm *time2tm __MAKETIME_P ((time_t, int));
-time_t difftm __MAKETIME_P ((struct tm const *, struct tm const *));
-time_t str2time __MAKETIME_P ((char const **, time_t, long));
-time_t tm2time __MAKETIME_P ((struct tm *, int));
-void adjzone __MAKETIME_P ((struct tm *, long));
+struct tm *time2tm (time_t, int);
+time_t difftm (struct tm const *, struct tm const *);
+time_t str2time (char const **, time_t, long);
+time_t tm2time (struct tm *, int);
+void adjzone (struct tm *, long);

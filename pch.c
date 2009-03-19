@@ -5,7 +5,7 @@
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003 Free Software Foundation, Inc.
+   2002, 2003, 2006 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN extern
 #include <common.h>
@@ -58,7 +58,7 @@ static char **p_line;			/* the text of the hunk */
 static size_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
 static LINENUM hunkmax = INITHUNKMAX;	/* size of above arrays */
-static int p_indent;			/* indent to patch */
+static size_t p_indent;			/* indent to patch */
 static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
 static bool p_pass_comments_through;	/* true if not ignoring # lines */
 static file_offset p_base;		/* where to intuit this time */
@@ -75,7 +75,7 @@ static char *scan_linenum (char *, LINENUM *);
 static enum diff intuit_diff_type (void);
 static enum nametype best_name (char * const *, int const *);
 static int prefix_components (char *, bool);
-static size_t pget_line (int, int, bool, bool);
+static size_t pget_line (size_t, int, bool, bool);
 static size_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
@@ -235,7 +235,8 @@ there_is_another_patch (void)
     if (verbosity != SILENT)
       {
 	if (p_indent)
-	  say ("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
+	  say ("(Patch is indented %lu space%s.)\n",
+	       (unsigned long int) p_indent, p_indent==1?"":"s");
 	if (p_strip_trailing_cr)
 	  say ("(Stripping trailing CRs from patch.)\n");
 	if (! inname)
@@ -320,7 +321,7 @@ intuit_diff_type (void)
 	register file_offset previous_line = this_line;
 	register bool last_line_was_command = this_is_a_command;
 	register bool stars_last_line = stars_this_line;
-	register int indent = 0;
+	register size_t indent = 0;
 	char ed_command_letter;
 	bool strip_trailing_cr;
 	size_t chars_read;
@@ -1554,12 +1555,12 @@ get_line (void)
    Return -1 if we ran out of memory.  */
 
 static size_t
-pget_line (int indent, int rfc934_nesting, bool strip_trailing_cr,
+pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	   bool pass_comments_through)
 {
   register FILE *fp = pfp;
   register int c;
-  register int i;
+  register size_t i;
   register char *b;
   register size_t s;
 
