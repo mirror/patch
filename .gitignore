@@ -1,0 +1,14 @@
+*.o
+/Makefile
+/aclocal.m4
+/autom4te.cache/
+/config.h
+/config.hin
+/config.hin~
+/config.log
+/config.status
+/configure
+/patch
+/.pc/
+/VERSION
+/patch-*.tar.gz
