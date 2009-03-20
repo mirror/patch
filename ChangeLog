@@ -1,5 +1,15 @@
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
+	* Makefile.in (DISTFILES): Add the files from DISTFILES_M4,
+	DISTFILES_PC, DISTFILES_PC_DJGPP.
+	(DISTFILES_M4, DISTFILES_PC, DISTFILES_PC_DJGPP): Remove.
+	(distclean): Also remove config.hin~ and autom4te.cache/.
+	(maintainer-clean): Also remove aclocal.m4, config.hin, configure.
+	(dist): Make work for DISTFILES in subdirectories.  Normalize and
+	sort DISTFILES.
+
+2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
+
 	Imported from Paul Eggert's working directory:
 	* exitfail.c, exitfail, m4/exitfail.m4: Import from gnulib.
 	* hash.c, hash.h, m4/hash.m4: Likewise.

@@ -89,11 +89,9 @@ MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
 	aclocal.m4 \
 	config.hin configure configure.ac \
 	install-sh mkinstalldirs patch.man stdbool_.h timespec.h
-DISTFILES = $(MISC) $(SRCS) $(HDRS)
-DISTFILES_M4 = $(ACINCLUDE_INPUTS)
-DISTFILES_PC = pc/chdirsaf.c
-DISTFILES_PC_DJGPP = pc/djgpp/README pc/djgpp/config.sed \
-	pc/djgpp/configure.bat pc/djgpp/configure.sed
+DISTFILES = $(MISC) $(SRCS) $(HDRS) $(ACINCLUDE_INPUTS) \
+	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
+	pc/djgpp/configure.sed pc/djgpp/README
 
 patch_name = `echo patch | sed '$(transform)'`
 
@@ -183,25 +181,27 @@ clean:: mostlyclean
 	rm -f patch$(EXEEXT)
 
 distclean:: clean
-	rm -f Makefile config.cache config.log config.status config.h
+	rm -f Makefile config.cache config.hin~ config.log config.status \
+	      config.h
+	rm -rf autom4te.cache/
 
 maintainer-clean::
 	@echo "This command is intended for maintainers to use;"
 	@echo "rebuilding the deleted files requires special tools."
 	$(MAKE) distclean
-	rm -f TAGS
+	rm -f TAGS aclocal.m4 config.hin configure
 
 PV = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
-dist:: $(DISTFILES) $(DISTFILES_M4) $(DISTFILES_PC) $(DISTFILES_PC_DJGPP)
-	rm -rf $(PV)
-	mkdir $(PV) $(PV)/m4 $(PV)/pc $(PV)/pc/djgpp
-	cp -p $(DISTFILES) $(PV)
-	cp -p $(DISTFILES_M4) $(PV)/m4
-	cp -p $(DISTFILES_PC) $(PV)/pc
-	cp -p $(DISTFILES_PC_DJGPP) $(PV)/pc/djgpp
-	tar -chf - $(PV) | gzip -9 >$(PV).tar.gz
-	rm -rf $(PV)
+dist:: $(DISTFILES)
+	@echo Creating $(PV).tar.gz
+	@rm -rf $(PV)
+	@ln -s . $(PV)
+	@tar -cf - `printf "%s\n" $(DISTFILES) \
+		    | sed -e 's,^$(srcdir)/,,' \
+		    | LC_ALL=C sort` \
+	  | gzip -9 > $(PV).tar.gz
+	@rm -rf $(PV)
 
 $(OBJS): config.h
 COMMON = common.h $(STDBOOL_H)
