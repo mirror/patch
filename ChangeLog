@@ -18,6 +18,9 @@
 	* configure.ac: Compute PACKAGE_VERSION from repository.
 	* update-version.sh: New file.
 
+	* README-alpha: New file.
+	* Makefile.in (dist): Add README-alpha when appropriate.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:
