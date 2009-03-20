@@ -8,6 +8,16 @@
 	(dist): Make work for DISTFILES in subdirectories.  Normalize and
 	sort DISTFILES.
 
+	* Makefile.in (MISC): Add VERSION.
+	(FORCE): New target.
+	(VERSION): Recompute automatically from repository.
+	(configure): Depend on VERSION.  Regenerate with --force: autoconf
+	does not recognize the dependency between VERSION and ocnfigure.
+	(config.hin): Regenerate with --force.
+	(maintainer-clean): Also remove VERSION.
+	* configure.ac: Compute PACKAGE_VERSION from repository.
+	* update-version.sh: New file.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:

@@ -19,7 +19,12 @@
 # 02110-1301, USA.
 
 AC_PREREQ(2.57)
-AC_INIT(patch, 2.5.9, bug-patch@gnu.org)
+define(AC_PACKAGE_VERSION, m4_normalize(esyscmd(
+[
+    . update-version.sh VERSION
+    cat VERSION
+])))
+AC_INIT(patch, AC_PACKAGE_VERSION, bug-patch@gnu.org)
 AC_CONFIG_SRCDIR(patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM

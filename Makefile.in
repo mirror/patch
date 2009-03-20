@@ -85,10 +85,9 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 	inp.h maketime.h partime.h pch.h \
 	quote.h quotearg.h quotesys.h \
 	unlocked-io.h util.h version.h xalloc.h
-MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README \
-	aclocal.m4 \
-	config.hin configure configure.ac \
-	install-sh mkinstalldirs patch.man stdbool_.h timespec.h
+MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
+	aclocal.m4 config.hin configure configure.ac install-sh \
+	mkinstalldirs patch.man stdbool_.h timespec.h
 DISTFILES = $(MISC) $(SRCS) $(HDRS) $(ACINCLUDE_INPUTS) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
 	pc/djgpp/configure.sed pc/djgpp/README
@@ -129,12 +128,15 @@ uninstall::
 
 Makefile: Makefile.in $(CONFIG_STATUS)
 	$(SHELL) $(CONFIG_STATUS)
+FORCE:
+VERSION: FORCE
+	@cd $(srcdir) && $(SHELL) update-version.sh VERSION
 config.status: configure
 	$(SHELL) $(CONFIG_STATUS) --recheck
-configure: configure.ac $(srcdir)/aclocal.m4
-	cd $(srcdir) && autoconf
+configure: configure.ac $(srcdir)/aclocal.m4 $(srcdir)/VERSION
+	cd $(srcdir) && autoconf --force
 config.hin: configure.ac $(srcdir)/aclocal.m4
-	cd $(srcdir) && rm -f config.hin && autoheader
+	cd $(srcdir) && autoheader --force
 stdbool.h: stdbool_.h
 	sed -e 's/@''HAVE__BOOL''@/$(HAVE__BOOL)/g' < $(srcdir)/stdbool_.h > $@-t
 	mv $@-t $@
@@ -189,7 +191,7 @@ maintainer-clean::
 	@echo "This command is intended for maintainers to use;"
 	@echo "rebuilding the deleted files requires special tools."
 	$(MAKE) distclean
-	rm -f TAGS aclocal.m4 config.hin configure
+	rm -f TAGS VERSION aclocal.m4 config.hin configure
 
 PV = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
