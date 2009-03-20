@@ -33,7 +33,7 @@ int foo()
   }
 EOF
 
-diff -p -u a b > ab.diff
+diff -p -c a b > ab.diff
 printf "" > c
 check 'patch c < ab.diff || cat c.rej' <<EOF
 patching file c
@@ -44,12 +44,12 @@ Hunk #1 FAILED at 2.
     {
       /* waste a line */
   
--     return 1;
+!     return 1;
     }
 --- 2,6 ----
     {
       /* waste a line */
   
-+     return 2;
+!     return 2;
     }
 EOF

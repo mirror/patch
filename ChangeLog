@@ -1,3 +1,15 @@
+2009-03-20  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.c: New option --reject-format=FORMAT.
+	(abort_hunk_context): Rename from abort_hunk().
+	(abort_hunk_unified, abort_hunk, mangled_patch,
+	print_unidiff_range): New functions.
+	* patch.man: Document this.
+	* pch.c, pch.h (pch_normalize): New function.
+	* tests/reject-format: New test case.
+	* Makefile.in (TESTS): Add test case.
+	* tests/preserve-c-function-names: Update.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (DISTFILES): Add the files from DISTFILES_M4,

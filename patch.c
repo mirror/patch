@@ -68,7 +68,6 @@ static bool similar (char const *, size_t, char const *, size_t);
 static bool spew_output (struct outstate *, struct stat *);
 static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
-static void abort_hunk (void);
 static void cleanup (void);
 static void get_some_switches (void);
 static void init_output (char const *, int, struct outstate *);
@@ -77,6 +76,11 @@ static void reinitialize_almost_everything (void);
 static void remove_if_needed (char const *, int volatile *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
+static void abort_hunk (void);
+static void abort_hunk_context (void);
+static void abort_hunk_unified (void);
+
+static enum diff reject_format = NO_DIFF;  /* automatic */
 static bool make_backups;
 static bool backup_if_mismatch;
 static char const *version_control;
@@ -527,6 +531,7 @@ static struct option const longopts[] =
   {"no-backup-if-mismatch", no_argument, NULL, CHAR_MAX + 6},
   {"posix", no_argument, NULL, CHAR_MAX + 7},
   {"quoting-style", required_argument, NULL, CHAR_MAX + 8},
+  {"reject-format", required_argument, NULL, CHAR_MAX + 9},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -587,6 +592,7 @@ static char const *const option_help[] =
 "  --posix  Conform to the POSIX standard.",
 "",
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
+"  --reject-format=FORMAT  Create 'context' or 'unified' rejects.",
 #if HAVE_SETMODE_DOS
 "  --binary  Read and write data in binary mode.",
 #else
@@ -784,6 +790,14 @@ get_some_switches (void)
 				     (enum quoting_style) i);
 		}
 		break;
+	    case CHAR_MAX + 9:
+		if (strcmp (optarg, "context") == 0)
+		  reject_format = NEW_CONTEXT_DIFF;
+		else if (strcmp (optarg, "unified") == 0)
+		  reject_format = UNI_DIFF;
+		else
+		  usage (stderr, 2);
+		break;
 	    default:
 		usage (stderr, 2);
 	}
@@ -932,10 +946,99 @@ locate_hunk (LINENUM fuzz)
     return 0;
 }
 
-/* We did not find the pattern, dump out the hunk so they can handle it. */
+static void
+mangled_patch (LINENUM old, LINENUM new)
+{
+  char numbuf0[LINENUM_LENGTH_BOUND + 1];
+  char numbuf1[LINENUM_LENGTH_BOUND + 1];
+  if (debug & 1)
+    say ("oldchar = '%c', newchar = '%c'\n",
+        pch_char (old), pch_char (new));
+  fatal ("Out-of-sync patch, lines %s,%s -- mangled text or line numbers, "
+        "maybe?",
+        format_linenum (numbuf0, pch_hunk_beg () + old),
+        format_linenum (numbuf1, pch_hunk_beg () + new));
+}
+
+/* Output a line number range in unified format.  */
 
 static void
-abort_hunk (void)
+print_unidiff_range (FILE *fp, LINENUM start, LINENUM count)
+{
+  char numbuf0[LINENUM_LENGTH_BOUND + 1];
+  char numbuf1[LINENUM_LENGTH_BOUND + 1];
+
+  switch (count)
+    {
+    case 0:
+      fprintf (fp, "%s,0", format_linenum (numbuf0, start - 1));
+      break;
+
+    case 1:
+      fprintf (fp, "%s", format_linenum (numbuf0, start));
+      break;
+
+    default:
+      fprintf (fp, "%s,%s",
+              format_linenum (numbuf0, start),
+              format_linenum (numbuf1, count));
+      break;
+    }
+}
+
+/* Produce unified reject files */
+
+static void
+abort_hunk_unified (void)
+{
+  FILE *fp = rejfp;
+  register LINENUM old = 1;
+  register LINENUM lastline = pch_ptrn_lines ();
+  register LINENUM new = lastline + 1;
+
+  /* Add last_offset to guess the same as the previous successful hunk.  */
+  fprintf (fp, "@@ -");
+  print_unidiff_range (fp, pch_first () + last_offset, lastline);
+  fprintf (fp, " +");
+  print_unidiff_range (fp, pch_newfirst () + last_offset, pch_repl_lines ());
+  fprintf (fp, " @@\n");
+
+  while (pch_char (new) == '=' || pch_char (new) == '\n')
+    new++;
+
+  if (diff_type != UNI_DIFF)
+    pch_normalize (UNI_DIFF);
+
+  for (; ; old++, new++)
+    {
+      for (;  pch_char (old) == '-';  old++)
+	{
+	  fputc ('-', fp);
+	  pch_write_line (old, fp);
+	}
+      for (;  pch_char (new) == '+';  new++)
+	{
+	  fputc ('+', fp);
+	  pch_write_line (new, fp);
+	}
+
+      if (old > lastline)
+	  break;
+
+      if (pch_char (new) != pch_char (old))
+	mangled_patch (old, new);
+
+      fputc (' ', fp);
+      pch_write_line (old, fp);
+    }
+  if (pch_char (new) != '^')
+    mangled_patch (old, new);
+}
+
+/* Output the rejected patch in context format.  */
+
+static void
+abort_hunk_context (void)
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end ();
@@ -949,6 +1052,9 @@ abort_hunk (void)
     char const *minuses =
       (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ----" : " -----";
     char const *c_function = pch_c_function();
+
+    if (diff_type == UNI_DIFF)
+      pch_normalize (NEW_CONTEXT_DIFF);
 
     fprintf(rejfp, "***************%s\n", c_function ? c_function : "");
     for (i=0; i<=pat_end; i++) {
@@ -984,11 +1090,23 @@ abort_hunk (void)
 	    pch_write_line (i, rejfp);
 	    break;
 	default:
-	    fatal ("fatal internal error in abort_hunk");
+	    fatal ("fatal internal error in abort_hunk_context");
 	}
 	if (ferror (rejfp))
 	  write_fatal ();
     }
+}
+
+/* Output the rejected hunk.  */
+
+static void
+abort_hunk (void)
+{
+  if (reject_format == UNI_DIFF
+      || (reject_format == NO_DIFF && diff_type == UNI_DIFF))
+    abort_hunk_unified ();
+  else
+    abort_hunk_context ();
 }
 
 /* We found where to apply it (we hope), so do it. */
@@ -1054,16 +1172,8 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	    outstate->zero_output = false;
 	    new++;
 	}
-	else if (pch_char(new) != pch_char(old)) {
-	    char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	    char numbuf1[LINENUM_LENGTH_BOUND + 1];
-	    if (debug & 1)
-	      say ("oldchar = '%c', newchar = '%c'\n",
-		   pch_char (old), pch_char (new));
-	    fatal ("Out-of-sync patch, lines %s,%s -- mangled text or line numbers, maybe?",
-		   format_linenum (numbuf0, pch_hunk_beg() + old),
-		   format_linenum (numbuf1, pch_hunk_beg() + new));
-	}
+	else if (pch_char(new) != pch_char(old))
+	  mangled_patch (old, new);
 	else if (pch_char(new) == '!') {
 	    assert (outstate->after_newline);
 	    if (! copy_till (outstate, where + old - 1))

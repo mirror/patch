@@ -111,8 +111,7 @@ would generate a file name that is too long
 makes the file name too long, then
 .B #
 replaces the file name's last character).
-(The rejected hunk comes out in ordinary context diff form regardless of
-the input patch's form.
+(The rejected hunk comes out in unified or context diff format.
 If the input was a normal diff, many of the contexts are simply null.)
 The line numbers on the hunks in the reject file may be different than
 in the patch file: they reflect the approximate location patch thinks the
@@ -545,6 +544,12 @@ anywhere.
 Luckily, most patches add or change lines rather than delete them, so most
 reversed normal diffs begin with a delete, which fails, triggering
 the heuristic.)
+.TP
+\fB\*=reject\-format=\fP\fIformat\fP
+Produce reject files in the specified \fIformat\fP (either \fBcontext\fP or
+\fBunified\fP).  Without this option, rejected hunks come out in unified diff
+format if the input patch was of that format, otherwise in ordinary context
+diff form.
 .TP
 \fB\-s\fP  or  \fB\*=silent\fP  or  \fB\*=quiet\fP
 Work silently, unless an error occurs.
