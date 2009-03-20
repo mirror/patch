@@ -24,6 +24,11 @@
 	* Makefile.in (M4FILES): Rename from ACINCLUDE_INPUTS.
 	(aclocal.m4): Recompute with aclocal.
 
+	* tests/test-lib.sh: Add library for simple test scripts.
+	* tests/crlf-handling, tests/remember-backup-files: New test cases.
+	* Makefile.in (TESTS): New variable.  Add test cases.
+	(check): Replace the dummy test target with running all TESTS.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:

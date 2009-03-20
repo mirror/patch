@@ -88,7 +88,8 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	aclocal.m4 config.hin configure configure.ac install-sh \
 	mkinstalldirs patch.man stdbool_.h timespec.h
-DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) \
+TESTS = tests/crlf-handling tests/remember-backup-files
+DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) $(TESTS) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
 	pc/djgpp/configure.sed pc/djgpp/README
 
@@ -99,9 +100,12 @@ all:: patch$(EXEEXT)
 info::
 installcheck::
 
-# Not a good check, but it's better than nothing.
-check:: all
-	./patch --help >/dev/null
+check:: all $(TESTS)
+
+.PHONY: $(TESTS)
+$(TESTS): patch$(EXEEXT)
+	@echo "[$@]"
+	@srcdir=$(srcdir)/tests $(SHELL) $@
 
 COMPILE = $(CC) -c $(CPPFLAGS) $(DEFS) -Ded_PROGRAM=\"$(ed_PROGRAM)\" \
 	-I. -I$(srcdir) $(CFLAGS)
