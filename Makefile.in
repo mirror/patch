@@ -88,7 +88,7 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	aclocal.m4 config.hin configure configure.ac install-sh \
 	mkinstalldirs patch.man stdbool_.h timespec.h
-DISTFILES = $(MISC) $(SRCS) $(HDRS) $(ACINCLUDE_INPUTS) \
+DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
 	pc/djgpp/configure.sed pc/djgpp/README
 
@@ -142,7 +142,7 @@ stdbool.h: stdbool_.h
 	mv $@-t $@
 
 M4DIR = $(srcdir)/m4
-ACINCLUDE_INPUTS = \
+M4FILES = \
   $(M4DIR)/backupfile.m4 \
   $(M4DIR)/d-ino.m4 \
   $(M4DIR)/dirname.m4 \
@@ -170,8 +170,8 @@ ACINCLUDE_INPUTS = \
   $(M4DIR)/utimbuf.m4 \
   $(M4DIR)/xalloc.m4
 
-$(srcdir)/aclocal.m4: $(ACINCLUDE_INPUTS)
-	cat $(ACINCLUDE_INPUTS) >$(srcdir)/aclocal.m4
+$(srcdir)/aclocal.m4: $(M4FILES)
+	aclocal -I m4
 
 TAGS: $(HDRS) $(SRCS)
 	etags $(HDRS) $(SRCS)

@@ -21,6 +21,9 @@
 	* README-alpha: New file.
 	* Makefile.in (dist): Add README-alpha when appropriate.
 
+	* Makefile.in (M4FILES): Rename from ACINCLUDE_INPUTS.
+	(aclocal.m4): Recompute with aclocal.
+
 2009-03-19  Andreas Gruenbacher  <agruen@suse.de>
 
 	Imported from Paul Eggert's working directory:
