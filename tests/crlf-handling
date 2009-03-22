@@ -80,3 +80,18 @@ EOF
 check 'cat -A c' <<EOF
 1b^M$
 EOF
+
+# ==============================================================
+
+echo 1 > a
+echo 2 > b
+diff -u a b | sed -e 's,@@$,@@ context\r,' > ab.diff
+
+echo 1 > c
+check 'patch c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+2$
+EOF
