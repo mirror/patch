@@ -70,7 +70,7 @@ static LINENUM p_bfake = -1;		/* beg of faked up lines */
 static char *p_c_function;		/* the C function a hunk is in */
 
 static char *scan_linenum (char *, LINENUM *);
-static enum diff intuit_diff_type (void);
+static enum diff intuit_diff_type (bool);
 static enum nametype best_name (char * const *, int const *);
 static int prefix_components (char *, bool);
 static size_t pget_line (size_t, int, bool, bool);
@@ -196,7 +196,7 @@ grow_hunkmax (void)
 /* True if the remainder of the patch file contains a diff of some sort. */
 
 bool
-there_is_another_patch (void)
+there_is_another_patch (bool need_filename)
 {
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
@@ -205,7 +205,7 @@ there_is_another_patch (void)
     }
     if (verbosity == VERBOSE)
 	say ("Hmm...");
-    diff_type = intuit_diff_type();
+    diff_type = intuit_diff_type (need_filename);
     if (diff_type == NO_DIFF) {
 	if (verbosity == VERBOSE)
 	  say (p_base
@@ -291,7 +291,7 @@ there_is_another_patch (void)
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff
-intuit_diff_type (void)
+intuit_diff_type (bool need_filename)
 {
     register file_offset this_line = 0;
     register file_offset first_command_line = -1;
@@ -359,7 +359,8 @@ intuit_diff_type (void)
 	  continue;
 	this_is_a_command = (ISDIGIT (*s) &&
 	  (*t == 'd' || *t == 'c' || *t == 'a') );
-	if (first_command_line < 0
+	if (! need_filename
+	    && first_command_line < 0
 	    && ((ed_command_letter = get_ed_command_letter (s))
 		|| this_is_a_command)) {
 	    first_command_line = this_line;
@@ -369,16 +370,21 @@ intuit_diff_type (void)
 	    p_strip_trailing_cr = strip_trailing_cr;
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
+	  {
 	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    need_filename = false;
+	  }
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
 	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    need_filename = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
 	    p_name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
+	    need_filename = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Prereq:", 7)) {
@@ -415,6 +421,7 @@ intuit_diff_type (void)
 	      {
 		time_t timestamp = (time_t) -1;
 		p_name[NEW] = fetchname (t+4, strippath, &timestamp);
+		need_filename = false;
 		if (timestamp != (time_t) -1)
 		  {
 		    p_timestamp[NEW] = timestamp;
@@ -423,6 +430,8 @@ intuit_diff_type (void)
 		p_strip_trailing_cr = strip_trailing_cr;
 	      }
 	  }
+	if (need_filename)
+	  continue;
 	if ((diff_type == NO_DIFF || diff_type == ED_DIFF) &&
 	  first_command_line >= 0 &&
 	  strEQ(s, ".\n") ) {

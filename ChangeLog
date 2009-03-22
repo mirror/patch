@@ -19,6 +19,14 @@
 	* patch.c (apply_hunk): Use fputs() in simple fprintf()
 	situations.
 
+	* patch.c (main): Require filename in patch if none specified on
+	the command line.
+	* pch.c (intuit_diff_type): While we still don't have a filename,
+	don't look for hunks.
+	(there_is_another_patch): Pass need_filename through.
+	* tests/need-filename: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (main): With -r, instead of moving the global reject

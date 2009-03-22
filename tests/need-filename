@@ -1,0 +1,125 @@
+#! /bin/bash
+
+# Copyright (C) 2009 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+# Don't recognize hunks before a filename has been specified/seen
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+cat > n.diff <<EOF
+0a1
+> one
+EOF
+
+check 'patch < n.diff || echo "Status: $?"' <<EOF
+$PATCH: **** Only garbage was found in the patch input.
+Status: 2
+EOF
+
+echo -n '' > f
+check 'patch f < n.diff' <<EOF
+patching file f
+EOF
+
+# ==============================================================
+
+cat > e.diff <<EOF
+0a
+one
+.
+EOF
+
+check 'patch < e.diff || echo "Status: $?"' <<EOF
+$PATCH: **** Only garbage was found in the patch input.
+Status: 2
+EOF
+
+echo -n '' > f
+check 'patch f < e.diff' <<EOF
+EOF
+
+check 'cat f' <<EOF
+one
+EOF
+
+# ==============================================================
+
+cat > h+c.diff <<EOF
+*** /dev/null
+--- f
+***************
+*** 0 ****
+--- 1 ----
++ one
+EOF
+
+rm -f f
+check 'patch < h+c.diff' <<EOF
+patching file f
+EOF
+
+check 'cat f' <<EOF
+one
+EOF
+
+sed -e '1,2d' h+c.diff > c.diff
+
+check 'patch < c.diff || echo "Status: $?"' <<EOF
+$PATCH: **** Only garbage was found in the patch input.
+Status: 2
+EOF
+
+rm -f f
+check 'patch f < c.diff' <<EOF
+missing header for context diff at line 1 of patch
+patching file f
+EOF
+
+check 'cat f' <<EOF
+one
+EOF
+
+# ==============================================================
+
+cat > h+u.diff <<EOF
+--- /dev/null
++++ f
+@@ -0,0 +1 @@
++one
+EOF
+
+rm -f f
+check 'patch < h+u.diff' <<EOF
+patching file f
+EOF
+
+check 'cat f' <<EOF
+one
+EOF
+
+sed -e '1,2d' h+u.diff > u.diff
+
+check 'patch < u.diff || echo "Status: $?"' <<EOF
+$PATCH: **** Only garbage was found in the patch input.
+Status: 2
+EOF
+
+rm -f f
+check 'patch f < u.diff' <<EOF
+missing header for unified diff at line 1 of patch
+patching file f
+EOF
+
+check 'cat f' <<EOF
+one
+EOF

@@ -33,7 +33,7 @@ LINENUM pch_repl_lines (void);
 LINENUM pch_suffix_context (void);
 bool pch_swap (void);
 bool pch_write_line (LINENUM, FILE *);
-bool there_is_another_patch (void);
+bool there_is_another_patch (bool);
 char *pfetch (LINENUM);
 char pch_char (LINENUM);
 int another_hunk (enum diff, bool);

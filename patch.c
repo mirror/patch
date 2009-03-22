@@ -180,7 +180,7 @@ main (int argc, char **argv)
 
     for (
 	open_patch_file (patchname);
-	there_is_another_patch();
+	there_is_another_patch (! inname);
 	reinitialize_almost_everything()
     ) {					/* for each patch in patch file */
       int hunk = 0;
