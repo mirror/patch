@@ -1,0 +1,46 @@
+#! /bin/bash
+
+# Copyright (C) 2009 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+# Be more strict in recognizing normal format commands
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+cat > ab.diff <<EOF
+1c1
+< 1
+---
+> 1b
+EOF
+
+echo 1 > a
+check 'patch a < ab.diff' <<EOF
+patching file a
+EOF
+
+check 'cat a' <<EOF
+1b
+EOF
+
+
+cat > ab.diff <<EOF
+1c1 garbage
+< 1
+---
+> 1b
+EOF
+
+echo 1 > a
+check 'patch a < ab.diff' <<EOF
+$PATCH: **** Only garbage was found in the patch input.
+EOF

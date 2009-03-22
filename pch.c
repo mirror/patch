@@ -355,10 +355,21 @@ intuit_diff_type (bool need_filename)
 	    else
 		indent++;
 	}
-	for (t = s;  ISDIGIT (*t) || *t == ',';  t++)
-	  continue;
-	this_is_a_command = (ISDIGIT (*s) &&
-	  (*t == 'd' || *t == 'c' || *t == 'a') );
+	if (ISDIGIT (*s))
+	  {
+	    for (t = s + 1; ISDIGIT (*t) || *t == ',';  t++)
+	      continue;
+	    if (*t == 'd' || *t == 'c' || *t == 'a')
+	      {
+		for (t++;  ISDIGIT (*t) || *t == ',';  t++)
+		  continue;
+		for (; *t == ' ' || *t == '\t'; t++)
+		  continue;
+		if (*t == '\r')
+		  t++;
+		this_is_a_command = (*t == '\n');
+	      }
+	  }
 	if (! need_filename
 	    && first_command_line < 0
 	    && ((ed_command_letter = get_ed_command_letter (s))
