@@ -46,8 +46,7 @@ STDBOOL_H = @STDBOOL_H@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-
-bindir = $(exec_prefix)/bin
+bindir = @bindir@
 
 # Where to put the manual pages.
 mandir = @mandir@
@@ -87,15 +86,17 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 	unlocked-io.h util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	aclocal.m4 config.hin configure configure.ac install-sh \
-	mkinstalldirs patch.man stdbool_.h timespec.h
+	mkinstalldirs patch.man stdbool_.h tests/test-lib.sh timespec.h \
+	update-version.sh
 TESTS = tests/corrupt-reject-files tests/crlf-handling \
 	tests/global-reject-files tests/need-filename \
 	tests/no-newline-triggers-assert tests/preserve-c-function-names \
 	tests/preserve-mode-and-timestamp tests/reject-format \
 	tests/remember-backup-files tests/remember-reject-files
-DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) $(TESTS) \
+DISTFILES = $(MISC) $(SRCS) $(HDRS) $(M4FILES) \
 	pc/chdirsaf.c pc/djgpp/config.sed pc/djgpp/configure.bat \
 	pc/djgpp/configure.sed pc/djgpp/README
+MORE_DISTFILES = $(TESTS)
 
 patch_name = `echo patch | sed '$(transform)'`
 
@@ -104,10 +105,10 @@ all:: patch$(EXEEXT)
 info::
 installcheck::
 
-check:: all $(TESTS)
+check:: $(TESTS)
 
 .PHONY: $(TESTS)
-$(TESTS): patch$(EXEEXT)
+$(TESTS): all
 	@echo "[$@]"
 	@srcdir=$(srcdir)/tests $(SHELL) $@
 
@@ -199,21 +200,23 @@ maintainer-clean::
 	@echo "This command is intended for maintainers to use;"
 	@echo "rebuilding the deleted files requires special tools."
 	$(MAKE) distclean
-	rm -f TAGS VERSION aclocal.m4 config.hin configure
+	rm -f TAGS VERSION aclocal.m4 config.hin configure patch-*.tar.gz
 
 PV = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
 dist:: $(DISTFILES)
-	@echo Creating $(PV).tar.gz
 	@rm -rf $(PV)
 	@ln -s . $(PV)
-	@tar -cf - `( printf "%s\n" $(DISTFILES); \
+	@tar -cf - `( printf "%s\n" $(DISTFILES) $(MORE_DISTFILES); \
 		      grep -q -E -- '-[0-9]+-[0-9a-z]+(-dirty)?$$' VERSION \
 		        && echo README-alpha \
-		    ) | sed -e 's,^$(srcdir)/,,' \
+		    ) | sed -e 's,^$(srcdir)/,,' -e "s,^,$(PV)/," \
 		    | LC_ALL=C sort` \
 	  | gzip -9 > $(PV).tar.gz
 	@rm -rf $(PV)
+	@whereto=$$(if grep -q -E -- '-[0-9]+-[0-9a-z]+(-dirty)?$$' VERSION; \
+		   then echo alpha; else echo ftp; fi); \
+	echo -e "\n# gnupload --to $$whereto.gnu.org:patch $(PV).tar.gz\n"
 
 $(OBJS): config.h
 COMMON = common.h $(STDBOOL_H)

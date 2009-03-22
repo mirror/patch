@@ -1,5 +1,7 @@
 2009-03-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* NEWS: Update for alpha release.
+
 	* patch.c (main): Always initialize the known files table.
 	Move new reject files into place; append to known ones.
 	* util.c (file_already_seen): Export.
@@ -31,6 +33,16 @@
 	like a normal format command.
 	* tests/normal-garbage: New test case.
 	* Makefile.in (TESTS): Add test case.
+
+	* Makefile.in (bindir): Define as @bindir@.
+	(DISTFILES_CLEAN): Move DISTFILES here which must not be remade by
+	the dist target.
+	(MISC): Add missing tests/test-lib.sh and update-version.sh.
+	(check, $(TESTS)): Make each test depend on all so that they can be
+	run individually.
+	(maintainer-clean): Also remove patch-*.tar.gz.
+	(dist): Add PV directory level.  Add reminder to self how to upload.
+	* configure.ac: Silence "missing datarootdir" warning.
 
 2009-03-21  Andreas Gruenbacher  <agruen@suse.de>
 

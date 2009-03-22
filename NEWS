@@ -1,11 +1,33 @@
-Changes in version 2.6:
-
-* If the input patch is in unified format, any .rej output is now
-  in unified format as well.  Formerly it was in context format.
-  This can be overridden with --reject-format=FORMAT.
-* Reject files new have patch headers.
-* Changed lines in reject files in context format will now be indicated
-  with '!' as per the definition of the format instead of '+' and '-'.
+* A regression test suite has been added ("make check").
+* All reject files have file name headers, which allows to use them
+  as regular patches.
+* Unless a filename has been specified on the command line, look only
+  for filenames in the patch until one has been found.  Start looking
+  for hunks only after that.  This prevents patch from tripping over
+  garbage that isn't a patch.
+* Reject more malformed normal format commands and check for trailing
+  garbage.  Recognize ed commands without addresses.
+* When a patch file modifies the same file more than once, and there are
+  rejects in more than one of those patches, the rejects are appended to
+  the same reject file (rather then overwriting themselves).  The -r option
+  works correctly even there are rejects in more than one file.  Use the -
+  argument to discard rejects.
+* Rejected hunks come out in unified diff format if the input patch was of
+  that format, otherwise in ordinary context diff form.  Use the
+  --reject-format option to enforce either "context" or "unified" format.
+  The "diff -p" (--show-c-function) output is preserved.
+  Changed lines in context format reject files are correctly indicated
+  with '!' markers as the format defines.  Added and removed lines are
+  still marked with '+' and '-', respectively.
+* The file permissions of reject files are no longer set to match the files
+  they modify.  Instead, they retain the default permissions.  This is
+  consistent with reject files to which rejects of multiple files may be
+  written (-r option).
+* The --binary option disables the heuristic for stripping CRs from
+  line endings in patches.  This allows to preserve CRs even in mangled
+  patches, or in patches generated without the --binary option on non-POSIX
+  systems.
+* Handle missing timestamps better.
 
 Changes in versions 2.5.8 and 2.5.9: bug fixes only.
 
