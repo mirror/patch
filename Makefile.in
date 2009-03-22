@@ -200,7 +200,8 @@ maintainer-clean::
 	@echo "This command is intended for maintainers to use;"
 	@echo "rebuilding the deleted files requires special tools."
 	$(MAKE) distclean
-	rm -f TAGS VERSION aclocal.m4 config.hin configure patch-*.tar.gz
+	rm -f TAGS VERSION aclocal.m4 config.hin configure \
+	      patch-*.tar.gz patch-*.tar.gz.sig
 
 PV = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 

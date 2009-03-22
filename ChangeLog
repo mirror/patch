@@ -40,7 +40,7 @@
 	(MISC): Add missing tests/test-lib.sh and update-version.sh.
 	(check, $(TESTS)): Make each test depend on all so that they can be
 	run individually.
-	(maintainer-clean): Also remove patch-*.tar.gz.
+	(maintainer-clean): Also remove patch-*.tar.gz and patch-*.tar.gz.sig.
 	(dist): Add PV directory level.  Add reminder to self how to upload.
 	* configure.ac: Silence "missing datarootdir" warning.
 
