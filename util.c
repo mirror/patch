@@ -1,7 +1,5 @@
 /* utility functions for `patch' */
 
-/* $Id: util.c,v 1.37 2003/09/11 18:36:17 eggert Exp $ */
-
 /* Copyright (C) 1986 Larry Wall
 
    Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2006

@@ -49,9 +49,6 @@
 #define ISUPPER(c)	(CTYPE_DOMAIN (c) && isupper (c))
 #define ISDIGIT(c)	((unsigned) (c) - '0' <= 9)
 
-char const partime_id[] =
-  "$Id: partime.c,v 1.2 2002/02/18 07:42:58 eggert Exp eggert $";
-
 
 /* Lookup tables for names of months, weekdays, time zones.  */
 

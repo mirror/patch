@@ -1,7 +1,5 @@
 /* inputting files to be patched */
 
-/* $Id: inp.h,v 1.7 2003/05/20 14:05:22 eggert Exp $ */
-
 /* Copyright (C) 1986, 1988 Larry Wall
    Copyright (C) 1991, 1992, 1993, 1997, 1998, 1999, 2002, 2003
    Free Software Foundation, Inc.

@@ -1,7 +1,5 @@
 /* reading patches */
 
-/* $Id: pch.c,v 1.46 2003/09/11 18:36:17 eggert Exp $ */
-
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
@@ -1934,7 +1932,7 @@ pch_c_function (void)
 
 /* Is the newline-terminated line a valid `ed' command for patch
    input?  If so, return the command character; if not, return 0.
-   This accepts accepts just a subset of the valid commands, but it's
+   This accepts just a subset of the valid commands, but it's
    good enough in practice.  */
 
 static char

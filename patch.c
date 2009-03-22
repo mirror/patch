@@ -1,7 +1,5 @@
 /* patch - a program to apply diffs to original files */
 
-/* $Id: patch.c,v 1.45 2003/09/11 18:36:17 eggert Exp $ */
-
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002,

@@ -1,7 +1,5 @@
 /* reading patches */
 
-/* $Id: pch.h,v 1.11 2003/05/20 13:56:03 eggert Exp $ */
-
 /* Copyright (C) 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,

@@ -42,9 +42,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-char const maket_id[] =
-  "$Id: maketime.c,v 1.1 1999/08/29 11:12:37 eggert Exp eggert $";
-
 /* Suppose A1 + B1 = SUM1, using 2's complement arithmetic ignoring overflow.
    Suppose A, B and SUM have the same respective signs as A1, B1, and SUM1.
    Then this yields nonzero if overflow occurred during the addition.
