@@ -22,7 +22,7 @@
 	situations.
 
 	* patch.c (main): Require filename in patch if none specified on
-	the command line.
+	the command line and posixly_correct is false.
 	* pch.c (intuit_diff_type): While we still don't have a filename,
 	don't look for hunks.
 	(there_is_another_patch): Pass need_filename through.

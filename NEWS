@@ -2,7 +2,8 @@
 * Unless a filename has been specified on the command line, look only
   for filenames in the patch until one has been found.  Start looking
   for hunks only after that.  This prevents patch from tripping over
-  garbage that isn't a patch.
+  garbage that isn't a patch.  When conforming to POSIX, this behavior
+  is turned off and patch will ask for a filename when none is found.
 * Reject more malformed normal format commands and check for trailing
   garbage.  Recognize ed commands without addresses.
 * All reject files have file name headers, which allows to use them
