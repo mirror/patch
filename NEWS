@@ -1,17 +1,20 @@
 * A regression test suite has been added ("make check").
-* All reject files have file name headers, which allows to use them
-  as regular patches.
 * Unless a filename has been specified on the command line, look only
   for filenames in the patch until one has been found.  Start looking
   for hunks only after that.  This prevents patch from tripping over
   garbage that isn't a patch.
 * Reject more malformed normal format commands and check for trailing
   garbage.  Recognize ed commands without addresses.
-* When a patch file modifies the same file more than once, and there are
-  rejects in more than one of those patches, the rejects are appended to
-  the same reject file (rather then overwriting themselves).  The -r option
-  works correctly even there are rejects in more than one file.  Use the -
-  argument to discard rejects.
+* All reject files have file name headers, which allows to use them
+  as regular patches.
+* When a patch file modifies the same file more than once, patch makes
+  sure it backs up the original version of the file, rather than any
+  intermediary versions.
+* In the above situation, if there are rejects in more than one of those
+  patches, the rejects are appended to the same reject file (rather then
+  overwriting themselves).
+* The -r option works correctly even there are rejects in more than one
+  file.  Use the - argument to discard rejects.
 * Rejected hunks come out in unified diff format if the input patch was of
   that format, otherwise in ordinary context diff form.  Use the
   --reject-format option to enforce either "context" or "unified" format.
