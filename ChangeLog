@@ -1,3 +1,10 @@
+2009-03-23  Andreas Gruenbacher  <agruen@suse.de>
+
+	(intuit_diff_type): When looking for an ed or normal patch, don't
+	look for filename headers.  (Those formats don't have any.)
+	* pch.c (there_is_another_patch): Don't suggest to use -p with
+	normal format diffs for the same reason.
+
 2009-03-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* NEWS: Update for alpha release.

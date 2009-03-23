@@ -244,7 +244,7 @@ there_is_another_patch (bool need_filename)
 	    char numbuf[LINENUM_LENGTH_BOUND + 1];
 	    say ("can't find file to patch at input line %s\n",
 		 format_linenum (numbuf, p_sline));
-	    if (diff_type != ED_DIFF)
+	    if (diff_type != ED_DIFF && diff_type != NORMAL_DIFF)
 	      say (strippath == -1
 		   ? "Perhaps you should have used the -p or --strip option?\n"
 		   : "Perhaps you used the wrong -p or --strip option?\n");
@@ -310,6 +310,10 @@ intuit_diff_type (bool need_filename)
 	free (p_name[i]);
 	p_name[i] = 0;
       }
+
+    /* Ed and normal format patches don't have filename headers.  */
+    if (diff_type == ED_DIFF || diff_type == NORMAL_DIFF)
+      need_filename = false;
 
     version_controlled[OLD] = -1;
     version_controlled[NEW] = -1;

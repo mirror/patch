@@ -26,6 +26,13 @@ $PATCH: **** Only garbage was found in the patch input.
 Status: 2
 EOF
 
+check 'patch -f -n < n.diff || echo "Status: $?"' <<EOF
+can't find file to patch at input line 1
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+Status: 1
+EOF
+
 echo -n '' > f
 check 'patch f < n.diff' <<EOF
 patching file f
@@ -42,6 +49,12 @@ EOF
 check 'patch < e.diff || echo "Status: $?"' <<EOF
 $PATCH: **** Only garbage was found in the patch input.
 Status: 2
+EOF
+
+check 'patch -f -e < e.diff || echo "Status: $?"' <<EOF
+can't find file to patch at input line 1
+No file to patch.  Skipping patch.
+Status: 1
 EOF
 
 echo -n '' > f
