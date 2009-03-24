@@ -1,5 +1,3 @@
-#! /bin/bash
-
 # Copyright (C) 2009 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
@@ -47,7 +45,10 @@ check 'date -u "+%Y-%m-%d %H:%M:%S %z" -r f' <<EOF
 $timestamp2
 EOF
 
-check 'set -- `ls -l f.orig`; echo $1' <<EOF
+# POSIX allows a leading '+' to indicate the presence of extended
+# permissions like ACLs.
+
+check 'ls -l f.orig | sed -e 's,^+;;' -e 's, .*,,' <<EOF
 -rw-r--r--
 EOF
 
@@ -68,7 +69,7 @@ Not setting time of file f (time mismatch)
 Status: 1
 EOF
 
-check 'set -- `ls -l f.rej`; echo $1' <<EOF
+check 'ls -l f.rej | sed -e 's,^+;;' -e 's, .*,,' <<EOF
 -rw-r--r--
 EOF
 

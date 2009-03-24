@@ -40,20 +40,20 @@ use_local_patch() {
 }
 
 _check() {
-    printf "[%s] %s -- " "${BASH_LINENO[1]}" "$*"
+    _start_test "$@"
     expected=`cat`
     if got=`set +x; eval "$*" < /dev/null 2>&1` && test "$expected" = "$got" ; then
-	printf "ok\n"
-	checks_succeeded=$[checks_succeeded+1]
+	echo "ok"
+	checks_succeeded="$checks_succeeded + 1"
     else
-	printf "FAILED\n"
+	echo "FAILED"
 	if test "$expected" != "$got" ; then
 	    echo "$expected" > expected~
 	    echo "$got" > got~
 	    diff -u -L expected -L got expected~ got~
 	    rm -f expected~ got~
 	fi
-	checks_failed=$[checks_failed+1]
+	checks_failed="$checks_failed + 1"
     fi
 }
 
@@ -66,14 +66,16 @@ ncheck() {
 }
 
 cleanup() {
-    checks_total=$[checks_succeeded+checks_failed]
+    checks_succeeded=`expr $checks_succeeded`
+    checks_failed=`expr $checks_failed`
+    checks_total=`expr $checks_succeeded + $checks_failed`
     status=0
     if test $checks_total -gt 0 ; then
 	if test $checks_failed -gt 0 ; then
 	    status=1
 	fi
-	printf "%s tests (%s passed, %s failed)\n" \
-	       $checks_total $checks_succeeded $checks_failed
+	echo "$checks_total tests ($checks_succeeded passed," \
+	     "$checks_failed failed)"
     fi
     if test -n "$tmpdir" ; then
 	set -e
@@ -85,6 +87,25 @@ cleanup() {
 }
 
 require_cat
+
+if test -z "`echo -n`"; then
+    if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
+	eval '
+	    _start_test() {
+		echo -n "[${BASH_LINENO[2]}] -- $*"
+	    }'
+    else
+	eval '
+	    _start_test() {
+		echo -n "* $* -- "
+	    }'
+    fi
+else
+    eval '
+	_start_test() {
+	    echo "* $*"
+	}'
+fi
 
 checks_succeeded=0
 checks_failed=0

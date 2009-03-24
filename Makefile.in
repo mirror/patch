@@ -30,6 +30,7 @@ ed_PROGRAM = @ed_PROGRAM@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+TEST_SHELL = @TEST_SHELL@
 transform = @program_transform_name@
 
 CFLAGS = @CFLAGS@
@@ -43,6 +44,7 @@ OBJEXT = @OBJEXT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 STDBOOL_H = @STDBOOL_H@
+HAVE__BOOL = @HAVE__BOOL@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -106,11 +108,12 @@ info::
 installcheck::
 
 check:: $(TESTS)
+	@echo All tests succeeded!
 
 .PHONY: $(TESTS)
 $(TESTS): all
 	@echo "[$@]"
-	@srcdir=$(srcdir)/tests $(SHELL) $@
+	@srcdir=$(srcdir)/tests $(TEST_SHELL) $@
 
 COMPILE = $(CC) -c $(CPPFLAGS) $(DEFS) -Ded_PROGRAM=\"$(ed_PROGRAM)\" \
 	-I. -I$(srcdir) $(CFLAGS)
@@ -230,7 +233,7 @@ dirname.$(OBJEXT): dirname.h xalloc.h
 error.$(OBJEXT): error.h gettext.h unlocked-io.h
 exitfail.$(OBJEXT): exitfail.h
 getopt.$(OBJEXT) getopt1.$(OBJEXT): getopt.h
-hash.$(OBJEXT): hash.h
+hash.$(OBJEXT): $(STDBOOL_H) hash.h
 inp.$(OBJEXT): backupfile.h $(COMMON) inp.h pch.h quotearg.h util.h xalloc.h
 maketime.$(OBJEXT): maketime.h partime.h
 partime.$(OBJEXT): partime.h

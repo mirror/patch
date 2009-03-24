@@ -4,6 +4,16 @@
 	Index lines in reject files as well.
 	* tests/reject-format: Test this change.
 
+	* configure.ac (TEST_SHELL): New substitution.
+	* Makefile.in (TEST_SHELL): New variable.
+	(HAVE__BOOL): New variable.
+	(hash.$(OBJEXT)): Add $(STDBOOL_H) dependency.
+	* tests/test-lib.sh: Use expr for arithmetic operations. Check for
+	working "echo -n" and BASH_LINENO.  Replace printf with echo.
+	* tests/preserve-mode-and-timestamp: Ignore leading "+" in ls output.
+	* tests: Remove !shebang line from tests and make them non-executable.
+	Replace printf with echo.
+
 2009-03-23  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (intuit_diff_type): When looking for an ed or normal

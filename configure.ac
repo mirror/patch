@@ -37,6 +37,8 @@ AC_PROG_MAKE_SET
 # because <errno.h> reserves symbols starting with `E'.
 AC_PATH_PROG(ed_PROGRAM, ed, ed)
 
+AC_PATH_PROG(TEST_SHELL, [bash sh])
+
 gl_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC_STDC
 AC_SYS_LARGEFILE

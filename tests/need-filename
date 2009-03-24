@@ -1,5 +1,3 @@
-#! /bin/bash
-
 # Copyright (C) 2009 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
@@ -33,7 +31,7 @@ No file to patch.  Skipping patch.
 Status: 1
 EOF
 
-echo -n '' > f
+touch f
 check 'patch f < n.diff' <<EOF
 patching file f
 EOF
@@ -57,7 +55,8 @@ No file to patch.  Skipping patch.
 Status: 1
 EOF
 
-echo -n '' > f
+rm -f f
+touch f
 check 'patch f < e.diff' <<EOF
 EOF
 
