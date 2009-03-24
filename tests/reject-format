@@ -59,7 +59,7 @@ EOF
 
 # --------------------------------------------------------------
 
-diff -p -u f.orig f > f.diff
+( echo "Index: f"; diff -p -u f.orig f ) > f.diff
 check 'patch -f -F0 --no-backup-if-mismatch f < f.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.
@@ -68,6 +68,7 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+Index: f
 --- f.orig
 +++ f
 @@ -2,6 +2,6 @@
@@ -105,7 +106,7 @@ EOF
 
 # --------------------------------------------------------------
 
-diff -p -u f.orig f > f.diff
+( echo "Index: f"; diff -p -u f.orig f ) > f.diff
 check 'patch -f -F0 --no-backup-if-mismatch --reject-format=context f < f.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.
@@ -114,6 +115,7 @@ Status: 1
 EOF
 
 check 'cat f.rej' <<EOF
+Index: f
 *** f.orig
 --- f
 *************** a() {

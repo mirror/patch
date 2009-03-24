@@ -1,7 +1,14 @@
+2009-03-24  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.c (abort_hunk_unified, abort_hunk_context): Preserve
+	Index lines in reject files as well.
+	* tests/reject-format: Test this change.
+
 2009-03-23  Andreas Gruenbacher  <agruen@suse.de>
 
-	(intuit_diff_type): When looking for an ed or normal patch, don't
-	look for filename headers.  (Those formats don't have any.)
+	* patch.c (intuit_diff_type): When looking for an ed or normal
+	patch, don't look for filename headers.  (Those formats don't
+	have any.)
 	* pch.c (there_is_another_patch): Don't suggest to use -p with
 	normal format diffs for the same reason.
 

@@ -1020,6 +1020,8 @@ abort_hunk_unified (bool header, bool reverse)
 
   if (header)
     {
+      if (pch_name (INDEX))
+	fprintf(fp, "Index: %s\n", pch_name (INDEX));
       print_header_line (rejfp, "---", reverse);
       print_header_line (rejfp, "+++", ! reverse);
     }
@@ -1084,10 +1086,13 @@ abort_hunk_context (bool header, bool reverse)
     if (diff_type == UNI_DIFF)
       pch_normalize (NEW_CONTEXT_DIFF);
 
-    if (header) {
+    if (header)
+      {
+	if (pch_name (INDEX))
+	  fprintf(rejfp, "Index: %s\n", pch_name (INDEX));
 	print_header_line (rejfp, "***", reverse);
 	print_header_line (rejfp, "---", ! reverse);
-    }
+      }
     fprintf(rejfp, "***************%s\n", c_function ? c_function : "");
     for (i=0; i<=pat_end; i++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
