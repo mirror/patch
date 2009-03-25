@@ -123,6 +123,7 @@ main (int argc, char **argv)
     struct stat outst;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
     bool written_to_rejname = false;
+    bool apply_empty_patch = false;
 
     exit_failure = 2;
     program_name = argv[0];
@@ -178,10 +179,17 @@ main (int argc, char **argv)
     /* Make sure we clean up in case of disaster.  */
     set_signals (false);
 
+    if (inname && outfile)
+      {
+	apply_empty_patch = true;
+	inerrno = -1;
+      }
     for (
 	open_patch_file (patchname);
-	there_is_another_patch (! (inname || posixly_correct));
-	reinitialize_almost_everything()
+	there_is_another_patch (! (inname || posixly_correct))
+	  || apply_empty_patch;
+	reinitialize_almost_everything(),
+	  apply_empty_patch = false
     ) {					/* for each patch in patch file */
       int hunk = 0;
       int failed = 0;
@@ -343,7 +351,6 @@ main (int argc, char **argv)
 	      }
 
 	    /* Finish spewing out the new file.  */
-	    assert (hunk);
 	    if (! spew_output (&outstate, &outst))
 	      {
 		say ("Skipping patch.\n");

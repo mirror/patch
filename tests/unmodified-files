@@ -37,3 +37,24 @@ Status: 1
 EOF
 
 ncheck 'test a -ef a.first'
+
+# ==============================================================
+
+# When applying an empty patch to a file with -o, copy the input file.
+
+cat > a.diff <<EOF
+EOF
+
+echo three > a
+
+check 'patch -o b a < a.diff' <<EOF
+patching file a
+EOF
+
+check 'cat b' <<EOF
+three
+EOF
+
+check 'patch -b -o b a < a.diff' <<EOF
+patching file a
+EOF

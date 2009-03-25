@@ -20,6 +20,10 @@
 	* tests/unmodified-files: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* patch.c (main): New apply_empty_patch variable. When applying an
+	empty patch to a file and -o is given, copy the input file to the
+	output file.
+
 2009-03-24  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (abort_hunk_unified, abort_hunk_context): Preserve
