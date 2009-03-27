@@ -26,6 +26,9 @@
 	* tests/backup-prefix-suffix: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* tests/munged-context-format: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-25  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (main): Avoid replacing files when nothing has changed.
