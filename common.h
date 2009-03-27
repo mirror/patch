@@ -123,6 +123,7 @@ XTERN bool posixly_correct;
 
 XTERN char const *origprae;
 XTERN char const *origbase;
+XTERN char const *origsuff;
 
 XTERN char const * volatile TMPINNAME;
 XTERN char const * volatile TMPOUTNAME;

@@ -117,6 +117,15 @@ file_already_seen (struct stat const *st)
   return hash_lookup (file_id_table, &f) != 0;
 }
 
+static bool
+contains_slash (const char *s)
+{
+  for (; *s; s++)
+    if (ISSLASH(*s))
+      return true;
+  return false;
+}
+
 /* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
    needs removal when cleaning up at the end of execution, and where
    *FROMST is FROM's status if known),
@@ -140,26 +149,29 @@ move_file (char const *from, int volatile *from_needs_removal,
       int try_makedirs_errno = 0;
       char *bakname;
 
-      if (origprae || origbase)
+      if (origprae || origbase || origsuff)
 	{
 	  char const *p = origprae ? origprae : "";
 	  char const *b = origbase ? origbase : "";
+	  char const *s = origsuff ? origsuff : "";
 	  char const *o = base_name (to);
 	  size_t plen = strlen (p);
 	  size_t tlen = o - to;
 	  size_t blen = strlen (b);
-	  size_t osize = strlen (o) + 1;
-	  bakname = xmalloc (plen + tlen + blen + osize);
+	  size_t olen = strlen (o);
+	  size_t slen = strlen (s);
+	  bakname = xmalloc (plen + tlen + blen + olen + slen + 1);
 	  memcpy (bakname, p, plen);
 	  memcpy (bakname + plen, to, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
-	  memcpy (bakname + plen + tlen + blen, o, osize);
-	  for (p += FILESYSTEM_PREFIX_LEN (p);  *p;  p++)
-	    if (ISSLASH (*p))
-	      {
-		try_makedirs_errno = ENOENT;
-		break;
-	      }
+	  memcpy (bakname + plen + tlen + blen, o, olen);
+	  memcpy (bakname + plen + tlen + blen + olen, s, slen + 1);
+	  if ((origprae
+	       && contains_slash (origprae
+				  + FILESYSTEM_PREFIX_LEN (origprae)))
+	      || (origbase && contains_slash (origbase))
+	      || (origsuff && contains_slash (origsuff)))
+	    try_makedirs_errno = ENOENT;
 	}
       else
 	{

@@ -775,7 +775,7 @@ get_some_switches (void)
 	    case_z:
 		if (!*optarg)
 		  fatal ("backup suffix is empty");
-		simple_backup_suffix = savestr (optarg);
+		origsuff = savestr (optarg);
 		break;
 	    case 'Z':
 		set_utc = true;

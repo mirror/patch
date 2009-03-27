@@ -280,9 +280,15 @@ This is the default if
 is conforming to \s-1POSIX\s0.
 .TP
 \fB\-B\fP \fIpref\fP  or  \fB\*=prefix=\fP\fIpref\fP
-Prefix
+Use the
+.B simple
+method to determine backup file names (see the
+.BI "\-V " method
+or
+.BI "\*=version\-control " method
+option), and append
 .I pref
-to a file name when generating its simple backup file name.
+to a file name when generating its backup file name.
 For example, with
 .B "\-B\ /junk/"
 the simple backup file name for
@@ -665,9 +671,15 @@ Set internal debugging flags of interest only to
 patchers.
 .TP
 \fB\-Y\fP \fIpref\fP  or  \fB\*=basename\-prefix=\fP\fIpref\fP
-Prefix
+Use the
+.B simple
+method to determine backup file names (see the
+.BI "\-V " method
+or
+.BI "\*=version\-control " method
+option), and prefix
 .I pref
-to the basename of a file name when generating its simple backup file name.
+to the basename of a file name when generating its backup file name.
 For example, with
 .B "\-Y\ .del/"
 the simple backup file name for
@@ -676,18 +688,21 @@ is
 .BR src/patch/.del/util.c .
 .TP
 \fB\-z\fP \fIsuffix\fP  or  \fB\*=suffix=\fP\fIsuffix\fP
-Use
+Use the
+.B simple
+method to determine backup file names (see the
+.BI "\-V " method
+or
+.BI "\*=version\-control " method
+option), and use
 .I suffix
-as the simple backup suffix.
+as the suffix.
 For example, with
 .B "\-z\ -"
-the simple backup file name for
+the backup file name for
 .B src/patch/util.c
 is
 .BR src/patch/util.c- .
-The backup suffix may also be specified by the
-.B SIMPLE_BACKUP_SUFFIX
-environment variable, which is overridden by this option.
 .TP
 \fB\-Z\fP  or  \fB\*=set\-utc\fP
 Set the modification and access times of patched files from time stamps

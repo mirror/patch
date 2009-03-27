@@ -16,6 +16,18 @@
 	* util.h (append_to_file): Update definition.
 	* Makefile.in: Remove timespec.h and m4/timespec.m4.
 
+	* common.h (origsuff): New variable.
+	* patch.c (main): Remember when -z was used.
+	* util.c (contains_slash): New function.
+	(move_file): Enforce simple backup mode and compute the backup file
+	name here if -B, -Y, or -z is used.  Fix the case where -B or -Y is
+	combined with -z.
+	* patch.man: Document this change.
+	* tests/backup-prefix-suffix: New test case.
+	* Makefile.in (TESTS): Add test case.
+
+2009-03-25  Andreas Gruenbacher  <agruen@suse.de>
+
 	* patch.c (main): Avoid replacing files when nothing has changed.
 	* tests/unmodified-files: New test case.
 	* Makefile.in (TESTS): Add test case.
