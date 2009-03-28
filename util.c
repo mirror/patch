@@ -189,7 +189,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 
 	  try_makedirs_errno = ENOENT;
 	  unlink (bakname);
-	  while ((fd = creat (bakname, 0)) < 0)
+	  while ((fd = creat (bakname, 0666)) < 0)
 	    {
 	      if (errno != try_makedirs_errno)
 		pfatal ("Can't create file %s", quotearg (bakname));

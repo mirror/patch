@@ -52,6 +52,8 @@ EOF
 
 # ==============================================================
 
+umask 022
+
 diff -u f /dev/null > f.diff
 rm f
 check 'patch -f f < f.diff || echo "Status: $?"' <<EOF
@@ -63,9 +65,13 @@ Hunk #1 FAILED at 1.
 Status: 1
 EOF
 
+check 'ls -l f.orig | sed -e "s,^+,," -e "s, .*,,"' <<EOF
+-rw-r--r--
+EOF
+
 # ==============================================================
 
-rm -f f.orig
+rm f.orig
 echo f > f.orig
 rm -f f
 touch f
