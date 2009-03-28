@@ -445,7 +445,7 @@ main (int argc, char **argv)
 			    written_to_rejname = true;
 			  }
 			else
-			  append_to_file (TMPREJNAME, rejname, false);
+			  append_to_file (TMPREJNAME, rejname);
 		      }
 		    else
 		      {
@@ -456,7 +456,7 @@ main (int argc, char **argv)
 			if (rej_errno && rej_errno != ENOENT)
 			  write_fatal ();
 		        if (! rej_errno && file_already_seen (&tost))
-			  append_to_file (TMPREJNAME, rej, true);
+			  append_to_file (TMPREJNAME, rej);
 			else
 			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
 				     &rejst, rej, 0666, false);

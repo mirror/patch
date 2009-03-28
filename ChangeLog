@@ -3,6 +3,19 @@
 	* pch.c (intuit_diff_type): Rename need_filename argument to
 	need_header.  Omit superfluous "missing header" warnings.
 
+	When remembering files including timestamps, we need to update the
+	timestamps after appending to a file.  This causes problems on some
+	systems where the timestamps returned by fstat() after appending are
+	not up to date, yes.  We only remember timestamps as a compatibility
+	hack with non-POSIX systems that do not have unique inode numbers;
+	drop this hack instead.
+	* timespec.h, m4/timespec.m4: Remove.
+	* util.c: Remove timespec.h and all uses of struct timespec.
+	(append_to_file): Remove REMEMBER argument; no need to update known
+	files anymore.
+	* util.h (append_to_file): Update definition.
+	* Makefile.in: Remove timespec.h and m4/timespec.m4.
+
 2009-03-24  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (abort_hunk_unified, abort_hunk_context): Preserve

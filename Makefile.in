@@ -88,7 +88,7 @@ HDRS = argmatch.h backupfile.h common.h dirname.h \
 	unlocked-io.h util.h version.h xalloc.h
 MISC = AUTHORS COPYING ChangeLog INSTALL Makefile.in NEWS README VERSION \
 	aclocal.m4 config.hin configure configure.ac install-sh \
-	mkinstalldirs patch.man stdbool_.h tests/test-lib.sh timespec.h \
+	mkinstalldirs patch.man stdbool_.h tests/test-lib.sh \
 	update-version.sh
 TESTS = tests/corrupt-reject-files tests/crlf-handling \
 	tests/global-reject-files tests/need-filename \
@@ -177,7 +177,6 @@ M4FILES = \
   $(M4DIR)/st_mtim.m4 \
   $(M4DIR)/stdbool.m4 \
   $(M4DIR)/strcase.m4 \
-  $(M4DIR)/timespec.m4 \
   $(M4DIR)/unlocked-io.m4 \
   $(M4DIR)/utimbuf.m4 \
   $(M4DIR)/xalloc.m4
@@ -245,7 +244,7 @@ quotearg.$(OBJEXT): gettext.h quotearg.h xalloc.h
 quotesys.$(OBJEXT): quotesys.h
 strncasecmp.$(OBJEXT): strcasecmp.c
 util.$(OBJEXT): backupfile.h $(COMMON) dirname.h hash.h maketime.h \
-	partime.h quotearg.h quotesys.h timespec.h util.h version.h xalloc.h
+	partime.h quotearg.h quotesys.h util.h version.h xalloc.h
 
 version.$(OBJEXT): $(COMMON) version.h
 xmalloc.$(OBJEXT): error.h exitfail.h gettext.h xalloc.h

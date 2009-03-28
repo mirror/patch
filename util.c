@@ -27,7 +27,6 @@
 #include <hash.h>
 #include <quotearg.h>
 #include <quotesys.h>
-#include <timespec.h>
 #undef XTERN
 #define XTERN
 #include <util.h>
@@ -52,7 +51,6 @@ typedef struct
 {
   dev_t dev;
   ino_t ino;
-  struct timespec mtime;
 } file_id;
 
 /* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
@@ -61,7 +59,7 @@ static unsigned int
 file_id_hasher (void const *entry, unsigned int table_size)
 {
   file_id const *e = entry;
-  unsigned int i = e->ino + e->dev + e->mtime.tv_sec + e->mtime.tv_nsec;
+  unsigned int i = e->ino + e->dev;
   return i % table_size;
 }
 
@@ -72,10 +70,7 @@ file_id_comparator (void const *entry1, void const *entry2)
 {
   file_id const *e1 = entry1;
   file_id const *e2 = entry2;
-  return (e1->mtime.tv_nsec == e2->mtime.tv_nsec
-	  && e1->mtime.tv_sec == e2->mtime.tv_sec
-	  && e1->ino == e2->ino
-	  && e1->dev == e2->dev);
+  return (e1->ino == e2->ino && e1->dev == e2->dev);
 }
 
 static Hash_table *file_id_table;
@@ -103,8 +98,6 @@ insert_file (struct stat const *st)
      next_slot = xmalloc (sizeof *next_slot);
    next_slot->dev = st->st_dev;
    next_slot->ino = st->st_ino;
-   next_slot->mtime.tv_sec = st->st_mtime;
-   next_slot->mtime.tv_nsec = TIMESPEC_NS (st->st_mtim);
    p = hash_insert (file_id_table, next_slot);
    if (!p)
      xalloc_die ();
@@ -121,8 +114,6 @@ file_already_seen (struct stat const *st)
   file_id f;
   f.dev = st->st_dev;
   f.ino = st->st_ino;
-  f.mtime.tv_sec = st->st_mtime;
-  f.mtime.tv_nsec = TIMESPEC_NS (st->st_mtim);
   return hash_lookup (file_id_table, &f) != 0;
 }
 
@@ -327,20 +318,13 @@ copy_file (char const *from, char const *to, struct stat *tost,
 /* Append to file. */
 
 void
-append_to_file (char const *from, char const *to, bool remember)
+append_to_file (char const *from, char const *to)
 {
   int tofd;
 
   if ((tofd = open (to, O_WRONLY | O_BINARY | O_APPEND)) < 0)
     pfatal ("Can't reopen file %s", quotearg (to));
   copy_to_fd (from, tofd);
-  if (remember)
-    {
-      struct stat newst;
-      if (fstat (tofd, &newst) != 0)
-	write_fatal ();
-      insert_file (&newst);
-    }
   if (close (tofd) != 0)
     write_fatal ();
 }

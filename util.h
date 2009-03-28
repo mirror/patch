@@ -45,7 +45,7 @@ int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], LINENUM);
 void Fseek (FILE *, file_offset, int);
 void copy_file (char const *, char const *, struct stat *, int, mode_t);
-void append_to_file (char const *, char const *, bool);
+void append_to_file (char const *, char const *);
 void exit_with_signal (int) __attribute__ ((noreturn));
 void ignore_signals (void);
 void init_backup_hash_table (void);
