@@ -16,6 +16,10 @@
 	* util.h (append_to_file): Update definition.
 	* Makefile.in: Remove timespec.h and m4/timespec.m4.
 
+	* patch.c (main): Avoid replacing files when nothing has changed.
+	* tests/unmodified-files: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-24  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (abort_hunk_unified, abort_hunk_context): Preserve

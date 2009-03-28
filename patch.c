@@ -373,6 +373,8 @@ main (int argc, char **argv)
 	    }
 	  else
 	    {
+	      bool changed;
+
 	      if (! outstate.zero_output
 		  && pch_says_nonexistent (! reverse))
 		{
@@ -382,7 +384,10 @@ main (int argc, char **argv)
 			 quotearg (outname));
 		}
 
-	      if (! dry_run)
+	      /* Avoid replacing files when nothing has changed.  */
+	      changed = failed < hunk || outfile || diff_type == ED_DIFF;
+
+	      if (changed && ! dry_run)
 		{
 		  time_t t;
 
