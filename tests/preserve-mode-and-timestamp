@@ -48,7 +48,7 @@ EOF
 # POSIX allows a leading '+' to indicate the presence of extended
 # permissions like ACLs.
 
-check 'ls -l f.orig | sed -e 's,^+;;' -e 's, .*,,' <<EOF
+check 'ls -l f.orig | sed -e "s,^+,," -e "s, .*,,"' <<EOF
 -rw-r--r--
 EOF
 
@@ -69,7 +69,7 @@ Not setting time of file f (time mismatch)
 Status: 1
 EOF
 
-check 'ls -l f.rej | sed -e 's,^+;;' -e 's, .*,,' <<EOF
+check 'ls -l f.rej | sed -e "s,^+,," -e "s, .*,,"' <<EOF
 -rw-r--r--
 EOF
 

@@ -92,7 +92,7 @@ if test -z "`echo -n`"; then
     if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
 	eval '
 	    _start_test() {
-		echo -n "[${BASH_LINENO[2]}] -- $*"
+		echo -n "[${BASH_LINENO[2]}] $* -- "
 	    }'
     else
 	eval '

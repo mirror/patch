@@ -12,3 +12,4 @@
 /.pc/
 /VERSION
 /patch-*.tar.gz
+/patch-*.tar.gz.sig

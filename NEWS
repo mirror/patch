@@ -1,11 +1,9 @@
 * A regression test suite has been added ("make check").
 * Unless a filename has been specified on the command line, look only
-  for filenames in the patch until one has been found.  Start looking
-  for hunks only after that.  This prevents patch from tripping over
-  garbage that isn't a patch.  When conforming to POSIX, this behavior
-  is turned off and patch will ask for a filename when none is found.
-* Reject more malformed normal format commands and check for trailing
-  garbage.  Recognize ed commands without addresses.
+  for filenames in the patch until one has been found.  This prevents
+  patch from tripping over garbage that isn't a patch.  When conforming
+  to POSIX, this behavior is turned off and patch will ask for a
+  filename if none is found.
 * All reject files have file name headers, which allows to use them
   as regular patches.
 * When a patch file modifies the same file more than once, patch makes
@@ -14,8 +12,8 @@
 * In the above situation, if there are rejects in more than one of those
   patches, the rejects are appended to the same reject file (rather then
   overwriting themselves).
-* The -r option works correctly even there are rejects in more than one
-  file.  Use the - argument to discard rejects.
+* The -r option works correctly even when there are rejects in more than
+  one file.  Use the - argument to discard rejects.
 * Rejected hunks come out in unified diff format if the input patch was of
   that format, otherwise in ordinary context diff form.  Use the
   --reject-format option to enforce either "context" or "unified" format.
@@ -31,7 +29,19 @@
   line endings in patches.  This allows to preserve CRs even in mangled
   patches, or in patches generated without the --binary option on non-POSIX
   systems.
+* Hunks with a different number of lines in the prefix and suffix context
+  can now apply anywhere in the file, rather than only at the beginning
+  (shorter prefix context) or at the end (shorter suffix context).
+* Backup files for nonexisting files are now created with default
+  permissions rather than with mode 0: backup files with mode 0 were
+  causing problems with applications which do not expect unreadable
+  files.
+* The -B, -Y, and -z options (--prefix, --basename-prefix, --suffix) now
+  imply the simple version control mode, and can be combined.
+* Reject more malformed normal format commands and check for trailing
+  garbage.  Recognize ed commands without addresses.
 * Handle missing timestamps better.
+* Various bug fixes.
 
 Changes in versions 2.5.8 and 2.5.9: bug fixes only.
 

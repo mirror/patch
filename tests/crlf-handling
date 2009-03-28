@@ -16,7 +16,7 @@ lf2crlf() {
     while read l; do echo -e "$l\r"; done \
 }
 echo 1 > a
-eco 1b > b
+echo 1b > b
 
 diff a b | lf2crlf > ab.diff
 echo 1 > c
