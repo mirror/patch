@@ -641,14 +641,20 @@ pfatal (char const *format, ...)
 
 /* Tell the user something.  */
 
+static void
+vsay (char const *format, va_list args)
+{
+  vfprintf (stdout, format, args);
+  fflush (stdout);
+}
+
 void
 say (char const *format, ...)
 {
   va_list args;
   va_start (args, format);
-  vfprintf (stdout, format, args);
+  vsay (format, args);
   va_end (args);
-  fflush (stdout);
 }
 
 /* Get a response from the user, somehow or other. */
@@ -722,19 +728,19 @@ ok_to_reverse (char const *format, ...)
     {
       va_list args;
       va_start (args, format);
-      vfprintf (stdout, format, args);
+      vsay (format, args);
       va_end (args);
     }
 
   if (noreverse)
     {
-      printf ("  Skipping patch.\n");
+      say ("  Skipping patch.\n");
       skip_rest_of_patch = true;
     }
   else if (force)
     {
       if (verbosity != SILENT)
-	printf ("  Applying it anyway.\n");
+	say ("  Applying it anyway.\n");
     }
   else if (batch)
     {

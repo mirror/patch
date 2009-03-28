@@ -29,6 +29,10 @@
 	* tests/munged-context-format: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+	* util.c (vsay): New function for use in say(), etc.
+	(ok_to_reverse): Use vsay() here instead of fprintf() to ensure
+	flushing.
+
 2009-03-25  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (main): Avoid replacing files when nothing has changed.
