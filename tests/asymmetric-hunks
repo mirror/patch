@@ -1,0 +1,41 @@
+# Copyright (C) 2009 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+. $srcdir/test-lib.sh
+
+require_cat
+require_diff
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+# Bug #25833: Patch fails to correctly apply hunks with asymmetric context
+
+cat > a.diff <<EOF
+--- a
++++ a
+@@ -2,3 +2,4 @@
+ 2
++2a
+ 3
+ 4
+EOF
+
+seq 1 5 > a
+
+check 'patch < a.diff' <<EOF
+patching file a
+EOF
+
+check 'cat a' <<EOF
+1
+2
+2a
+3
+4
+5
+EOF

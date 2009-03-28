@@ -1,3 +1,12 @@
+2009-03-29  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.c (locate_hunk): Hunks that have fewer or more lines of
+	context at the beginning than at the end can match anywhere; the
+	assumption that this can only occur at the beginning or end of the
+	file is wrong. Remove those checks.
+	* tests/asymmetric-hunks: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-28  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (intuit_diff_type): Rename need_filename argument to

@@ -888,10 +888,10 @@ locate_hunk (LINENUM fuzz)
     LINENUM pat_lines = pch_ptrn_lines();
     LINENUM prefix_context = pch_prefix_context ();
     LINENUM suffix_context = pch_suffix_context ();
-    LINENUM context = (prefix_context < suffix_context
-		       ? suffix_context : prefix_context);
-    LINENUM prefix_fuzz = fuzz + prefix_context - context;
-    LINENUM suffix_fuzz = fuzz + suffix_context - context;
+    LINENUM prefix_fuzz = (prefix_context < fuzz
+			   ? prefix_context : fuzz);
+    LINENUM suffix_fuzz = (suffix_context < fuzz
+			   ? suffix_context : fuzz);
     LINENUM max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
     LINENUM min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
     LINENUM max_pos_offset = max_where - first_guess;
@@ -905,41 +905,6 @@ locate_hunk (LINENUM fuzz)
     /* Do not try lines <= 0.  */
     if (first_guess <= max_neg_offset)
 	max_neg_offset = first_guess - 1;
-
-    if (prefix_fuzz < 0)
-      {
-	/* Can only match start of file.  */
-
-	if (suffix_fuzz < 0)
-	  /* Can only match entire file.  */
-	  if (pat_lines != input_lines || prefix_context < last_frozen_line)
-	    return 0;
-
-	offset = 1 - first_guess;
-	if (last_frozen_line <= prefix_context
-	    && offset <= max_pos_offset
-	    && patch_match (first_guess, offset, (LINENUM) 0, suffix_fuzz))
-	  {
-	    last_offset += offset;
-	    return first_guess + offset;
-	  }
-	else
-	  return 0;
-      }
-
-    if (suffix_fuzz < 0)
-      {
-	/* Can only match end of file.  */
-	offset = first_guess - (input_lines - pat_lines + 1);
-	if (offset <= max_neg_offset
-	    && patch_match (first_guess, -offset, prefix_fuzz, (LINENUM) 0))
-	  {
-	    last_offset -= offset;
-	    return first_guess - offset;
-	  }
-	else
-	  return 0;
-      }
 
     for (offset = 0;  offset <= max_offset;  offset++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
