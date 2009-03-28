@@ -93,7 +93,6 @@ EOF
 
 rm -f f
 check 'patch f < c.diff' <<EOF
-missing header for context diff at line 1 of patch
 patching file f
 EOF
 
@@ -128,7 +127,6 @@ EOF
 
 rm -f f
 check 'patch f < u.diff' <<EOF
-missing header for unified diff at line 1 of patch
 patching file f
 EOF
 
