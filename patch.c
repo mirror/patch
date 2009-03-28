@@ -301,11 +301,6 @@ main (int argc, char **argv)
 	    else if (!where
 		     || (where == 1 && pch_says_nonexistent (reverse) == 2
 			 && instat.st_size)) {
-
-		if (where)
-		  say ("Patch attempted to create file %s, which already exists.\n",
-		       quotearg (inname));
-
 		abort_hunk (! failed, reverse);
 		failed++;
 		if (verbosity != SILENT)

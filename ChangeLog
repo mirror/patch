@@ -33,6 +33,13 @@
 	(ok_to_reverse): Use vsay() here instead of fprintf() to ensure
 	flushing.
 
+	* pch.c (there_is_another_patch): Move the "patch would create" test
+	here from intuit_diff_type() after asking for the filename to patch.
+	* inp.c (get_input_file): No need to report when the file is missing;
+	this is done in there_is_another_patch() already.
+	* patch.c (main): No need to report when a patch attempts to create
+	an exiting file, either.
+
 2009-03-25  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (main): Avoid replacing files when nothing has changed.

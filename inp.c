@@ -145,7 +145,7 @@ get_input_file (char const *filename, char const *outname)
     char *getbuf;
 
     if (inerrno == -1)
-      inerrno = stat (inname, &instat) == 0 ? 0 : errno;
+      inerrno = stat (filename, &instat) == 0 ? 0 : errno;
 
     /* Perhaps look for RCS or SCCS versions.  */
     if (patch_get
@@ -196,7 +196,7 @@ get_input_file (char const *filename, char const *outname)
 	    if (diffbuf)
 	      free (diffbuf);
 
-    } else if (inerrno && !pch_says_nonexistent (reverse))
+    } else if (inerrno && inerrno != ENOENT)
       {
 	errno = inerrno;
 	pfatal ("Can't find file %s", quotearg (filename));

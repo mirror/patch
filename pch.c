@@ -198,6 +198,8 @@ grow_hunkmax (void)
 bool
 there_is_another_patch (bool need_header)
 {
+    bool is_empty;
+
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
 	    say ("done\n");
@@ -285,6 +287,20 @@ there_is_another_patch (bool need_header)
 	    }
 	}
     }
+    is_empty = inerrno || instat.st_size == 0;
+    if ((! is_empty) < p_says_nonexistent[reverse ^ is_empty])
+      {
+	reverse ^= ok_to_reverse
+	    ("The next patch%s would %s the file %s,\nwhich %s!",
+	     reverse ? ", when reversed," : "",
+	     (inerrno ? "delete"
+	      : instat.st_size == 0 ? "empty out"
+	      : "create"),
+	     quotearg (inname),
+	     (inerrno ? "does not exist"
+	      : instat.st_size == 0 ? "is already empty"
+	      : "already exists"));
+      }
     return true;
 }
 
@@ -600,8 +616,6 @@ intuit_diff_type (bool need_header)
 
 	if (! posixly_correct)
 	  {
-	    bool is_empty;
-
 	    i = best_name (p_name, stat_errno);
 
 	    if (i == NONE && patch_get)
@@ -642,23 +656,6 @@ intuit_diff_type (bool need_header)
 
 		      nope = i;
 		    }
-	      }
-
-	    is_empty = i == NONE || st[i].st_size == 0;
-	    if ((! is_empty) < p_says_nonexistent[reverse ^ is_empty])
-	      {
-		assert (i0 != NONE);
-		reverse ^=
-		  ok_to_reverse
-		    ("The next patch%s would %s the file %s,\nwhich %s!",
-		     reverse ? ", when reversed," : "",
-		     (i == NONE ? "delete"
-		      : st[i].st_size == 0 ? "empty out"
-		      : "create"),
-		     quotearg (p_name[i == NONE || st[i].st_size == 0 ? i0 : i]),
-		     (i == NONE ? "does not exist"
-		      : st[i].st_size == 0 ? "is already empty"
-		      : "already exists"));
 	      }
 
 	    if (i == NONE && p_says_nonexistent[reverse])
