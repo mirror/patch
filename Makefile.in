@@ -51,6 +51,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 
 # Where to put the manual pages.
+datarootdir = @datarootdir@
 mandir = @mandir@
 man1dir = $(mandir)/man1
 # Extension (including `.') for the manual page filenames.
