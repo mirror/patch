@@ -1,3 +1,10 @@
+2009-03-30  Andreas Gruenbacher  <agruen@suse.de>
+
+	* tests/test-lib.sh: Unset environment variables that influence
+	the behavior of patch.
+	* util.c (move_file): Add debug message when files have been seen
+	already.  Fix leftover "empty uneadable" debug message.
+
 2009-03-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (locate_hunk): Hunks that have fewer or more lines of

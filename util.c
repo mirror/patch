@@ -144,7 +144,12 @@ move_file (char const *from, int volatile *from_needs_removal,
   struct stat to_st;
   int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
 
-  if (backup && (to_errno || ! file_already_seen (&to_st)))
+  if (! to_errno && file_already_seen (&to_st))
+    {
+      if (debug & 4)
+	say ("File %s already seen\n", quotearg (to));
+    }
+  else if (backup)
     {
       int try_makedirs_errno = 0;
       char *bakname;
@@ -185,7 +190,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	  int fd;
 
 	  if (debug & 4)
-	    say ("Creating empty unreadable file %s\n", quotearg (bakname));
+	    say ("Creating empty file %s\n", quotearg (bakname));
 
 	  try_makedirs_errno = ENOENT;
 	  unlink (bakname);

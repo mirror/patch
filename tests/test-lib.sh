@@ -39,6 +39,11 @@ use_local_patch() {
     }'
 }
 
+clean_env() {
+    unset PATCH_GET POSIXLY_CORRECT SIMPLE_BACKUP_SUFFIX VERSION_CONTROL \
+	  PATCH_VERSION_CONTROL
+}
+
 _check() {
     _start_test "$@"
     expected=`cat`
@@ -86,8 +91,6 @@ cleanup() {
     exit $status
 }
 
-require_cat
-
 if test -z "`echo -n`"; then
     if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
 	eval '
@@ -107,6 +110,10 @@ else
 	}'
 fi
 
+require_cat
+clean_env
+
 checks_succeeded=0
 checks_failed=0
 trap cleanup 0
+
