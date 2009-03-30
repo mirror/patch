@@ -236,7 +236,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	      && (to_errno == -1 || to_errno == ENOENT))
 	    {
 	      makedirs (to);
-	      to_dir_known_to_exist = 1;
+	      to_dir_known_to_exist = true;
 	      if (rename (from, to) == 0)
 		goto rename_succeeded;
 	    }
@@ -325,6 +325,9 @@ copy_file (char const *from, char const *to, struct stat *tost,
 {
   int tofd;
 
+  if (debug & 4)
+    say ("Copying file %s to %s\n",
+	 quotearg_n (0, from), quotearg_n (1, to));
   tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode);
   copy_to_fd (from, tofd);
   if ((tost && fstat (tofd, tost) != 0)

@@ -357,6 +357,9 @@ main (int argc, char **argv)
       /* and put the output where desired */
       ignore_signals ();
       if (! skip_rest_of_patch && ! outfile) {
+	  bool backup = make_backups
+			|| (backup_if_mismatch && (mismatch | failed));
+
 	  if (outstate.zero_output
 	      && (remove_empty_files
 		  || (pch_says_nonexistent (! reverse) == 2
@@ -367,9 +370,7 @@ main (int argc, char **argv)
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
-		  move_file (0, 0, 0, outname, 0,
-			     (make_backups
-			      || (backup_if_mismatch && (mismatch | failed))));
+		  move_file (0, 0, 0, outname, 0, backup);
 		  removedirs (outname);
 		}
 	    }
@@ -394,9 +395,7 @@ main (int argc, char **argv)
 		  time_t t;
 
 		  move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
-			     outname, instat.st_mode,
-			     (make_backups
-			      || (backup_if_mismatch && (mismatch | failed))));
+			     outname, instat.st_mode, backup);
 
 		  if ((set_time | set_utc)
 		      && (t = pch_timestamp (! reverse)) != (time_t) -1)
@@ -441,7 +440,7 @@ main (int argc, char **argv)
 		    strcpy (rej, outname);
 		    addext (rej, ".rej", '#');
 		}
-		say (" -- saving rejects to file %s", quotearg (rej));
+		say (" -- saving rejects to file %s\n", quotearg (rej));
 		if (! dry_run)
 		  {
 		    if (rejname)
@@ -456,13 +455,13 @@ main (int argc, char **argv)
 		      }
 		    else
 		      {
-			struct stat tost;
-			int rej_errno;
+			struct stat oldst;
+			int olderrno;
 
-			rej_errno = stat (rej, &tost) ? errno : 0;
-			if (rej_errno && rej_errno != ENOENT)
+			olderrno = stat (rej, &oldst) ? errno : 0;
+			if (olderrno && olderrno != ENOENT)
 			  write_fatal ();
-		        if (! rej_errno && file_already_seen (&tost))
+		        if (! olderrno && file_already_seen (&oldst))
 			  append_to_file (TMPREJNAME, rej);
 			else
 			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
@@ -471,8 +470,8 @@ main (int argc, char **argv)
 		  }
 		if (!rejname)
 		    free (rej);
-	    }
-	    say ("\n");
+	    } else
+	      say ("\n");
 	}
       }
       set_signals (true);
