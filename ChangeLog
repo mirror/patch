@@ -1,3 +1,12 @@
+2009-03-30  Jim Meyering  <meyering@redhat.com>
+
+	tests: accommodate ls' "alternate access control method" indicator
+	ls can output an additional byte after a file's permissions string,
+	e.g., rather than "rwxr--r-- ..." it can output "rwxr--r--+ ..."
+	or "rwxr--r--. ..." to indicate the presence of an ACL.
+	* tests/create-delete: Adjust sed filter to accommodate that.
+	* tests/preserve-mode-and-timestamp: Likewise.
+
 2009-03-30  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: Unset environment variables that influence
@@ -2639,7 +2648,7 @@ Sun Dec 17 17:29:48 1989  Jim Kingdon  (kingdon at hobbes.ai.mit.edu)
 Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall.
 
 Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-2002 Free Software Foundation, Inc.
+2002, 2009 Free Software Foundation, Inc.
 
 This file is part of GNU Patch.
 

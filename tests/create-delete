@@ -65,7 +65,7 @@ Hunk #1 FAILED at 1.
 Status: 1
 EOF
 
-check 'ls -l f.orig | sed -e "s,^+,," -e "s, .*,,"' <<EOF
+check 'ls -l f.orig | sed "s,\(..........\).*,\1,"' <<EOF
 -rw-r--r--
 EOF
 
