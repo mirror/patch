@@ -107,7 +107,9 @@ static char *rejname;
 static char const * volatile TMPREJNAME;
 static int volatile TMPREJNAME_needs_removal;
 
-static LINENUM last_offset;
+/* offset in the input and output at which the previous hunk matched */
+static LINENUM in_offset;
+static LINENUM out_offset;
 static LINENUM maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
@@ -246,7 +248,7 @@ main (int argc, char **argv)
 	    if (!skip_rest_of_patch) {
 		do {
 		    where = locate_hunk(fuzz);
-		    if (! where || fuzz || last_offset)
+		    if (! where || fuzz || in_offset)
 		      mismatch = true;
 		    if (hunk == 1 && ! where && ! (force | apply_anyway)
 			&& reverse == reverse_flag_specified) {
@@ -290,7 +292,7 @@ main (int argc, char **argv)
 		}
 	    }
 
-	    newwhere = pch_newfirst() + last_offset;
+	    newwhere = (where ? where : pch_first()) + out_offset;
 	    if (skip_rest_of_patch) {
 		abort_hunk (! failed, reverse);
 		failed++;
@@ -315,15 +317,15 @@ main (int argc, char **argv)
 		       format_linenum (numbuf, newwhere));
 	    } else {
 		if (verbosity == VERBOSE
-		    || (verbosity != SILENT && (fuzz || last_offset))) {
+		    || (verbosity != SILENT && (fuzz || in_offset))) {
 		    say ("Hunk #%d succeeded at %s", hunk,
 			 format_linenum (numbuf, newwhere));
 		    if (fuzz)
 		      say (" with fuzz %s", format_linenum (numbuf, fuzz));
-		    if (last_offset)
+		    if (in_offset)
 		      say (" (offset %s line%s)",
-			   format_linenum (numbuf, last_offset),
-			   "s" + (last_offset == 1));
+			   format_linenum (numbuf, in_offset),
+			   "s" + (in_offset == 1));
 		    say (".\n");
 		}
 	    }
@@ -500,7 +502,8 @@ reinitialize_almost_everything (void)
 	inname = 0;
     }
 
-    last_offset = 0;
+    in_offset = 0;
+    out_offset = 0;
 
     diff_type = NO_DIFF;
 
@@ -882,7 +885,7 @@ numeric_string (char const *string,
 static LINENUM
 locate_hunk (LINENUM fuzz)
 {
-    register LINENUM first_guess = pch_first () + last_offset;
+    register LINENUM first_guess = pch_first () + in_offset;
     register LINENUM offset;
     LINENUM pat_lines = pch_ptrn_lines();
     LINENUM prefix_context = pch_prefix_context ();
@@ -912,18 +915,18 @@ locate_hunk (LINENUM fuzz)
 	    && patch_match (first_guess, offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
 	      say ("Offset changing from %s to %s\n",
-		   format_linenum (numbuf0, last_offset),
-		   format_linenum (numbuf1, last_offset + offset));
-	    last_offset += offset;
+		   format_linenum (numbuf0, in_offset),
+		   format_linenum (numbuf1, in_offset + offset));
+	    in_offset += offset;
 	    return first_guess+offset;
 	}
 	if (0 < offset && offset <= max_neg_offset
 	    && patch_match (first_guess, -offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
 	      say ("Offset changing from %s to %s\n",
-		   format_linenum (numbuf0, last_offset),
-		   format_linenum (numbuf1, last_offset - offset));
-	    last_offset -= offset;
+		   format_linenum (numbuf0, in_offset),
+		   format_linenum (numbuf1, in_offset - offset));
+	    in_offset -= offset;
 	    return first_guess-offset;
 	}
     }
@@ -997,11 +1000,11 @@ abort_hunk_unified (bool header, bool reverse)
       print_header_line (rejfp, "+++", ! reverse);
     }
 
-  /* Add last_offset to guess the same as the previous successful hunk.  */
+  /* Add out_offset to guess the same as the previous successful hunk.  */
   fprintf (fp, "@@ -");
-  print_unidiff_range (fp, pch_first () + last_offset, lastline);
+  print_unidiff_range (fp, pch_first () + out_offset, lastline);
   fprintf (fp, " +");
-  print_unidiff_range (fp, pch_newfirst () + last_offset, pch_repl_lines ());
+  print_unidiff_range (fp, pch_newfirst () + out_offset, pch_repl_lines ());
   fprintf (fp, " @@\n");
 
   while (pch_char (new) == '=' || pch_char (new) == '\n')
@@ -1043,9 +1046,9 @@ abort_hunk_context (bool header, bool reverse)
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end ();
-    /* add in last_offset to guess the same as the previous successful hunk */
-    LINENUM oldfirst = pch_first() + last_offset;
-    LINENUM newfirst = pch_newfirst() + last_offset;
+    /* add in out_offset to guess the same as the previous successful hunk */
+    LINENUM oldfirst = pch_first() + out_offset;
+    LINENUM newfirst = pch_newfirst() + out_offset;
     LINENUM oldlast = oldfirst + pch_ptrn_lines() - 1;
     LINENUM newlast = newfirst + pch_repl_lines() - 1;
     char const *stars =
@@ -1266,6 +1269,7 @@ apply_hunk (struct outstate *outstate, LINENUM where)
 	  write_fatal ();
 	outstate->after_newline = true;
     }
+    out_offset += pch_repl_lines() - pch_ptrn_lines ();
     return true;
 }
 

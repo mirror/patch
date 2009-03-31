@@ -110,6 +110,7 @@ TESTS = \
 	tests/create-delete \
 	tests/crlf-handling \
 	tests/global-reject-files \
+	tests/line-numbers \
 	tests/munged-context-format \
 	tests/need-filename \
 	tests/no-newline-triggers-assert \

@@ -1,3 +1,11 @@
+2009-03-31  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.c: Split last_offset into in_offset and out_offset and
+	count line numbers properly.
+	* tests/line-numbers: Without the fixes, this test case goes
+	horribly wrong.
+	* Makefile.in (TESTS): Add test case.
+
 2009-03-30  Jim Meyering  <meyering@redhat.com>
 
 	tests: accommodate ls' "alternate access control method" indicator
