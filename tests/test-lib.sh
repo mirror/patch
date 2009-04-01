@@ -35,7 +35,12 @@ use_local_patch() {
     test -n "$PATCH" || PATCH=$PWD/patch
 
     eval 'patch() {
-	$PATCH "$@"
+	if test -n "$GDB" ; then
+	  echo -e "\n" >&3
+	  gdbserver localhost:53153 $PATCH "$@" 2>&3
+	else
+          $PATCH "$@"
+	fi
     }'
 }
 
@@ -47,7 +52,8 @@ clean_env() {
 _check() {
     _start_test "$@"
     expected=`cat`
-    if got=`set +x; eval "$*" < /dev/null 2>&1` && test "$expected" = "$got" ; then
+    if got=`set +x; eval "$*" 3>&2 </dev/null 2>&1` && \
+            test "$expected" = "$got" ; then
 	echo "ok"
 	checks_succeeded="$checks_succeeded + 1"
     else

@@ -1,3 +1,8 @@
+2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
+
+	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
+	for debugging.
+
 2009-03-31  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c: Split last_offset into in_offset and out_offset and
