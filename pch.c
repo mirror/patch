@@ -1567,23 +1567,25 @@ another_hunk (enum diff difftype, bool rev)
     if (rev)				/* backwards patch? */
 	if (!pch_swap())
 	    say ("Not enough memory to swap next hunk!\n");
-    if (debug & 2) {
-	LINENUM i;
-	char special;
-
-	for (i=0; i <= p_end; i++) {
-	    if (i == p_ptrn_lines)
-		special = '^';
-	    else
-		special = ' ';
-	    fprintf (stderr, "%s %c %c ", format_linenum (numbuf0, i),
-		     p_Char[i], special);
-	    pch_write_line (i, stderr);
-	    fflush (stderr);
-	}
-    }
     assert (p_end + 1 < hunkmax);
     p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
+    if (debug & 2) {
+	LINENUM i;
+
+	for (i = 0; i <= p_end + 1; i++) {
+	    fprintf (stderr, "%s %c",
+		     format_linenum (numbuf0, i),
+		     p_Char[i]);
+	    if (p_Char[i] != '*' && p_Char[i] != '=' && p_Char[i] != '^')
+	      {
+		fputs(" |", stderr);
+		pch_write_line (i, stderr);
+	      }
+	    else
+	      fputc('\n', stderr);
+	}
+	fflush (stderr);
+    }
     return 1;
 }
 

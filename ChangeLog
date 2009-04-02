@@ -2,6 +2,7 @@
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
 	for debugging.
+	* pch.c (another_hunk): Make the debug output easier to read.
 
 2009-03-31  Andreas Gruenbacher  <agruen@suse.de>
 
