@@ -263,3 +263,22 @@ XTERN bool no_strip_trailing_cr;
 #ifndef TTY_DEVICE
 #define TTY_DEVICE "/dev/tty"
 #endif
+
+/* Output stream state.  */
+struct outstate
+{
+  FILE *ofp;
+  bool after_newline;
+  bool zero_output;
+};
+
+/* offset in the input and output at which the previous hunk matched */
+XTERN LINENUM in_offset;
+XTERN LINENUM out_offset;
+
+/* how many input lines have been irretractably output */
+XTERN LINENUM last_frozen_line;
+
+bool apply_hunk (struct outstate *, LINENUM);
+bool copy_till (struct outstate *, LINENUM);
+bool similar (char const *, size_t, char const *, size_t);

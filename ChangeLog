@@ -5,6 +5,10 @@
 	more context remains (and the hunk has become symmetric).
 
 	* patch.c (main): Restructure to get rid of some code duplication.
+	(copy_till, similar): Export these functions.
+	* common.h (struct outstate, in_offset, out_offset,
+	last_frozen_line): Move here from patch.c.
+	(apply_hunk, copy_till, similar): Declare here.
 
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 

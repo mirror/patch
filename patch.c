@@ -47,22 +47,11 @@ struct utimbuf
 };
 #endif
 
-/* Output stream state.  */
-struct outstate
-{
-  FILE *ofp;
-  bool after_newline;
-  bool zero_output;
-};
-
 /* procedures */
 
 static FILE *create_output_file (char const *, int);
 static LINENUM locate_hunk (LINENUM);
-static bool apply_hunk (struct outstate *, LINENUM);
-static bool copy_till (struct outstate *, LINENUM);
 static bool patch_match (LINENUM, LINENUM, LINENUM, LINENUM);
-static bool similar (char const *, size_t, char const *, size_t);
 static bool spew_output (struct outstate *, struct stat *);
 static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
@@ -88,9 +77,6 @@ static bool remove_empty_files;
 /* true if -R was specified on command line.  */
 static bool reverse_flag_specified;
 
-/* how many input lines have been irretractably output */
-static LINENUM last_frozen_line;
-
 static char const *do_defines; /* symbol to patch using ifdef, ifndef, etc. */
 static char const if_defined[] = "\n#ifdef %s\n";
 static char const not_defined[] = "\n#ifndef %s\n";
@@ -107,9 +93,6 @@ static char *rejname;
 static char const * volatile TMPREJNAME;
 static int volatile TMPREJNAME_needs_removal;
 
-/* offset in the input and output at which the previous hunk matched */
-static LINENUM in_offset;
-static LINENUM out_offset;
 static LINENUM maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
@@ -1149,7 +1132,7 @@ abort_hunk (bool header, bool reverse)
 
 /* We found where to apply it (we hope), so do it. */
 
-static bool
+bool
 apply_hunk (struct outstate *outstate, LINENUM where)
 {
     register LINENUM old = 1;
@@ -1335,7 +1318,7 @@ init_reject (void)
 
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
-static bool
+bool
 copy_till (register struct outstate *outstate, register LINENUM lastline)
 {
     register LINENUM R_last_frozen_line = last_frozen_line;
@@ -1423,7 +1406,7 @@ patch_match (LINENUM base, LINENUM offset,
 
 /* Do two lines match with canonicalized white space? */
 
-static bool
+bool
 similar (register char const *a, register size_t alen,
 	 register char const *b, register size_t blen)
 {
