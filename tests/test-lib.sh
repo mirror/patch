@@ -46,7 +46,7 @@ use_local_patch() {
 
 clean_env() {
     unset PATCH_GET POSIXLY_CORRECT SIMPLE_BACKUP_SUFFIX VERSION_CONTROL \
-	  PATCH_VERSION_CONTROL
+	  PATCH_VERSION_CONTROL GDB
 }
 
 _check() {
