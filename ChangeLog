@@ -30,6 +30,12 @@
 	* Makefile.in (HDRS): Add bestmatch.h.
 	* tests/merge: Only minor improvements up to now.
 
+	* diffseq.h: New file (Gnulib compareseq algorithm).
+	* minmax.h: New file (Gnulib MIN and MAX macros).
+	* Makefile.in (HDRS): Add diffseq.h and minmax.h.
+
+	* COPYING: Update to GPL version 3 because of diffseq.h.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
