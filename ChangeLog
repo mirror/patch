@@ -40,6 +40,14 @@
 	of EQUAL.  This macro takes vector indexes instead of elements as
 	arguments.
 
+	Better merge support:
+	* patch.c, common.h (apply_hunk): Make static again.
+	* merge.c (compute_changes): New function for computing the
+	difference between lines in a hunk and lines in the input file.
+	(merge_result): We may have more than one result per hunk now.
+	(merge_hunk): Merge the hunk with the compute_changes() result.
+	* tests/merge: Better results now.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

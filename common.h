@@ -279,7 +279,6 @@ XTERN LINENUM out_offset;
 /* how many input lines have been irretractably output */
 XTERN LINENUM last_frozen_line;
 
-bool apply_hunk (struct outstate *, LINENUM);
 bool copy_till (struct outstate *, LINENUM);
 bool similar (char const *, size_t, char const *, size_t);
 

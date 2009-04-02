@@ -51,6 +51,7 @@ struct utimbuf
 
 static FILE *create_output_file (char const *, int);
 static LINENUM locate_hunk (LINENUM);
+static bool apply_hunk (struct outstate *, LINENUM);
 static bool patch_match (LINENUM, LINENUM, LINENUM, LINENUM);
 static bool spew_output (struct outstate *, struct stat *);
 static char const *make_temp (char);
@@ -1170,7 +1171,7 @@ abort_hunk (bool header, bool reverse)
 
 /* We found where to apply it (we hope), so do it. */
 
-bool
+static bool
 apply_hunk (struct outstate *outstate, LINENUM where)
 {
     register LINENUM old = 1;
