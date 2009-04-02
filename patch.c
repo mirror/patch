@@ -67,6 +67,12 @@ static void abort_hunk (bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
+#ifdef ENABLE_MERGE
+static bool merge;
+#else
+# define merge false
+#endif
+
 static enum diff reject_format = NO_DIFF;  /* automatic */
 static bool make_backups;
 static bool backup_if_mismatch;
@@ -197,7 +203,7 @@ main (int argc, char **argv)
 	  }
       } else {
 	int got_hunk;
-	bool apply_anyway = false;
+	bool apply_anyway = merge;  /* don't try to reverse when merging */
 
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
@@ -223,11 +229,22 @@ main (int argc, char **argv)
 	    LINENUM where = 0; /* Pacify `gcc -Wall'.  */
 	    LINENUM newwhere;
 	    LINENUM fuzz = 0;
-	    LINENUM prefix_context = pch_prefix_context ();
-	    LINENUM suffix_context = pch_suffix_context ();
-	    LINENUM context = (prefix_context < suffix_context
-			       ? suffix_context : prefix_context);
-	    LINENUM mymaxfuzz = (maxfuzz < context ? maxfuzz : context);
+	    LINENUM mymaxfuzz;
+
+	    if (merge)
+	      {
+		/* When in merge mode, don't apply with fuzz.  */
+		mymaxfuzz = 0;
+	      }
+	    else
+	      {
+		LINENUM prefix_context = pch_prefix_context ();
+		LINENUM suffix_context = pch_suffix_context ();
+		LINENUM context = (prefix_context < suffix_context
+				   ? suffix_context : prefix_context);
+		mymaxfuzz = (maxfuzz < context ? maxfuzz : context);
+	      }
+
 	    hunk++;
 	    if (!skip_rest_of_patch) {
 		do {
@@ -278,10 +295,13 @@ main (int argc, char **argv)
 
 	    newwhere = (where ? where : pch_first()) + out_offset;
 	    if (skip_rest_of_patch
-		|| (where == 1 && pch_says_nonexistent (reverse) == 2
-		    && instat.st_size)
-		|| ! where
-		|| ! apply_hunk (&outstate, where))
+		|| (merge && ! merge_hunk (hunk, &outstate, where,
+					   &somefailed))
+		|| (! merge
+		    && ((where == 1 && pch_says_nonexistent (reverse) == 2
+			 && instat.st_size)
+			|| ! where
+			|| ! apply_hunk (&outstate, where))))
 	      {
 		abort_hunk (! failed, reverse);
 		failed++;
@@ -291,8 +311,9 @@ main (int argc, char **argv)
 		       skip_rest_of_patch ? "ignored" : "FAILED",
 		       format_linenum (numbuf, newwhere));
 	      }
-	    else if (verbosity == VERBOSE
-		     || (verbosity != SILENT && (fuzz || in_offset)))
+	    else if (! merge &&
+		     (verbosity == VERBOSE
+		      || (verbosity != SILENT && (fuzz || in_offset))))
 	      {
 		say ("Hunk #%d succeeded at %s", hunk,
 		     format_linenum (numbuf, newwhere));
@@ -356,7 +377,8 @@ main (int argc, char **argv)
 	      bool changed;
 
 	      if (! outstate.zero_output
-		  && pch_says_nonexistent (! reverse))
+		  && pch_says_nonexistent (! reverse)
+		  && ! (merge && somefailed))
 		{
 		  mismatch = true;
 		  if (verbosity != SILENT)
@@ -491,7 +513,12 @@ reinitialize_almost_everything (void)
     skip_rest_of_patch = false;
 }
 
-static char const shortopts[] = "bB:cd:D:eEfF:g:i:lnNo:p:r:RstTuvV:x:Y:z:Z";
+static char const shortopts[] = "bB:cd:D:eEfF:g:i:l"
+#ifdef ENABLE_MERGE
+				"m"
+#endif
+				"nNo:p:r:RstTuvV:x:Y:z:Z";
+
 static struct option const longopts[] =
 {
   {"backup", no_argument, NULL, 'b'},
@@ -506,6 +533,9 @@ static struct option const longopts[] =
   {"get", no_argument, NULL, 'g'},
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
+#ifdef ENABLE_MERGE
+  {"merge", no_argument, NULL, 'm'},
+#endif
   {"normal", no_argument, NULL, 'n'},
   {"forward", no_argument, NULL, 'N'},
   {"output", required_argument, NULL, 'o'},
@@ -559,6 +589,9 @@ static char const *const option_help[] =
 "  -r FILE  --reject-file=FILE  Output rejects to FILE.",
 "",
 "  -D NAME  --ifdef=NAME  Make merged if-then-else output using NAME.",
+#ifdef ENABLE_MERGE
+"  -m  --merge  Merge using conflict markers instead of creating reject files.",
+#endif
 "  -E  --remove-empty-files  Remove output files that are empty after patching.",
 "",
 "  -Z  --set-utc  Set times of patched files, assuming diff uses UTC (GMT).",
@@ -692,6 +725,11 @@ get_some_switches (void)
 	    case 'l':
 		canonicalize = true;
 		break;
+#ifdef ENABLE_MERGE
+	    case 'm':
+	    	merge = true;
+		break;
+#endif
 	    case 'n':
 		diff_type = NORMAL_DIFF;
 		break;

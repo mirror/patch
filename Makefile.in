@@ -45,6 +45,7 @@ PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 STDBOOL_H = @STDBOOL_H@
 HAVE__BOOL = @HAVE__BOOL@
+ENABLE_MERGE = @ENABLE_MERGE@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -70,11 +71,11 @@ SRCS = $(LIBSRCS) \
 	addext.c argmatch.c backupfile.c \
 	basename.c dirname.c exitfail.c \
 	getopt.c getopt1.c hash.c inp.c \
-	maketime.c partime.c \
+	maketime.c merge.c partime.c \
 	patch.c pch.c \
 	quote.c quotearg.c quotesys.c \
 	util.c version.c xmalloc.c
-OBJS = $(LIBOBJS) \
+OBJS := $(LIBOBJS) \
 	addext.$(OBJEXT) argmatch.$(OBJEXT) backupfile.$(OBJEXT) \
 	basename.$(OBJEXT) dirname.$(OBJEXT) exitfail.$(OBJEXT) \
 	getopt.$(OBJEXT) getopt1.$(OBJEXT) hash.$(OBJEXT) inp.$(OBJEXT) \
@@ -82,6 +83,9 @@ OBJS = $(LIBOBJS) \
 	patch.$(OBJEXT) pch.$(OBJEXT) \
 	quote.$(OBJEXT) quotearg.$(OBJEXT) quotesys.$(OBJEXT) \
 	util.$(OBJEXT) version.$(OBJEXT) xmalloc.$(OBJEXT)
+ifeq ($(ENABLE_MERGE),1)
+OBJS += merge.$(OBJEXT)
+endif
 HDRS = argmatch.h backupfile.h common.h dirname.h \
 	error.h exitfail.h getopt.h gettext.h hash.h \
 	inp.h maketime.h partime.h pch.h \
@@ -111,6 +115,7 @@ TESTS = \
 	tests/crlf-handling \
 	tests/global-reject-files \
 	tests/line-numbers \
+	tests/merge \
 	tests/munged-context-format \
 	tests/need-filename \
 	tests/no-newline-triggers-assert \
@@ -132,8 +137,11 @@ $(TESTS) $(BROKEN_TESTS): all
 	@echo "[$@]"
 	@srcdir=$(srcdir)/tests $(TEST_SHELL) $@
 
+ifeq ($(ENABLE_MERGE),1)
+DEFINE_ENABLE_MERGE := -DENABLE_MERGE
+endif
 COMPILE = $(CC) -c $(CPPFLAGS) $(DEFS) -Ded_PROGRAM=\"$(ed_PROGRAM)\" \
-	-I. -I$(srcdir) $(CFLAGS)
+	$(DEFINE_ENABLE_MERGE) -I. -I$(srcdir) $(CFLAGS)
 
 .c.$(OBJEXT):
 	$(COMPILE) $<

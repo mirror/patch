@@ -79,5 +79,12 @@ PATCH_FUNC_MKDIR_TAKES_ONE_ARG
 jm_AC_DOS
 AC_SYS_LONG_FILE_NAMES
 
+AC_ARG_ENABLE([merge],
+  [AS_HELP_STRING([--disable-merge],
+    [disable support for merging])])
+if test "$enableval" != no ; then
+  AC_SUBST(ENABLE_MERGE, 1)
+fi
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

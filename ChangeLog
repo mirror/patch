@@ -10,6 +10,19 @@
 	last_frozen_line): Move here from patch.c.
 	(apply_hunk, copy_till, similar): Declare here.
 
+	Simple merge support:
+	* configure.ac (ENABLE_MERGE): New --disable-merge option.
+	* patch.c (merge): New variable.
+	(main): New -m and --merge options.  When in merge mode, don't try
+	to reverse patches, and don't try to apply with fuzz.
+	* common.h (merge_hunk): Declare function.
+	* merge.c: New file containing all the merge code.
+	* tests/merge: New test case.
+	* Makefile.in (SRCS): Add merge.c.
+	(OBJS): Add merge.$(OBJEXT) when merge support is enabled.
+	(TESTS): Add test case.
+	(COMPILE): Define ENABLE_MERGE when merge support is enabled.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

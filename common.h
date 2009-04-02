@@ -282,3 +282,9 @@ XTERN LINENUM last_frozen_line;
 bool apply_hunk (struct outstate *, LINENUM);
 bool copy_till (struct outstate *, LINENUM);
 bool similar (char const *, size_t, char const *, size_t);
+
+#ifdef ENABLE_MERGE
+bool merge_hunk (int hunk, struct outstate *, LINENUM where, bool *);
+#else
+# define merge_hunk(hunk, outstate, where, somefailed) false
+#endif
