@@ -58,6 +58,10 @@
 	failed assertions.
 	* tests/merge: Add test cases for each of these checks.
 
+	* Makefile.in (install, uninstall): DESTDIR specifies a prefix to
+	the root directory to install into.
+	(installdirs): Merge with install.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
