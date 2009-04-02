@@ -48,6 +48,8 @@
 	(merge_hunk): Merge the hunk with the compute_changes() result.
 	* tests/merge: Better results now.
 
+	* merge.c: Add license header.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
