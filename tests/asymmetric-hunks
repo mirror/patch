@@ -29,6 +29,7 @@ seq 1 5 > a
 
 check 'patch < a.diff' <<EOF
 patching file a
+Hunk #1 succeeded at 2 with fuzz 2.
 EOF
 
 check 'cat a' <<EOF

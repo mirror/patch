@@ -1,7 +1,8 @@
 2009-04-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (locate_hunk): Revert the assymmetric hunk fix from
-	2009-03-29.  The next commit will fix the original check.
+	2009-03-29.  Instead, allow such hunks to apply only when no
+	more context remains (and the hunk has become symmetric).
 
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 

@@ -908,7 +908,7 @@ locate_hunk (LINENUM fuzz)
     if (first_guess <= max_neg_offset)
 	max_neg_offset = first_guess - 1;
 
-    if (prefix_fuzz < 0)
+    if (prefix_context < suffix_context && fuzz < suffix_context)
       {
 	/* Can only match start of file.  */
 
@@ -929,7 +929,7 @@ locate_hunk (LINENUM fuzz)
 	  return 0;
       }
 
-    if (suffix_fuzz < 0)
+    if (suffix_context < prefix_context && fuzz < prefix_context)
       {
 	/* Can only match end of file.  */
 	offset = first_guess - (input_lines - pat_lines + 1);
