@@ -36,6 +36,10 @@
 
 	* COPYING: Update to GPL version 3 because of diffseq.h.
 
+	* diffseq.h: When an EQUAL_IDX macro is defined, use that instead
+	of EQUAL.  This macro takes vector indexes instead of elements as
+	arguments.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

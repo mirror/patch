@@ -41,8 +41,10 @@
 
 /* Before including this file, you need to define:
      ELEMENT                 The element type of the vectors being compared.
-     EQUAL                   A two-argument macro that tests two elements for
-                             equality.
+     EQUAL(elex, eley)       A two-argument macro that tests two elements for
+                             equality, or
+     EQUAL_IDX(ctxt, x, y)   A three-argument macro that tests the elements at
+                             offset x and y for equality.
      OFFSET                  A signed integer type sufficient to hold the
                              difference between two indices. Usually
                              something like ssize_t.
@@ -77,14 +79,20 @@
 # endif
 #endif
 
+#ifdef EQUAL
+# define EQUAL_IDX(ctxt, x, y) EQUAL(xv[x], yv[y])
+#endif
+
 /*
  * Context of comparison operation.
  */
 struct context
 {
+#ifdef EQUAL
   /* Vectors being compared.  */
   ELEMENT const *xvec;
   ELEMENT const *yvec;
+#endif
 
   /* Extra fields.  */
   EXTRA_CONTEXT_FIELDS
@@ -160,8 +168,10 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 {
   OFFSET *const fd = ctxt->fdiag;	/* Give the compiler a chance. */
   OFFSET *const bd = ctxt->bdiag;	/* Additional help for the compiler. */
+#ifdef EQUAL
   ELEMENT const *const xv = ctxt->xvec;	/* Still more help for the compiler. */
   ELEMENT const *const yv = ctxt->yvec;	/* And more and more . . . */
+#endif
   const OFFSET dmin = xoff - ylim;	/* Minimum valid diagonal. */
   const OFFSET dmax = xlim - yoff;	/* Maximum valid diagonal. */
   const OFFSET fmid = xoff - yoff;	/* Center diagonal of top-down search. */
@@ -200,7 +210,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 	  OFFSET x0 = tlo < thi ? thi : tlo + 1;
 
 	  for (x = x0, y = x0 - d;
-	       x < xlim && y < ylim && EQUAL (xv[x], yv[y]);
+	       x < xlim && y < ylim && EQUAL_IDX (ctxt, x, y);
 	       x++, y++)
 	    continue;
 	  if (x - x0 > SNAKE_LIMIT)
@@ -233,7 +243,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 	  OFFSET x0 = tlo < thi ? tlo : thi - 1;
 
 	  for (x = x0, y = x0 - d;
-	       xoff < x && yoff < y && EQUAL (xv[x - 1], yv[y - 1]);
+	       xoff < x && yoff < y && EQUAL_IDX (ctxt, x - 1, y - 1);
 	       x--, y--)
 	    continue;
 	  if (x0 - x > SNAKE_LIMIT)
@@ -281,7 +291,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 			 that it end with a significant snake.  */
 		      int k;
 
-		      for (k = 1; EQUAL (xv[x - k], yv[y - k]); k++)
+		      for (k = 1; EQUAL_IDX (ctxt, x - k, y - k); k++)
 			if (k == SNAKE_LIMIT)
 			  {
 			    best = v;
@@ -317,7 +327,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 			 that it end with a significant snake.  */
 		      int k;
 
-		      for (k = 0; EQUAL (xv[x + k], yv[y + k]); k++)
+		      for (k = 0; EQUAL_IDX (ctxt, x + k, y + k); k++)
 			if (k == SNAKE_LIMIT - 1)
 			  {
 			    best = v;
@@ -423,18 +433,20 @@ static bool
 compareseq (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
 	    bool find_minimal, struct context *ctxt)
 {
+#ifdef EQUAL
   ELEMENT const *xv = ctxt->xvec; /* Help the compiler.  */
   ELEMENT const *yv = ctxt->yvec;
+#endif
 
   /* Slide down the bottom initial diagonal.  */
-  while (xoff < xlim && yoff < ylim && EQUAL (xv[xoff], yv[yoff]))
+  while (xoff < xlim && yoff < ylim && EQUAL_IDX (ctxt, xoff, yoff))
     {
       xoff++;
       yoff++;
     }
 
   /* Slide up the top initial diagonal. */
-  while (xoff < xlim && yoff < ylim && EQUAL (xv[xlim - 1], yv[ylim - 1]))
+  while (xoff < xlim && yoff < ylim && EQUAL_IDX (ctxt, xlim - 1, ylim - 1))
     {
       xlim--;
       ylim--;
@@ -476,6 +488,7 @@ compareseq (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
 
 #undef ELEMENT
 #undef EQUAL
+#undef EQUAL_IDX
 #undef OFFSET
 #undef EXTRA_CONTEXT_FIELDS
 #undef NOTE_DELETE
