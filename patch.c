@@ -235,7 +235,8 @@ main (int argc, char **argv)
 	/* might misfire and we can't catch it easily */
 
 	/* apply each hunk of patch */
-	while (0 < (got_hunk = another_hunk (diff_type, reverse))) {
+	while (0 < (got_hunk = another_hunk (diff_type, reverse)))
+	  {
 	    LINENUM where = 0; /* Pacify `gcc -Wall'.  */
 	    LINENUM newwhere;
 	    LINENUM fuzz = 0;
@@ -293,43 +294,34 @@ main (int argc, char **argv)
 	    }
 
 	    newwhere = (where ? where : pch_first()) + out_offset;
-	    if (skip_rest_of_patch) {
+	    if (skip_rest_of_patch
+		|| (where == 1 && pch_says_nonexistent (reverse) == 2
+		    && instat.st_size)
+		|| ! where
+		|| ! apply_hunk (&outstate, where))
+	      {
 		abort_hunk (! failed, reverse);
 		failed++;
-		if (verbosity == VERBOSE)
-		  say ("Hunk #%d ignored at %s.\n", hunk,
+		if (verbosity == VERBOSE ||
+		    (! skip_rest_of_patch && verbosity != SILENT))
+		  say ("Hunk #%d %s at %s.\n", hunk,
+		       skip_rest_of_patch ? "ignored" : "FAILED",
 		       format_linenum (numbuf, newwhere));
-	    }
-	    else if (!where
-		     || (where == 1 && pch_says_nonexistent (reverse) == 2
-			 && instat.st_size)) {
-		abort_hunk (! failed, reverse);
-		failed++;
-		if (verbosity != SILENT)
-		  say ("Hunk #%d FAILED at %s.\n", hunk,
-		       format_linenum (numbuf, newwhere));
-	    }
-	    else if (! apply_hunk (&outstate, where)) {
-		abort_hunk (! failed, reverse);
-		failed++;
-		if (verbosity != SILENT)
-		  say ("Hunk #%d FAILED at %s.\n", hunk,
-		       format_linenum (numbuf, newwhere));
-	    } else {
-		if (verbosity == VERBOSE
-		    || (verbosity != SILENT && (fuzz || in_offset))) {
-		    say ("Hunk #%d succeeded at %s", hunk,
-			 format_linenum (numbuf, newwhere));
-		    if (fuzz)
-		      say (" with fuzz %s", format_linenum (numbuf, fuzz));
-		    if (in_offset)
-		      say (" (offset %s line%s)",
-			   format_linenum (numbuf, in_offset),
-			   "s" + (in_offset == 1));
-		    say (".\n");
-		}
-	    }
-	}
+	      }
+	    else if (verbosity == VERBOSE
+		     || (verbosity != SILENT && (fuzz || in_offset)))
+	      {
+		say ("Hunk #%d succeeded at %s", hunk,
+		     format_linenum (numbuf, newwhere));
+		if (fuzz)
+		  say (" with fuzz %s", format_linenum (numbuf, fuzz));
+		if (in_offset)
+		  say (" (offset %s line%s)",
+		       format_linenum (numbuf, in_offset),
+		       "s" + (in_offset == 1));
+		say (".\n");
+	      }
+	  }
 
 	if (!skip_rest_of_patch)
 	  {

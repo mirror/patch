@@ -4,6 +4,8 @@
 	2009-03-29.  Instead, allow such hunks to apply only when no
 	more context remains (and the hunk has become symmetric).
 
+	* patch.c (main): Restructure to get rid of some code duplication.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver
