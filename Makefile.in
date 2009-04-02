@@ -86,7 +86,7 @@ OBJS := $(LIBOBJS) \
 ifeq ($(ENABLE_MERGE),1)
 OBJS += merge.$(OBJEXT)
 endif
-HDRS = argmatch.h backupfile.h common.h dirname.h \
+HDRS = argmatch.h backupfile.h bestmatch.h common.h dirname.h \
 	error.h exitfail.h getopt.h gettext.h hash.h \
 	inp.h maketime.h partime.h pch.h \
 	quote.h quotearg.h quotesys.h \

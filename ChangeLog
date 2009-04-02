@@ -23,6 +23,13 @@
 	(TESTS): Add test case.
 	(COMPILE): Define ENABLE_MERGE when merge support is enabled.
 
+	Locate hunks to merge more intelligently:
+	* bestmatch.h: Shortest Edit Sequence algorithm.
+	* merge.c (locate_merge, count_fuzz_lines): New functions.
+	(merge_hunk): Replace simple guessing with locate_merge().
+	* Makefile.in (HDRS): Add bestmatch.h.
+	* tests/merge: Only minor improvements up to now.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

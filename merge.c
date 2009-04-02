@@ -4,7 +4,102 @@
 #include <pch.h>
 #include <util.h>
 
+static LINENUM count_context_lines (void);
 static bool context_matches_file (LINENUM, LINENUM);
+
+#define OFFSET LINENUM
+#define EQUAL_IDX(x, y) (context_matches_file (x, y))
+#include "bestmatch.h"
+
+static LINENUM
+locate_merge (LINENUM *matched)
+{
+    LINENUM first_guess = pch_first () + in_offset;
+    LINENUM pat_lines = pch_ptrn_lines ();
+    LINENUM max_where = input_lines - (pat_lines - pch_suffix_context ()) + 1;
+    LINENUM min_where = last_frozen_line + 1;
+    LINENUM max_pos_offset = max_where - first_guess;
+    LINENUM max_neg_offset = first_guess - min_where;
+    LINENUM max_offset = (max_pos_offset < max_neg_offset
+			  ? max_neg_offset : max_pos_offset);
+    LINENUM context_lines = count_context_lines ();
+    LINENUM where = first_guess, max_matched = 0;
+    LINENUM min, max;
+    LINENUM offset;
+
+    /* - Allow at most MAX changes so that no more than FUZZ_LINES lines
+	 may change (insert + delete).
+       - Require the remaining lines to match.  */
+    if (context_lines == 0)
+      goto out;
+    max = 2 * context_lines;
+    min = pat_lines - context_lines;
+
+    if (debug & 1)
+      {
+	char numbuf0[LINENUM_LENGTH_BOUND + 1];
+	char numbuf1[LINENUM_LENGTH_BOUND + 1];
+	say ("locating merge: min=%s max=%s ",
+	     format_linenum (numbuf0, min),
+	     format_linenum (numbuf1, max));
+      }
+
+    /* Do not try lines <= 0.  */
+    if (first_guess <= max_neg_offset)
+      max_neg_offset = first_guess - 1;
+
+    for (offset = 0; offset <= max_offset; offset++)
+      {
+	if (offset <= max_pos_offset)
+	  {
+	    LINENUM guess = first_guess + offset;
+	    LINENUM last;
+	    LINENUM changes;
+
+	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
+				 min, max, &last);
+	    if (changes <= max && max_matched < last - guess)
+	      {
+		max_matched = last - guess;
+		where = guess;
+		if (changes == 0)
+		  break;
+		min = last - guess;
+		max = changes - 1;
+	      }
+	  }
+	if (0 < offset && offset <= max_neg_offset)
+	  {
+	    LINENUM guess = first_guess - offset;
+	    LINENUM last;
+	    LINENUM changes;
+
+	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
+				 min, max, &last);
+	    if (changes <= max && max_matched < last - guess)
+	      {
+		max_matched = last - guess;
+		where = guess;
+		if (changes == 0)
+		  break;
+		min = last - guess;
+		max = changes - 1;
+	      }
+	  }
+      }
+    if (debug & 1)
+      {
+	char numbuf0[LINENUM_LENGTH_BOUND + 1];
+	char numbuf1[LINENUM_LENGTH_BOUND + 1];
+	say ("where=%s matched=%s\n",
+	     format_linenum (numbuf0, where),
+	     format_linenum (numbuf1, max_matched));
+      }
+
+  out:
+    *matched = max_matched;
+    return where;
+}
 
 static void
 merge_result (int hunk, char const *what, LINENUM from, LINENUM to)
@@ -52,20 +147,8 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM first_where,
     }
   else
     {
-      /* Just guessing ...  */
-      where = found_where = pch_first () + in_offset;
-      if (context_matches_file (new, where))
-	{
-	  lastwhere = where + pch_ptrn_lines () - 1;
-	  if (! context_matches_file (lastnew, lastwhere))
-	    {
-	      lastwhere = where + pch_repl_lines () - 1;
-	      if (! context_matches_file (lastnew, lastwhere))
-		lastwhere = where - 1;
-	    }
-	}
-      else
-	lastwhere = where - 1;
+      where = found_where = locate_merge (&lastwhere);
+      lastwhere += where - 1;
     }
 
   /* Hide common prefix context */
@@ -136,6 +219,19 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM first_where,
   *somefailed = true;
 
   return true;
+}
+
+static LINENUM
+count_context_lines (void)
+{
+  LINENUM old;
+  LINENUM lastold = pch_ptrn_lines ();
+  LINENUM context;
+
+  for (context = 0, old = 1; old <= lastold; old++)
+    if (pch_char (old) == ' ')
+      context++;
+  return context;
 }
 
 static bool
