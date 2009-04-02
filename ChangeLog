@@ -50,6 +50,10 @@
 
 	* merge.c: Add license header.
 
+	* merge.c (locate_merge): The number of changes allowed permits a
+	higher maximum merge position (max_where).
+	* tests/merge: Add a test for this case.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

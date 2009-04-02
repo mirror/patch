@@ -49,22 +49,22 @@ locate_merge (LINENUM *matched)
 {
     LINENUM first_guess = pch_first () + in_offset;
     LINENUM pat_lines = pch_ptrn_lines ();
-    LINENUM max_where = input_lines - (pat_lines - pch_suffix_context ()) + 1;
+    LINENUM context_lines = count_context_lines ();
+    LINENUM max_where = input_lines - pat_lines + context_lines + 1;
     LINENUM min_where = last_frozen_line + 1;
     LINENUM max_pos_offset = max_where - first_guess;
     LINENUM max_neg_offset = first_guess - min_where;
     LINENUM max_offset = (max_pos_offset < max_neg_offset
 			  ? max_neg_offset : max_pos_offset);
-    LINENUM context_lines = count_context_lines ();
     LINENUM where = first_guess, max_matched = 0;
     LINENUM min, max;
     LINENUM offset;
 
-    /* - Allow at most MAX changes so that no more than FUZZ_LINES lines
-	 may change (insert + delete).
-       - Require the remaining lines to match.  */
     if (context_lines == 0)
-      goto out;
+      goto out;  /* locate_hunk() already tried that */
+
+    /* Allow at most CONTEXT_LINES lines to be replaced (replacing counts
+       as insert + delete), and require the remaining MIN lines to match.  */
     max = 2 * context_lines;
     min = pat_lines - context_lines;
 
