@@ -252,7 +252,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 
 	  while (pch_char (old) == '-')
 	    {
-	      if (oldin[old] == '-')
+	      if (oldin[old] == '-' || oldin[in] == '+')
 		goto conflict;
 	      else if (oldin[old] == ' ')
 		{
@@ -286,7 +286,10 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 		{
 		  if (oldin[old] != '-')
 		    break;
-		  assert (pch_char (new) == ' ');
+		  if (pch_char (new) == '+')
+		    goto conflict;
+		  else
+		    assert (pch_char (new) == ' ');
 		  old++;
 		  new++;
 		}

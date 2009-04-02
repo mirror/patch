@@ -54,6 +54,10 @@
 	higher maximum merge position (max_where).
 	* tests/merge: Add a test for this case.
 
+	* merge.c (merge_hunk): Add two missing checks that were leading into
+	failed assertions.
+	* tests/merge: Add test cases for each of these checks.
+
 2009-04-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: When $GDB is set, run patch in gdbserver

@@ -291,7 +291,7 @@ a
 Status: 1
 EOF
 
-check 'x 3 2i b . 4i b .' <<EOF
+check 'x 3  2i b . 4i b .' <<EOF
 Hunk #1 merged at 2,4.
 1
 b
@@ -302,7 +302,7 @@ EOF
 
 # ==============================================================
 
-check 'x 5 2,4d -- 3c 3c .' <<EOF
+check 'x 5  2,4d -- 3c 3c .' <<EOF
 Hunk #1 UNMERGED at 2-7.
 1
 <<<<<<<
@@ -315,7 +315,7 @@ Hunk #1 UNMERGED at 2-7.
 Status: 1
 EOF
 
-check 'x 5 3c 3c . -- 2,4d' <<EOF
+check 'x 5  3c 3c . -- 2,4d' <<EOF
 Hunk #1 UNMERGED at 2-7.
 1
 <<<<<<<
@@ -325,5 +325,31 @@ Hunk #1 UNMERGED at 2-7.
 4
 >>>>>>>
 5
+Status: 1
+EOF
+
+# ==============================================================
+
+check 'x 3  1,2d -- 2i c .' <<EOF
+Hunk #1 UNMERGED at 1-6.
+<<<<<<<
+1
+c
+2
+=======
+>>>>>>>
+3
+Status: 1
+EOF
+
+check 'x 3  2i c . -- 1,2d' <<EOF
+Hunk #1 UNMERGED at 1-6.
+<<<<<<<
+=======
+1
+c
+2
+>>>>>>>
+3
 Status: 1
 EOF
