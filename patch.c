@@ -904,10 +904,8 @@ locate_hunk (LINENUM fuzz)
     LINENUM pat_lines = pch_ptrn_lines();
     LINENUM prefix_context = pch_prefix_context ();
     LINENUM suffix_context = pch_suffix_context ();
-    LINENUM context = (prefix_context < suffix_context
-		       ? suffix_context : prefix_context);
-    LINENUM prefix_fuzz = fuzz + prefix_context - context;
-    LINENUM suffix_fuzz = fuzz + suffix_context - context;
+    LINENUM prefix_fuzz = (prefix_context < fuzz ? prefix_context : fuzz);
+    LINENUM suffix_fuzz = (suffix_context < fuzz ? suffix_context : fuzz);
     LINENUM max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
     LINENUM min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
     LINENUM max_pos_offset = max_where - first_guess;
@@ -922,7 +920,8 @@ locate_hunk (LINENUM fuzz)
     if (first_guess <= max_neg_offset)
 	max_neg_offset = first_guess - 1;
 
-    if (prefix_context < suffix_context && fuzz < suffix_context)
+    if (prefix_context < suffix_context && fuzz < suffix_context
+	&& pch_first () <= 1)
       {
 	/* Can only match start of file.  */
 

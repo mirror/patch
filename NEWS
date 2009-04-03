@@ -44,10 +44,11 @@
 * Reject more malformed normal format commands and check for trailing
   garbage.  Recognize ed commands without addresses.
 * As seemingly originally intended, patch will assume that hunks with fewer
-  lines of prefix than suffix context must apply at the beginning of the
-  file, while hunks with fewer lines of suffix context must apply at the end
-  of the file.  If a high-enough fuzz factor is allowed to strip off all
-  context (which is not the default), such hunks can also apply within a file.
+  lines of prefix than suffix context which start at line 1 must apply at the
+  beginning of the file, while hunks with fewer lines of suffix context must
+  apply at the end of the file.  If a high-enough fuzz factor is allowed to
+  strip off all context (which is not the default), such hunks can also apply
+  within a file.
 * Handle missing timestamps better.
 * Various bug fixes.
 

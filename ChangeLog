@@ -19,11 +19,15 @@
 	ed related tests if we don't have it.
 	* tests/merge: Use sed instead of ed: sed is more readily available.
 
+	* patch.c (locate_hunk): If a hunk starts at a line > 1, it obviously
+	is not from the start of the file.
+	* tests/asymmetric-hunks: Add tests for all possible cases.
+
 2009-04-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (locate_hunk): Revert the assymmetric hunk fix from
 	2009-03-29.  Instead, allow such hunks to apply only when no
-	more context remains (and the hunk has become symmetric).
+	more context remains.
 
 	* patch.c (main): Restructure to get rid of some code duplication.
 	(copy_till, similar): Export these functions.
