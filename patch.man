@@ -110,8 +110,9 @@ would generate a file name that is too long
 makes the file name too long, then
 .B #
 replaces the file name's last character).
-(The rejected hunk comes out in unified or context diff format.
-If the input was a normal diff, many of the contexts are simply null.)
+.PP
+The rejected hunk comes out in unified or context diff format.
+If the input was a normal diff, many of the contexts are simply null.
 The line numbers on the hunks in the reject file may be different than
 in the patch file: they reflect the approximate location patch thinks the
 failed hunks belong in the new file rather than the old one.
@@ -121,7 +122,7 @@ failed, and if so which line (in the new file)
 .B patch
 thought the hunk should go on.
 If the hunk is installed at a different line
-from the line number specified in the diff you
+from the line number specified in the diff, you
 are told the offset.
 A single large offset
 .I may
@@ -408,6 +409,26 @@ Any sequence of one or more blanks in the patch file matches any sequence
 in the original file, and sequences of blanks at the ends of lines are ignored.
 Normal characters must still match exactly.
 Each line of the context must still match a line in the original file.
+.TP
+\fB\-m\fP  or  \fB\*=merge\fP
+Merge a \fIpatchfile\fP into the original files similar to
+\fBmerge\fP(1). If a conflict is found, \fBpatch\fP outputs a warning
+and brackets the conflict with \fB<<<<<<<\fP and \fB>>>>>>>\fP lines.  A
+typical conflict will look like this:
+.LP
+.RS
+.nf
+.B <<<<<<<
+lines from the original file
+.B =======
+lines from the patch
+.B >>>>>>>
+.RE
+.fi
+.IP "" 3
+If there are conflicts, the user should edit the result and delete one
+of the alternatives.  This option implies \fB\*=forward\fP and does not
+take the \fB--fuzz\fR=\fInum\fP option into account.
 .TP
 \fB\-n\fP  or  \fB\*=normal\fP
 Interpret the patch file as a normal diff.
@@ -793,7 +814,8 @@ temporary files
 controlling terminal; used to get answers to questions asked of the user
 .SH "SEE ALSO"
 .BR diff (1),
-.BR ed (1)
+.BR ed (1),
+.BR merge (1).
 .Sp
 Marshall T. Rose and Einar A. Stefferud,
 Proposed Standard for Message Encapsulation,
@@ -952,7 +974,7 @@ what kind of patch it is.
 .BR patch 's
 exit status is
 0 if all hunks are applied successfully,
-1 if some hunks cannot be applied,
+1 if some hunks cannot be applied or there were merge conflicts,
 and 2 if there is more serious trouble.
 When applying a set of patches in a loop it behooves you to check this
 exit status so you don't apply a later patch to a partially patched file.
@@ -970,7 +992,7 @@ cannot tell if the line numbers are off in an
 script, and can detect
 bad line numbers in a normal diff only when it finds a change or deletion.
 A context diff using fuzz factor 3 may have the same problem.
-Until a suitable interactive interface is added, you should probably do
+You should probably do
 a context diff in these cases to see if the changes made sense.
 Of course, compiling without errors is a pretty good indication that the patch
 worked, but not always.
@@ -1129,10 +1151,6 @@ Spaces are significant in the following list, and operands are required.
 Please report bugs via email to
 .BR <bug-patch@gnu.org> .
 .PP
-.B patch
-could be smarter about partial matches, excessively deviant offsets and
-swapped code, but that would take an extra pass.
-.PP
 If code has been duplicated (for instance with
 \fB#ifdef OLDCODE\fP .\|.\|. \fB#else .\|.\|. #endif\fP),
 .B patch
@@ -1179,3 +1197,4 @@ setting file times, and deleting files;
 and made it conform better to \s-1POSIX\s0.
 Other contributors include Wayne Davison, who added unidiff support,
 and David MacKenzie, who added configuration and backup support.
+Andreas Gr\[:u]nbacher added support for merging.
