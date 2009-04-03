@@ -411,10 +411,10 @@ Normal characters must still match exactly.
 Each line of the context must still match a line in the original file.
 .TP
 \fB\-m\fP  or  \fB\*=merge\fP
-Merge a \fIpatchfile\fP into the original files similar to
-\fBmerge\fP(1). If a conflict is found, \fBpatch\fP outputs a warning
-and brackets the conflict with \fB<<<<<<<\fP and \fB>>>>>>>\fP lines.  A
-typical conflict will look like this:
+Merge a patch file into the original files similar to \fBmerge\fP(1). If a
+conflict is found, \fBpatch\fP outputs a warning and brackets the conflict
+with \fB<<<<<<<\fP and \fB>>>>>>>\fP lines.  A typical conflict will look like
+this:
 .LP
 .RS
 .nf

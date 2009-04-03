@@ -1,11 +1,14 @@
 * A regression test suite has been added ("make check").
+* A -m or --merge option has been added which will merge a patch file into
+  the original files similar to merge(1).  See the patch(1) manual page for
+  documentation.
 * Unless a filename has been specified on the command line, look only
   for filenames in the patch until one has been found.  This prevents
   patch from tripping over garbage that isn't a patch.  When conforming
   to POSIX, this behavior is turned off and patch will ask for a
   filename if none is found.
-* All reject files have file name headers, which allows to use them
-  as regular patches.
+* All reject files have file name headers, so they are now well-formed
+  patches.
 * When a patch file modifies the same file more than once, patch makes
   sure it backs up the original version of the file, rather than any
   intermediary versions.
@@ -40,6 +43,11 @@
   imply the simple version control mode, and can be combined.
 * Reject more malformed normal format commands and check for trailing
   garbage.  Recognize ed commands without addresses.
+* As seemingly originally intended, patch will assume that hunks with fewer
+  lines of prefix than suffix context must apply at the beginning of the
+  file, while hunks with fewer lines of suffix context must apply at the end
+  of the file.  If a high-enough fuzz factor is allowed to strip off all
+  context (which is not the default), such hunks can also apply within a file.
 * Handle missing timestamps better.
 * Various bug fixes.
 
