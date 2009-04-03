@@ -184,6 +184,7 @@ bool
 merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    bool *somefailed)
 {
+  bool applies_cleanly;
   bool first_result = true;
   FILE *fp = outstate->ofp;
   LINENUM old = 1;
@@ -204,9 +205,15 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
     new++;
 
   if (where)
-    matched = pch_ptrn_lines ();
+    {
+      applies_cleanly = true;
+      matched = pch_ptrn_lines ();
+    }
   else
-    where = locate_merge (&matched);
+    {
+      where = locate_merge (&matched);
+      applies_cleanly = false;
+    }
 
   in = firstold + 2;
   oldin = xmalloc (in + matched + 1);
@@ -277,7 +284,8 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    new++;
 
 	  lines = new - firstnew;
-	  if (verbosity == VERBOSE)
+	  if (verbosity == VERBOSE
+	      || (verbosity != SILENT) && ! applies_cleanly)
 	    merge_result (&first_result, hunk, "merged",
 			  where, where + lines - 1);
 	  last_frozen_line += (old - firstold);

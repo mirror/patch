@@ -74,6 +74,7 @@ b
 EOF
 
 check 'x 3  2i b . -- 3i c .' <<EOF
+Hunk #1 merged at 2.
 1
 b
 2
@@ -225,7 +226,7 @@ Status: 1
 EOF
 
 check 'x 3  2i b . 4i b . -- 2i c .' <<EOF
-Hunk #1 UNMERGED at 2-6.
+Hunk #1 UNMERGED at 2-6, merged at 8.
 1
 <<<<<<<
 c
@@ -239,7 +240,7 @@ Status: 1
 EOF
 
 check 'x 3  2i b . 4i b b . -- 2i c .' <<EOF
-Hunk #1 UNMERGED at 2-6.
+Hunk #1 UNMERGED at 2-6, merged at 8-9.
 1
 <<<<<<<
 c
@@ -281,6 +282,7 @@ b
 EOF
 
 check 'x 4  2i b . 5i b . -- 1i 0 . 4i c .' <<EOF
+Hunk #1 merged at 3,7.
 0
 1
 b
