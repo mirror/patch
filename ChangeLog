@@ -13,6 +13,12 @@
 	--verbose mode.
 	* tests/merge: Add another interesting test case.
 
+	* tests/test-lib.sh: Add have_ed function for checking if ed is
+	available.
+	* tests/crlf-handling, tests/need-filename: Check for ed and skip the
+	ed related tests if we don't have it.
+	* tests/merge: Use sed instead of ed: sed is more readily available.
+
 2009-04-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.c (locate_hunk): Revert the assymmetric hunk fix from

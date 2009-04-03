@@ -39,9 +39,13 @@ check 'patch c < ab.diff' <<EOF
 patching file c
 EOF
 
-diff -e a b > ab.ed | lf2crlf > ab.ed
-echo 1 > c
-ncheck 'patch c < ab.ed'
+if ! have_ed ; then
+    echo "The ed utility is not available; skipping ed related tests"
+else
+    diff -e a b > ab.ed | lf2crlf > ab.ed
+    echo 1 > c
+    ncheck 'patch c < ab.ed'
+fi
 
 # ==============================================================
 

@@ -38,31 +38,34 @@ EOF
 
 # ==============================================================
 
-cat > e.diff <<EOF
+if ! have_ed ; then
+    echo "The ed utility is not available; skipping ed related tests"
+else
+    cat > e.diff <<EOF
 0a
 one
 .
 EOF
 
-check 'patch < e.diff || echo "Status: $?"' <<EOF
+    check 'patch < e.diff || echo "Status: $?"' <<EOF
 $PATCH: **** Only garbage was found in the patch input.
 Status: 2
 EOF
 
-check 'patch -f -e < e.diff || echo "Status: $?"' <<EOF
+    check 'patch -f -e < e.diff || echo "Status: $?"' <<EOF
 can't find file to patch at input line 1
 No file to patch.  Skipping patch.
 Status: 1
 EOF
 
-rm -f f
-touch f
-check 'patch f < e.diff' <<EOF
-EOF
+    rm -f f
+    touch f
+    ncheck 'patch f < e.diff'
 
-check 'cat f' <<EOF
+    check 'cat f' <<EOF
 one
 EOF
+fi
 
 # ==============================================================
 

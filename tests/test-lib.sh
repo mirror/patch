@@ -6,7 +6,7 @@
 # notice and this notice are preserved.
 
 require_cat() {
-    if ! cat /dev/null > /dev/null 2> /dev/null; then
+    if ! type cat > /dev/null 2> /dev/null; then
 	echo "This test requires the cat utility" >&2
 	exit 2
     fi
@@ -20,6 +20,10 @@ require_diff() {
 	echo "This test requires GNU diff" >&2
 	exit 2
     esac
+}
+
+have_ed() {
+    type ed >/dev/null 2>/dev/null
 }
 
 use_tmpdir() {
