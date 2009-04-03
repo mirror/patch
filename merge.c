@@ -285,7 +285,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 
 	  lines = new - firstnew;
 	  if (verbosity == VERBOSE
-	      || (verbosity != SILENT) && ! applies_cleanly)
+	      || ((verbosity != SILENT) && ! applies_cleanly))
 	    merge_result (&first_result, hunk, "merged",
 			  where, where + lines - 1);
 	  last_frozen_line += (old - firstold);
