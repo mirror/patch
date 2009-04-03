@@ -4,6 +4,14 @@
 	changes.
 	* NEWS: Document the asymmetric hunk behavior and the -m or --merge
 	option.
+	* merge.c (locate_merge): Include the number of changes in the debug
+	message.
+	(print_linerange): New function.
+	(merge_result): No longer print line offsets: without exact matches,
+	line numbers are less meaningful.  Output the entire messages here.
+	(merge_hunk): Be silent about successful merges unless in --verbose
+	mode.
+	tests/merge: Add another interesting test case.
 
 2009-04-02  Andreas Gruenbacher  <agruen@suse.de>
 

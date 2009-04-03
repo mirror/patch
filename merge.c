@@ -124,9 +124,11 @@ locate_merge (LINENUM *matched)
       {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
 	char numbuf1[LINENUM_LENGTH_BOUND + 1];
-	say ("where=%s matched=%s\n",
+	char numbuf2[LINENUM_LENGTH_BOUND + 1];
+	say ("where=%s matched=%s changes=%s\n",
 	     format_linenum (numbuf0, where),
-	     format_linenum (numbuf1, max_matched));
+	     format_linenum (numbuf1, max_matched),
+	     format_linenum (numbuf2, max + 1));
       }
 
   out:
@@ -135,36 +137,47 @@ locate_merge (LINENUM *matched)
 }
 
 static void
-merge_result (bool *first_result, char const *what, LINENUM from, LINENUM to)
+print_linerange (LINENUM from, LINENUM to)
 {
-  if (verbosity != SILENT)
+  char numbuf0[LINENUM_LENGTH_BOUND + 1];
+  char numbuf1[LINENUM_LENGTH_BOUND + 1];
+
+  if (to <= from)
+    printf ("%s",
+	    format_linenum (numbuf0, from));
+  else
+    printf ("%s-%s",
+	    format_linenum (numbuf0, from),
+	    format_linenum (numbuf1, to));
+}
+
+static void
+merge_result (bool *first_result, int hunk, char const *what, LINENUM from,
+	      LINENUM to)
+{
+  static char const *last_what;
+
+  if (*first_result && what)
     {
-      static char const *last_what;
-      char numbuf0[LINENUM_LENGTH_BOUND + 1];
-      char numbuf1[LINENUM_LENGTH_BOUND + 1];
-
-      if (*first_result)
-	{
-	  last_what = what;
-	  printf ("%s at ", what);
-	}
-      else if (last_what == what)
-	fputs (",", stdout);
-      else
-	printf (", %s at ", what);
-      *first_result = false;
-
-      if (to <= from)
-	printf ("%s",
-		format_linenum (numbuf0, from + out_offset));
-      else
-	printf ("%s-%s",
-		format_linenum (numbuf0, from + out_offset),
-		format_linenum (numbuf1, to + out_offset));
-      if (in_offset != 0)
-	printf (" (offset %s lines)",
-		format_linenum (numbuf0, in_offset));
+      printf ("Hunk #%d %s at ", hunk, what);
+      last_what = what;
     }
+  else if (! what)
+    {
+      if (! *first_result)
+	{
+	  fputs (".\n", stdout);
+	  fflush (stdout);
+	  last_what = 0;
+	}
+      return;
+    }
+  else if (last_what == what)
+    fputs (",", stdout);
+  else
+    printf (", %s at ", what);
+  print_linerange (from + out_offset, to + out_offset);
+  *first_result = false;
 }
 
 bool
@@ -237,9 +250,6 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
     if (! copy_till (outstate, where - 1))
       return false;
 
-  if (verbosity != SILENT)
-    printf("Hunk #%d ", hunk);
-
   for (;;)
     {
       firstold = old;
@@ -267,7 +277,9 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    new++;
 
 	  lines = new - firstnew;
-	  merge_result (&first_result, "merged", where, where + lines - 1);
+	  if (verbosity == VERBOSE)
+	    merge_result (&first_result, hunk, "merged",
+			  where, where + lines - 1);
 	  last_frozen_line += (old - firstold);
 	  where += (old - firstold);
 	  out_offset += new - firstnew;
@@ -379,7 +391,8 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	   firstin++, firstnew++, lastwhere++)
 	continue;
       if (firstin == in && firstnew == new)
-	merge_result (&first_result, "already applied", where, lastwhere - 1);
+	merge_result (&first_result, hunk, "already applied",
+		      where, lastwhere - 1);
       if (where != lastwhere)
 	{
 	  where = lastwhere;
@@ -401,8 +414,8 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    continue;
 
 	  lines = 3 + (in - firstin) + (new - firstnew);
-	  merge_result (&first_result, "UNMERGED", where,
-			where + lines - 1);
+	  merge_result (&first_result, hunk, "UNMERGED",
+			where, where + lines - 1);
 	  out_offset += 3 + (new - firstnew);
 
 	  fputs (outstate->after_newline + "\n<<<<<<<\n", fp);
@@ -438,11 +451,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	  *somefailed = true;
 	}
     }
-  if (verbosity != SILENT)
-    {
-      fputs (".\n", stdout);
-      fflush (stdout);
-    }
+  merge_result (&first_result, 0, 0, 0, 0);
 
   assert (last_frozen_line == where - 1);
   free (oldin);
