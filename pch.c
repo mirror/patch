@@ -1576,7 +1576,15 @@ another_hunk (enum diff difftype, bool rev)
 	    fprintf (stderr, "%s %c",
 		     format_linenum (numbuf0, i),
 		     p_Char[i]);
-	    if (p_Char[i] != '*' && p_Char[i] != '=' && p_Char[i] != '^')
+	    if (p_Char[i] == '*')
+	      fprintf (stderr, " %s,%s\n",
+		       format_linenum (numbuf0, p_first),
+		       format_linenum (numbuf1, p_ptrn_lines));
+	    else if (p_Char[i] == '=')
+	      fprintf (stderr, " %s,%s\n",
+		       format_linenum (numbuf0, p_newfirst),
+		       format_linenum (numbuf1, p_repl_lines));
+	    else if (p_Char[i] != '^')
 	      {
 		fputs(" |", stderr);
 		pch_write_line (i, stderr);

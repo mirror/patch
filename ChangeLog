@@ -1,3 +1,9 @@
+2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
+
+	* pch.c (another_hunk): Add (back) the line number ranges to the
+	debug output.
+	* merge.c (merge_hunk): Likewise.
+
 2009-04-03  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.man: Document the -m or --merge option.  Some minor other

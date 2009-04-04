@@ -227,6 +227,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
   if (debug & 2)
     {
       char numbuf0[LINENUM_LENGTH_BOUND + 1];
+      char numbuf1[LINENUM_LENGTH_BOUND + 1];
       LINENUM n;
 
       fputc ('\n', stderr);
@@ -235,9 +236,17 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	  fprintf (stderr, "%s %c",
 		  format_linenum (numbuf0, n),
 		  oldin[n]);
-	  if (n > 0 && n <= firstold)
+	  if (n == 0)
+	    fprintf(stderr, " %s,%s\n",
+		    format_linenum (numbuf0, pch_first()),
+		    format_linenum (numbuf1, pch_ptrn_lines()));
+	  else if (n <= firstold)
 	    fprintf (stderr, " |%.*s",
 		     (int) pch_line_len (n), pfetch (n));
+	  else if (n == in - 1)
+	    fprintf(stderr, " %s,%s\n",
+		    format_linenum (numbuf0, where),
+		    format_linenum (numbuf1, matched));
 	  else if (n >= in && n < in + matched)
 	    {
 	      size_t size;
