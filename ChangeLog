@@ -11,6 +11,7 @@
 	files into src/.
 	* Makefile.in, tests/test-lib.sh, configure.ac, autogen.sh: Update
 	accordingly.
+	* m4/st_mtim.m4: Remove (obsolete since 2009-03-28).
 
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 

@@ -196,7 +196,6 @@ M4FILES = \
 	gl/m4/quotearg.m4 \
 	gl/m4/realloc.m4 \
 	m4/setmode.m4 \
-	m4/st_mtim.m4 \
 	gl/m4/stdbool.m4 \
 	gl/m4/strcase.m4 \
 	gl/m4/unlocked-io.m4 \
