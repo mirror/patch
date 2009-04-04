@@ -7,6 +7,10 @@
 
 	Move all source and header files into src/.
 	* Makefile.in, tests/test-lib.sh, configure.ac: Update accordingly.
+	Move all Gnulib files below gl/, and all other source and header
+	files into src/.
+	* Makefile.in, tests/test-lib.sh, configure.ac, autogen.sh: Update
+	accordingly.
 
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
