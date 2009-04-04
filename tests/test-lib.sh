@@ -36,7 +36,7 @@ use_tmpdir() {
 }
 
 use_local_patch() {
-    test -n "$PATCH" || PATCH=$PWD/patch
+    test -n "$PATCH" || PATCH=$PWD/src/patch
 
     eval 'patch() {
 	if test -n "$GDB" ; then

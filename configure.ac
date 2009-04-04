@@ -25,7 +25,7 @@ define(AC_PACKAGE_VERSION, m4_normalize(esyscmd(
     cat VERSION
 ])))
 AC_INIT(patch, AC_PACKAGE_VERSION, bug-patch@gnu.org)
-AC_CONFIG_SRCDIR(patch.c)
+AC_CONFIG_SRCDIR(src/patch.c)
 AC_CONFIG_HEADER(config.h:config.hin)
 AC_ARG_PROGRAM
 

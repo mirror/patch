@@ -5,6 +5,9 @@
 	--suffix cannot contain slashes, though.
 	* merge.c (merge_hunk): Add missing outstate->zero_output = false.
 
+	Move all source and header files into src/.
+	* Makefile.in, tests/test-lib.sh, configure.ac: Update accordingly.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the

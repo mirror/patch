@@ -8,7 +8,7 @@
 /config.log
 /config.status
 /configure
-/patch
+/src/patch
 /.pc/
 /VERSION
 /patch-*.tar.gz
