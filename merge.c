@@ -60,6 +60,12 @@ locate_merge (LINENUM *matched)
     LINENUM min, max;
     LINENUM offset;
 
+    /* Note: we need to preserve patch's property that it applies hunks at the
+       best match closest to their original position in the file.  It is
+       common for hunks to apply equally well in several places in a file.
+       Applying at the first best match would be a lot easier.
+     */
+
     if (context_lines == 0)
       goto out;  /* locate_hunk() already tried that */
 
