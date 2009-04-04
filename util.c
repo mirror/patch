@@ -346,13 +346,13 @@ static void
 copy_to_fd (const char *from, int tofd)
 {
   int fromfd;
-  size_t i;
+  ssize_t i;
 
   if ((fromfd = open (from, O_RDONLY | O_BINARY)) < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
   while ((i = read (fromfd, buf, bufsize)) != 0)
     {
-      if (i == (size_t) -1)
+      if (i == (ssize_t) -1)
 	read_fatal ();
       if (write (tofd, buf, i) != i)
 	write_fatal ();
@@ -715,7 +715,7 @@ void
 ask (char const *format, ...)
 {
   static int ttyfd = -2;
-  int r;
+  ssize_t r;
   va_list args;
 
   va_start (args, format);

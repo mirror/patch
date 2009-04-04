@@ -15,6 +15,7 @@
 	files when patch says "patching file".
 	* tests/unmodified-files: Test the patch.c change.  (The EXDEV fix in
 	create_mackup() was tested manually.)
+	* util.c (copy_to_fd, ask): The read() return type is ssize_t.
 
 2009-04-03  Andreas Gruenbacher  <agruen@suse.de>
 
