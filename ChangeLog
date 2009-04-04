@@ -4,6 +4,17 @@
 	debug output.
 	* merge.c (merge_hunk): Likewise.
 	(locate_merge): Add a note about the algorithm's requirements.
+	* util.c (create_backup): Split from move_file.  New LEAVE_ORIGINAL
+	argument for copying instead of renaming.  Don't fail when rename
+	fails with errno == EXDEV; copy and unlink in that case instead.
+	(copy_file): Add debug message.
+	* util.h: Move including <utime.h> etc. here from patch.c.
+	(create_backup): Declare.
+	* patch.c (main): Create backup files even for files which did not
+	actually change; some users of patch rely on the presence of backup
+	files when patch says "patching file".
+	* tests/unmodified-files: Test the patch.c change.  (The EXDEV fix in
+	create_mackup() was tested manually.)
 
 2009-04-03  Andreas Gruenbacher  <agruen@suse.de>
 

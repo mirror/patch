@@ -20,6 +20,18 @@
    If not, write to the Free Software Foundation,
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
+#if HAVE_UTIME_H
+# include <utime.h>
+#endif
+/* Some nonstandard hosts don't declare this structure even in <utime.h>.  */
+#if ! HAVE_STRUCT_UTIMBUF
+struct utimbuf
+{
+  time_t actime;
+  time_t modtime;
+};
+#endif
+
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */
 #define LINENUM_LENGTH_BOUND (sizeof (LINENUM) * CHAR_BIT / 3 + 1)
@@ -51,6 +63,7 @@ void ignore_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 void memory_fatal (void) __attribute__ ((noreturn));
+void create_backup (char *, struct stat *, int *, bool);
 void move_file (char const *, int volatile *, struct stat const *, char *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);

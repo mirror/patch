@@ -35,18 +35,6 @@
 #include <version.h>
 #include <xalloc.h>
 
-#if HAVE_UTIME_H
-# include <utime.h>
-#endif
-/* Some nonstandard hosts don't declare this structure even in <utime.h>.  */
-#if ! HAVE_STRUCT_UTIMBUF
-struct utimbuf
-{
-  time_t actime;
-  time_t modtime;
-};
-#endif
-
 /* procedures */
 
 static FILE *create_output_file (char const *, int);
@@ -375,8 +363,6 @@ main (int argc, char **argv)
 	    }
 	  else
 	    {
-	      bool changed;
-
 	      if (! outstate.zero_output
 		  && pch_says_nonexistent (! reverse)
 		  && ! (merge && somefailed))
@@ -387,39 +373,44 @@ main (int argc, char **argv)
 			 quotearg (outname));
 		}
 
-	      /* Avoid replacing files when nothing has changed.  */
-	      changed = failed < hunk || outfile || diff_type == ED_DIFF;
-
-	      if (changed && ! dry_run)
+	      if (! dry_run)
 		{
-		  time_t t;
-
-		  move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
-			     outname, instat.st_mode, backup);
-
-		  if ((set_time | set_utc)
-		      && (t = pch_timestamp (! reverse)) != (time_t) -1)
+		  /* Avoid replacing files when nothing has changed.  */
+		  if (failed < hunk || outfile || diff_type == ED_DIFF)
 		    {
-		      struct utimbuf utimbuf;
-		      utimbuf.actime = utimbuf.modtime = t;
+		      time_t t;
 
-		      if (! force && ! inerrno
-			  && pch_says_nonexistent (reverse) != 2
-			  && (t = pch_timestamp (reverse)) != (time_t) -1
-			  && t != instat.st_mtime)
-			say ("Not setting time of file %s (time mismatch)\n",
-			     quotearg (outname));
-		      else if (! force && (mismatch | failed))
-			say ("Not setting time of file %s (contents mismatch)\n",
-			     quotearg (outname));
-		      else if (utime (outname, &utimbuf) != 0)
-			pfatal ("Can't set timestamp on file %s",
+		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
+				 outname, instat.st_mode, backup);
+
+		      if ((set_time | set_utc)
+			  && (t = pch_timestamp (! reverse)) != (time_t) -1)
+			{
+			  struct utimbuf utimbuf;
+			  utimbuf.actime = utimbuf.modtime = t;
+
+			  if (! force && ! inerrno
+			      && pch_says_nonexistent (reverse) != 2
+			      && (t = pch_timestamp (reverse)) != (time_t) -1
+			      && t != instat.st_mtime)
+			    say ("Not setting time of file %s "
+				 "(time mismatch)\n",
+				 quotearg (outname));
+			  else if (! force && (mismatch | failed))
+			    say ("Not setting time of file %s "
+				 "(contents mismatch)\n",
+				 quotearg (outname));
+			  else if (utime (outname, &utimbuf) != 0)
+			    pfatal ("Can't set timestamp on file %s",
+				    quotearg (outname));
+			}
+
+		      if (! inerrno && chmod (outname, instat.st_mode) != 0)
+			pfatal ("Can't set permissions on file %s",
 				quotearg (outname));
 		    }
-
-		  if (! inerrno && chmod (outname, instat.st_mode) != 0)
-		    pfatal ("Can't set permissions on file %s",
-			    quotearg (outname));
+		  else
+		    create_backup (outname, 0, 0, true);
 		}
 	    }
       }

@@ -29,7 +29,7 @@ EOF
 echo three > a
 ln a a.first
 
-check 'patch a < a.diff || echo "Status: $?"' <<EOF
+check 'patch -b a < a.diff || echo "Status: $?"' <<EOF
 patching file a
 Hunk #1 FAILED at 1.
 1 out of 1 hunk FAILED -- saving rejects to file a.rej
@@ -37,6 +37,10 @@ Status: 1
 EOF
 
 ncheck 'test a -ef a.first'
+
+check 'cat a.orig' <<EOF
+three
+EOF
 
 # ==============================================================
 
@@ -53,8 +57,4 @@ EOF
 
 check 'cat b' <<EOF
 three
-EOF
-
-check 'patch -b -o b a < a.diff' <<EOF
-patching file a
 EOF

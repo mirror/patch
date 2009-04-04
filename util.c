@@ -126,30 +126,42 @@ contains_slash (const char *s)
   return false;
 }
 
-/* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
-   needs removal when cleaning up at the end of execution, and where
-   *FROMST is FROM's status if known),
-   to TO, renaming it if possible and copying it if necessary.
-   If we must create TO, use MODE to create it.
-   If FROM is null, remove TO.
-   FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
-   and FROMST must be nonnull if both FROM and BACKUP are nonnull.
-   Back up TO if BACKUP is true.  */
+static void
+create_backup_copy (char const *from, char const *to, struct stat *st)
+{
+  struct utimbuf utimbuf;
+
+  copy_file (from, to, 0, 0, st->st_mode);
+  utimbuf.actime = st->st_atime;
+  utimbuf.modtime = st->st_mtime;
+  if (utime (to, &utimbuf) != 0)
+    pfatal ("Can't set timestamp on file %s",
+	    quotearg (to));
+  if (chmod (to, st->st_mode) != 0)
+    pfatal ("Can't set timestamp on file %s",
+	    quotearg (to));
+}
 
 void
-move_file (char const *from, int volatile *from_needs_removal,
-	   struct stat const *fromst,
-	   char *to, mode_t mode, bool backup)
+create_backup (char *to, struct stat *to_st, int *to_errno,
+	       bool leave_original)
 {
-  struct stat to_st;
-  int to_errno = ! backup ? -1 : stat (to, &to_st) == 0 ? 0 : errno;
+  struct stat tmp_st;
+  int tmp_errno;
 
-  if (! to_errno && file_already_seen (&to_st))
+  if (! to_st || ! to_errno)
+    {
+      to_st = &tmp_st;
+      to_errno = &tmp_errno;
+    }
+  *to_errno = stat (to, to_st) == 0 ? 0 : errno;
+
+  if (! *to_errno && file_already_seen (to_st))
     {
       if (debug & 4)
 	say ("File %s already seen\n", quotearg (to));
     }
-  else if (backup)
+  else
     {
       int try_makedirs_errno = 0;
       char *bakname;
@@ -185,7 +197,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 	    memory_fatal ();
 	}
 
-      if (to_errno)
+      if (*to_errno)
 	{
 	  int fd;
 
@@ -204,6 +216,8 @@ move_file (char const *from, int volatile *from_needs_removal,
 	  if (close (fd) != 0)
 	    pfatal ("Can't close file %s", quotearg (bakname));
 	}
+      else if (leave_original)
+	create_backup_copy (to, bakname, to_st);
       else
 	{
 	  if (debug & 4)
@@ -211,16 +225,46 @@ move_file (char const *from, int volatile *from_needs_removal,
 		 quotearg_n (0, to), quotearg_n (1, bakname));
 	  while (rename (to, bakname) != 0)
 	    {
-	      if (errno != try_makedirs_errno)
+	      if (errno == try_makedirs_errno)
+		{
+		  makedirs (bakname);
+		  try_makedirs_errno = 0;
+		}
+	      else if (errno == EXDEV)
+		{
+		  create_backup_copy (to, bakname, to_st);
+		  unlink (to);
+		  break;
+		}
+	      else
 		pfatal ("Can't rename file %s to %s",
 			quotearg_n (0, to), quotearg_n (1, bakname));
-	      makedirs (bakname);
-	      try_makedirs_errno = 0;
 	    }
 	}
-
       free (bakname);
     }
+}
+
+/* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
+   needs removal when cleaning up at the end of execution, and where
+   *FROMST is FROM's status if known),
+   to TO, renaming it if possible and copying it if necessary.
+   If we must create TO, use MODE to create it.
+   If FROM is null, remove TO.
+   FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
+   and FROMST must be nonnull if both FROM and BACKUP are nonnull.
+   Back up TO if BACKUP is true.  */
+
+void
+move_file (char const *from, int volatile *from_needs_removal,
+	   struct stat const *fromst,
+	   char *to, mode_t mode, bool backup)
+{
+  struct stat to_st;
+  int to_errno = -1;
+
+  if (backup)
+    create_backup (to, &to_st, &to_errno, false);
 
   if (from)
     {
