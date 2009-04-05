@@ -1,3 +1,9 @@
+2009-04-05  Andreas Gruenbacher  <agruen@suse.de>
+
+	* util.c (create_backup): We also need to create base directories
+	with a --prefix without slashes and a filename with slashes. A
+	--suffix cannot contain slashes, though.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the

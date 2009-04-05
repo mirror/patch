@@ -184,10 +184,9 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 	  memcpy (bakname + plen + tlen + blen, o, olen);
 	  memcpy (bakname + plen + tlen + blen + olen, s, slen + 1);
 	  if ((origprae
-	       && contains_slash (origprae
-				  + FILESYSTEM_PREFIX_LEN (origprae)))
-	      || (origbase && contains_slash (origbase))
-	      || (origsuff && contains_slash (origsuff)))
+	       && (contains_slash (origprae + FILESYSTEM_PREFIX_LEN (origprae))
+		   || contains_slash (to)))
+	      || (origbase && contains_slash (origbase)))
 	    try_makedirs_errno = ENOENT;
 	}
       else
