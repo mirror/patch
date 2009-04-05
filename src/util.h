@@ -62,7 +62,7 @@ void exit_with_signal (int) __attribute__ ((noreturn));
 void ignore_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
-void memory_fatal (void) __attribute__ ((noreturn));
+void xalloc_die (void) __attribute__ ((noreturn));
 void create_backup (char *, struct stat *, int *, bool);
 void move_file (char const *, int volatile *, struct stat const *, char *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));

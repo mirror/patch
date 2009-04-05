@@ -111,7 +111,6 @@ main (int argc, char **argv)
 
     setbuf(stderr, serrbuf);
 
-    xalloc_fail_func = memory_fatal;
     bufsize = 8 * 1024;
     buf = xmalloc (bufsize);
 
@@ -427,9 +426,15 @@ main (int argc, char **argv)
 	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
 		char *rej = rejname;
 		if (!rejname) {
-		    rej = xmalloc (strlen (outname) + 5);
-		    strcpy (rej, outname);
-		    addext (rej, ".rej", '#');
+		    /* FIXME: This should really be done differnely!  */
+		    const char *s = simple_backup_suffix;
+		    size_t len;
+		    simple_backup_suffix = ".rej";
+		    rej = find_backup_file_name (outname, simple_backups);
+		    len = strlen (rej);
+		    if (rej[len - 1] == '~')
+		      rej[len - 1] = '#';
+		    simple_backup_suffix = s;
 		}
 		say (" -- saving rejects to file %s\n", quotearg (rej));
 		if (! dry_run)

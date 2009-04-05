@@ -169,22 +169,29 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
       if (origprae || origbase || origsuff)
 	{
 	  char const *p = origprae ? origprae : "";
+	  char *t = dir_name (to);
 	  char const *b = origbase ? origbase : "";
+	  char *o = base_name (to);
 	  char const *s = origsuff ? origsuff : "";
-	  char const *o = base_name (to);
 	  size_t plen = strlen (p);
-	  size_t tlen = o - to;
+	  size_t tlen = strlen (t);
 	  size_t blen = strlen (b);
 	  size_t olen = strlen (o);
 	  size_t slen = strlen (s);
+
+	  if (! contains_slash (t))
+	    tlen = 0;
 	  bakname = xmalloc (plen + tlen + blen + olen + slen + 1);
 	  memcpy (bakname, p, plen);
-	  memcpy (bakname + plen, to, tlen);
+	  memcpy (bakname + plen, t, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
 	  memcpy (bakname + plen + tlen + blen, o, olen);
 	  memcpy (bakname + plen + tlen + blen + olen, s, slen + 1);
+	  free (t);
+	  free (o);
+
 	  if ((origprae
-	       && (contains_slash (origprae + FILESYSTEM_PREFIX_LEN (origprae))
+	       && (contains_slash (origprae + FILE_SYSTEM_PREFIX_LEN (origprae))
 		   || contains_slash (to)))
 	      || (origbase && contains_slash (origbase)))
 	    try_makedirs_errno = ENOENT;
@@ -193,7 +200,7 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 	{
 	  bakname = find_backup_file_name (to, backup_type);
 	  if (!bakname)
-	    memory_fatal ();
+	    xalloc_die ();
 	}
 
       if (*to_errno)
@@ -425,13 +432,13 @@ version_controller (char const *filename, bool readonly,
 		    struct stat const *filestat, char **getbuf, char **diffbuf)
 {
   struct stat cstat;
-  char const *filebase = base_name (filename);
+  char *dir = dir_name (filename);
+  char *filebase = base_name (filename);
   char const *dotslash = *filename == '-' ? "./" : "";
-  size_t dirlen = filebase - filename;
-  size_t filenamelen = strlen (filename);
+  size_t dirlen = strlen (dir) + 1;
   size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
-  size_t maxtrysize = filenamelen + maxfixlen + 1;
-  size_t quotelen = quote_system_arg (0, filename);
+  size_t maxtrysize = dirlen + strlen (filebase) + maxfixlen + 1;
+  size_t quotelen = quote_system_arg (0, dir) + quote_system_arg (0, filebase);
   size_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
   size_t maxdiffsize =
     (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof DEV_NULL - 1
@@ -439,7 +446,7 @@ version_controller (char const *filename, bool readonly,
   char *trybuf = xmalloc (maxtrysize);
   char const *r = 0;
 
-  strcpy (trybuf, filename);
+  sprintf (trybuf, "%s/", dir);
 
 #define try1(f,a1)    (sprintf (trybuf + dirlen, f, a1),    stat (trybuf, &cstat) == 0)
 #define try2(f,a1,a2) (sprintf (trybuf + dirlen, f, a1,a2), stat (trybuf, &cstat) == 0)
@@ -538,6 +545,8 @@ version_controller (char const *filename, bool readonly,
     }
 
   free (trybuf);
+  free (filebase);
+  free (dir);
   return r;
 }
 
@@ -593,7 +602,7 @@ savebuf (register char const *s, register size_t size)
   if (! rv)
     {
       if (! using_plan_a)
-	memory_fatal ();
+	xalloc_die ();
     }
   else
     memcpy (rv, s, size);
@@ -655,7 +664,7 @@ fatal (char const *format, ...)
 }
 
 void
-memory_fatal (void)
+xalloc_die (void)
 {
   fatal ("out of memory");
 }
@@ -752,7 +761,7 @@ ask (char const *format, ...)
 	  bufsize *= 2;
 	  buf = realloc (buf, bufsize);
 	  if (!buf)
-	    memory_fatal ();
+	    xalloc_die ();
 	}
       if (r == 0)
 	printf ("EOF\n");
@@ -978,7 +987,7 @@ replace_slashes (char *filename)
   char *last_location_replaced = 0;
   char const *component_start;
 
-  for (f = filename + FILESYSTEM_PREFIX_LEN (filename);  ISSLASH (*f);  f++)
+  for (f = filename + FILE_SYSTEM_PREFIX_LEN (filename);  ISSLASH (*f);  f++)
     continue;
 
   component_start = f;

@@ -185,7 +185,7 @@ grow_hunkmax (void)
 	&& (p_Char = realloc (p_Char, hunkmax * sizeof (*p_Char))))
       return true;
     if (!using_plan_a)
-      memory_fatal ();
+      xalloc_die ();
     /* Don't free previous values of p_line etc.,
        since some broken implementations free them for us.
        Whatever is null will be allocated again from within plan_a (),
@@ -353,7 +353,7 @@ intuit_diff_type (bool need_header)
 	this_line = file_tell (pfp);
 	chars_read = pget_line (0, 0, false, false);
 	if (chars_read == (size_t) -1)
-	  memory_fatal ();
+	  xalloc_die ();
 	if (! chars_read) {
 	    if (first_ed_command_letter) {
 					/* nothing but deletes!? */
@@ -703,7 +703,7 @@ prefix_components (char *filename, bool checkdirs)
   int count = 0;
   struct stat stat_buf;
   int stat_result;
-  char *f = filename + FILESYSTEM_PREFIX_LEN (filename);
+  char *f = filename + FILE_SYSTEM_PREFIX_LEN (filename);
 
   if (*f)
     while (*++f)
@@ -748,7 +748,7 @@ best_name (char *const *name, int const *ignore)
 	components_min = components[i];
 
 	/* Of those, take the names with the shortest basename.  */
-	basename_len[i] = strlen (base_name (name[i]));
+	basename_len[i] = base_len (name[i]);
 	if (basename_len_min < basename_len[i])
 	  continue;
 	basename_len_min = basename_len[i];
@@ -1677,7 +1677,7 @@ pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	      if (!b)
 		{
 		  if (!using_plan_a)
-		    memory_fatal ();
+		    xalloc_die ();
 		  return (size_t) -1;
 		}
 	      buf = b;
