@@ -127,11 +127,12 @@ contains_slash (const char *s)
 }
 
 static void
-create_backup_copy (char const *from, char const *to, struct stat *st)
+create_backup_copy (char const *from, char const *to, struct stat *st,
+		    bool to_dir_known_to_exist)
 {
   struct utimbuf utimbuf;
 
-  copy_file (from, to, 0, 0, st->st_mode);
+  copy_file (from, to, 0, 0, st->st_mode, to_dir_known_to_exist);
   utimbuf.actime = st->st_atime;
   utimbuf.modtime = st->st_mtime;
   if (utime (to, &utimbuf) != 0)
@@ -223,7 +224,7 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 	    pfatal ("Can't close file %s", quotearg (bakname));
 	}
       else if (leave_original)
-	create_backup_copy (to, bakname, to_st);
+	create_backup_copy (to, bakname, to_st, try_makedirs_errno == 0);
       else
 	{
 	  if (debug & 4)
@@ -238,7 +239,8 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 		}
 	      else if (errno == EXDEV)
 		{
-		  create_backup_copy (to, bakname, to_st);
+		  create_backup_copy (to, bakname, to_st,
+				      try_makedirs_errno == 0);
 		  unlink (to);
 		  break;
 		}
@@ -301,9 +303,7 @@ move_file (char const *from, int volatile *from_needs_removal,
 		  else if (errno != ENOENT)
 		    pfatal ("Can't remove file %s", quotearg (to));
 		}
-	      if (! to_dir_known_to_exist)
-		makedirs (to);
-	      copy_file (from, to, &tost, 0, mode);
+	      copy_file (from, to, &tost, 0, mode, to_dir_known_to_exist);
 	      insert_file (&tost);
 	      return;
 	    }
@@ -335,16 +335,29 @@ move_file (char const *from, int volatile *from_needs_removal,
    we can read and write the file and that the file is not executable.
    Return the file descriptor.  */
 int
-create_file (char const *file, int open_flags, mode_t mode)
+create_file (char const *file, int open_flags, mode_t mode,
+	     bool to_dir_known_to_exist)
 {
+  int try_makedirs_errno = to_dir_known_to_exist ? 0 : ENOENT;
   int fd;
   mode |= S_IRUSR | S_IWUSR;
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
-  if (! (O_CREAT && O_TRUNC))
-    close (creat (file, mode));
-  fd = open (file, O_CREAT | O_TRUNC | open_flags, mode);
-  if (fd < 0)
-    pfatal ("Can't create file %s", quotearg (file));
+  do
+    {
+      if (! (O_CREAT && O_TRUNC))
+	close (creat (file, mode));
+      fd = open (file, O_CREAT | O_TRUNC | open_flags, mode);
+      if (fd < 0)
+	{
+	  char *f;
+	  if (errno != try_makedirs_errno)
+	    pfatal ("Can't create file %s", quotearg (file));
+	  f = xstrdup (file);
+	  makedirs (f);
+	  free (f);
+	  try_makedirs_errno = 0;
+	}
+    } while (fd < 0);
   return fd;
 }
 
@@ -371,14 +384,15 @@ copy_to_fd (const char *from, int tofd)
 
 void
 copy_file (char const *from, char const *to, struct stat *tost,
-	   int to_flags, mode_t mode)
+	   int to_flags, mode_t mode, bool to_dir_known_to_exist)
 {
   int tofd;
 
   if (debug & 4)
     say ("Copying file %s to %s\n",
 	 quotearg_n (0, from), quotearg_n (1, to));
-  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode);
+  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
+		      to_dir_known_to_exist);
   copy_to_fd (from, tofd);
   if ((tost && fstat (tofd, tost) != 0)
       || close (tofd) != 0)

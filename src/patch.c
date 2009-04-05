@@ -443,7 +443,7 @@ main (int argc, char **argv)
 		      {
 			if (! written_to_rejname)
 			  {
-			    copy_file (TMPREJNAME, rejname, 0, 0, 0666);
+			    copy_file (TMPREJNAME, rejname, 0, 0, 0666, true);
 			    written_to_rejname = true;
 			  }
 			else
@@ -1323,7 +1323,7 @@ static FILE *
 create_output_file (char const *name, int open_flags)
 {
   int fd = create_file (name, O_WRONLY | binary_transput | open_flags,
-			instat.st_mode);
+			instat.st_mode, true);
   FILE *f = fdopen (fd, binary_transput ? "wb" : "w");
   if (! f)
     pfatal ("Can't create file %s", quotearg (name));

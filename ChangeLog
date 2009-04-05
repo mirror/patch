@@ -48,6 +48,18 @@
 	* src/util.h: Replace memory_fatal() with xalloc_die().
 	* src/pch.c: Don't leak memory with strlen (base_name (...)).
 
+	* src/util.c (create_file): Add to_dir_known_to_exist argument and
+	try to create parent directories when set and the create failed with
+	ENOENT.
+	(copy_file, create_backup_copy): Pass the new to_dir_known_to_exist
+	argument through.
+	(create_backup): Don't assume the target directory exists when making
+	a backup copy.
+	* src/util.h (create_file, copy_file): Change the declarations.
+	* src/patch.c, src/pch.c, src/inp.c: In the calls to create_file() and
+	copy_file(), assume the parent directory exists.
+	* tests/unmodified-files: Test the create_backup() fix.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the

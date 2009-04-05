@@ -129,7 +129,7 @@ open_patch_file (char const *filename)
 	    TMPPATNAME_needs_removal = 1;
 	    pfp = fdopen (create_file (TMPPATNAME,
 				       O_RDWR | O_BINARY | exclusive,
-				       (mode_t) 0),
+				       (mode_t) 0, true),
 			  "w+b");
 	    if (!pfp)
 	      pfatal ("Can't open stream for file %s", quotearg (TMPPATNAME));
@@ -2033,7 +2033,7 @@ do_ed_script (FILE *ofp)
 	int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
 	assert (! inerrno);
 	TMPOUTNAME_needs_removal = 1;
-	copy_file (inname, TMPOUTNAME, 0, exclusive, instat.st_mode);
+	copy_file (inname, TMPOUTNAME, 0, exclusive, instat.st_mode, true);
 	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
 	fflush (stdout);
