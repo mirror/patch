@@ -83,6 +83,13 @@ locate_merge (LINENUM *matched)
 	     format_linenum (numbuf1, max));
       }
 
+    /* Hunks from the start or end of the file have less context. Anchor them
+       to the start or end, trying to make up for this disadvantage.  */
+    if (pch_prefix_context () < pch_suffix_context () && pch_first () <= 1)
+      max_pos_offset = 0;
+    else if (pch_suffix_context () > pch_prefix_context ())
+      max_neg_offset = 0;
+
     /* Do not try lines <= 0.  */
     if (first_guess <= max_neg_offset)
       max_neg_offset = first_guess - 1;

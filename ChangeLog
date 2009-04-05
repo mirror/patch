@@ -68,6 +68,7 @@
 	* src/patch.c (locate_hunk): Revert to the original asymmetric hunk
 	behavior (but only anchor hunks starting at line 0 to the start of the
 	file): there is not enough reason to change the historic behavior.
+	* src/merge.c (locate_merge): Add similar asymmetric hunk check here.
 	* tests/asymmetric-hunks: Update accordingly.
 	* patch.man: Document the asymmetric hunk behavior.
 	* NEWS: Update.
