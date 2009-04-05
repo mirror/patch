@@ -2,6 +2,7 @@ This version of `patch' has many changes made by the Free Software Foundation.
 They add support for:
  * handling arbitrary binary data and large files
  * the unified context diff format that GNU diff can produce
+ * merging into files instead of creating reject files
  * making GNU Emacs-style backup files
  * improved interaction with RCS and SCCS
  * the GNU conventions for option parsing and configuring and compilation.
@@ -35,8 +36,8 @@ Public License.
 
 Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
-Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1999, 2002 Free
-Software Foundation, Inc.
+Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1999, 2002, 2009
+Free Software Foundation, Inc.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

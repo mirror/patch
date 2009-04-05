@@ -3,7 +3,7 @@
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
    Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2002,
-   2003, 2006 Free Software Foundation, Inc.
+   2003, 2006, 2009 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; see the file COPYING.
    If not, write to the Free Software Foundation,
-   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #define XTERN
 #include <common.h>

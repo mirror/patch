@@ -7,3 +7,5 @@ better to POSIX.
 Wayne Davison added unidiff support.
 
 David MacKenzie added configuration and backup support.
+
+Andreas Gruenbacher added merge support.
