@@ -3,6 +3,7 @@
 	* util.c (create_backup): We also need to create base directories
 	with a --prefix without slashes and a filename with slashes. A
 	--suffix cannot contain slashes, though.
+	* merge.c (merge_hunk): Add missing outstate->zero_output = false.
 
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 

@@ -307,10 +307,14 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	  where += (old - firstold);
 	  out_offset += new - firstnew;
 
-	  while (firstnew < new)
+	  if (firstnew < new)
 	    {
-	      outstate->after_newline = pch_write_line (firstnew, fp);
-	      firstnew++;
+	      while (firstnew < new)
+		{
+		  outstate->after_newline = pch_write_line (firstnew, fp);
+		  firstnew++;
+		}
+	      outstate->zero_output = false;
 	    }
 	}
       else if (pch_char (old) == ' ')
