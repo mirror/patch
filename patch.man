@@ -1167,6 +1167,10 @@ If you apply a patch you've already applied,
 .B patch
 thinks it is a reversed patch, and offers to un-apply the patch.
 This could be construed as a feature.
+.PP
+Computing how to merge a hunk is significantly harder than using the standard
+fuzzy algorithm.  Bigger hunks, more context, a bigger offset from the
+original location, and a worse match all slow the algorithm down.
 .SH COPYING
 Copyright
 .ie t \(co

@@ -76,6 +76,9 @@
 	Copyright notice updates.
 	* README, AUTHORS: Updates.
 
+	* patch.man: Document that merging can be slow.
+	* tests/test-lib.sh: Also unset QUOTING_STYLE.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the
