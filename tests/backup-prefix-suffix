@@ -86,3 +86,62 @@ EOF
 check 'cat f.~3~' <<EOF
 one
 EOF
+
+unset PATCH_VERSION_CONTROL SIMPLE_BACKUP_SUFFIX
+
+# ==============================================================
+
+cat > ab.diff <<EOF
+--- a/d/f
++++ b/d/f
+@@ -1 +1 @@
+-one
++two
+EOF
+
+mkdir d
+
+echo one > d/f
+check 'patch -b -p1 < ab.diff' <<EOF
+patching file d/f
+EOF
+
+check 'cat d/f.orig' <<EOF
+one
+EOF
+
+echo one > d/f
+check 'patch -b -B orig/ -p1 < ab.diff' <<EOF
+patching file d/f
+EOF
+
+check 'cat orig/d/f' <<EOF
+one
+EOF
+
+echo one > d/f
+check 'patch -b -B orig/ -z .orig -p1 < ab.diff' <<EOF
+patching file d/f
+EOF
+
+check 'cat orig/d/f.orig' <<EOF
+one
+EOF
+
+echo one > d/f
+check 'patch -b -Y .orig/ -p1 < ab.diff' <<EOF
+patching file d/f
+EOF
+
+check 'cat d/.orig/f' <<EOF
+one
+EOF
+
+echo one > d/f
+check 'patch -b -Y .orig/ -z .orig -p1 < ab.diff' <<EOF
+patching file d/f
+EOF
+
+check 'cat d/.orig/f.orig' <<EOF
+one
+EOF

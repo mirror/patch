@@ -170,26 +170,28 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
       if (origprae || origbase || origsuff)
 	{
 	  char const *p = origprae ? origprae : "";
-	  char *t = dir_name (to);
 	  char const *b = origbase ? origbase : "";
-	  char *o = base_name (to);
 	  char const *s = origsuff ? origsuff : "";
+	  char const *t = to;
 	  size_t plen = strlen (p);
-	  size_t tlen = strlen (t);
 	  size_t blen = strlen (b);
-	  size_t olen = strlen (o);
 	  size_t slen = strlen (s);
+	  size_t tlen = strlen (t);
+	  char const *o;
+	  size_t olen;
 
-	  if (! contains_slash (t))
-	    tlen = 0;
+	  for (o = t + tlen, olen = 0;
+	       o > t && ! ISSLASH (*(o - 1));
+	       o--)
+	    continue;
+	  olen = t + tlen - o;
+	  tlen -= olen;
 	  bakname = xmalloc (plen + tlen + blen + olen + slen + 1);
 	  memcpy (bakname, p, plen);
 	  memcpy (bakname + plen, t, tlen);
 	  memcpy (bakname + plen + tlen, b, blen);
 	  memcpy (bakname + plen + tlen + blen, o, olen);
 	  memcpy (bakname + plen + tlen + blen + olen, s, slen + 1);
-	  free (t);
-	  free (o);
 
 	  if ((origprae
 	       && (contains_slash (origprae + FILE_SYSTEM_PREFIX_LEN (origprae))

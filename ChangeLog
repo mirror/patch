@@ -60,6 +60,11 @@
 	copy_file(), assume the parent directory exists.
 	* tests/unmodified-files: Test the create_backup() fix.
 
+	* src/util.c (create_backup): The new dir_name() and base_name()
+	functions are really counter productive.  Remove them and the bugs
+	that keepeing them here as introduced.
+	* tests/backup-prefix-suffix: Add more regression tests.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the
