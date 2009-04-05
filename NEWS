@@ -32,9 +32,6 @@
   line endings in patches.  This allows to preserve CRs even in mangled
   patches, or in patches generated without the --binary option on non-POSIX
   systems.
-* Hunks with a different number of lines in the prefix and suffix context
-  can now apply anywhere in the file, rather than only at the beginning
-  (shorter prefix context) or at the end (shorter suffix context).
 * Backup files for nonexisting files are now created with default
   permissions rather than with mode 0: backup files with mode 0 were
   causing problems with applications which do not expect unreadable
@@ -43,12 +40,6 @@
   imply the simple version control mode, and can be combined.
 * Reject more malformed normal format commands and check for trailing
   garbage.  Recognize ed commands without addresses.
-* As seemingly originally intended, patch will assume that hunks with fewer
-  lines of prefix than suffix context which start at line 1 must apply at the
-  beginning of the file, while hunks with fewer lines of suffix context must
-  apply at the end of the file.  If a high-enough fuzz factor is allowed to
-  strip off all context (which is not the default), such hunks can also apply
-  within a file.
 * Handle missing timestamps better.
 * Various bug fixes.
 

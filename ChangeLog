@@ -65,6 +65,13 @@
 	that keepeing them here as introduced.
 	* tests/backup-prefix-suffix: Add more regression tests.
 
+	* src/patch.c (locate_hunk): Revert to the original asymmetric hunk
+	behavior (but only anchor hunks starting at line 0 to the start of the
+	file): there is not enough reason to change the historic behavior.
+	* tests/asymmetric-hunks: Update accordingly.
+	* patch.man: Document the asymmetric hunk behavior.
+	* NEWS: Update.
+
 2009-04-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* pch.c (another_hunk): Add (back) the line number ranges to the

@@ -94,6 +94,12 @@ If that fails, and the maximum fuzz factor is set to 2 or more,
 the first two and last two lines of context are ignored,
 and another scan is made.
 (The default maximum fuzz factor is 2.)
+.PP
+Hunks with less prefix context than suffix context (after applying fuzz)
+must apply at the start of the file if their first line number is\ 1.  Hunks
+with more prefix context than suffix context (after applying fuzz) must apply
+at the end of the file.
+.PP
 If
 .B patch
 cannot find a place to install that hunk of the patch, it puts the
