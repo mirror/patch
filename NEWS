@@ -38,8 +38,8 @@
   files.
 * The -B, -Y, and -z options (--prefix, --basename-prefix, --suffix) now
   imply the simple version control mode, and can be combined.
-* Reject more malformed normal format commands and check for trailing
-  garbage.  Recognize ed commands without addresses.
+* Patch rejects more malformed normal format commands and checks for trailing
+  garbage.  It now recognizes ed commands without addresses.
 * Handle missing timestamps better.
 * Various bug fixes.
 
