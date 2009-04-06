@@ -7,15 +7,14 @@
   patch from tripping over garbage that isn't a patch.  When conforming
   to POSIX, this behavior is turned off and patch will ask for a
   filename if none is found.
-* All reject files have file name headers, so they are now well-formed
-  patches.
+* All reject files have file name headers, which allows them to be used as
+  regular patches.
 * When a patch file modifies the same file more than once, patch makes
-  sure it backs up the original version of the file, rather than any
+  sure it backs up the original version of the file rather than any
   intermediary versions.
 * In the above situation, if there are rejects in more than one of those
-  patches, the rejects are appended to the same reject file (rather then
-  overwriting themselves).
-* The -r option works correctly even when there are rejects in more than
+  patches, they all go into the same reject file.
+* The -r option works correctly even if there are rejects in more than
   one file.  Use the - argument to discard rejects.
 * Rejected hunks come out in unified diff format if the input patch was of
   that format, otherwise in ordinary context diff form.  Use the
@@ -26,12 +25,11 @@
   still marked with '+' and '-', respectively.
 * The file permissions of reject files are no longer set to match the files
   they modify.  Instead, they retain the default permissions.  This is
-  consistent with reject files to which rejects of multiple files may be
-  written (-r option).
+  consistent with reject files produced with the -r option.
 * The --binary option disables the heuristic for stripping CRs from
   line endings in patches.  This allows to preserve CRs even in mangled
-  patches, or in patches generated without the --binary option on non-POSIX
-  systems.
+  patches, or in patches generated on non-POSIX systems and without the
+  --binary option.
 * Backup files for nonexisting files are now created with default
   permissions rather than with mode 0: backup files with mode 0 were
   causing problems with applications which do not expect unreadable
