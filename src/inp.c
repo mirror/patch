@@ -195,11 +195,6 @@ get_input_file (char const *filename, char const *outname)
 	    free (getbuf);
 	    if (diffbuf)
 	      free (diffbuf);
-
-    } else if (inerrno && inerrno != ENOENT)
-      {
-	errno = inerrno;
-	pfatal ("Can't find file %s", quotearg (filename));
       }
 
     if (inerrno)

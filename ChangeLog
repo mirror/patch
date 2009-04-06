@@ -1,3 +1,17 @@
+2009-04-06  Andreas Gruenbacher  <agruen@suse.de>
+
+	Fix the "patch would create" fix from 2009-03-28.
+	* src/pch.c (maybe_reverse): New function.
+	(intuit_diff_type): Move the check back here from
+	there_is_another_patch(), but compute it using maybe_reverse().  If
+	an input file name has been specified, do this check here as well.
+	* src/patch.c (main): Only set outname if we are not skipping the
+	patch.
+	* src/inp.c (get_input_file): We may get here without a file to read
+	as well now; don't abort in this case.
+	* tests/create-delete: Add test cases covering the previously-broken
+	code paths.
+
 2009-04-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* util.c (create_backup): We also need to create base directories
@@ -1216,7 +1230,7 @@
 	this undoes the previous change to this file.
 
 	* patch.c (locate_hunk): Fix bug when locating context diff hunks
- 	near end of file with nonzero fuzz.
+	near end of file with nonzero fuzz.
 
 	* util.c (move_file): Don't assume that ENOENT is reported when both
 	ENOENT and EXDEV apply; this isn't true with DJGPP, and
@@ -1328,7 +1342,7 @@
 	file.
 	(DEV_NULL): New constant.
 	(SCCSPREFIX, GET. GET_LOCKED, SCCSDIFF1, SCCSDIFF2,
- 	RCSSUFFIX, CHECKOUT, CHECKOUT_LOCKED, RCSDIFF1): Moved here from inp.c.
+	RCSSUFFIX, CHECKOUT, CHECKOUT_LOCKED, RCSDIFF1): Moved here from inp.c.
 	(version_controller, version_get): New functions.
 	(ask): Look only at /dev/tty for answers; and when standard output is
 	not a terminal and ! posixly_correct, don't even look there.
@@ -1357,18 +1371,18 @@
 	* configure.in (VERSION): Bump to 2.3.6.
 	(AC_CHECK_HEADERS): Add utime.h.
 	* acconfig.h, configure.in, pc/djgpp/config.h (HAVE_STRUCT_UTIMBUF):
- 	New macro.
+	New macro.
 	* pc/djgpp/config.h (HAVE_UTIME_H, TZ_is_unset): New macros.
 
 	* NEWS, patch.man: Describe new -Z, -T options, new numeric
- 	option for -G, retired -G, and more verbose default behavior
- 	with fuzz.
+	option for -G, retired -G, and more verbose default behavior
+	with fuzz.
 
 	* pch.c (intuit_diff_type): Record times reported for files in headers.
 	Remove head_says_nonexistent[x], since it's now equivalent to
 	!timestamp[x].
 	* util.h (fetchname): Change argument head_says_nonexistent to
- 	timestamp.
+	timestamp.
 	* util.c: #include <partime.h> for TM_LOCAL_ZONE.
 	Don't include <time.h> since common.h now includes it.
 	(ok_to_reverse): noreverse and batch cases now output regardless of
@@ -1474,9 +1488,9 @@
 	Do not use xxx.h -> xxxh~ hack.
 
 	* util.c: (move_file): Avoid makedirs test when possible even
- 	if FILESYSTEM_PREFIX_LEN (p) is nonzero.  Don't play
- 	case-changing tricks to come up with backup file name; it's
- 	not portable to case-insensitive file systems.
+	if FILESYSTEM_PREFIX_LEN (p) is nonzero.  Don't play
+	case-changing tricks to come up with backup file name; it's
+	not portable to case-insensitive file systems.
 	* common.h (ISLOWER): Remove.
 
 	* inp.c (scan_input): Don't use Plan A if (debug & 16).
@@ -1742,7 +1756,7 @@
 
 	* pch.c (existing_prefix_components): New function.
 	(intuit_diff_type): When creating a file, use a name whose existing
- 	directory prefix contains the most nontrivial path name components.
+	directory prefix contains the most nontrivial path name components.
 	(best_name): Don't check for null 2nd arg.
 
 	* util.h (replace_slashes): New decl.
@@ -1761,7 +1775,7 @@
 
 	* pch.c (existing_prefix_components): New function.
 	(intuit_diff_type): When creating a file, use a name whose existing
- 	directory prefix contains the most nontrivial path name components.
+	directory prefix contains the most nontrivial path name components.
 	(best_name): Don't check for null 2nd arg.
 
 	* util.h (replace_slashes): New decl.

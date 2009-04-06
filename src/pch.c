@@ -193,13 +193,31 @@ grow_hunkmax (void)
     return false;
 }
 
+static bool
+maybe_reverse (char const *name, bool nonexistent, bool empty)
+{
+  bool is_empty = nonexistent || empty;
+  bool r;
+
+  r = (! is_empty) < p_says_nonexistent[reverse ^ is_empty]
+      && ok_to_reverse ("The next patch%s would %s the file %s,\nwhich %s!",
+			reverse ? ", when reversed," : "",
+			(nonexistent ? "delete"
+			 : empty ? "empty out"
+			 : "create"),
+			quotearg (name),
+			(nonexistent ? "does not exist"
+			 : empty ? "is already empty"
+			 : "already exists"));
+  reverse ^= r;
+  return r;
+}
+
 /* True if the remainder of the patch file contains a diff of some sort. */
 
 bool
 there_is_another_patch (bool need_header)
 {
-    bool is_empty;
-
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
 	    say ("done\n");
@@ -287,20 +305,6 @@ there_is_another_patch (bool need_header)
 	    }
 	}
     }
-    is_empty = inerrno || instat.st_size == 0;
-    if ((! is_empty) < p_says_nonexistent[reverse ^ is_empty])
-      {
-	reverse ^= ok_to_reverse
-	    ("The next patch%s would %s the file %s,\nwhich %s!",
-	     reverse ? ", when reversed," : "",
-	     (inerrno ? "delete"
-	      : instat.st_size == 0 ? "empty out"
-	      : "create"),
-	     quotearg (inname),
-	     (inerrno ? "does not exist"
-	      : instat.st_size == 0 ? "is already empty"
-	      : "already exists"));
-      }
     return true;
 }
 
@@ -658,6 +662,13 @@ intuit_diff_type (bool need_header)
 		    }
 	      }
 
+	    if (i != NONE && st[i].st_size > 0)
+	      i0 = i;
+	    if (i0 != NONE
+		&& ! maybe_reverse (p_name[i0], i == NONE,
+				    i == NONE || st[i].st_size == 0))
+	      i = i0;
+
 	    if (i == NONE && p_says_nonexistent[reverse])
 	      {
 		int newdirs[3];
@@ -683,7 +694,15 @@ intuit_diff_type (bool need_header)
       }
 
     if (i == NONE)
-      inerrno = -1;
+      {
+	if (inname)
+	  {
+	    inerrno = stat (inname, &instat) == 0 ? 0 : errno;
+	    maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
+	  }
+	else
+          inerrno = -1;
+      }
     else
       {
 	inname = savestr(p_name[i]);

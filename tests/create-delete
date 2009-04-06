@@ -52,8 +52,37 @@ EOF
 
 # ==============================================================
 
+echo one > f
+diff -u f /dev/null > f.diff
+rm f
+check 'patch -p0 < f.diff || echo "Status: $?"' <<EOF
+The next patch would delete the file f,
+which does not exist!  Assume -R? [n] 
+Apply anyway? [n] 
+Skipping patch.
+1 out of 1 hunk ignored
+Status: 1
+EOF
+
+# ==============================================================
+
+echo one > f
+diff -u f /dev/null > f.diff
+rm f
+check 'patch -p0 -f < f.diff || echo "Status: $?"' <<EOF
+The next patch would delete the file f,
+which does not exist!  Applying it anyway.
+patching file f
+Hunk #1 FAILED at 1.
+1 out of 1 hunk FAILED -- saving rejects to file f.rej
+Status: 1
+EOF
+
+# ==============================================================
+
 umask 022
 
+echo one > f
 diff -u f /dev/null > f.diff
 rm f
 check 'patch -f f < f.diff || echo "Status: $?"' <<EOF
