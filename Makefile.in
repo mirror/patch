@@ -218,6 +218,7 @@ COMPILE = $(CC) -c $(CPPFLAGS) $(DEFS) -Ded_PROGRAM=\"$(ed_PROGRAM)\" \
 	$(DEFINE_ENABLE_MERGE) -I. -I$(srcdir)/src -I$(srcdir)/gl/lib $(CFLAGS)
 
 .c.$(OBJEXT):
+	@mkdir -p $(@D)
 	$(COMPILE) -o $@ $<
 
 src/patch$(EXEEXT): $(OBJS)
