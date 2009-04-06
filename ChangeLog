@@ -12,6 +12,8 @@
 	* tests/create-delete: Add test cases covering the previously-broken
 	code paths.
 
+	* Makefile.in (MISC): Add config.guess and config.sub.
+
 2009-04-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* util.c (create_backup): We also need to create base directories

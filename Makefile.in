@@ -154,7 +154,9 @@ MISC = \
 	README \
 	VERSION \
 	aclocal.m4 \
+	config.guess\
 	config.hin \
+	config.sub \
 	configure \
 	configure.ac \
 	install-sh \
