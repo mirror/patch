@@ -55,11 +55,11 @@ typedef struct
 
 /* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
 
-static unsigned int
-file_id_hasher (void const *entry, unsigned int table_size)
+static size_t
+file_id_hasher (void const *entry, size_t table_size)
 {
   file_id const *e = entry;
-  unsigned int i = e->ino + e->dev;
+  size_t i = e->ino + e->dev;
   return i % table_size;
 }
 
