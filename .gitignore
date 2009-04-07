@@ -11,5 +11,9 @@
 /src/patch
 /.pc/
 /VERSION
+/patch-*.tar.bz2
+/patch-*.tar.bz2.sig
 /patch-*.tar.gz
 /patch-*.tar.gz.sig
+/patch-*.tar.xz
+/patch-*.tar.xz.sig
