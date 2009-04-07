@@ -1027,9 +1027,11 @@ static void
 print_header_line (FILE *fp, const char *tag, bool reverse)
 {
   const char *name = pch_name (reverse);
+  const char *timestr = pch_timestr (reverse);
 
   /* FIXME: include timestamp as well. */
-  fprintf (fp, "%s %s\n", tag, name ? name : "/dev/null");
+  fprintf (fp, "%s %s%s\n", tag, name ? name : "/dev/null",
+	   timestr ? timestr : "");
 }
 
 /* Produce unified reject files */

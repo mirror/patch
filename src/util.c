@@ -1099,9 +1099,10 @@ init_time (void)
 /* Make filenames more reasonable. */
 
 char *
-fetchname (char *at, int strip_leading, time_t *pstamp)
+fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
 {
     char *name;
+    char *timestr = NULL;
     register char *t;
     int sleading = strip_leading;
     time_t stamp = (time_t) -1;
@@ -1137,6 +1138,16 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
 	      stamp = (time_t) -1;
 	    else
 	      {
+		if (ptimestr)
+		  {
+		    char const *t = u + strlen (u);
+		    if (t != u && *(t-1) == '\n')
+		      t--;
+		    if (t != u && *(t-1) == '\r')
+		      t--;
+		    timestr = savebuf (u, t - u);
+		  }
+
 		if (set_time | set_utc)
 		  stamp = str2time (&u, initial_time,
 				    set_utc ? 0L : TM_LOCAL_ZONE);
@@ -1165,7 +1176,11 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
       }
 
     if (!*name)
-      return 0;
+      {
+	if (timestr)
+	  free (timestr);
+	return 0;
+      }
 
     /* If the name is "/dev/null", ignore the name and mark the file
        as being nonexistent.  The name "/dev/null" appears in patches
@@ -1174,16 +1189,23 @@ fetchname (char *at, int strip_leading, time_t *pstamp)
       {
 	if (pstamp)
 	  *pstamp = 0;
+	if (timestr)
+	  free (timestr);
 	return 0;
       }
 
     /* Ignore the name if it doesn't have enough slashes to strip off.  */
     if (0 < sleading)
-      return 0;
+      {
+	if (timestr)
+	  free (timestr);
+	return 0;
+      }
 
     if (pstamp)
       *pstamp = stamp;
-
+    if (ptimestr)
+      *ptimestr = timestr;
     return savestr (name);
 }
 

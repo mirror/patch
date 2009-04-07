@@ -43,6 +43,7 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
 static time_t p_timestamp[2];		/* timestamps in patch headers */
+static char *p_timestr[2];		/* timestamps as strings */
 static off_t p_filesize;		/* size of the patch file */
 static LINENUM p_first;			/* 1st line number */
 static LINENUM p_newfirst;		/* 1st line number of replacement */
@@ -279,7 +280,7 @@ there_is_another_patch (bool need_header)
 	    return true;
 	}
 	ask ("File to patch: ");
-	inname = fetchname (buf, 0, (time_t *) 0);
+	inname = fetchname (buf, 0, (char **) 0, (time_t *) 0);
 	if (inname)
 	  {
 	    if (stat (inname, &instat) == 0)
@@ -327,9 +328,15 @@ intuit_diff_type (bool need_header)
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
-	free (p_name[i]);
-	p_name[i] = 0;
-      }
+	  free (p_name[i]);
+	  p_name[i] = 0;
+        }
+    for (i = OLD; i <= NEW; i++)
+      if (p_timestr[i])
+	{
+	  free(p_timestr[i]);
+	  p_timestr[i] = 0;
+	}
 
     /* Ed and normal format patches don't have filename headers.  */
     if (diff_type == ED_DIFF || diff_type == NORMAL_DIFF)
@@ -406,19 +413,22 @@ intuit_diff_type (bool need_header)
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	  {
-	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
+				     &p_timestamp[OLD]);
 	    need_header = false;
 	  }
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
-	    p_name[OLD] = fetchname (s+4, strippath, &p_timestamp[OLD]);
+	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
+				     &p_timestamp[OLD]);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    p_name[INDEX] = fetchname (s+6, strippath, (time_t *) 0);
+	    p_name[INDEX] = fetchname (s+6, strippath, (char **) 0,
+				       (time_t *) 0);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -455,7 +465,8 @@ intuit_diff_type (bool need_header)
 	    if (strnEQ(t, "--- ", 4))
 	      {
 		time_t timestamp = (time_t) -1;
-		p_name[NEW] = fetchname (t+4, strippath, &timestamp);
+		p_name[NEW] = fetchname (t+4, strippath, &p_timestr[NEW],
+					 &timestamp);
 		need_header = false;
 		if (timestamp != (time_t) -1)
 		  {
@@ -478,13 +489,17 @@ intuit_diff_type (bool need_header)
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
 
-	    /* `p_name' and `p_timestamp' are backwards; swap them.  */
+	    /* `p_name', `p_timestr', and `p_timestamp' are backwards;
+	       swap them.  */
 	    time_t ti = p_timestamp[OLD];
 	    p_timestamp[OLD] = p_timestamp[NEW];
 	    p_timestamp[NEW] = ti;
 	    t = p_name[OLD];
 	    p_name[OLD] = p_name[NEW];
 	    p_name[NEW] = t;
+	    t = p_timestr[OLD];
+	    p_timestr[OLD] = p_timestr[NEW];
+	    p_timestr[NEW] = t;
 
 	    s += 4;
 	    if (s[0] == '0' && !ISDIGIT (s[1]))
@@ -1978,6 +1993,12 @@ char const *
 pch_c_function (void)
 {
     return p_c_function;
+}
+
+char const *
+pch_timestr (bool which)
+{
+  return p_timestr[which];
 }
 
 /* Is the newline-terminated line a valid `ed' command for patch

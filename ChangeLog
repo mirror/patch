@@ -7,6 +7,15 @@
 
 	* patch.man: Replace "systems like DOS" with "Windows". Spelling.
 
+	Preserve timestamps in reject files.
+	* src/pch.c (p_timestr): New variable.
+	(intuit_diff_type): Set p_timestr here through fetchname().
+	(pch_timestr): New function.
+	* src/pch.h (pch_timestr): Declare.
+	* src/util.c (fetchname): Return the timestamp as string when asked to.
+	* src/util.h (fetchname): Update declaration.
+	* tests/preserve-c-function-names, tests/reject-format: Update.
+
 2009-04-06  Andreas Gruenbacher  <agruen@suse.de>
 
 	Fix the "patch would create" fix from 2009-03-28.

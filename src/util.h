@@ -47,7 +47,7 @@ void fatal (char const *, ...)
 void pfatal (char const *, ...)
 	__attribute__ ((noreturn, format (printf, 1, 2)));
 
-char *fetchname (char *, int, time_t *);
+char *fetchname (char *, int, char **, time_t *);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);

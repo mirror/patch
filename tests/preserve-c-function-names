@@ -31,7 +31,7 @@ int foo()
   }
 EOF
 
-diff -p -c a b > ab.diff
+diff -p -c -L a -L b a b > ab.diff
 touch c
 check 'patch c < ab.diff || cat c.rej' <<EOF
 patching file c
