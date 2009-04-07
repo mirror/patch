@@ -337,9 +337,9 @@ dist:: $(DISTFILES)
 		    ) | sed -e 's,^$(srcdir)/,,' -e "s,^,$(PV)/," \
 		    | LC_ALL=C sort` \
 	  | gzip -9 > $(PV).tar.gz
-	@if which bzip2 2>/dev/null; then \
+	@if which bzip2 >/dev/null 2>/dev/null; then \
 	    gzip -d < $(PV).tar.gz | bzip2 -9 > $(PV).tar.bz2; fi
-	@if which xz 2>/dev/null; then \
+	@if which xz >/dev/null 2>/dev/null; then \
 	    gzip -d < $(PV).tar.gz | xz -9 > $(PV).tar.xz; fi
 	@rm -rf $(PV)
 	@whereto=$$(if grep -q -E -- '-[0-9]+-[0-9a-z]+(-dirty)?$$' VERSION; \
