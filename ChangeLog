@@ -2,6 +2,7 @@
 
 	* src/util.c (file_id_hasher): Adapt to Gnulib type change.
 	* Makefile.in: Fix out-of-tree builds.
+	(dist): Optionally also create bzip2 and xz tarballs.
 
 2009-04-06  Andreas Gruenbacher  <agruen@suse.de>
 

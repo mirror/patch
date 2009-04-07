@@ -337,10 +337,20 @@ dist:: $(DISTFILES)
 		    ) | sed -e 's,^$(srcdir)/,,' -e "s,^,$(PV)/," \
 		    | LC_ALL=C sort` \
 	  | gzip -9 > $(PV).tar.gz
+	@if which bzip2 2>/dev/null; then \
+	    gzip -d < $(PV).tar.gz | bzip2 -9 > $(PV).tar.bz2; fi
+	@if which xz 2>/dev/null; then \
+	    gzip -d < $(PV).tar.gz | xz -9 > $(PV).tar.xz; fi
 	@rm -rf $(PV)
 	@whereto=$$(if grep -q -E -- '-[0-9]+-[0-9a-z]+(-dirty)?$$' VERSION; \
 		   then echo alpha; else echo ftp; fi); \
-	echo -e "\n# gnupload --to $$whereto.gnu.org:patch $(PV).tar.gz\n"
+	    echo; \
+	    echo "# gnupload --to $$whereto.gnu.org:patch $(PV).tar.gz"; \
+	    test ! -e $(PV).tar.bz2 || echo "# gnupload" \
+	      "--to $$whereto.gnu.org:patch $(PV).tar.bz2"; \
+	    test ! -e $(PV).tar.xz || echo "# gnupload" \
+	      "--to $$whereto.gnu.org:patch $(PV).tar.xz"; \
+	    echo
 
 $(OBJS): config.h
 COMMON = src/common.h $(STDBOOL_H)
