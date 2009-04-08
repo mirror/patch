@@ -5,6 +5,9 @@
 	(main): Allow -o -.  Remove redundant check.
 	* patch.man: Document the new use of -o.
 
+	* src/pch.c (there_is_another_patch): Allow special characters in
+	filenames read interactively.
+
 2009-04-07  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (file_id_hasher): Adapt to Gnulib type change.

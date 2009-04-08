@@ -274,15 +274,18 @@ there_is_another_patch (bool need_header)
 
     skip_to(p_start,p_sline);
     while (!inname) {
+	char *t;
 	if (force | batch) {
 	    say ("No file to patch.  Skipping patch.\n");
 	    skip_rest_of_patch = true;
 	    return true;
 	}
 	ask ("File to patch: ");
-	inname = fetchname (buf, 0, (char **) 0, (time_t *) 0);
-	if (inname)
+	t = buf + strlen (buf);
+	if (t > buf + 1 && *(t - 1) == '\n')
 	  {
+	    inname = savebuf (buf, t - buf);
+	    inname[t - buf - 1] = 0;
 	    if (stat (inname, &instat) == 0)
 	      {
 		inerrno = 0;
