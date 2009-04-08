@@ -1,6 +1,9 @@
 2009-04-08  Andreas Gruenbacher  <agruen@suse.de>
 
-	* src/patch.c (main): Remove redundant check.
+	* src/patch.c (create_output_file): Add support for sending output
+	to standard output.
+	(main): Allow -o -.  Remove redundant check.
+	* patch.man: Document the new use of -o.
 
 2009-04-07  Andreas Gruenbacher  <agruen@suse.de>
 

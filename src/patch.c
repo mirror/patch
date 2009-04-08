@@ -737,8 +737,6 @@ get_some_switches (void)
 		noreverse = true;
 		break;
 	    case 'o':
-		if (strcmp (optarg, "-") == 0)
-		  fatal ("can't output patches to standard output");
 		outfile = savestr (optarg);
 		break;
 	    case 'p':
@@ -1343,7 +1341,16 @@ create_output_file (char const *name, int open_flags)
 static void
 init_output (char const *name, int open_flags, struct outstate *outstate)
 {
-  outstate->ofp = name ? create_output_file (name, open_flags) : (FILE *) 0;
+  if (! name)
+    outstate->ofp = (FILE *) 0;
+  else if (strcmp (name, "-") != 0)
+    outstate->ofp = create_output_file (name, open_flags);
+  else
+    {
+      outstate->ofp = stdout;
+      stdout = stderr;
+    }
+
   outstate->after_newline = true;
   outstate->zero_output = true;
 }

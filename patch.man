@@ -425,9 +425,9 @@ this:
 .RS
 .nf
 .B <<<<<<<
-lines from the original file
+.I lines from the original file
 .B =======
-lines from the patch
+.I lines from the patch
 .B >>>>>>>
 .RE
 .fi
@@ -451,6 +451,8 @@ instead of patching files in place.
 Do not use this option if
 .I outfile
 is one of the files to be patched.
+When \fIoutfile\fP is \fB\-\fP, send output to standard output, and send any
+messages that would usually go to standard output to standard error.
 .TP
 \fB\-p\fP\fInum\fP  or  \fB\*=strip\fP\fB=\fP\fInum\fP
 Strip the smallest prefix containing
