@@ -1,3 +1,7 @@
+2009-04-08  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/patch.c (main): Remove redundant check.
+
 2009-04-07  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (file_id_hasher): Adapt to Gnulib type change.

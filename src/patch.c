@@ -378,7 +378,7 @@ main (int argc, char **argv)
 	      if (! dry_run)
 		{
 		  /* Avoid replacing files when nothing has changed.  */
-		  if (failed < hunk || outfile || diff_type == ED_DIFF)
+		  if (failed < hunk || diff_type == ED_DIFF)
 		    {
 		      time_t t;
 
