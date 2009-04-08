@@ -1145,7 +1145,8 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
 		      t--;
 		    if (t != u && *(t-1) == '\r')
 		      t--;
-		    timestr = savebuf (u, t - u);
+		    timestr = savebuf (u, t - u + 1);
+		    timestr[t - u] = 0;
 		  }
 
 		if (set_time | set_utc)
@@ -1204,7 +1205,7 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
 
     if (pstamp)
       *pstamp = stamp;
-    if (ptimestr)
+    if (timestr)
       *ptimestr = timestr;
     return savestr (name);
 }

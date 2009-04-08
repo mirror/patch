@@ -8,6 +8,8 @@
 	* src/pch.c (there_is_another_patch): Allow special characters in
 	filenames read interactively.
 
+	* src/util.c (fetchname): Don't forget to NUL terminate ptimestr.
+
 2009-04-07  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (file_id_hasher): Adapt to Gnulib type change.
