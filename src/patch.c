@@ -127,7 +127,7 @@ main (int argc, char **argv)
     backup_if_mismatch = ! posixly_correct;
     patch_get = ((val = getenv ("PATCH_GET"))
 		 ? numeric_string (val, true, "PATCH_GET value")
-		 : posixly_correct - 1);
+		 : 0);
 
     val = getenv ("SIMPLE_BACKUP_SUFFIX");
     simple_backup_suffix = val && *val ? val : ".orig";

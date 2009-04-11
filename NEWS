@@ -38,6 +38,9 @@
   imply the simple version control mode, and can be combined.
 * Patch rejects more malformed normal format commands and checks for trailing
   garbage.  It now recognizes ed commands without addresses.
+* Change the default value of PATCH_GET to 0.  (Previously, the default was 0
+  under POSIXLY_CORRECT and negative otherwise; this is causing problems
+  particularly with Perforce.)
 * Handle missing timestamps better.
 * Various bug fixes.
 
