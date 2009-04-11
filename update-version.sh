@@ -1,5 +1,3 @@
-#! /bin/sh
-
 # (Re)compute version from git repostitory
 # Copyright (C) 2009 Free Software Foundation, Inc.
 #
@@ -22,7 +20,10 @@ if git rev-parse --verify HEAD >/dev/null 2>/dev/null \
 	    if git diff-index --name-only HEAD | read dummy; then
 	      echo -dirty
 	    fi`
-    echo ${1#v}$2 > .$version.tmp
+    if test "`expr substr "$1" 1 1`" = v ; then
+	set -- "`expr substr "$1" 2 "(" length "$1" - 1 ")"`" "$2"
+    fi
+    echo $1$2 > .$version.tmp
     if test ! -e $version \
        || ! cmp -s .$version.tmp $version ; then
 	mv .$version.tmp $version

@@ -1,3 +1,8 @@
+2009-04-11  Andreas Gruenbacher  <agruen@suse.de>
+
+	* update-version.sh, configure.ac, Makefile.in: Portability
+	improvements.
+
 2009-04-08  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (create_output_file): Add support for sending output

@@ -21,7 +21,7 @@
 AC_PREREQ(2.57)
 define(AC_PACKAGE_VERSION, m4_normalize(esyscmd(
 [
-    . update-version.sh VERSION
+    . ./update-version.sh VERSION
     cat VERSION
 ])))
 AC_INIT(patch, AC_PACKAGE_VERSION, bug-patch@gnu.org)

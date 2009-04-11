@@ -240,7 +240,7 @@ Makefile: Makefile.in $(CONFIG_STATUS)
 	$(SHELL) $(CONFIG_STATUS)
 FORCE:
 VERSION: FORCE
-	@cd $(srcdir) && $(SHELL) update-version.sh VERSION
+	@cd $(srcdir) && $(SHELL) ./update-version.sh VERSION
 config.status: configure
 	$(SHELL) $(CONFIG_STATUS) --recheck
 configure: configure.ac $(srcdir)/aclocal.m4 $(srcdir)/VERSION
