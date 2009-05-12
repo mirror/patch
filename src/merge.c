@@ -146,6 +146,8 @@ locate_merge (LINENUM *matched)
 
   out:
     *matched = max_matched;
+    if (where < min_where)
+      where = min_where;
     return where;
 }
 
