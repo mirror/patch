@@ -188,6 +188,7 @@ TESTS = \
 	tests/create-delete \
 	tests/crlf-handling \
 	tests/global-reject-files \
+	tests/inname \
 	tests/line-numbers \
 	tests/merge \
 	tests/munged-context-format \

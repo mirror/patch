@@ -14,12 +14,16 @@
   intermediary versions.
 * In the above situation, if there are rejects in more than one of those
   patches, they all go into the same reject file.
-* The -r option works correctly even if there are rejects in more than
+* When the file to be patched is specified on the command line, all patches
+  are applied to that file. (Previously, the first patch was applied to the
+  file specified on the command line, and the names of additional files to
+  patch were taken from header lines in the patch file.)
+* The -r option now works correctly even if there are rejects in more than
   one file.  Use the - argument to discard rejects.
 * Rejected hunks come out in unified diff format if the input patch was of
   that format, otherwise in ordinary context diff form.  Use the
   --reject-format option to enforce either "context" or "unified" format.
-  The "diff -p" (--show-c-function) output is preserved.
+  Timestamps and the "diff -p" (--show-c-function) output are preserved.
   Changed lines in context format reject files are correctly indicated
   with '!' markers as the format defines.  Added and removed lines are
   still marked with '+' and '-', respectively.

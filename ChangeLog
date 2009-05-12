@@ -1,3 +1,22 @@
+2009-05-12  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/merge.c (locate_merge): Make sure to return a line number
+	bigger than last_frozen_line.
+
+	* src/patch.c (explicit_inname): New variable.
+	(get_some_switches): Set to true when the filename to patch has been
+	specified on the command line.
+	(reinitialize_almost_everything): Do not reset the input filename
+	between patches when it has been specified on the command line.
+	* tests/inname: New test case.
+	* Makefile.in: Add test case.
+
+2009-04-11  Vincent Legoll <vincent.legoll@gmail.com>
+
+	* src/patch.c (main): Always set patch_get to 0 unless PATCH_GET is
+	set.
+	* patch.man: Update accordingly.
+
 2009-04-11  Andreas Gruenbacher  <agruen@suse.de>
 
 	* update-version.sh, configure.ac, Makefile.in: Portability

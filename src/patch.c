@@ -68,6 +68,7 @@ static bool backup_if_mismatch;
 static char const *version_control;
 static char const *version_control_context;
 static bool remove_empty_files;
+static bool explicit_inname;
 
 /* true if -R was specified on command line.  */
 static bool reverse_flag_specified;
@@ -494,7 +495,7 @@ reinitialize_almost_everything (void)
     input_lines = 0;
     last_frozen_line = 0;
 
-    if (inname) {
+    if (inname && ! explicit_inname) {
 	free (inname);
 	inname = 0;
     }
@@ -840,6 +841,7 @@ get_some_switches (void)
     if (optind < Argc)
       {
 	inname = savestr (Argv[optind++]);
+	explicit_inname = true;
 	invc = -1;
 	if (optind < Argc)
 	  {
