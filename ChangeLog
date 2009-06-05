@@ -10,6 +10,9 @@
 	some platforms.
 	* gl/lib/dup2.c, gl/m4/dup2.m4: Import from gnulib.
 
+	* gl/lib/rename.c, gl/m4/rename.m4: Import from gnulib for platforms
+	like Mingw.
+
 2009-05-12  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/merge.c (locate_merge): Make sure to return a line number
