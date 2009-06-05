@@ -1,3 +1,8 @@
+2009-06-05  Andreas Gruenbacher  <agruen@suse.de>
+
+	* gl/lib/getopt_int.h, gl/lib/strndup.c, gl/m4/strndup.m4: Add
+	some missing gnulib files.
+
 2009-05-12  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/merge.c (locate_merge): Make sure to return a line number
