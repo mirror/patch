@@ -2,6 +2,8 @@
 
 	* gl/lib/getopt_int.h, gl/lib/strndup.c, gl/m4/strndup.m4: Add
 	some missing gnulib files.
+	* Makefile.in (GETOPT_H): Include subdirectory (gl/lib/) when
+	using the gnulib version.
 
 2009-05-12  Andreas Gruenbacher  <agruen@suse.de>
 
