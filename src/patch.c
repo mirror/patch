@@ -1349,8 +1349,12 @@ init_output (char const *name, int open_flags, struct outstate *outstate)
     outstate->ofp = create_output_file (name, open_flags);
   else
     {
-      outstate->ofp = stdout;
-      stdout = stderr;
+      int stdout_dup = dup (fileno (stdout));
+      outstate->ofp = fdopen (stdout_dup, "a");
+      if (stdout_dup == -1 || ! outstate->ofp)
+	pfatal ("Failed to duplicate standard output");
+      if (dup2 (fileno (stderr), fileno (stdout)) == -1)
+	pfatal ("Failed to redirect messages to standard error");
     }
 
   outstate->after_newline = true;
