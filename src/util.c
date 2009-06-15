@@ -328,7 +328,7 @@ move_file (char const *from, int volatile *from_needs_removal,
     {
       if (debug & 4)
 	say ("Removing file %s\n", quotearg (to));
-      if (unlink (to) != 0)
+      if (unlink (to) != 0 && errno != ENOENT)
 	pfatal ("Can't remove file %s", quotearg (to));
     }
 }

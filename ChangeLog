@@ -1,3 +1,8 @@
+2009-06-15  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/util.c (move_file): Don't fail when removing nonexistent
+	files: this condition is already checked in maybe_reverse().
+
 2009-06-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* gl/lib/getopt_int.h, gl/lib/strndup.c, gl/m4/strndup.m4: Add
