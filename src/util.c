@@ -44,6 +44,7 @@
 #endif
 
 #include <stdarg.h>
+#include <full-write.h>
 
 static void makedirs (char *);
 
@@ -375,7 +376,7 @@ copy_to_fd (const char *from, int tofd)
     {
       if (i == (ssize_t) -1)
 	read_fatal ();
-      if (write (tofd, buf, i) != i)
+      if (full_write (tofd, buf, i) != i)
 	write_fatal ();
     }
   if (close (fromfd) != 0)

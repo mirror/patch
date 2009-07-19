@@ -1,3 +1,14 @@
+2009-07-19  Andreas Gruenbacher  <agruen@suse.de>
+
+	* gl/lib/full-write.c, gl/lib/safe-write.c, gl/lib/full-write.h,
+	gl/lib/safe-write.h, gl/m4/safe-write.m4, gl/m4/ssize_t.m4:
+	Import full_write() and its prerequesites from gnulib.
+	* Makefile.in (LIBSRCS, LIBHDRS, LIBM4FILES): Add new files.
+	Add new dependencies.
+	* configure.ac (gl_SAFE_WRITE): Needef for full_write().
+	* src/util.c: Include full-write.h.
+	(copy_to_fd): use full_write() instead of write().
+
 2009-06-15  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (move_file): Don't fail when removing nonexistent

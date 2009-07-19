@@ -39,7 +39,7 @@ DEFS = @DEFS@
 EXEEXT = @EXEEXT@
 LDFLAGS = @LDFLAGS@
 LIBOBJDIR = gl/lib/
-LIBOBJS = @LIBOBJS@
+LIBOBJS = @LIBOBJS@ ${LIBOBJDIR}full-write$U.o
 LIBS = @LIBS@
 OBJEXT = @OBJEXT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -76,6 +76,7 @@ LIBSRCS = \
 	gl/lib/dirname.c \
 	gl/lib/error.c \
 	gl/lib/exitfail.c \
+	gl/lib/full-write.c \
 	gl/lib/getopt1.c \
 	gl/lib/getopt.c \
 	gl/lib/hash.c \
@@ -85,6 +86,8 @@ LIBSRCS = \
 	gl/lib/quotearg.c \
 	gl/lib/quote.c \
 	gl/lib/realloc.c \
+	gl/lib/safe-read.c \
+	gl/lib/safe-write.c \
 	gl/lib/strcasecmp.c \
 	gl/lib/stripslash.c \
 	gl/lib/strncasecmp.c \
@@ -122,12 +125,14 @@ LIBHDRS = \
 	gl/lib/dirname.h \
 	gl/lib/error.h \
 	gl/lib/exitfail.h \
+	gl/lib/full-write.h \
 	gl/lib/getopt.hin \
 	gl/lib/gettext.h \
 	gl/lib/hash.h \
 	gl/lib/minmax.h \
 	gl/lib/quotearg.h \
 	gl/lib/quote.h \
+	gl/lib/safe-write.h \
 	gl/lib/stdbool.hin \
 	gl/lib/unlocked-io.h \
 	gl/lib/verify.h \
@@ -293,6 +298,8 @@ LIBM4FILES = \
 	gl/m4/quotearg.m4 \
 	gl/m4/quote.m4 \
 	gl/m4/realloc.m4 \
+	gl/m4/safe-write.m4 \
+	gl/m4/ssize_t.m4 \
 	gl/m4/stdbool.m4 \
 	gl/m4/strcase.m4 \
 	gl/m4/unlocked-io.m4 \
@@ -357,6 +364,7 @@ dist:: $(DISTFILES)
 
 $(OBJS): config.h
 COMMON = src/common.h $(STDBOOL_H)
+
 gl/lib/addext.$(OBJEXT): gl/lib/backupfile.h gl/lib/dirname.h
 gl/lib/argmatch.$(OBJEXT): gl/lib/argmatch.h gl/lib/gettext.h gl/lib/error.h \
 	gl/lib/quote.h gl/lib/quotearg.h gl/lib/unlocked-io.h
@@ -366,8 +374,12 @@ gl/lib/basename.$(OBJEXT): gl/lib/dirname.h
 gl/lib/dirname.$(OBJEXT): gl/lib/dirname.h gl/lib/xalloc.h
 gl/lib/error.$(OBJEXT): gl/lib/error.h gl/lib/gettext.h gl/lib/unlocked-io.h
 gl/lib/exitfail.$(OBJEXT): gl/lib/exitfail.h
+gl/lib/full-write.$(OBJEXT): gl/lib/full-write.h gl/lib/safe-write.h
 gl/lib/getopt.$(OBJEXT) gl/lib/getopt1.$(OBJEXT): gl/lib/getopt.h
 gl/lib/hash.$(OBJEXT): $(STDBOOL_H) gl/lib/hash.h
+gl/lib/safe-read.$(OBJEXT): gl/lib/safe-write.h
+gl/lib/safe-write.$(OBJEXT): gl/lib/safe-read.c
+
 src/inp.$(OBJEXT): gl/lib/backupfile.h $(COMMON) src/inp.h src/pch.h \
 	gl/lib/quotearg.h src/util.h gl/lib/xalloc.h
 src/maketime.$(OBJEXT): src/maketime.h src/partime.h
@@ -381,7 +393,7 @@ gl/lib/quote.$(OBJECT): gl/lib/quote.h gl/lib/quotearg.h
 gl/lib/quotearg.$(OBJEXT): gl/lib/gettext.h gl/lib/quotearg.h gl/lib/xalloc.h
 src/quotesys.$(OBJEXT): src/quotesys.h
 gl/lib/strncasecmp.$(OBJEXT): gl/lib/strcasecmp.c
-src/util.$(OBJEXT): gl/lib/backupfile.h $(COMMON) gl/lib/dirname.h \
+src/util.$(OBJEXT): gl/lib/backupfile.h $(COMMON) gl/lib/dirname.h gl/lib/full-write.h \
 	gl/lib/hash.h src/maketime.h src/partime.h gl/lib/quotearg.h \
 	src/quotesys.h src/util.h src/version.h gl/lib/xalloc.h
 src/version.$(OBJEXT): $(COMMON) src/version.h
