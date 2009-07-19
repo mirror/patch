@@ -39,7 +39,7 @@ x() {
 	shift
     done
     echo "$body" | sed$sed -e b > c
-    output=`diff -u a b | patch $ARGS -f -m c`
+    output=`diff -u a b | patch $ARGS -f --merge c`
     status=$?
     echo "$output" | sed -e '/^\(\|patching file c\)$/d'
     cat c

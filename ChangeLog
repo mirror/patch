@@ -9,6 +9,9 @@
 	* src/util.c: Include full-write.h.
 	(copy_to_fd): use full_write() instead of write().
 
+	* src/partime.c: The -m option hasn't been officially allocated yet.
+	Use only the long form for now (--merge).
+
 2009-06-15  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (move_file): Don't fail when removing nonexistent

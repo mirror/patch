@@ -1,5 +1,5 @@
 * A regression test suite has been added ("make check").
-* A -m or --merge option has been added which will merge a patch file into
+* A --merge option has been added which will merge a patch file into
   the original files similar to merge(1).  See the patch(1) manual page for
   documentation.
 * Unless a filename has been specified on the command line, look only
