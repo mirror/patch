@@ -86,11 +86,13 @@ LIBSRCS = \
 	gl/lib/quotearg.c \
 	gl/lib/quote.c \
 	gl/lib/realloc.c \
+	gl/lib/rename.c \
 	gl/lib/safe-read.c \
 	gl/lib/safe-write.c \
 	gl/lib/strcasecmp.c \
 	gl/lib/stripslash.c \
 	gl/lib/strncasecmp.c \
+	gl/lib/strndup.c \
 	gl/lib/xmalloc.c \
 	gl/lib/xstrndup.c
 
@@ -127,6 +129,7 @@ LIBHDRS = \
 	gl/lib/exitfail.h \
 	gl/lib/full-write.h \
 	gl/lib/getopt.hin \
+	gl/lib/getopt_int.h \
 	gl/lib/gettext.h \
 	gl/lib/hash.h \
 	gl/lib/minmax.h \
@@ -298,10 +301,12 @@ LIBM4FILES = \
 	gl/m4/quotearg.m4 \
 	gl/m4/quote.m4 \
 	gl/m4/realloc.m4 \
+	gl/m4/rename.m4 \
 	gl/m4/safe-write.m4 \
 	gl/m4/ssize_t.m4 \
 	gl/m4/stdbool.m4 \
 	gl/m4/strcase.m4 \
+	gl/m4/strndup.m4 \
 	gl/m4/unlocked-io.m4 \
 	gl/m4/utimbuf.m4 \
 	gl/m4/xalloc.m4 \
