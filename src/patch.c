@@ -408,9 +408,18 @@ main (int argc, char **argv)
 				    quotearg (outname));
 			}
 
-		      if (! inerrno && chmod (outname, instat.st_mode) != 0)
-			pfatal ("Can't set permissions on file %s",
-				quotearg (outname));
+		      if (! inerrno)
+			{
+			  if (chmod (outname, instat.st_mode) != 0)
+			    pfatal ("Can't set permissions on file %s",
+				    quotearg (outname));
+			  if (geteuid () != instat.st_gid)
+			    {
+			      /* Fails if we are not in group instat.st_gid.  */
+			      chown (outname, -1, instat.st_gid);
+			    }
+			  /* FIXME: There may be other attributes to preserve.  */
+			}
 		    }
 		  else
 		    create_backup (outname, 0, 0, true);
