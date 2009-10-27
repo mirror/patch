@@ -450,7 +450,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    continue;
 
 	  lines = 3 + (in - firstin) + (new - firstnew);
-	  merge_result (&first_result, hunk, "UNMERGED",
+	  merge_result (&first_result, hunk, "NOT MERGED",
 			where, where + lines - 1);
 	  out_offset += 3 + (new - firstnew);
 

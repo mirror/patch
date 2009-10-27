@@ -2,6 +2,10 @@
 
 	* patch.man: Fix typo (reported by Vytautas Šaltenis).
 
+	* src/merge.c: Clarify the message when (part of) a hunk cannot be
+	merged.
+	* tests/merge: Adapt the test case.
+
 2009-09-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (LIBSRCS, LIBHDRS, LIBM4FILES): Add the gnulib which
