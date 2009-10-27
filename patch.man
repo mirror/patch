@@ -36,7 +36,7 @@ or
 .B \*=backup
 option.
 The names of the files to be patched are usually taken from the patch file,
-but if there's just one file to be patched it can specified on the
+but if there's just one file to be patched it can be specified on the
 command line as
 .IR originalfile .
 .PP

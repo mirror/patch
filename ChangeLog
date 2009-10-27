@@ -1,3 +1,7 @@
+2009-10-27  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.man: Fix typo (reported by Vytautas Šaltenis).
+
 2009-09-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (LIBSRCS, LIBHDRS, LIBM4FILES): Add the gnulib which
