@@ -1,3 +1,7 @@
+2009-11-12  Andreas Gruenbacher  <agruen@suse.de>
+
+	* NEWS: Version 2.6 released.
+
 2009-10-27  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.man: Fix typo (reported by Vytautas Šaltenis).

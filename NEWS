@@ -1,3 +1,5 @@
+Changes in version 2.6:
+
 * A regression test suite has been added ("make check").
 * A --merge option has been added which will merge a patch file into
   the original files similar to merge(1).  See the patch(1) manual page for
