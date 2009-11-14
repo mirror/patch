@@ -20,8 +20,8 @@ if git rev-parse --verify HEAD >/dev/null 2>/dev/null \
 	    if git diff-index --name-only HEAD | read dummy; then
 	      echo -dirty
 	    fi`
-    if test "`expr substr "$1" 1 1`" = v ; then
-	set -- "`expr substr "$1" 2 "(" length "$1" - 1 ")"`" "$2"
+    if test "`expr substr $1 1 1`" = v ; then
+	set -- "`expr substr $1 2 \( length $1 - 1 \)`" $2
     fi
     echo $1$2 > .$version.tmp
     if test ! -e $version \

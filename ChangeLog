@@ -1,3 +1,7 @@
+2009-11-14  Andreas Gruenbacher  <agruen@suse.de>
+
+	* update-version.sh: Platform compatibility fixes.
+
 2009-11-12  Andreas Gruenbacher  <agruen@suse.de>
 
 	* NEWS: Version 2.6 released.
