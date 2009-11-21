@@ -219,7 +219,7 @@ check:: $(TESTS)
 .PHONY: $(TESTS) $(BROKEN_TESTS)
 $(TESTS) $(BROKEN_TESTS): all
 	@echo "[$@]"
-	@srcdir=$(srcdir)/tests $(TEST_SHELL) $@
+	@srcdir=$(srcdir)/tests $(TEST_SHELL) $(srcdir)/$@
 
 ifeq ($(ENABLE_MERGE),1)
 DEFINE_ENABLE_MERGE = -DENABLE_MERGE

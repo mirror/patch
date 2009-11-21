@@ -55,6 +55,10 @@
 	arguments to the update-version.sh script [on some platforms].  Invoke
 	with sh instead.
 
+2009-11-21  Peter Breitenlohner <peb@mppmu.mpg.de>
+
+	* Makefile.in: Make the test suite work for a VPATH build.
+
 2009-11-14  Andreas Gruenbacher  <agruen@suse.de>
 
 	* update-version.sh: Platform compatibility fixes.
