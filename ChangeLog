@@ -31,6 +31,12 @@
 	* tests/filename-choice: New test case.
 	* Makefile.in (TESTS): Add test case.
 
+2009-11-24  Bert Wesarg <bert.wesarg@googlemail.com>
+
+	* configure.ac: It looks like the . command does not pass the
+	arguments to the update-version.sh script [on some platforms].  Invoke
+	with sh instead.
+
 2009-11-14  Andreas Gruenbacher  <agruen@suse.de>
 
 	* update-version.sh: Platform compatibility fixes.
