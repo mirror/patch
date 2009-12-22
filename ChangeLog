@@ -2,6 +2,8 @@
 
 	* src/version.c (copyright_string): Add year 2009.
 
+	* src/pch.c (intuit_diff_type): Add some clarifying comments.
+
 2009-11-14  Andreas Gruenbacher  <agruen@suse.de>
 
 	* update-version.sh: Platform compatibility fixes.

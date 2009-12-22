@@ -638,6 +638,7 @@ intuit_diff_type (bool need_header)
 
 	if (! posixly_correct)
 	  {
+	    /* The best of all existing files. */
 	    i = best_name (p_name, stat_errno);
 
 	    if (i == NONE && patch_get)
@@ -706,6 +707,7 @@ intuit_diff_type (bool need_header)
 		  if (p_name[i])
 		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
 
+		/* The best of the filenames which create the fewest directories. */
 		i = best_name (p_name, distance_from_minimum);
 	      }
 	  }
