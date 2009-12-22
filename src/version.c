@@ -8,7 +8,7 @@
 
 static char const copyright_string[] = "\
 Copyright (C) 1988 Larry Wall\n\
-Copyright (C) 2003 Free Software Foundation, Inc.";
+Copyright (C) 2003, 2009 Free Software Foundation, Inc.";
 
 static char const free_software_msgid[] = "\
 This program comes with NO WARRANTY, to the extent permitted by law.\n\
