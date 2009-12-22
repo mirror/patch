@@ -4,6 +4,14 @@
 
 	* src/pch.c (intuit_diff_type): Add some clarifying comments.
 
+	* src/pch.c (intuit_diff_type): Fix regression introduced after patch
+	2.5.9: when none of the filenames in the old, new, and index headers
+	exists, patch chose the wrong filename (bug 28367).
+	(maybe_reverse): Return if the patch looks reversed, not if this
+	function toggled the reverse flag.
+	* tests/filename-choice: New test case.
+	* Makefile.in (TESTS): Add test case.
+
 2009-11-14  Andreas Gruenbacher  <agruen@suse.de>
 
 	* update-version.sh: Platform compatibility fixes.

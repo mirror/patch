@@ -197,6 +197,7 @@ TESTS = \
 	tests/corrupt-reject-files \
 	tests/create-delete \
 	tests/crlf-handling \
+	tests/filename-choice \
 	tests/global-reject-files \
 	tests/inname \
 	tests/line-numbers \
