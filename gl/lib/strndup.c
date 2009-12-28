@@ -23,6 +23,10 @@
 
 #include <stdlib.h>
 
+#ifndef HAVE_DECL_STRNLEN
+extern size_t strnlen (const char *, size_t);
+#endif
+
 char *
 strndup (char const *s, size_t n)
 {

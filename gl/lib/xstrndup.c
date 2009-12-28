@@ -23,6 +23,10 @@
 #include <string.h>
 #include "xalloc.h"
 
+#ifndef HAVE_DECL_STRNDUP
+extern char *strndup (const char *, size_t);
+#endif
+
 /* Return a newly allocated copy of at most N bytes of STRING.
    In other words, return a copy of the initial segment of length N of
    STRING.  */

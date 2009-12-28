@@ -8,6 +8,15 @@
 	mangled patch in this case.
 	* tests/crlf-handling: Update test case to cover this case.
 
+	* configure.ac (gl_FUNC_STRNDUP, gl_FUNC_STRNLEN): Add here.
+	* gl/m4/strndup.m4 (gl_HEADER_STRING_H_DEFAULTS): Don't use gnulib's
+	strings.h replacement for now, it is too complicated to add right now.
+	* gl/lib/xstrndup.c: Instead of using gl_HEADER_STRING_H_DEFAULTS,
+	declare strndup here on systems which don't have it.
+	* gl/lib/strndup.c: Instead of using gl_HEADER_STRING_H_DEFAULTS,
+	declare strnlen here on systems which don't have it.
+	* gl/lib/strnlen.c: Import from gnulib.
+
 2009-12-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/version.c (copyright_string): Add year 2009.
