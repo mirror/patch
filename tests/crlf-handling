@@ -13,8 +13,9 @@ use_local_patch
 use_tmpdir
 
 lf2crlf() {
-    while read l; do echo -e "$l\r"; done \
+    while read l; do echo -e "$l\r"; done
 }
+
 echo 1 > a
 echo 1b > b
 
