@@ -573,7 +573,6 @@ intuit_diff_type (bool need_header)
 	    p_start = previous_line;
 	    p_sline = p_input_line - 1;
 	    p_indent = indent;
-	    p_strip_trailing_cr = strip_trailing_cr;
 	    retval = NORMAL_DIFF;
 	    goto scan_exit;
 	}

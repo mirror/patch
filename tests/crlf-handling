@@ -52,6 +52,19 @@ fi
 
 echo 1 | lf2crlf > a
 echo 1b | lf2crlf > b
+
+diff a b > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+# --------------------------------------------------------------
+
 diff -u a b > ab.diff
 cp a c
 check 'patch c < ab.diff' <<EOF
@@ -62,8 +75,56 @@ check 'cat -A c' <<EOF
 1b^M$
 EOF
 
+# --------------------------------------------------------------
+
+diff -c a b > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+# --------------------------------------------------------------
+
+diff -e a b > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+# ==============================================================
+
 echo 1 > a
 echo 1b > b
+
+diff a b | lf2crlf > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+(Stripping trailing CRs from patch.)
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b$
+EOF
+
+lf2crlf < a > c
+check 'patch --binary c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+# --------------------------------------------------------------
+
 diff -u a b | lf2crlf > ab.diff
 cp a c
 check 'patch c < ab.diff' <<EOF
@@ -75,7 +136,7 @@ check 'cat -A c' <<EOF
 1b$
 EOF
 
-echo 1 | lf2crlf > c
+lf2crlf < a > c
 check 'patch --binary c < ab.diff' <<EOF
 patching file c
 EOF
@@ -83,6 +144,34 @@ EOF
 check 'cat -A c' <<EOF
 1b^M$
 EOF
+
+# --------------------------------------------------------------
+
+diff -c a b | lf2crlf > ab.diff
+cp a c
+check 'patch c < ab.diff' <<EOF
+(Stripping trailing CRs from patch.)
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b$
+EOF
+
+lf2crlf < a > c
+check 'patch --binary c < ab.diff' <<EOF
+patching file c
+EOF
+
+check 'cat -A c' <<EOF
+1b^M$
+EOF
+
+# --------------------------------------------------------------
+
+# NOTE: ed does not fix up CRLF mangled input, so mangled ed-style
+# patches will break.  (We could fix up things in patch and pipe
+# the result to ed, but this is not what we do so far.)
 
 # ==============================================================
 

@@ -2,6 +2,12 @@
 
 	* tests/create-delete: Clean up a syntactic glitch.
 
+	* src/pch.c: When the input files to diff have CRLF line endings, the
+	'<' and '>' lines of normal-style diffs will have CRLF endings even
+	when the patch itself has not been CRLF mangled.  Do not assume a
+	mangled patch in this case.
+	* tests/crlf-handling: Update test case to cover this case.
+
 2009-12-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/version.c (copyright_string): Add year 2009.
