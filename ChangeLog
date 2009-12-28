@@ -23,6 +23,8 @@
 	generation on platforms which don't provide this header.
 	(argmatch.$(OBJEXT)): Add missing $(STDBOOL_H) dependency.
 
+	* install-sh: Make executable.
+
 2009-12-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/version.c (copyright_string): Add year 2009.
