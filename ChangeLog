@@ -17,6 +17,12 @@
 	declare strnlen here on systems which don't have it.
 	* gl/lib/strnlen.c: Import from gnulib.
 
+	* Makefile.in (getopt.h, GETOPT_H): Generate getopt.h in the top-level
+	directory if needed.
+	(stdbool.h, STDBOOL_H): Likewise -- this should fix stdbool.h
+	generation on platforms which don't provide this header.
+	(argmatch.$(OBJEXT)): Add missing $(STDBOOL_H) dependency.
+
 2009-12-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/version.c (copyright_string): Add year 2009.

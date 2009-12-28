@@ -45,9 +45,7 @@ OBJEXT = @OBJEXT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 STDBOOL_H = @STDBOOL_H@
-ifneq (@GETOPT_H@,)
-GETOPT_H = gl/lib/@GETOPT_H@
-endif
+GETOPT_H = @GETOPT_H@
 HAVE__BOOL = @HAVE__BOOL@
 ENABLE_MERGE = @ENABLE_MERGE@
 
@@ -262,7 +260,7 @@ config.hin: configure.ac $(srcdir)/aclocal.m4
 
 # We need the following in order to create <getopt.h> when the system
 # doesn't have one that works with the given compiler.
-gl/lib/getopt.h: gl/lib/getopt.hin
+getopt.h: gl/lib/getopt.hin
 	rm -f $@-t $@
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  cat $(srcdir)/gl/lib/getopt.hin; \
@@ -271,7 +269,8 @@ gl/lib/getopt.h: gl/lib/getopt.hin
 
 # We need the following in order to create <stdbool.h> when the system
 # doesn't have one that works.
-gl/lib/stdbool.h: gl/lib/stdbool.hin
+#gl/lib/stdbool.h: gl/lib/stdbool.hin
+stdbool.h: gl/lib/stdbool.hin
 	rm -f $@-t $@
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  sed -e 's/@''HAVE__BOOL''@/$(HAVE__BOOL)/g' \
@@ -325,7 +324,7 @@ TAGS: $(HDRS) $(SRCS)
 
 mostlyclean::
 	rm -f core* *core src/*.$(OBJEXT) gl/lib/*.$(OBJEXT) \
-	    gl/lib/stdbool.h gl/lib/getopt.h gl/lib/*.h-t
+	    stdbool.h getopt.h gl/lib/*.h-t
 
 clean:: mostlyclean
 	rm -f src/patch$(EXEEXT)
@@ -372,8 +371,8 @@ $(OBJS): config.h
 COMMON = src/common.h $(STDBOOL_H)
 
 gl/lib/addext.$(OBJEXT): gl/lib/backupfile.h gl/lib/dirname.h
-gl/lib/argmatch.$(OBJEXT): gl/lib/argmatch.h gl/lib/gettext.h gl/lib/error.h \
-	gl/lib/quote.h gl/lib/quotearg.h gl/lib/unlocked-io.h
+gl/lib/argmatch.$(OBJEXT): $(STDBOOL_H) gl/lib/argmatch.h gl/lib/gettext.h \
+	gl/lib/error.h gl/lib/quote.h gl/lib/quotearg.h gl/lib/unlocked-io.h
 gl/lib/backupfile.$(OBJEXT): gl/lib/argmatch.h gl/lib/backupfile.h \
 	gl/lib/dirname.h
 gl/lib/basename.$(OBJEXT): gl/lib/dirname.h
@@ -381,7 +380,7 @@ gl/lib/dirname.$(OBJEXT): gl/lib/dirname.h gl/lib/xalloc.h
 gl/lib/error.$(OBJEXT): gl/lib/error.h gl/lib/gettext.h gl/lib/unlocked-io.h
 gl/lib/exitfail.$(OBJEXT): gl/lib/exitfail.h
 gl/lib/full-write.$(OBJEXT): gl/lib/full-write.h gl/lib/safe-write.h
-gl/lib/getopt.$(OBJEXT) gl/lib/getopt1.$(OBJEXT): gl/lib/getopt.h
+gl/lib/getopt.$(OBJEXT) gl/lib/getopt1.$(OBJEXT): getopt.h
 gl/lib/hash.$(OBJEXT): $(STDBOOL_H) gl/lib/hash.h
 gl/lib/safe-read.$(OBJEXT): gl/lib/safe-write.h
 gl/lib/safe-write.$(OBJEXT): gl/lib/safe-read.c
