@@ -1,3 +1,13 @@
+2009-12-29  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/patch.c (longopts, get_some_switches): Add an optional argument
+	to the --merge option to choose the output formats for conflicts.
+	* patch.man: Document the new optional argument of --merge.
+	* src/merge.c (merge_hunk): Implement diff3-style conflicts.
+	* src/common.h (conflict_style): This global variable determines the
+	output format for conflicts.
+	* tests/merge: Add test cases for the diff3 output format.
+
 2009-12-28  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/create-delete: Clean up a syntactic glitch.

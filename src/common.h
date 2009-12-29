@@ -283,6 +283,9 @@ bool copy_till (struct outstate *, LINENUM);
 bool similar (char const *, size_t, char const *, size_t);
 
 #ifdef ENABLE_MERGE
+enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
+XTERN enum conflict_style conflict_style;
+
 bool merge_hunk (int hunk, struct outstate *, LINENUM where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false

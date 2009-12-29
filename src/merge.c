@@ -201,6 +201,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 {
   bool applies_cleanly;
   bool first_result = true;
+  bool already_applied;
   FILE *fp = outstate->ofp;
   LINENUM old = 1;
   LINENUM firstold = pch_ptrn_lines ();
@@ -426,9 +427,19 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	     && context_matches_file (firstnew, lastwhere);
 	   firstin++, firstnew++, lastwhere++)
 	continue;
-      if (firstin == in && firstnew == new)
+      already_applied = (firstin == in && firstnew == new);
+      if (already_applied)
 	merge_result (&first_result, hunk, "already applied",
 		      where, lastwhere - 1);
+      if (conflict_style == MERGE_DIFF3)
+	{
+	  LINENUM common_prefix = lastwhere - where;
+
+	  /* Forget about common prefix lines.  */
+	  firstin -= common_prefix;
+	  firstnew -= common_prefix;
+	  lastwhere -= common_prefix;
+	}
       if (where != lastwhere)
 	{
 	  where = lastwhere;
@@ -436,23 +447,27 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	    return false;
 	}
 
-      if (firstin < in || firstnew < new)
+      if (! already_applied)
 	{
-	  LINENUM common_suffix;
+	  LINENUM common_suffix = 0;
 	  LINENUM lines;
 
-	  /* Remember common suffix lines.  */
-	  for (common_suffix = 0,
-	       lastwhere = where + (in - firstin);
-	       firstin < in && firstnew < new
-		 && context_matches_file (new - 1, lastwhere - 1);
-	       in--, new--, lastwhere--, common_suffix++)
-	    continue;
+	  if (conflict_style == MERGE_MERGE)
+	    {
+	      /* Remember common suffix lines.  */
+	      for (lastwhere = where + (in - firstin);
+		   firstin < in && firstnew < new
+		   && context_matches_file (new - 1, lastwhere - 1);
+		   in--, new--, lastwhere--, common_suffix++)
+		continue;
+	    }
 
 	  lines = 3 + (in - firstin) + (new - firstnew);
+	  if (conflict_style == MERGE_DIFF3)
+	    lines += 1 + (old - firstold);
 	  merge_result (&first_result, hunk, "NOT MERGED",
 			where, where + lines - 1);
-	  out_offset += 3 + (new - firstnew);
+	  out_offset += lines - (in - firstin);
 
 	  fputs (outstate->after_newline + "\n<<<<<<<\n", fp);
 	  outstate->after_newline = true;
@@ -462,6 +477,18 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	      if (! copy_till (outstate, where - 1))
 		return false;
 	    }
+
+	  if (conflict_style == MERGE_DIFF3)
+	    {
+	      fputs (outstate->after_newline + "\n|||||||\n", fp);
+	      outstate->after_newline = true;
+	      while (firstold < old)
+		{
+		  outstate->after_newline = pch_write_line (firstold, fp);
+		  firstold++;
+		}
+	    }
+
 	  fputs (outstate->after_newline + "\n=======\n", fp);
 	  outstate->after_newline = true;
 	  while (firstnew < new)

@@ -414,25 +414,31 @@ in the original file, and sequences of blanks at the ends of lines are ignored.
 Normal characters must still match exactly.
 Each line of the context must still match a line in the original file.
 .TP
-\fB\*=merge\fP
-Merge a patch file into the original files similar to \fBmerge\fP(1). If a
-conflict is found, \fBpatch\fP outputs a warning and brackets the conflict
-with \fB<<<<<<<\fP and \fB>>>>>>>\fP lines.  A typical conflict will look like
-this:
+\fB\*=merge\fP or \fB\*=merge=merge\fP or \fB\*=merge=diff3\fP
+Merge a patch file into the original files similar to \fBdiff3\fP(1) or
+\fBmerge\fP(1).  If a conflict is found, \fBpatch\fP outputs a warning and
+brackets the conflict with \fB<<<<<<<\fP and \fB>>>>>>>\fP lines.
+A typical conflict will look like this:
 .LP
 .RS
 .nf
 .B <<<<<<<
 .I lines from the original file
+.B |||||||
+.I original lines from the patch
 .B =======
-.I lines from the patch
+.I new lines from the patch
 .B >>>>>>>
 .RE
 .fi
 .IP "" 3
-If there are conflicts, the user should edit the result and delete one
-of the alternatives.  This option implies \fB\*=forward\fP and does not
-take the \fB--fuzz\fR=\fInum\fP option into account.
+The optional argument of \fB\*=merge\fP determines the output format for
+conflicts: the diff3 format shows the \fB|||||||\fP section with the original
+lines from the patch; in the merge format, this section is missing.  The merge
+format is the default.
+
+This option implies \fB\*=forward\fP and does not take the
+\fB--fuzz\fR=\fInum\fP option into account.
 .TP
 \fB\-n\fP  or  \fB\*=normal\fP
 Interpret the patch file as a normal diff.

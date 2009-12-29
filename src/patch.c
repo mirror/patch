@@ -544,7 +544,7 @@ static struct option const longopts[] =
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
 #ifdef ENABLE_MERGE
-  {"merge", no_argument, NULL, 'm'},
+  {"merge", optional_argument, NULL, 'm'},
 #endif
   {"normal", no_argument, NULL, 'n'},
   {"forward", no_argument, NULL, 'N'},
@@ -737,7 +737,18 @@ get_some_switches (void)
 		break;
 #ifdef ENABLE_MERGE
 	    case 'm':
-	    	merge = true;
+		merge = true;
+		if (optarg)
+		  {
+		    if (! strcmp (optarg, "merge"))
+		      conflict_style = MERGE_MERGE;
+		    else if (! strcmp (optarg, "diff3"))
+		      conflict_style = MERGE_DIFF3;
+		    else
+		      usage (stderr, 2);
+		  }
+		else
+		  conflict_style = MERGE_MERGE;
 		break;
 #endif
 	    case 'n':
