@@ -4,6 +4,8 @@
 
 	* NEWS: Version 2.6.1 released.
 
+	* src/pch.c: coding style fix (syntactic).
+
 2009-12-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (longopts, get_some_switches): Add an optional argument

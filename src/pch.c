@@ -434,7 +434,8 @@ intuit_diff_type (bool need_header)
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
-	else if (strnEQ(s, "Prereq:", 7)) {
+	else if (strnEQ(s, "Prereq:", 7))
+	  {
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
 	      continue;
 	    revision = t;
@@ -460,7 +461,8 @@ intuit_diff_type (bool need_header)
 		revision = savestr (revision);
 		*t = oldc;
 	    }
-	} else
+	  }
+	else
 	  {
 	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)
 	      continue;
