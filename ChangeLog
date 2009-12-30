@@ -1,3 +1,7 @@
+2009-12-30  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.man: Clarify the description of the -F / --fuzz option.
+
 2009-12-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (longopts, get_some_switches): Add an optional argument

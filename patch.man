@@ -369,10 +369,11 @@ for that.
 Set the maximum fuzz factor.
 This option only applies to diffs that have context, and causes
 .B patch
-to ignore up to that many lines in looking for places to install a hunk.
+to ignore up to that many lines of context in looking for places to install a hunk.
 Note that a larger fuzz factor increases the odds of a faulty patch.
-The default fuzz factor is 2, and it may not be set to more than
-the number of lines of context in the context diff, ordinarily 3.
+The default fuzz factor is 2.  A fuzz factor greater than or equal to the
+number of lines of context in the context diff, ordinarily 3, ignores all
+context.
 .TP
 \fB\-g\fP \fInum\fP  or  \fB\*=get=\fP\fInum\fP
 This option controls
