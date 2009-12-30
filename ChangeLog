@@ -2,6 +2,8 @@
 
 	* patch.man: Clarify the description of the -F / --fuzz option.
 
+	* NEWS: Version 2.6.1 released.
+
 2009-12-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (longopts, get_some_switches): Add an optional argument

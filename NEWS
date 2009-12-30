@@ -1,3 +1,5 @@
+Changes in version 2.6.1:
+
 * Support for diff3(1) style merges which show the old, original, and new lines
   of a conflict has been added (--merge=diff3).  The default still is the
   merge(1) format (--merge or --merge=merge).
