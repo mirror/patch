@@ -91,6 +91,7 @@ LIBSRCS = \
 	gl/lib/stripslash.c \
 	gl/lib/strncasecmp.c \
 	gl/lib/strndup.c \
+	gl/lib/strnlen.c \
 	gl/lib/xmalloc.c \
 	gl/lib/xstrndup.c
 
@@ -302,11 +303,13 @@ LIBM4FILES = \
 	gl/m4/quote.m4 \
 	gl/m4/realloc.m4 \
 	gl/m4/rename.m4 \
+	gl/m4/safe-read.m4 \
 	gl/m4/safe-write.m4 \
 	gl/m4/ssize_t.m4 \
 	gl/m4/stdbool.m4 \
 	gl/m4/strcase.m4 \
 	gl/m4/strndup.m4 \
+	gl/m4/strnlen.m4 \
 	gl/m4/unlocked-io.m4 \
 	gl/m4/utimbuf.m4 \
 	gl/m4/xalloc.m4 \
