@@ -7,6 +7,10 @@
 	notice.  Replace the GPLv2 license template with the GPLv3 license
 	template.
 
+	* src/patch.c (main): Compare the input file's group ID with the
+	effective group ID to determine if a chown() is necessary, not the
+	effective user ID.
+
 2009-01-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (LIBSRCS, LIBM4FILES): Add the missing files strnlen.c,
