@@ -8,16 +8,15 @@
 
 static char const copyright_string[] = "\
 Copyright (C) 1988 Larry Wall\n\
-Copyright (C) 2003, 2009 Free Software Foundation, Inc.";
+Copyright (C) 2003, 2009, 2010 Free Software Foundation, Inc.";
 
 static char const free_software_msgid[] = "\
-This program comes with NO WARRANTY, to the extent permitted by law.\n\
-You may redistribute copies of this program\n\
-under the terms of the GNU General Public License.\n\
-For more information about these matters, see the file named COPYING.";
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.";
 
 static char const authorship_msgid[] = "\
-written by Larry Wall and Paul Eggert";
+Written by Larry Wall and Paul Eggert";
 
 void
 version (void)

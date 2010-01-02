@@ -1,3 +1,12 @@
+2009-01-02  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/bestmatch.h, src/common.h, src/diffseq.h, src/inp.c, src/inp.h,
+	src/maketime.c, src/maketime.h, src/merge.c, src/partime.c,
+	src/partime.h, src/patch.c, src/pch.c, src/pch.h, src/quotesys.c,
+	src/util.c, src/util.h, src/version.c: Add year 2010 to copyright
+	notice.  Replace the GPLv2 license template with the GPLv3 license
+	template.
+
 2009-01-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (LIBSRCS, LIBM4FILES): Add the missing files strnlen.c,
