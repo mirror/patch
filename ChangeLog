@@ -1,3 +1,7 @@
+2010-01-03  Matthew Burgess <matthew@linuxfromscratch.org>
+
+	* tests/crlf-handling:  Skip another ed-dependent test.
+
 2009-01-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/bestmatch.h, src/common.h, src/diffseq.h, src/inp.c, src/inp.h,

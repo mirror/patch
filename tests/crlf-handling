@@ -89,10 +89,13 @@ EOF
 
 # --------------------------------------------------------------
 
-diff -e a b > ab.diff
-cp a c
-check 'patch c < ab.diff' <<EOF
-EOF
+if ! have_ed ; then
+    echo "The ed utility is not available; skipping ed related tests"
+else
+    diff -e a b > ab.diff
+    cp a c
+    ncheck 'patch c < ab.diff'
+fi
 
 check 'cat -A c' <<EOF
 1b^M$
