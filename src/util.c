@@ -137,6 +137,11 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
   if (utime (to, &utimbuf) != 0)
     pfatal ("Can't set timestamp on file %s",
 	    quotearg (to));
+  if (getegid () != st->st_gid)
+    {
+      /* Fails if we are not in group instat.st_gid.  */
+      chown (to, -1, st->st_gid);
+    }
   if (chmod (to, st->st_mode) != 0)
     pfatal ("Can't set timestamp on file %s",
 	    quotearg (to));
