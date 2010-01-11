@@ -1,5 +1,12 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (main): Convert outname into a char const *.
+	* src/util.ch (create_backup, move_file, removedirs): Take char const *
+	filenames.
+	* src/util.c (makedirs): Take a char const * filename.
+	(makedirs, removedirs): Take char const * filenames.  Create and
+	modify a copy of the filename.
+
 	* src/pch.c (p_copy, p_rename): New variables.
 	(pch_copy, pch_rename): New functions.
 	(intuit_diff_type): Parse the "copy from", "copy to", "rename from",

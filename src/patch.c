@@ -180,7 +180,7 @@ main (int argc, char **argv)
       int hunk = 0;
       int failed = 0;
       bool mismatch = false;
-      char *outname = NULL;
+      char const *outname = NULL;
 
       if (! skip_rest_of_patch && ! file_type)
 	{

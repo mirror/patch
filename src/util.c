@@ -41,7 +41,7 @@
 #include <stdarg.h>
 #include <full-write.h>
 
-static void makedirs (char *);
+static void makedirs (char const *);
 
 typedef struct
 {
@@ -194,7 +194,7 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
 }
 
 void
-create_backup (char *to, struct stat *to_st, int *to_errno,
+create_backup (char const *to, struct stat *to_st, int *to_errno,
 	       bool leave_original)
 {
   struct stat tmp_st;
@@ -322,7 +322,7 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 void
 move_file (char const *from, int *from_needs_removal,
 	   struct stat const *fromst,
-	   char *to, mode_t mode, bool backup)
+	   char const *to, mode_t mode, bool backup)
 {
   struct stat to_st;
   int to_errno = -1;
@@ -1154,8 +1154,9 @@ replace_slashes (char *filename)
    Ignore the last element of `filename'.  */
 
 static void
-makedirs (char *filename)
+makedirs (char const *name)
 {
+  char *filename = xstrdup (name);
   char *f;
   char *flim = replace_slashes (filename);
 
@@ -1176,14 +1177,16 @@ makedirs (char *filename)
 	    *f = '/';
 	  }
     }
+  free (filename);
 }
 
 /* Remove empty ancestor directories of FILENAME.
    Ignore errors, since the path may contain ".."s, and when there
    is an EEXIST failure the system may return some other error number.  */
 void
-removedirs (char *filename)
+removedirs (char const *name)
 {
+  char *filename = xstrdup (name);
   size_t i;
 
   for (i = strlen (filename);  i != 0;  i--)
@@ -1201,6 +1204,7 @@ removedirs (char *filename)
 	  say ("Removed empty directory %s\n", quotearg (filename));
 	filename[i] = '/';
       }
+  free (filename);
 }
 
 static struct timespec initial_time;
