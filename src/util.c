@@ -1135,13 +1135,16 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
 	    char const *u = t;
 	    while (*u != '\t' && ISSPACE ((unsigned char) u[1]))
 	      u++;
-	    if (*u != '\t' && strchr (u + 1, '\t'))
+	    if (*u != '\t' && (strchr (u + 1, pstamp ? '\t' : '\n')))
 	      continue;
 
 	    if (*u == '\n')
 	      stamp = (time_t) -1;
 	    else
 	      {
+		if (! pstamp)
+		  return 0;
+
 		if (ptimestr)
 		  {
 		    char const *t = u + strlen (u);

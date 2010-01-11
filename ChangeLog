@@ -1,3 +1,7 @@
+2010-01-11  Andreas Gruenbacher  <agruen@suse.de>
+
+	*  src/util.c (fetchname): Do not allow timestamps in Index lines.
+
 2010-01-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (create_backup_copy): Try to preserve the owning group
