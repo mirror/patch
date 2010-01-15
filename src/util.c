@@ -187,7 +187,7 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
 	  for (o = t + tlen, olen = 0;
 	       o > t && ! ISSLASH (*(o - 1));
 	       o--)
-	    continue;
+	    /* do nothing */ ;
 	  olen = t + tlen - o;
 	  tlen -= olen;
 	  bakname = xmalloc (plen + tlen + blen + olen + slen + 1);
@@ -641,7 +641,7 @@ remove_prefix (char *p, size_t prefixlen)
 {
   char const *s = p + prefixlen;
   while ((*p++ = *s++))
-    continue;
+    /* do nothing */ ;
 }
 
 char *
@@ -1008,7 +1008,7 @@ replace_slashes (char *filename)
   char const *component_start;
 
   for (f = filename + FILE_SYSTEM_PREFIX_LEN (filename);  ISSLASH (*f);  f++)
-    continue;
+    /* do nothing */ ;
 
   component_start = f;
 

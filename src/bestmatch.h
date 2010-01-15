@@ -131,7 +131,7 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
 		for (y = x - d;
 		     x < xlim && y < ylim && EQUAL_IDX (x, y);
 		     x++, y++)
-		  continue;
+		  /* do nothing */ ;
 		fd[d] = x;
 		if (x == xlim && y >= min
 		    && x + y - c >= fmid_plus_2_min)

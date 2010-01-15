@@ -212,7 +212,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 	  for (x = x0, y = x0 - d;
 	       x < xlim && y < ylim && EQUAL_IDX (ctxt, x, y);
 	       x++, y++)
-	    continue;
+	    /* do nothing */ ;
 	  if (x - x0 > SNAKE_LIMIT)
 	    big_snake = true;
 	  fd[d] = x;
@@ -245,7 +245,7 @@ diag (OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim, bool find_minimal,
 	  for (x = x0, y = x0 - d;
 	       xoff < x && yoff < y && EQUAL_IDX (ctxt, x - 1, y - 1);
 	       x--, y--)
-	    continue;
+	    /* do nothing */ ;
 	  if (x0 - x > SNAKE_LIMIT)
 	    big_snake = true;
 	  bd[d] = x;

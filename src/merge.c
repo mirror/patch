@@ -425,7 +425,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 	   firstin < in && firstnew < new
 	     && context_matches_file (firstnew, lastwhere);
 	   firstin++, firstnew++, lastwhere++)
-	continue;
+	/* do nothing */ ;
       already_applied = (firstin == in && firstnew == new);
       if (already_applied)
 	merge_result (&first_result, hunk, "already applied",
@@ -458,7 +458,7 @@ merge_hunk (int hunk, struct outstate *outstate, LINENUM where,
 		   firstin < in && firstnew < new
 		   && context_matches_file (new - 1, lastwhere - 1);
 		   in--, new--, lastwhere--, common_suffix++)
-		continue;
+		/* do nothing */ ;
 	    }
 
 	  lines = 3 + (in - firstin) + (new - firstnew);

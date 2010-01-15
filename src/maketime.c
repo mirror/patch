@@ -389,7 +389,7 @@ maketime (struct partime const *pt, time_t default_time)
 	for (mon = 11;
 	     (tm.tm_mday = (yday2 - month_yday[mon] + (mon < 2 || !leap))) <= 0;
 	     mon--)
-	  continue;
+	  /* do nothing */ ;
 	tm.tm_mon = mon;
       }
 

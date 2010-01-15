@@ -342,7 +342,7 @@ parse_prefix (char const *str, char const **patterns, struct partime *t)
       while ((s = parse_pattern_letter (s, c, t)) != 0);
 
       while (*pat++)
-	continue;
+	/* do nothing */ ;
     }
 
   return 0;

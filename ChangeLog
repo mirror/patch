@@ -1,3 +1,11 @@
+2010-01-15  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/bestmatch.h, src/diffseq.h, src/inp.c, src/maketime.c,
+	src/merge.c, src/partime.c, src/pch.c, src/util.c: No longer use
+	"continue" as the only instruction in a loop body: at least one
+	compiler chokes on this in combination with variable-length arrays
+	as in src/bestmatch.h.
+
 2010-01-11  Andreas Gruenbacher  <agruen@suse.de>
 
 	*  src/util.c (fetchname): Do not allow timestamps in Index lines.

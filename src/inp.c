@@ -374,7 +374,7 @@ plan_b (char const *filename)
     report_revision (found_revision);
   Fseek (ifp, 0, SEEK_SET);		/* rewind file */
   for (tibufsize = TIBUFSIZE_MINIMUM;  tibufsize < maxlen;  tibufsize <<= 1)
-    continue;
+    /* do nothing */ ;
   lines_per_buf = tibufsize / maxlen;
   tireclen = maxlen;
   tibuf[0] = xmalloc (2 * tibufsize);
@@ -454,7 +454,7 @@ ifetch (LINENUM line, bool whichbuf, size_t *psize)
 	    *psize = last_line_size;
 	else {
 	    for (q = p;  *q++ != '\n';  )
-		continue;
+		/* do nothing */ ;
 	    *psize = q - p;
 	}
 	return p;

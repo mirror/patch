@@ -389,13 +389,13 @@ intuit_diff_type (bool need_header)
 	if (ISDIGIT (*s))
 	  {
 	    for (t = s + 1; ISDIGIT (*t) || *t == ',';  t++)
-	      continue;
+	      /* do nothing */ ;
 	    if (*t == 'd' || *t == 'c' || *t == 'a')
 	      {
 		for (t++;  ISDIGIT (*t) || *t == ',';  t++)
-		  continue;
+		  /* do nothing */ ;
 		for (; *t == ' ' || *t == '\t'; t++)
-		  continue;
+		  /* do nothing */ ;
 		if (*t == '\r')
 		  t++;
 		this_is_a_command = (*t == '\n');
@@ -435,14 +435,14 @@ intuit_diff_type (bool need_header)
 	else if (strnEQ(s, "Prereq:", 7))
 	  {
 	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
-	      continue;
+	      /* do nothing */ ;
 	    revision = t;
 	    for (t = revision;  *t;  t++)
 	      if (ISSPACE ((unsigned char) *t))
 		{
 		  char const *u;
 		  for (u = t + 1;  ISSPACE ((unsigned char) *u);  u++)
-		    continue;
+		    /* do nothing */ ;
 		  if (*u)
 		    {
 		      char numbuf[LINENUM_LENGTH_BOUND + 1];
@@ -463,7 +463,7 @@ intuit_diff_type (bool need_header)
 	else
 	  {
 	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)
-	      continue;
+	      /* do nothing */ ;
 	    if (strnEQ(t, "--- ", 4))
 	      {
 		time_t timestamp = (time_t) -1;
@@ -1013,7 +1013,7 @@ another_hunk (enum diff difftype, bool rev)
 		    return -1;
 		}
 		for (s = buf;  *s && !ISDIGIT (*s);  s++)
-		  continue;
+		  /* do nothing */ ;
 		if (strnEQ(s,"0,0",3))
 		    remove_prefix (s, 2);
 		s = scan_linenum (s, &p_first);
@@ -1086,7 +1086,7 @@ another_hunk (enum diff difftype, bool rev)
 		  }
 		p_Char[p_end] = '=';
 		for (s = buf;  *s && ! ISDIGIT (*s);  s++)
-		  continue;
+		  /* do nothing */ ;
 		s = scan_linenum (s, &p_newfirst);
 		if (*s == ',')
 		  {
@@ -1752,7 +1752,7 @@ incomplete_line (void)
   if (getc (fp) == '\\')
     {
       while ((c = getc (fp)) != '\n'  &&  c != EOF)
-	continue;
+	/* do nothing */ ;
       return true;
     }
   else
@@ -2017,13 +2017,13 @@ get_ed_command_letter (char const *line)
   if (ISDIGIT (*p))
     {
       while (ISDIGIT (*++p))
-	continue;
+	/* do nothing */ ;
       if (*p == ',')
 	{
 	  if (! ISDIGIT (*++p))
 	    return 0;
 	  while (ISDIGIT (*++p))
-	    continue;
+	    /* do nothing */ ;
 	  pair = true;
 	}
     }
