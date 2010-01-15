@@ -23,7 +23,7 @@
 #include <string.h>
 #include "xalloc.h"
 
-#ifndef HAVE_DECL_STRNDUP
+#if !HAVE_DECL_STRNDUP
 extern char *strndup (const char *, size_t);
 #endif
 

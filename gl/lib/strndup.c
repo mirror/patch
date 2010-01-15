@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 
-#ifndef HAVE_DECL_STRNLEN
+#if !HAVE_DECL_STRNLEN
 extern size_t strnlen (const char *, size_t);
 #endif
 

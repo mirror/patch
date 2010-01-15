@@ -6,6 +6,10 @@
 	compiler chokes on this in combination with variable-length arrays
 	as in src/bestmatch.h.
 
+	* gl/lib/strndup.c: HAVE_DECL_STRNLEN is either 0 or 1 so we need
+	to test for it with #if, not #ifdef.
+	* gl/lib/xstrndup.c: Likewise for HAVE_DECL_STRNDUP.
+
 2010-01-11  Andreas Gruenbacher  <agruen@suse.de>
 
 	*  src/util.c (fetchname): Do not allow timestamps in Index lines.
