@@ -1,6 +1,26 @@
+2010-04-12  Andreas Gruenbacher  <agruen@suse.de>
+
 	* src/util.c: Fix the use of HAVE_UTIME_H.
 	* src/pch.c (EDITOR_PROGRAM): Rename from ed_PROGRAM.
-	* configure.ac (EDITOR_PROGRAM): Likewise.
+	* configure.ac (EDITOR_PROGRAM): Rename from ed_PROGRAM.
+
+	* configure.ac: Add automake and gnulib macros, replace several
+	obsolete macros.
+	* Makefile.am, lib/Makefile.am, src/Makefile.am, tests/Makefile.am:
+	Add for automake.
+	* autogen.sh, INSTALL, Makefile.in, mkinstalldirs, update-version.sh:
+	Obsolete; remove.
+	* README-hacking: Import from diffutils, replace cvs with git.
+	* build-aux: Move gnulib auxiliary files here from the top-level
+	directory.
+	* gnulib: Add gnulib git submodule.
+	* bootstrap, bootstrap.conf: Import from gnulib and adjust.
+	* gl/lib: Remove gnulib files from the repository; they are now
+	imported into lib/ from gnulib as needed.
+	* tests/test-lib.sh: Use $abs_top_builddir exported from
+	tests/Makefile.am here instead of $PWD.
+	* m4/utimbuf.m4: This macro has been removed from gnulib. Add it here
+	for now; this will be replaced by gnulib's utimens module soon.
 
 2010-02-21  Andreas Gruenbacher  <agruen@suse.de>
 
