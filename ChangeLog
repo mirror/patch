@@ -1,3 +1,7 @@
+2010-02-17  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.man: Clarify the description of the -N option.
+
 2010-01-15  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/bestmatch.h, src/diffseq.h, src/inp.c, src/maketime.c,

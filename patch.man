@@ -445,7 +445,8 @@ This option implies \fB\*=forward\fP and does not take the
 Interpret the patch file as a normal diff.
 .TP
 \fB\-N\fP  or  \fB\*=forward\fP
-Ignore patches that seem to be reversed or already applied.
+Ignore patches that seem to be reversed or already applied. It is only checked if
+the first hunk of a patch can be reversed.
 See also
 .BR \-R .
 .TP
