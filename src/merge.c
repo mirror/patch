@@ -58,6 +58,7 @@ locate_merge (LINENUM *matched)
     LINENUM where = first_guess, max_matched = 0;
     LINENUM min, max;
     LINENUM offset;
+    bool match_until_eof;
 
     /* Note: we need to preserve patch's property that it applies hunks at the
        best match closest to their original position in the file.  It is
@@ -84,10 +85,10 @@ locate_merge (LINENUM *matched)
 
     /* Hunks from the start or end of the file have less context. Anchor them
        to the start or end, trying to make up for this disadvantage.  */
-    if (pch_prefix_context () < pch_suffix_context () && pch_first () <= 1)
+    offset = pch_suffix_context () - pch_prefix_context ();
+    if (offset > 0 && pch_first () <= 1)
       max_pos_offset = 0;
-    else if (pch_suffix_context () > pch_prefix_context ())
-      max_neg_offset = 0;
+    match_until_eof = offset < 0;
 
     /* Do not try lines <= 0.  */
     if (first_guess <= max_neg_offset)
@@ -102,7 +103,8 @@ locate_merge (LINENUM *matched)
 	    LINENUM changes;
 
 	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
-				 min, max, &last);
+				 match_until_eof ? input_lines - guess + 1 : min,
+				 max, &last);
 	    if (changes <= max && max_matched < last - guess)
 	      {
 		max_matched = last - guess;
@@ -120,7 +122,8 @@ locate_merge (LINENUM *matched)
 	    LINENUM changes;
 
 	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
-				 min, max, &last);
+				 match_until_eof ? input_lines - guess + 1 : min,
+				 max, &last);
 	    if (changes <= max && max_matched < last - guess)
 	      {
 		max_matched = last - guess;

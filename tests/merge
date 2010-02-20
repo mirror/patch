@@ -166,6 +166,36 @@ a
 4
 EOF
 
+check 'x 2  1ia 1ib -- 1ia 1ib' <<EOF
+Hunk #1 already applied at 1-2.
+a
+b
+1
+2
+
+Hunk #1 already applied at 1-2.
+a
+b
+1
+2
+
+EOF
+
+check 'x 2  2aa 2ab -- 2aa 2ab' <<EOF
+Hunk #1 already applied at 3-4.
+1
+2
+a
+b
+
+Hunk #1 already applied at 3-4.
+1
+2
+a
+b
+
+EOF
+
 # ==============================================================
 
 check 'x 4  2d -- 3d' <<EOF

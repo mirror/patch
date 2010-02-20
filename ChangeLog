@@ -1,3 +1,10 @@
+2010-02-21  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/merge.c: When a hunk has fewer suffix than prefix context lines,
+	try matching to the end of the file instead of doing a "greedy match":
+	this allows to detect already-applied inserts at the end of the file.
+	* tests/merge: Add test cases for this.
+
 2010-02-17  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.man: Clarify the description of the -N option.
