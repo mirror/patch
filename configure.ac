@@ -33,9 +33,7 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-# Use ed_PROGRAM, not ED_PROGRAM,
-# because <errno.h> reserves symbols starting with `E'.
-AC_PATH_PROG(ed_PROGRAM, ed, ed)
+AC_PATH_PROG(EDITOR_PROGRAM, ed, ed)
 
 AC_PATH_PROG(TEST_SHELL, [bash sh])
 

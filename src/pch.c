@@ -2064,7 +2064,7 @@ get_ed_command_letter (char const *line)
 void
 do_ed_script (FILE *ofp)
 {
-    static char const ed_program[] = ed_PROGRAM;
+    static char const editor_program[] = EDITOR_PROGRAM;
 
     register file_offset beginning_of_this_line;
     register FILE *pipefp = 0;
@@ -2075,7 +2075,7 @@ do_ed_script (FILE *ofp)
 	assert (! inerrno);
 	TMPOUTNAME_needs_removal = 1;
 	copy_file (inname, TMPOUTNAME, 0, exclusive, instat.st_mode, true);
-	sprintf (buf, "%s %s%s", ed_program, verbosity == VERBOSE ? "" : "- ",
+	sprintf (buf, "%s %s%s", editor_program, verbosity == VERBOSE ? "" : "- ",
 		 TMPOUTNAME);
 	fflush (stdout);
 	pipefp = popen(buf, binary_transput ? "wb" : "w");
@@ -2118,7 +2118,7 @@ do_ed_script (FILE *ofp)
 	|| fflush (pipefp) != 0)
       write_fatal ();
     if (pclose (pipefp) != 0)
-      fatal ("%s FAILED", ed_program);
+      fatal ("%s FAILED", editor_program);
 
     if (ofp)
       {
