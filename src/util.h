@@ -20,7 +20,10 @@
 
 #if HAVE_UTIME_H
 # include <utime.h>
+#else
+# include <sys/utime.h>
 #endif
+
 /* Some nonstandard hosts don't declare this structure even in <utime.h>.  */
 #if ! HAVE_STRUCT_UTIMBUF
 struct utimbuf

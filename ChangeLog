@@ -1,3 +1,5 @@
+	* src/util.c: Fix the use of HAVE_UTIME_H.
+
 2010-02-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/merge.c: When a hunk has fewer suffix than prefix context lines,
