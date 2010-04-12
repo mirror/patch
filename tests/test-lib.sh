@@ -27,7 +27,7 @@ have_ed() {
 }
 
 use_tmpdir() {
-    tmpdir=`mktemp -d`
+    tmpdir=`mktemp -d ${TMPDIR:-/tmp}/patch.XXXXXXXXXX`
     if test -z "$tmpdir" ; then
 	echo "This test requires the mktemp utility" >&2
 	exit 2
@@ -118,6 +118,33 @@ else
 	_start_test() {
 	    echo "* $*"
 	}'
+fi
+
+# The seq utility is not universally available -- provide a replacement.
+if ! type seq > /dev/null 2> /dev/null; then
+    seq() {(
+	case $# in
+	0)	echo "seq: missing operand" >&2
+	    return 1 ;;
+	1)	set -- 1 1 $1 ;;
+	2)  set -- $1 1 $2 ;;
+	3)	;;
+	*)	echo "seq: extra operands" >&2
+	    return 1 ;;
+	esac
+
+	i=$1
+	if test $2 -gt 0; then
+	    op=-le
+	else
+	    op=-ge
+	fi
+
+	while test $i $op $3; do
+	    echo $i
+	    i=`expr $i + $2`
+	done
+    )}
 fi
 
 require_cat

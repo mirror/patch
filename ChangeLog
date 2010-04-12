@@ -22,6 +22,10 @@
 	* m4/utimbuf.m4: This macro has been removed from gnulib. Add it here
 	for now; this will be replaced by gnulib's utimens module soon.
 
+	* tests/test-lib.sh: Some versions of mktemp require a filename
+	template; use one.  Provide a seq replacement on platforms which don't
+	have seq.
+
 2010-02-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/merge.c: When a hunk has fewer suffix than prefix context lines,
