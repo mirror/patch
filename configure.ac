@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.65])
 
 AC_INIT([GNU patch],
 	m4_esyscmd([build-aux/git-version-gen .tarball-version]),
@@ -33,7 +33,7 @@ AM_CONDITIONAL([ENABLE_MERGE], [test "$enableval" != no])
 AM_CONDITIONAL([ALPHA_VERSION],
   [[echo "$PACKAGE_VERSION" | grep -q -- "-[0-9a-f][0-9a-f]*\\(-dirty\\)\\?$"]])
 
-AM_INIT_AUTOMAKE([-Wall -Werror gnu dist-bzip2 dist-xz color-tests parallel-tests])
+AM_INIT_AUTOMAKE([1.11.1 -Wall -Werror gnu dist-bzip2 dist-xz color-tests parallel-tests])
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_HEADER([config.h:config.hin])

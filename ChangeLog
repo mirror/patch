@@ -26,6 +26,9 @@
 	template; use one.  Provide a seq replacement on platforms which don't
 	have seq.
 
+	* configure.ac: Minimum versions required: automake-1.11.1,
+	autoconf-2.65.
+
 2010-02-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/merge.c: When a hunk has fewer suffix than prefix context lines,
