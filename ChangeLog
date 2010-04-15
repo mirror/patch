@@ -1,5 +1,15 @@
 2010-04-15  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/merge: Use the sed commands i, a, and c in their standard form
+	instead of relying on a GNU extension, and pass sed a script (-f)
+	instead of a list of commands via -e.
+	Some versions of sed don't support expressions like /^\(\|foo\)$/.
+	* tests/corrupt-reject-files: Use the more widely available -e switch
+	instead of -A.
+	* tests/crlf-handling: Likewise.
+	* tests/preserve-mode-and-timestamp: Use touch -t instead of touch -d.
+	Some non-GNU versions of date can't show a file's timestamp.
+
 	* Makefile.am: Add rules for generating .version and for including
 	.tarball-version in dist tarballs.
 

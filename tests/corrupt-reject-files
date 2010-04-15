@@ -47,7 +47,7 @@ Hunk #1 FAILED at 1.
 Status: 1
 EOF
 
-check 'cat -A a.rej' <<EOF
+check 'cat -e a.rej' <<EOF
 *** a$
 --- b$
 ***************$
