@@ -34,6 +34,12 @@ else
   GNU_SERVER = ftp.gnu.org
 endif
 
+BUILT_SOURCES = $(top_srcdir)/.version
+$(top_srcdir)/.version:
+	echo $(VERSION) > $@-t && mv $@-t $@
+dist-hook:
+	echo $(VERSION) > $(distdir)/.tarball-version
+
 tell-upload:
 	echo; \
 	(echo "Upload with: "; \

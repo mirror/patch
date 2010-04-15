@@ -1,3 +1,8 @@
+2010-04-15  Andreas Gruenbacher  <agruen@suse.de>
+
+	* Makefile.am: Add rules for generating .version and for including
+	.tarball-version in dist tarballs.
+
 2010-04-12  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c: Fix the use of HAVE_UTIME_H.

@@ -2,6 +2,7 @@
 -/lib/Makefile.am
 .deps/
 /.pc/
+/.version
 /INSTALL
 /VERSION
 /aclocal.m4
