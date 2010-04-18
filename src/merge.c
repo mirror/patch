@@ -33,7 +33,7 @@ static void compute_changes (LINENUM, LINENUM, LINENUM, LINENUM, char *,
 #define EQUAL_IDX(x, y) (context_matches_file (x, y))
 #include "bestmatch.h"
 
-#define EQUAL_IDX(ctxt, x, y) (context_matches_file (x, y))
+#define XVECREF_YVECREF_EQUAL(ctxt, x, y) (context_matches_file (x, y))
 #define OFFSET LINENUM
 #define EXTRA_CONTEXT_FIELDS \
 	char *xchar; \

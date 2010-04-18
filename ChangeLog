@@ -1,5 +1,7 @@
 2010-04-18  Andreas Gruenbacher  <agruen@suse.de>
 
+	* diffseq: Use the gnulib version instead of a private copy.
+
 	* gnulib: Update to latest.
 
 2010-04-15  Andreas Gruenbacher  <agruen@suse.de>
