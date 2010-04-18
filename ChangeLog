@@ -1,5 +1,9 @@
 2010-04-18  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (Argv): Change type to char ** so that we can pass Argv
+	to getopt_long without warning.
+	* src/maketime.c (maketime): Fix year overflow check.
+
 	* diffseq: Use the gnulib version instead of a private copy.
 
 	* gnulib: Update to latest.

@@ -78,7 +78,7 @@ static char const else_defined[] = "\n#else\n";
 static char const end_defined[] = "\n#endif\n";
 
 static int Argc;
-static char * const *Argv;
+static char **Argv;
 
 static FILE *rejfp;  /* reject file pointer */
 

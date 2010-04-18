@@ -314,7 +314,7 @@ maketime (struct partime const *pt, time_t default_time)
     tm.tm_sec = 0;
 
   tm.tm_year = year - TM_YEAR_ORIGIN;
-  if ((year < tm.tm_year) != (TM_YEAR_ORIGIN < 0))
+  if (tm.tm_year != year - TM_YEAR_ORIGIN)
     return -1;
 
   if (!localzone)
