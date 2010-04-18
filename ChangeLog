@@ -1,3 +1,7 @@
+2010-04-18  Andreas Gruenbacher  <agruen@suse.de>
+
+	* gnulib: Update to latest.
+
 2010-04-15  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/merge: Use the sed commands i, a, and c in their standard form
