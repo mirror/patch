@@ -17,9 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-XTERN LINENUM input_lines;		/* how long is input file in lines */
+XTERN lin input_lines;		/* how long is input file in lines */
 
-char const *ifetch (LINENUM, bool, size_t *);
+char const *ifetch (lin, bool, size_t *);
 void get_input_file (char const *, char const *);
 void re_input (void);
 void scan_input (char *);

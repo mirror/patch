@@ -39,8 +39,8 @@ static size_t tibufsize;		/* size of plan b buffers */
 #endif
 static int tifd = -1;			/* plan b virtual string array */
 static char *tibuf[2];			/* plan b buffers */
-static LINENUM tiline[2] = {-1, -1};	/* 1st line in each buffer */
-static LINENUM lines_per_buf;		/* how many lines per buffer */
+static lin tiline[2] = {-1, -1};	/* 1st line in each buffer */
+static lin lines_per_buf;		/* how many lines per buffer */
 static size_t tireclen;			/* length of records in tmp file */
 static size_t last_line_size;		/* size of last input line */
 
@@ -215,7 +215,7 @@ plan_a (char const *filename)
   register char const *lim;
   register char const **ptr;
   register char *buffer;
-  register LINENUM iline;
+  register lin iline;
   size_t size = instat.st_size;
 
   /* Fail if the file size doesn't fit in a size_t,
@@ -324,7 +324,7 @@ plan_b (char const *filename)
   register size_t i;
   register char const *rev;
   register size_t revlen;
-  register LINENUM line = 1;
+  register lin line = 1;
   int exclusive;
 
   if (instat.st_size == 0)
@@ -421,7 +421,7 @@ plan_b (char const *filename)
    WHICHBUF is ignored when the file is in memory.  */
 
 char const *
-ifetch (LINENUM line, bool whichbuf, size_t *psize)
+ifetch (lin line, bool whichbuf, size_t *psize)
 {
     register char const *q;
     register char const *p;
@@ -435,8 +435,8 @@ ifetch (LINENUM line, bool whichbuf, size_t *psize)
 	*psize = i_ptr[line + 1] - p;
 	return p;
     } else {
-	LINENUM offline = line % lines_per_buf;
-	LINENUM baseline = line - offline;
+	lin offline = line % lines_per_buf;
+	lin baseline = line - offline;
 
 	if (tiline[0] == baseline)
 	    whichbuf = false;

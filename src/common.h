@@ -100,7 +100,7 @@
 
 /* typedefs */
 
-typedef off_t LINENUM;			/* must be signed */
+typedef off_t lin;			/* must be signed */
 
 /* globals */
 
@@ -271,20 +271,20 @@ struct outstate
 };
 
 /* offset in the input and output at which the previous hunk matched */
-XTERN LINENUM in_offset;
-XTERN LINENUM out_offset;
+XTERN lin in_offset;
+XTERN lin out_offset;
 
 /* how many input lines have been irretractably output */
-XTERN LINENUM last_frozen_line;
+XTERN lin last_frozen_line;
 
-bool copy_till (struct outstate *, LINENUM);
+bool copy_till (struct outstate *, lin);
 bool similar (char const *, size_t, char const *, size_t);
 
 #ifdef ENABLE_MERGE
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
 XTERN enum conflict_style conflict_style;
 
-bool merge_hunk (int hunk, struct outstate *, LINENUM where, bool *);
+bool merge_hunk (int hunk, struct outstate *, lin where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false
 #endif

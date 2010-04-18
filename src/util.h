@@ -35,7 +35,7 @@ struct utimbuf
 
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */
-#define LINENUM_LENGTH_BOUND (sizeof (LINENUM) * CHAR_BIT / 3 + 1)
+#define LINENUM_LENGTH_BOUND (sizeof (lin) * CHAR_BIT / 3 + 1)
 
 XTERN enum backup_type backup_type;
 
@@ -55,7 +55,7 @@ char const *version_controller (char const *, bool, struct stat const *, char **
 bool version_get (char const *, char const *, bool, bool, char const *, struct stat *);
 int create_file (char const *, int, mode_t, bool);
 int systemic (char const *);
-char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], LINENUM);
+char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
 void Fseek (FILE *, file_offset, int);
 void copy_file (char const *, char const *, struct stat *, int, mode_t, bool);
 void append_to_file (char const *, char const *);

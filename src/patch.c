@@ -36,9 +36,9 @@
 /* procedures */
 
 static FILE *create_output_file (char const *, int);
-static LINENUM locate_hunk (LINENUM);
-static bool apply_hunk (struct outstate *, LINENUM);
-static bool patch_match (LINENUM, LINENUM, LINENUM, LINENUM);
+static lin locate_hunk (lin);
+static bool apply_hunk (struct outstate *, lin);
+static bool patch_match (lin, lin, lin, lin);
 static bool spew_output (struct outstate *, struct stat *);
 static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
@@ -87,7 +87,7 @@ static char *rejname;
 static char const * volatile TMPREJNAME;
 static int volatile TMPREJNAME_needs_removal;
 
-static LINENUM maxfuzz = 2;
+static lin maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
 
@@ -216,10 +216,10 @@ main (int argc, char **argv)
 	/* apply each hunk of patch */
 	while (0 < (got_hunk = another_hunk (diff_type, reverse)))
 	  {
-	    LINENUM where = 0; /* Pacify `gcc -Wall'.  */
-	    LINENUM newwhere;
-	    LINENUM fuzz = 0;
-	    LINENUM mymaxfuzz;
+	    lin where = 0; /* Pacify `gcc -Wall'.  */
+	    lin newwhere;
+	    lin fuzz = 0;
+	    lin mymaxfuzz;
 
 	    if (merge)
 	      {
@@ -228,10 +228,10 @@ main (int argc, char **argv)
 	      }
 	    else
 	      {
-		LINENUM prefix_context = pch_prefix_context ();
-		LINENUM suffix_context = pch_suffix_context ();
-		LINENUM context = (prefix_context < suffix_context
-				   ? suffix_context : prefix_context);
+		lin prefix_context = pch_prefix_context ();
+		lin suffix_context = pch_suffix_context ();
+		lin context = (prefix_context < suffix_context
+			       ? suffix_context : prefix_context);
 		mymaxfuzz = (maxfuzz < context ? maxfuzz : context);
 	      }
 
@@ -913,23 +913,23 @@ numeric_string (char const *string,
 
 /* Attempt to find the right place to apply this hunk of patch. */
 
-static LINENUM
-locate_hunk (LINENUM fuzz)
+static lin
+locate_hunk (lin fuzz)
 {
-    register LINENUM first_guess = pch_first () + in_offset;
-    register LINENUM offset;
-    LINENUM pat_lines = pch_ptrn_lines();
-    LINENUM prefix_context = pch_prefix_context ();
-    LINENUM suffix_context = pch_suffix_context ();
-    LINENUM context = (prefix_context < suffix_context
-		       ? suffix_context : prefix_context);
-    LINENUM prefix_fuzz = fuzz + prefix_context - context;
-    LINENUM suffix_fuzz = fuzz + suffix_context - context;
-    LINENUM max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
-    LINENUM min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
-    LINENUM max_pos_offset = max_where - first_guess;
-    LINENUM max_neg_offset = first_guess - min_where;
-    LINENUM max_offset = (max_pos_offset < max_neg_offset
+    register lin first_guess = pch_first () + in_offset;
+    register lin offset;
+    lin pat_lines = pch_ptrn_lines();
+    lin prefix_context = pch_prefix_context ();
+    lin suffix_context = pch_suffix_context ();
+    lin context = (prefix_context < suffix_context
+		   ? suffix_context : prefix_context);
+    lin prefix_fuzz = fuzz + prefix_context - context;
+    lin suffix_fuzz = fuzz + suffix_context - context;
+    lin max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
+    lin min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
+    lin max_pos_offset = max_where - first_guess;
+    lin max_neg_offset = first_guess - min_where;
+    lin max_offset = (max_pos_offset < max_neg_offset
 			  ? max_neg_offset : max_pos_offset);
 
     if (!pat_lines)			/* null range matches always */
@@ -951,7 +951,7 @@ locate_hunk (LINENUM fuzz)
 	offset = 1 - first_guess;
 	if (last_frozen_line <= prefix_context
 	    && offset <= max_pos_offset
-	    && patch_match (first_guess, offset, (LINENUM) 0, suffix_fuzz))
+	    && patch_match (first_guess, offset, 0, suffix_fuzz))
 	  {
 	    in_offset += offset;
 	    return first_guess + offset;
@@ -967,7 +967,7 @@ locate_hunk (LINENUM fuzz)
 	/* Can only match end of file.  */
 	offset = first_guess - (input_lines - pat_lines + 1);
 	if (offset <= max_neg_offset
-	    && patch_match (first_guess, -offset, prefix_fuzz, (LINENUM) 0))
+	    && patch_match (first_guess, -offset, prefix_fuzz, 0))
 	  {
 	    in_offset -= offset;
 	    return first_guess - offset;
@@ -1002,7 +1002,7 @@ locate_hunk (LINENUM fuzz)
 }
 
 static void
-mangled_patch (LINENUM old, LINENUM new)
+mangled_patch (lin old, lin new)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];
   char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -1018,7 +1018,7 @@ mangled_patch (LINENUM old, LINENUM new)
 /* Output a line number range in unified format.  */
 
 static void
-print_unidiff_range (FILE *fp, LINENUM start, LINENUM count)
+print_unidiff_range (FILE *fp, lin start, lin count)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];
   char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -1058,9 +1058,9 @@ static void
 abort_hunk_unified (bool header, bool reverse)
 {
   FILE *fp = rejfp;
-  register LINENUM old = 1;
-  register LINENUM lastline = pch_ptrn_lines ();
-  register LINENUM new = lastline + 1;
+  register lin old = 1;
+  register lin lastline = pch_ptrn_lines ();
+  register lin new = lastline + 1;
 
   if (header)
     {
@@ -1114,13 +1114,13 @@ abort_hunk_unified (bool header, bool reverse)
 static void
 abort_hunk_context (bool header, bool reverse)
 {
-    register LINENUM i;
-    register LINENUM pat_end = pch_end ();
+    register lin i;
+    register lin pat_end = pch_end ();
     /* add in out_offset to guess the same as the previous successful hunk */
-    LINENUM oldfirst = pch_first() + out_offset;
-    LINENUM newfirst = pch_newfirst() + out_offset;
-    LINENUM oldlast = oldfirst + pch_ptrn_lines() - 1;
-    LINENUM newlast = newfirst + pch_repl_lines() - 1;
+    lin oldfirst = pch_first() + out_offset;
+    lin newfirst = pch_newfirst() + out_offset;
+    lin oldlast = oldfirst + pch_ptrn_lines() - 1;
+    lin newlast = newfirst + pch_repl_lines() - 1;
     char const *stars =
       (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ****" : "";
     char const *minuses =
@@ -1193,14 +1193,14 @@ abort_hunk (bool header, bool reverse)
 /* We found where to apply it (we hope), so do it. */
 
 static bool
-apply_hunk (struct outstate *outstate, LINENUM where)
+apply_hunk (struct outstate *outstate, lin where)
 {
-    register LINENUM old = 1;
-    register LINENUM lastline = pch_ptrn_lines ();
-    register LINENUM new = lastline+1;
+    register lin old = 1;
+    register lin lastline = pch_ptrn_lines ();
+    register lin new = lastline+1;
     register enum {OUTSIDE, IN_IFNDEF, IN_IFDEF, IN_ELSE} def_state = OUTSIDE;
     register char const *R_do_defines = do_defines;
-    register LINENUM pat_end = pch_end ();
+    register lin pat_end = pch_end ();
     register FILE *fp = outstate->ofp;
 
     where--;
@@ -1392,9 +1392,9 @@ init_reject (void)
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 bool
-copy_till (register struct outstate *outstate, register LINENUM lastline)
+copy_till (register struct outstate *outstate, register lin lastline)
 {
-    register LINENUM R_last_frozen_line = last_frozen_line;
+    register lin R_last_frozen_line = last_frozen_line;
     register FILE *fp = outstate->ofp;
     register char const *s;
     size_t size;
@@ -1453,12 +1453,11 @@ spew_output (struct outstate *outstate, struct stat *st)
 /* Does the patch pattern match at line base+offset? */
 
 static bool
-patch_match (LINENUM base, LINENUM offset,
-	     LINENUM prefix_fuzz, LINENUM suffix_fuzz)
+patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 {
-    register LINENUM pline = 1 + prefix_fuzz;
-    register LINENUM iline;
-    register LINENUM pat_lines = pch_ptrn_lines () - suffix_fuzz;
+    register lin pline = 1 + prefix_fuzz;
+    register lin iline;
+    register lin pat_lines = pch_ptrn_lines () - suffix_fuzz;
     size_t size;
     register char const *p;
 

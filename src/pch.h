@@ -20,24 +20,24 @@
 
 enum nametype { OLD, NEW, INDEX, NONE };
 
-LINENUM pch_end (void);
-LINENUM pch_first (void);
-LINENUM pch_hunk_beg (void);
+lin pch_end (void);
+lin pch_first (void);
+lin pch_hunk_beg (void);
 char const *pch_c_function (void);
 char const * pch_timestr (bool which);
-LINENUM pch_newfirst (void);
-LINENUM pch_prefix_context (void);
-LINENUM pch_ptrn_lines (void);
-LINENUM pch_repl_lines (void);
-LINENUM pch_suffix_context (void);
+lin pch_newfirst (void);
+lin pch_prefix_context (void);
+lin pch_ptrn_lines (void);
+lin pch_repl_lines (void);
+lin pch_suffix_context (void);
 bool pch_swap (void);
-bool pch_write_line (LINENUM, FILE *);
+bool pch_write_line (lin, FILE *);
 bool there_is_another_patch (bool);
-char *pfetch (LINENUM);
-char pch_char (LINENUM);
+char *pfetch (lin);
+char pch_char (lin);
 int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool);
-size_t pch_line_len (LINENUM);
+size_t pch_line_len (lin);
 const char *pch_name(enum nametype);
 time_t pch_timestamp (bool);
 void do_ed_script (FILE *);

@@ -645,7 +645,7 @@ remove_prefix (char *p, size_t prefixlen)
 }
 
 char *
-format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], LINENUM n)
+format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
 {
   char *p = numbuf + LINENUM_LENGTH_BOUND;
   *p = '\0';
