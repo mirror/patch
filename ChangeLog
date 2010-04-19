@@ -1,3 +1,8 @@
+2010-04-19  Ludovic Courtès <ludo@gnu.org>
+
+	* src/Makefile.am (patch_SOURCES): Remove the obsolete diffseq.h to
+	fix "make dist".
+
 2010-04-18  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Globally rename type LINENUM to lin (as in diffutils).

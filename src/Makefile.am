@@ -20,7 +20,6 @@ bin_PROGRAMS = patch
 patch_SOURCES = \
 	bestmatch.h \
 	common.h \
-	diffseq.h \
 	inp.c \
 	inp.h \
 	maketime.c \
