@@ -1,5 +1,10 @@
 2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.c (quote_system_arg): Add a replacement for
+	quote_system_arg() which uses quotearg's shell quoting style.
+	* src/Makefile.am (patch_SOURCES): Remove quotesys.c and quotesys.h.
+	* src/quotesys.c, src/quotesys.h: Delete.
+
 	* src/util.c (fetchname): Cosmetic fix.
 
 2010-04-19  Ludovic Courtès <ludo@gnu.org>

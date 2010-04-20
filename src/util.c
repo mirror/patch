@@ -24,7 +24,6 @@
 #include <dirname.h>
 #include <hash.h>
 #include <quotearg.h>
-#include <quotesys.h>
 #undef XTERN
 #define XTERN
 #include <util.h>
@@ -435,6 +434,17 @@ static char const SCCSDIFF2[] = "|diff - %s";
 static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
 
 static char const PERFORCE_CO[] = "p4 edit ";
+
+static size_t
+quote_system_arg (char *quoted, char const *arg)
+{
+  char *q = quotearg_style (shell_quoting_style, arg);
+  size_t len = strlen (q);
+
+  if (quoted)
+    memcpy (quoted, q, len + 1);
+  return len;
+}
 
 /* Return "RCS" if FILENAME is controlled by RCS,
    "SCCS" if it is controlled by SCCS,

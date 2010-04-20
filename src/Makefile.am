@@ -29,8 +29,6 @@ patch_SOURCES = \
 	patch.c \
 	pch.c \
 	pch.h \
-	quotesys.c \
-	quotesys.h \
 	util.c \
 	util.h \
 	version.c \
