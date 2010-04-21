@@ -383,23 +383,20 @@ main (int argc, char **argv)
 		  /* Avoid replacing files when nothing has changed.  */
 		  if (failed < hunk || diff_type == ED_DIFF)
 		    {
-		      time_t t;
+		      struct timespec new_time = pch_timestamp (! reverse);
 
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
 				 outname, instat.st_mode, backup);
 
-		      if ((set_time | set_utc)
-			  && (t = pch_timestamp (! reverse).tv_sec)
-			     != (time_t) -1)
+		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
-			  struct utimbuf utimbuf;
-			  utimbuf.actime = utimbuf.modtime = t;
-
+			  struct timespec times[2] = { new_time, new_time };
+			  struct timespec old_time = pch_timestamp (reverse);
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse) != 2
-			      && (t = pch_timestamp (reverse).tv_sec)
-			         != (time_t) -1
-			      && t != instat.st_mtime)
+			      && old_time.tv_sec != -1
+			      && timespec_cmp (old_time,
+					       get_stat_mtime (&instat)))
 			    say ("Not setting time of file %s "
 				 "(time mismatch)\n",
 				 quotearg (outname));
@@ -407,7 +404,7 @@ main (int argc, char **argv)
 			    say ("Not setting time of file %s "
 				 "(contents mismatch)\n",
 				 quotearg (outname));
-			  else if (utime (outname, &utimbuf) != 0)
+			  else if (utimens (outname, times) != 0)
 			    pfatal ("Can't set timestamp on file %s",
 				    quotearg (outname));
 			}

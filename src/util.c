@@ -127,12 +127,12 @@ static void
 create_backup_copy (char const *from, char const *to, struct stat *st,
 		    bool to_dir_known_to_exist)
 {
-  struct utimbuf utimbuf;
+  struct timespec times[2];
 
   copy_file (from, to, 0, 0, st->st_mode, to_dir_known_to_exist);
-  utimbuf.actime = st->st_atime;
-  utimbuf.modtime = st->st_mtime;
-  if (utime (to, &utimbuf) != 0)
+  times[0] = get_stat_atime (st);
+  times[1] = get_stat_mtime (st);
+  if (utimens (to, times) != 0)
     pfatal ("Can't set timestamp on file %s",
 	    quotearg (to));
   if (getegid () != st->st_gid)

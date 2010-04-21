@@ -18,20 +18,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if HAVE_UTIME_H
-# include <utime.h>
-#else
-# include <sys/utime.h>
-#endif
-
-/* Some nonstandard hosts don't declare this structure even in <utime.h>.  */
-#if ! HAVE_STRUCT_UTIMBUF
-struct utimbuf
-{
-  time_t actime;
-  time_t modtime;
-};
-#endif
+#include <utimens.h>
+#include <timespec.h>
+#include <stat-time.h>
 
 #include <timespec.h>
 

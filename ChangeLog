@@ -1,5 +1,13 @@
 2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (main): Support nanosecond timestamps.  Replaqce utime()
+	with utimens().
+	* src/util.c (create_backup_copy): Preserve nanosecond timestamps.
+	Replace utime() with utimens().
+	* src/util.h: Remove the utime() related declarations, and include
+	the utimens() and nanosecond related headers instead.
+	* bootstrap.conf: Add the stat-time and utimens modules.
+
 	* src/Makefile.am (patch_SOURCES): Remove maketime.c, maketime.h,
 	partime.c, and partime.h.
 	(patch_LDFLAGS): Add LIB_CLOCK_GETTIME for clock_gettime().
