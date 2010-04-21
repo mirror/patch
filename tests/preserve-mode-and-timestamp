@@ -13,8 +13,8 @@ use_tmpdir
 
 # ==============================================================
 
-timestamp1="2009-03-13 00:00:00 +0000"
-timestamp2="2009-03-14 00:00:00 +0000"
+timestamp1="2009-03-13 00:00:00"
+timestamp2="2009-03-14 00:00:00"
 cat > f.diff <<EOF
 --- a/f	$timestamp1
 +++ b/f	$timestamp2
@@ -33,7 +33,7 @@ EOF
 
 # touch -d "$timestamp1" f
 # Some non-GNU versions of touch don't support the -d option
-sed_expr='s,\(....\)-\(..\)-\(..\) \(..\):\(..\):\(..\) +\(....\),\1\2\3\4\5.\6,'
+sed_expr='s,\(....\)-\(..\)-\(..\) \(..\):\(..\):\(..\),\1\2\3\4\5.\6,'
 timestamp1_touch=`echo "$timestamp1" | sed -e "$sed_expr"`
 TZ=UTC touch -t $timestamp1_touch f
 

@@ -33,6 +33,8 @@ struct utimbuf
 };
 #endif
 
+#include <timespec.h>
+
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */
 #define LINENUM_LENGTH_BOUND (sizeof (lin) * CHAR_BIT / 3 + 1)

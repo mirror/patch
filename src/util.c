@@ -29,8 +29,7 @@
 #include <util.h>
 #include <xalloc.h>
 
-#include <maketime.h>
-#include <partime.h>
+#include <getdate.h>
 
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
@@ -1102,12 +1101,12 @@ removedirs (char *filename)
       }
 }
 
-static time_t initial_time;
+static struct timespec initial_time;
 
 void
 init_time (void)
 {
-  time (&initial_time);
+  gettime (&initial_time);
 }
 
 /* Make filenames more reasonable. */
@@ -1120,7 +1119,9 @@ fetchname (char *at, int strip_leading, char **ptimestr,
     char *timestr = NULL;
     register char *t;
     int sleading = strip_leading;
-    time_t stamp = (time_t) -1;
+    struct timespec stamp;
+
+    stamp.tv_sec = -1;
 
     while (ISSPACE ((unsigned char) *at))
 	at++;
@@ -1150,7 +1151,7 @@ fetchname (char *at, int strip_leading, char **ptimestr,
 	      continue;
 
 	    if (*u == '\n')
-	      stamp = (time_t) -1;
+	      stamp.tv_sec = -1;
 	    else
 	      {
 		if (! pstamp)
@@ -1168,25 +1169,23 @@ fetchname (char *at, int strip_leading, char **ptimestr,
 		  }
 
 		if (set_time | set_utc)
-		  stamp = str2time (&u, initial_time,
-				    set_utc ? 0L : TM_LOCAL_ZONE);
+		  get_date (&stamp, u, &initial_time);
 		else
 		  {
 		    /* The head says the file is nonexistent if the
 		       timestamp is the epoch; but the listed time is
 		       local time, not UTC, and POSIX.1 allows local
 		       time offset anywhere in the range -25:00 <
-		       offset < +26:00.  Match any time in that range
-		       by assuming local time is -25:00 and then
-		       matching any ``local'' time T in the range 0 <
-		       T < 25+26 hours.  */
-		    stamp = str2time (&u, initial_time, -25L * 60 * 60);
-		    if (0 < stamp && stamp < (25 + 26) * 60L * 60)
-		      stamp = 0;
+		       offset < +26:00.  Match any time in that range.  */
+		    const struct timespec lower = { -25L * 60 * 60 },
+			                  upper = {  26L * 60 * 60 };
+		    if (get_date (&stamp, u, &initial_time)
+			&& timespec_cmp (stamp, lower) > 0
+			&& timespec_cmp (stamp, upper) < 0) {
+			    stamp.tv_sec = 0;
+			    stamp.tv_nsec = 0;
+		    }
 		  }
-
-		if (*u && ! ISSPACE ((unsigned char) *u))
-		  stamp = (time_t) -1;
 	      }
 
 	    *t = '\0';
@@ -1225,10 +1224,7 @@ fetchname (char *at, int strip_leading, char **ptimestr,
       }
 
     if (pstamp)
-      {
-	pstamp->tv_sec = stamp;
-	pstamp->tv_nsec = 0;
-      }
+      *pstamp = stamp;
     if (ptimestr)
       *ptimestr = timestr;
     return savestr (name);

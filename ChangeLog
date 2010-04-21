@@ -1,3 +1,20 @@
+2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/Makefile.am (patch_SOURCES): Remove maketime.c, maketime.h,
+	partime.c, and partime.h.
+	(patch_LDFLAGS): Add LIB_CLOCK_GETTIME for clock_gettime().
+	* src/util.c: Replace maketime.h and partime.h with getdate.h.
+	(fetchname): Replace str2time() with get_date().  Sanitize the test
+	for epoch timestamps.
+	* src/patch.c (main): When --set-utc is given, set the TZ environment
+	variable to UTC so that get_date() will default to UTC timestamps.
+	* tests/preserve-mode-and-timestamp: Switching to get_date() revealed
+	that str2time() was ignoring timezones.  In order to test --set-utc
+	now that get_date() fixes this, we must use timestamps that do not
+	include timestamps here.
+	* bootstrap.conf: Add the clock-time, getdate, gettime, and setenv
+	modules.
+
 2010-04-20  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.h (pch_timestamp): Return timestamp as struct timespec

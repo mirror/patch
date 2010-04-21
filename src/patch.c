@@ -148,6 +148,10 @@ main (int argc, char **argv)
     Argv = argv;
     get_some_switches();
 
+    /* Make get_date() assume that context diff headers use UTC. */
+    if (set_utc)
+      setenv ("TZ", "UTC", 1);
+
     if (make_backups | backup_if_mismatch)
       backup_type = get_version (version_control_context, version_control);
 

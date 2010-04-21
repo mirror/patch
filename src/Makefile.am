@@ -22,10 +22,6 @@ patch_SOURCES = \
 	common.h \
 	inp.c \
 	inp.h \
-	maketime.c \
-	maketime.h \
-	partime.c \
-	partime.h \
 	patch.c \
 	pch.c \
 	pch.h \
@@ -35,6 +31,7 @@ patch_SOURCES = \
 	version.h
 
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
+patch_LDFLAGS = $(LIB_CLOCK_GETTIME)
 patch_LDADD = $(top_builddir)/lib/libpatch.a
 
 if ENABLE_MERGE
