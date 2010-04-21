@@ -40,7 +40,6 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 		2 for nonexistent */
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
-static time_t p_timestamp[2];		/* timestamps in patch headers */
 static char *p_timestr[2];		/* timestamps as strings */
 static off_t p_filesize;		/* size of the patch file */
 static lin p_first;			/* 1st line number */
@@ -346,7 +345,7 @@ intuit_diff_type (bool need_header)
     version_controlled[NEW] = -1;
     version_controlled[INDEX] = -1;
     p_rfc934_nesting = 0;
-    p_timestamp[OLD] = p_timestamp[NEW] = (time_t) -1;
+    p_timestamp[OLD].tv_sec = p_timestamp[NEW].tv_sec = -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
@@ -427,8 +426,7 @@ intuit_diff_type (bool need_header)
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    p_name[INDEX] = fetchname (s+6, strippath, (char **) 0,
-				       (time_t *) 0);
+	    p_name[INDEX] = fetchname (s+6, strippath, (char **) 0, NULL);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -466,11 +464,12 @@ intuit_diff_type (bool need_header)
 	      /* do nothing */ ;
 	    if (strnEQ(t, "--- ", 4))
 	      {
-		time_t timestamp = (time_t) -1;
+		struct timespec timestamp;
+		timestamp.tv_sec = -1;
 		p_name[NEW] = fetchname (t+4, strippath, &p_timestr[NEW],
 					 &timestamp);
 		need_header = false;
-		if (timestamp != (time_t) -1)
+		if (timestamp.tv_sec != -1)
 		  {
 		    p_timestamp[NEW] = timestamp;
 		    p_rfc934_nesting = (t - s) >> 1;
@@ -493,7 +492,7 @@ intuit_diff_type (bool need_header)
 
 	    /* `p_name', `p_timestr', and `p_timestamp' are backwards;
 	       swap them.  */
-	    time_t ti = p_timestamp[OLD];
+	    struct timespec ti = p_timestamp[OLD];
 	    p_timestamp[OLD] = p_timestamp[NEW];
 	    p_timestamp[NEW] = ti;
 	    t = p_name[OLD];
@@ -505,19 +504,19 @@ intuit_diff_type (bool need_header)
 
 	    s += 4;
 	    if (s[0] == '0' && !ISDIGIT (s[1]))
-	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD];
+	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;
 	    while (*s != ' ' && *s != '\n')
 	      s++;
 	    while (*s == ' ')
 	      s++;
 	    if (s[0] == '+' && s[1] == '0' && !ISDIGIT (s[2]))
-	      p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
+	      p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW].tv_sec;
 	    p_indent = indent;
 	    p_start = this_line;
 	    p_sline = p_input_line;
 	    retval = UNI_DIFF;
-	    if (! ((p_name[OLD] || ! p_timestamp[OLD])
-		   && (p_name[NEW] || ! p_timestamp[NEW]))
+	    if (! ((p_name[OLD] || ! p_timestamp[OLD].tv_sec)
+		   && (p_name[NEW] || ! p_timestamp[NEW].tv_sec))
 		&& ! p_name[INDEX] && need_header)
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
@@ -533,7 +532,7 @@ intuit_diff_type (bool need_header)
 	    && stars_last_line && strnEQ (s, "*** ", 4)) {
 	    s += 4;
 	    if (s[0] == '0' && !ISDIGIT (s[1]))
-	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD];
+	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
 	    while (*s != '\n')
@@ -553,12 +552,12 @@ intuit_diff_type (bool need_header)
 	      p_input_line -= 2;
 	      if (another_hunk (retval, false)
 		  && ! p_repl_lines && p_newfirst == 1)
-		p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW];
+		p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW].tv_sec;
 	      next_intuit_at (saved_p_base, saved_p_bline);
 	    }
 
-	    if (! ((p_name[OLD] || ! p_timestamp[OLD])
-		   && (p_name[NEW] || ! p_timestamp[NEW]))
+	    if (! ((p_name[OLD] || ! p_timestamp[OLD].tv_sec)
+		   && (p_name[NEW] || ! p_timestamp[NEW].tv_sec))
 		&& ! p_name[INDEX] && need_header)
 	      {
 		char numbuf[LINENUM_LENGTH_BOUND + 1];
@@ -1877,15 +1876,6 @@ const char *
 pch_name (enum nametype type)
 {
   return type == NONE ? NULL : p_name[type];
-}
-
-/* Return timestamp of patch header for file WHICH (false = old, true = new),
-   or -1 if there was no timestamp or an error in the timestamp.  */
-
-time_t
-pch_timestamp (bool which)
-{
-  return p_timestamp[which];
 }
 
 /* Return the specified line position in the old file of the old context. */

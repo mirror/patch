@@ -1113,7 +1113,8 @@ init_time (void)
 /* Make filenames more reasonable. */
 
 char *
-fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
+fetchname (char *at, int strip_leading, char **ptimestr,
+	   struct timespec *pstamp)
 {
     char *name;
     char *timestr = NULL;
@@ -1206,7 +1207,10 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
     if (strcmp (at, "/dev/null") == 0)
       {
 	if (pstamp)
-	  *pstamp = 0;
+	  {
+	    pstamp->tv_sec = 0;
+	    pstamp->tv_nsec = 0;
+	  }
 	if (timestr)
 	  free (timestr);
 	return 0;
@@ -1221,7 +1225,10 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
       }
 
     if (pstamp)
-      *pstamp = stamp;
+      {
+	pstamp->tv_sec = stamp;
+	pstamp->tv_nsec = 0;
+      }
     if (ptimestr)
       *ptimestr = timestr;
     return savestr (name);

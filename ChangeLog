@@ -1,4 +1,16 @@
-2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-20  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/pch.h (pch_timestamp): Return timestamp as struct timespec
+	instead of time_t.
+	* src/pch.c: Use struct timespec instead of time_t.  A tv_sec value
+	of -1 indicates "no timestamp".
+	* src/util.h (fetchname): Return timestamp as struct timespec
+	instead of time_t.
+	* src/util.c (fetchname): str2time() does not give us nanoseconds; set
+	them to zero for now.
+	* src/patch.c (main): Only use the seconds in timestamps for now.
+	* bootstrap.conf: Add the time module for getting struct timespec
+	declared on old hosts.
 
 	* src/util.c (quote_system_arg): Add a replacement for
 	quote_system_arg() which uses quotearg's shell quoting style.

@@ -385,14 +385,16 @@ main (int argc, char **argv)
 				 outname, instat.st_mode, backup);
 
 		      if ((set_time | set_utc)
-			  && (t = pch_timestamp (! reverse)) != (time_t) -1)
+			  && (t = pch_timestamp (! reverse).tv_sec)
+			     != (time_t) -1)
 			{
 			  struct utimbuf utimbuf;
 			  utimbuf.actime = utimbuf.modtime = t;
 
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse) != 2
-			      && (t = pch_timestamp (reverse)) != (time_t) -1
+			      && (t = pch_timestamp (reverse).tv_sec)
+			         != (time_t) -1
 			      && t != instat.st_mtime)
 			    say ("Not setting time of file %s "
 				 "(time mismatch)\n",

@@ -39,9 +39,19 @@ int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool);
 size_t pch_line_len (lin);
 const char *pch_name(enum nametype);
-time_t pch_timestamp (bool);
 void do_ed_script (FILE *);
 void open_patch_file (char const *);
 void re_patch (void);
 void set_hunkmax (void);
 void pch_normalize (enum diff);
+
+XTERN struct timespec p_timestamp[2];  /* timestamps in patch headers */
+
+/* Return timestamp of patch header for file WHICH (false = old, true = new),
+   or a timestamp with tv_sec == -1 if there was no timestamp or an error in
+   the timestamp.  */
+
+static inline const struct timespec pch_timestamp (bool which)
+{
+  return p_timestamp[which];
+}
