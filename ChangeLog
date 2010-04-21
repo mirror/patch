@@ -1,3 +1,7 @@
+2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/util.c (fetchname): Cosmetic fix.
+
 2010-04-19  Ludovic Courtès <ludo@gnu.org>
 
 	* src/Makefile.am (patch_SOURCES): Remove the obsolete diffseq.h to

@@ -1212,7 +1212,7 @@ fetchname (char *at, int strip_leading, char **ptimestr, time_t *pstamp)
 
     if (pstamp)
       *pstamp = stamp;
-    if (timestr)
+    if (ptimestr)
       *ptimestr = timestr;
     return savestr (name);
 }
