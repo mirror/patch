@@ -1,3 +1,13 @@
+* When a filename in a context diff starts with a double quote, it is
+  interpreted as a C string literal.  The escape sequences \\, \", \a,
+  \b, \f, \n, \r, \t, \v, and \ooo (a three-digit octal number between
+  0 and 255) are recognized.
+* When fed a git binary diff, patch complains and skips the diff.
+* Timestamps and --set-time or --set-utc: support for nanosecond precision.
+  Honor time zones in timestamps over the local time zone (--set-time) or
+  Universal Coordinated Time (--set-utc).
+* Many portability and several bug fixes.
+
 Changes in version 2.6.1:
 
 * Support for diff3(1) style merges which show the old, original, and new lines

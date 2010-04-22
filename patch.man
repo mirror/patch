@@ -609,12 +609,15 @@ they are.
 .TP
 \fB\-T\fP  or  \fB\*=set\-time\fP
 Set the modification and access times of patched files from time stamps
-given in context diff headers, assuming that the context diff headers
-use local time.  This option is not recommended, because patches using
-local time cannot easily be used by people in other time zones, and
-because local time stamps are ambiguous when local clocks move backwards
-during daylight-saving time adjustments.  Instead of using this option,
-generate patches with \s-1UTC\s0 and use the
+given in context diff headers.  Unless specified in the time stamps,
+assume that the context diff headers use local time.
+.Sp
+Use of this option with time stamps that do not include time zones is
+not recommended, because patches using local time cannot easily be used
+by people in other time zones, and because local time stamps are
+ambiguous when local clocks move backwards during daylight-saving time
+adjustments.  Make sure that time stamps include time zones, or generate
+patches with \s-1UTC\s0 and use the
 .B \-Z
 or
 .B \*=set\-utc
@@ -741,9 +744,9 @@ is
 .TP
 \fB\-Z\fP  or  \fB\*=set\-utc\fP
 Set the modification and access times of patched files from time stamps
-given in context diff headers, assuming that the context diff headers
-use Coordinated Universal Time (\s-1UTC\s0, often known as \s-1GMT\s0).
-Also see the
+given in context diff headers. Unless specified in the time stamps,
+assume that the context diff headers use Coordinated Universal Time
+(\s-1UTC\s0, often known as \s-1GMT\s0).  Also see the
 .B \-T
 or
 .B \*=set\-time

@@ -1,3 +1,9 @@
+2009-04-23  Andreas Gruenbacher  <agruen@suse.de>
+
+	* patch.man: Describe the fixed behavior of --set-time and --set-utc
+	for timestamps that include time zones.
+	* NEWS: Update.
+
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/common.h (enum diff): New enumeration GIT_BINARY_DIFF.
