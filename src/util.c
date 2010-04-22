@@ -1109,6 +1109,79 @@ init_time (void)
   gettime (&initial_time);
 }
 
+static char *
+parse_c_string (char const *s, char const **endp)
+{
+  char *u, *v;
+
+  assert (*s++ == '"');
+  u = v = xmalloc (strlen (s));
+  for (;;)
+    {
+      char c = *s++;
+
+      switch (c)
+	{
+	  case 0:
+	    goto fail;
+
+	  case '"':
+	    *v++ = 0;
+	    v = realloc (u, v - u);
+	    if (v)
+	      u = v;
+	    if (endp)
+	      *endp = s;
+	    return u;
+
+	  case '\\':
+	    break;
+
+	  default:
+	    *v++ = c;
+	    continue;
+	}
+
+      c = *s++;
+      switch (c)
+	{
+	  case 'a': c = '\a'; break;
+	  case 'b': c = '\b'; break;
+	  case 'f': c = '\f'; break;
+	  case 'n': c = '\n'; break;
+	  case 'r': c = '\r'; break;
+	  case 't': c = '\t'; break;
+	  case 'v': c = '\v'; break;
+	  case '\\': case '"':
+	    break;  /* verbatim */
+	  case '0': case '1': case '2': case '3':
+	    {
+	      int acc = (c - '0') << 6;
+
+	      c = *s++;
+	      if (c < '0' || c > '7')
+	        goto fail;
+	      acc |= (c - '0') << 3;
+	      c = *s++;
+	      if (c < '0' || c > '7')
+	        goto fail;
+	      acc |= (c - '0');
+	      c = acc;
+	      break;
+	    }
+	  default:
+	    goto fail;
+	}
+      *v++ = c;
+    }
+
+fail:
+  free (u);
+  if (endp)
+    *endp = s;
+  return NULL;
+}
+
 /* Strip up to STRIP_LEADING leading slashes.
    If STRIP_LEADING is negative, strip all leading slashes.
    Returns a pointer into NAME on success, and NULL otherwise.
@@ -1146,7 +1219,6 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	   struct timespec *pstamp)
 {
     char *name;
-    char *timestr = NULL;
     const char *t;
     struct timespec stamp;
 
@@ -1157,22 +1229,35 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
     if (debug & 128)
 	say ("fetchname %s %d\n", at, strip_leading);
 
-    for (t = at;  *t;  t++)
+    if (*at == '"')
       {
-	if (ISSPACE ((unsigned char) *t))
+	name = parse_c_string (at, &t);
+	if (! name)
 	  {
-	    /* Allow file names with internal spaces,
-	       but only if a tab separates the file name from the date.  */
-	    char const *u = t;
-	    while (*u != '\t' && ISSPACE ((unsigned char) u[1]))
-	      u++;
-	    if (*u != '\t' && (strchr (u + 1, pstamp ? '\t' : '\n')))
-	      continue;
-	    break;
+	    if (debug & 128)
+	      say ("ignoring malformed filename %s\n", quotearg (at));
+	    return 0;
 	  }
       }
-    name = savebuf (at, t - at + 1);
-    name[t - at] = 0;
+    else
+      {
+	for (t = at;  *t;  t++)
+	  {
+	    if (ISSPACE ((unsigned char) *t))
+	      {
+		/* Allow file names with internal spaces,
+		   but only if a tab separates the file name from the date.  */
+		char const *u = t;
+		while (*u != '\t' && ISSPACE ((unsigned char) u[1]))
+		  u++;
+		if (*u != '\t' && (strchr (u + 1, pstamp ? '\t' : '\n')))
+		  continue;
+		break;
+	      }
+	  }
+	name = savebuf (at, t - at + 1);
+	name[t - at] = 0;
+      }
 
     /* If the name is "/dev/null", ignore the name and mark the file
        as being nonexistent.  The name "/dev/null" appears in patches

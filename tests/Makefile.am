@@ -33,6 +33,7 @@ TESTS = \
 	no-newline-triggers-assert \
 	preserve-c-function-names \
 	preserve-mode-and-timestamp \
+	quoted-filenames \
 	reject-format \
 	remember-backup-files \
 	remember-reject-files \

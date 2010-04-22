@@ -1,5 +1,10 @@
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.c (parse_c_string): New function.
+	(fetchname): Add support for quoted filenames.
+	* tests/quoted-filenames: New test case.
+	* tests/Makefile.am (TESTS): Add test case.
+
 	* src/util.c (fetchname): Untangle the name and timestamp parsing.
 
 	* src/util.c (strip_leading_slashes): Make this a separate function.
