@@ -1,5 +1,7 @@
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.c (fetchname): Untangle the name and timestamp parsing.
+
 	* src/util.c (strip_leading_slashes): Make this a separate function.
 	(fetchname): Use strip_leading_slashes() here.
 

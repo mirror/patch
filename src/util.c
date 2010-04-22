@@ -1142,12 +1142,12 @@ strip_leading_slashes (char *name, int strip_leading)
 /* Make filenames more reasonable. */
 
 char *
-fetchname (char *at, int strip_leading, char **ptimestr,
+fetchname (char const *at, int strip_leading, char **ptimestr,
 	   struct timespec *pstamp)
 {
     char *name;
     char *timestr = NULL;
-    register char *t;
+    const char *t;
     struct timespec stamp;
 
     stamp.tv_sec = -1;
@@ -1157,7 +1157,6 @@ fetchname (char *at, int strip_leading, char **ptimestr,
     if (debug & 128)
 	say ("fetchname %s %d\n", at, strip_leading);
 
-    name = at;
     for (t = at;  *t;  t++)
       {
 	if (ISSPACE ((unsigned char) *t))
@@ -1169,85 +1168,80 @@ fetchname (char *at, int strip_leading, char **ptimestr,
 	      u++;
 	    if (*u != '\t' && (strchr (u + 1, pstamp ? '\t' : '\n')))
 	      continue;
-
-	    if (*u == '\n')
-	      stamp.tv_sec = -1;
-	    else
-	      {
-		if (! pstamp)
-		  return 0;
-
-		if (ptimestr)
-		  {
-		    char const *t = u + strlen (u);
-		    if (t != u && *(t-1) == '\n')
-		      t--;
-		    if (t != u && *(t-1) == '\r')
-		      t--;
-		    timestr = savebuf (u, t - u + 1);
-		    timestr[t - u] = 0;
-		  }
-
-		if (set_time | set_utc)
-		  get_date (&stamp, u, &initial_time);
-		else
-		  {
-		    /* The head says the file is nonexistent if the
-		       timestamp is the epoch; but the listed time is
-		       local time, not UTC, and POSIX.1 allows local
-		       time offset anywhere in the range -25:00 <
-		       offset < +26:00.  Match any time in that range.  */
-		    const struct timespec lower = { -25L * 60 * 60 },
-			                  upper = {  26L * 60 * 60 };
-		    if (get_date (&stamp, u, &initial_time)
-			&& timespec_cmp (stamp, lower) > 0
-			&& timespec_cmp (stamp, upper) < 0) {
-			    stamp.tv_sec = 0;
-			    stamp.tv_nsec = 0;
-		    }
-		  }
-	      }
-
-	    *t = '\0';
 	    break;
 	  }
       }
-
-    if (!*name)
-      {
-	if (timestr)
-	  free (timestr);
-	return 0;
-      }
+    name = savebuf (at, t - at + 1);
+    name[t - at] = 0;
 
     /* If the name is "/dev/null", ignore the name and mark the file
        as being nonexistent.  The name "/dev/null" appears in patches
        regardless of how NULL_DEVICE is spelled.  */
-    if (strcmp (at, "/dev/null") == 0)
+    if (strcmp (name, "/dev/null") == 0)
       {
+	free (name);
 	if (pstamp)
 	  {
 	    pstamp->tv_sec = 0;
 	    pstamp->tv_nsec = 0;
 	  }
-	if (timestr)
-	  free (timestr);
 	return 0;
       }
 
     /* Ignore the name if it doesn't have enough slashes to strip off.  */
     if (! strip_leading_slashes (name, strip_leading))
       {
-	if (timestr)
-	  free (timestr);
+	free (name);
 	return 0;
       }
 
+    if (ptimestr)
+      {
+	char *timestr;
+	char const *u = t + strlen (t);
+
+	if (u != t && *(u-1) == '\n')
+	  u--;
+	if (u != t && *(u-1) == '\r')
+	  u--;
+	timestr = savebuf (t, u - t + 1);
+	timestr[u - t] = 0;
+	*ptimestr = timestr;
+      }
+
+      if (*t == '\n')
+	stamp.tv_sec = -1;
+      else
+	{
+	  if (! pstamp)
+	    {
+	      free (name);
+	      return 0;
+	    }
+
+	  if (set_time | set_utc)
+	    get_date (&stamp, t, &initial_time);
+	  else
+	    {
+	      /* The head says the file is nonexistent if the
+		 timestamp is the epoch; but the listed time is
+		 local time, not UTC, and POSIX.1 allows local
+		 time offset anywhere in the range -25:00 <
+		 offset < +26:00.  Match any time in that range.  */
+	      const struct timespec lower = { -25L * 60 * 60 },
+				    upper = {  26L * 60 * 60 };
+	      if (get_date (&stamp, t, &initial_time)
+		  && timespec_cmp (stamp, lower) > 0
+		  && timespec_cmp (stamp, upper) < 0) {
+		      stamp.tv_sec = 0;
+		      stamp.tv_nsec = 0;
+	      }
+	    }
+	}
+
     if (pstamp)
       *pstamp = stamp;
-    if (ptimestr)
-      *ptimestr = timestr;
-    return savestr (name);
+    return name;
 }
 
 void
