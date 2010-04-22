@@ -412,6 +412,7 @@ intuit_diff_type (bool need_header)
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	  {
+	    free (p_name[OLD]);
 	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
 				     &p_timestamp[OLD]);
 	    need_header = false;
@@ -419,6 +420,7 @@ intuit_diff_type (bool need_header)
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
+	    free (p_name[OLD]);
 	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
 				     &p_timestamp[OLD]);
 	    need_header = false;
@@ -426,6 +428,7 @@ intuit_diff_type (bool need_header)
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
+	    free (p_name[INDEX]);
 	    p_name[INDEX] = fetchname (s+6, strippath, (char **) 0, NULL);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
@@ -466,6 +469,7 @@ intuit_diff_type (bool need_header)
 	      {
 		struct timespec timestamp;
 		timestamp.tv_sec = -1;
+		free (p_name[NEW]);
 		p_name[NEW] = fetchname (t+4, strippath, &p_timestr[NEW],
 					 &timestamp);
 		need_header = false;

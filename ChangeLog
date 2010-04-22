@@ -1,5 +1,8 @@
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Make sure we don't leak file names
+	even when fed weird input.
+
 	* src/util.c (parse_c_string): New function.
 	(fetchname): Add support for quoted filenames.
 	* tests/quoted-filenames: New test case.
