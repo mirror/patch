@@ -1109,6 +1109,36 @@ init_time (void)
   gettime (&initial_time);
 }
 
+/* Strip up to STRIP_LEADING leading slashes.
+   If STRIP_LEADING is negative, strip all leading slashes.
+   Returns a pointer into NAME on success, and NULL otherwise.
+  */
+static bool
+strip_leading_slashes (char *name, int strip_leading)
+{
+  int s = strip_leading;
+  char *p, *n;
+
+  for (p = n = name;  *p;  p++)
+    {
+      if (ISSLASH (*p))
+	{
+	  while (ISSLASH (p[1]))
+	    p++;
+	  if (strip_leading < 0 || --s >= 0)
+	      n = p+1;
+	}
+    }
+  if ((strip_leading < 0 || s <= 0) && *n)
+    {
+      memmove (name, n, strlen (n) + 1);
+      return true;
+    }
+  else
+    return false;
+}
+
+
 /* Make filenames more reasonable. */
 
 char *
@@ -1118,7 +1148,6 @@ fetchname (char *at, int strip_leading, char **ptimestr,
     char *name;
     char *timestr = NULL;
     register char *t;
-    int sleading = strip_leading;
     struct timespec stamp;
 
     stamp.tv_sec = -1;
@@ -1129,18 +1158,9 @@ fetchname (char *at, int strip_leading, char **ptimestr,
 	say ("fetchname %s %d\n", at, strip_leading);
 
     name = at;
-    /* Strip up to `strip_leading' leading slashes and null terminate.
-       If `strip_leading' is negative, strip all leading slashes.  */
     for (t = at;  *t;  t++)
       {
-	if (ISSLASH (*t))
-	  {
-	    while (ISSLASH (t[1]))
-	      t++;
-	    if (strip_leading < 0 || --sleading >= 0)
-		name = t+1;
-	  }
-	else if (ISSPACE ((unsigned char) *t))
+	if (ISSPACE ((unsigned char) *t))
 	  {
 	    /* Allow file names with internal spaces,
 	       but only if a tab separates the file name from the date.  */
@@ -1216,7 +1236,7 @@ fetchname (char *at, int strip_leading, char **ptimestr,
       }
 
     /* Ignore the name if it doesn't have enough slashes to strip off.  */
-    if (0 < sleading)
+    if (! strip_leading_slashes (name, strip_leading))
       {
 	if (timestr)
 	  free (timestr);

@@ -1,3 +1,8 @@
+2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/util.c (strip_leading_slashes): Make this a separate function.
+	(fetchname): Use strip_leading_slashes() here.
+
 2010-04-21  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (main): Support nanosecond timestamps.  Replaqce utime()
