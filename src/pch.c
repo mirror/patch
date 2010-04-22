@@ -319,6 +319,7 @@ intuit_diff_type (bool need_header)
     lin fcl_line = 0; /* Pacify `gcc -W'.  */
     register bool this_is_a_command = false;
     register bool stars_this_line = false;
+    bool git_diff = false;
     enum nametype i;
     struct stat st[3];
     int stat_errno[3];
@@ -461,6 +462,27 @@ intuit_diff_type (bool need_header)
 		*t = oldc;
 	    }
 	  }
+	else if (strnEQ (s, "diff --git ", 11))
+	  {
+	    char const *t;
+
+	    if (! ((free (p_name[OLD]),
+		    (p_name[OLD] = parse_name (s + 11, strippath, &t)))
+		   && ISSPACE (*t)
+		   && (free (p_name[NEW]),
+		       (p_name[NEW] = parse_name (t, strippath, &t)))
+		   && (t = skip_spaces (t), ! *t)))
+	      for (i = OLD; i <= NEW; i++)
+		{
+		  free (p_name[i]);
+		  p_name[i] = 0;
+		}
+	    git_diff = true;
+	  }
+	else if (git_diff && strnEQ (s, "deleted file mode ", 18))
+	  p_says_nonexistent[NEW] = 2;
+	else if (git_diff && strnEQ (s, "new file mode ", 14))
+	  p_says_nonexistent[OLD] = 2;
 	else
 	  {
 	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)

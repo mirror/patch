@@ -1,5 +1,11 @@
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Parse filenames in "diff --git" lines.
+	* src/util.c (parse_name): New helper function for parsing unquoted or
+	quoted filenames.
+	* src/util.h (parse_name): Declare.
+	(skip_spaces): New helper function for skipping spaces in a string.
+
 	* src/pch.c (intuit_diff_type): Make sure we don't leak file names
 	even when fed weird input.
 

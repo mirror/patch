@@ -40,6 +40,7 @@ void pfatal (char const *, ...)
 	__attribute__ ((noreturn, format (printf, 1, 2)));
 
 char *fetchname (char const *, int, char **, struct timespec *);
+char *parse_name (char const *, int, char const **);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
@@ -63,3 +64,11 @@ void removedirs (char *);
 void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
 bool file_already_seen (struct stat const *);
+
+static inline char const *
+skip_spaces (char const *str)
+{
+  while (ISSPACE (*str))
+    str++;
+  return str;
+}
