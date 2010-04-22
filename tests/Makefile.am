@@ -24,6 +24,7 @@ TESTS = \
 	crlf-handling \
 	dash-o-append \
 	filename-choice \
+	git-binary-diff \
 	global-reject-files \
 	inname \
 	line-numbers \

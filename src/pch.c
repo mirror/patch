@@ -245,6 +245,7 @@ there_is_another_patch (bool need_header)
 	    diff_type == CONTEXT_DIFF ? "a context diff" :
 	    diff_type == NEW_CONTEXT_DIFF ? "a new-style context diff" :
 	    diff_type == NORMAL_DIFF ? "a normal diff" :
+	    diff_type == GIT_BINARY_DIFF ? "a git binary diff" :
 	    "an ed script" );
 
     if (verbosity != SILENT)
@@ -483,6 +484,13 @@ intuit_diff_type (bool need_header)
 	  p_says_nonexistent[NEW] = 2;
 	else if (git_diff && strnEQ (s, "new file mode ", 14))
 	  p_says_nonexistent[OLD] = 2;
+	else if (git_diff && strnEQ (s, "GIT binary patch", 16))
+	  {
+	    p_start = this_line;
+	    p_sline = p_input_line;
+	    retval = GIT_BINARY_DIFF;
+	    goto scan_exit;
+	  }
 	else
 	  {
 	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)

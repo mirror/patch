@@ -199,6 +199,13 @@ main (int argc, char **argv)
 	int got_hunk;
 	bool apply_anyway = merge;  /* don't try to reverse when merging */
 
+	if (! skip_rest_of_patch && diff_type == GIT_BINARY_DIFF) {
+	  say ("File %s: git binary diffs are not supported.\n",
+	       quotearg (outname));
+	  skip_rest_of_patch = true;
+	  somefailed = true;
+	}
+
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
 	  {

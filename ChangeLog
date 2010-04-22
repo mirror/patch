@@ -1,5 +1,11 @@
 2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/common.h (enum diff): New enumeration GIT_BINARY_DIFF.
+	* src/pch.c (intuit_diff_type): Recognize git binary patches.
+	* src/patch.c (main): Complain when fed git binary patches.
+	* tests/git-binary-diff: New test case.
+	* tests/Makefile.am (TESTS): Add test case.
+
 	* src/pch.c (intuit_diff_type): Parse filenames in "diff --git" lines.
 	* src/util.c (parse_name): New helper function for parsing unquoted or
 	quoted filenames.
