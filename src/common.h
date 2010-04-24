@@ -123,13 +123,13 @@ XTERN char const *origprae;
 XTERN char const *origbase;
 XTERN char const *origsuff;
 
-XTERN char const * volatile TMPINNAME;
-XTERN char const * volatile TMPOUTNAME;
-XTERN char const * volatile TMPPATNAME;
+XTERN char const * TMPINNAME;
+XTERN char const * TMPOUTNAME;
+XTERN char const * TMPPATNAME;
 
-XTERN int volatile TMPINNAME_needs_removal;
-XTERN int volatile TMPOUTNAME_needs_removal;
-XTERN int volatile TMPPATNAME_needs_removal;
+XTERN int TMPINNAME_needs_removal;
+XTERN int TMPOUTNAME_needs_removal;
+XTERN int TMPPATNAME_needs_removal;
 
 #ifdef DEBUGGING
 XTERN int debug;

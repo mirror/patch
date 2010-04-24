@@ -268,7 +268,7 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
    Back up TO if BACKUP is true.  */
 
 void
-move_file (char const *from, int volatile *from_needs_removal,
+move_file (char const *from, int *from_needs_removal,
 	   struct stat const *fromst,
 	   char *to, mode_t mode, bool backup)
 {

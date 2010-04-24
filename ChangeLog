@@ -1,3 +1,6 @@
+	* src/common.h, src/patch.c, src/util.c, src/util.h: Do not declare
+	variables as "volatile" unnecessarily.
+
 2009-04-24  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/inp.c, src/patch.c, src/pch.c, src/util.c: Stop declaring

@@ -47,7 +47,7 @@ static void get_some_switches (void);
 static void init_output (char const *, int, struct outstate *);
 static void init_reject (void);
 static void reinitialize_almost_everything (void);
-static void remove_if_needed (char const *, int volatile *);
+static void remove_if_needed (char const *, int *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
 static void abort_hunk (bool, bool);
@@ -84,8 +84,8 @@ static FILE *rejfp;  /* reject file pointer */
 
 static char const *patchname;
 static char *rejname;
-static char const * volatile TMPREJNAME;
-static int volatile TMPREJNAME_needs_removal;
+static char const * TMPREJNAME;
+static int TMPREJNAME_needs_removal;
 
 static lin maxfuzz = 2;
 
@@ -1571,7 +1571,7 @@ fatal_exit (int sig)
 }
 
 static void
-remove_if_needed (char const *name, int volatile *needs_removal)
+remove_if_needed (char const *name, int *needs_removal)
 {
   if (*needs_removal)
     {
