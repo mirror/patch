@@ -679,7 +679,7 @@ usage (FILE *stream, int status)
 static void
 get_some_switches (void)
 {
-    register int optc;
+    int optc;
 
     if (rejname)
 	free (rejname);
@@ -926,8 +926,8 @@ numeric_string (char const *string,
 static lin
 locate_hunk (lin fuzz)
 {
-    register lin first_guess = pch_first () + in_offset;
-    register lin offset;
+    lin first_guess = pch_first () + in_offset;
+    lin offset;
     lin pat_lines = pch_ptrn_lines();
     lin prefix_context = pch_prefix_context ();
     lin suffix_context = pch_suffix_context ();
@@ -1068,9 +1068,9 @@ static void
 abort_hunk_unified (bool header, bool reverse)
 {
   FILE *fp = rejfp;
-  register lin old = 1;
-  register lin lastline = pch_ptrn_lines ();
-  register lin new = lastline + 1;
+  lin old = 1;
+  lin lastline = pch_ptrn_lines ();
+  lin new = lastline + 1;
 
   if (header)
     {
@@ -1124,8 +1124,8 @@ abort_hunk_unified (bool header, bool reverse)
 static void
 abort_hunk_context (bool header, bool reverse)
 {
-    register lin i;
-    register lin pat_end = pch_end ();
+    lin i;
+    lin pat_end = pch_end ();
     /* add in out_offset to guess the same as the previous successful hunk */
     lin oldfirst = pch_first() + out_offset;
     lin newfirst = pch_newfirst() + out_offset;
@@ -1205,13 +1205,13 @@ abort_hunk (bool header, bool reverse)
 static bool
 apply_hunk (struct outstate *outstate, lin where)
 {
-    register lin old = 1;
-    register lin lastline = pch_ptrn_lines ();
-    register lin new = lastline+1;
-    register enum {OUTSIDE, IN_IFNDEF, IN_IFDEF, IN_ELSE} def_state = OUTSIDE;
-    register char const *R_do_defines = do_defines;
-    register lin pat_end = pch_end ();
-    register FILE *fp = outstate->ofp;
+    lin old = 1;
+    lin lastline = pch_ptrn_lines ();
+    lin new = lastline+1;
+    enum {OUTSIDE, IN_IFNDEF, IN_IFDEF, IN_ELSE} def_state = OUTSIDE;
+    char const *R_do_defines = do_defines;
+    lin pat_end = pch_end ();
+    FILE *fp = outstate->ofp;
 
     where--;
     while (pch_char(new) == '=' || pch_char(new) == '\n')
@@ -1402,11 +1402,11 @@ init_reject (void)
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 bool
-copy_till (register struct outstate *outstate, register lin lastline)
+copy_till (struct outstate *outstate, lin lastline)
 {
-    register lin R_last_frozen_line = last_frozen_line;
-    register FILE *fp = outstate->ofp;
-    register char const *s;
+    lin R_last_frozen_line = last_frozen_line;
+    FILE *fp = outstate->ofp;
+    char const *s;
     size_t size;
 
     if (R_last_frozen_line > lastline)
@@ -1465,11 +1465,11 @@ spew_output (struct outstate *outstate, struct stat *st)
 static bool
 patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 {
-    register lin pline = 1 + prefix_fuzz;
-    register lin iline;
-    register lin pat_lines = pch_ptrn_lines () - suffix_fuzz;
+    lin pline = 1 + prefix_fuzz;
+    lin iline;
+    lin pat_lines = pch_ptrn_lines () - suffix_fuzz;
     size_t size;
-    register char const *p;
+    char const *p;
 
     for (iline=base+offset+prefix_fuzz; pline <= pat_lines; pline++,iline++) {
 	p = ifetch (iline, offset >= 0, &size);
@@ -1489,8 +1489,7 @@ patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 /* Do two lines match with canonicalized white space? */
 
 bool
-similar (register char const *a, register size_t alen,
-	 register char const *b, register size_t blen)
+similar (char const *a, size_t alen, char const *b, size_t blen)
 {
   /* Ignore presence or absence of trailing newlines.  */
   alen  -=  alen && a[alen - 1] == '\n';

@@ -619,9 +619,9 @@ version_get (char const *filename, char const *cs, bool exists, bool readonly,
 /* Allocate a unique area for a string. */
 
 char *
-savebuf (register char const *s, register size_t size)
+savebuf (char const *s, size_t size)
 {
-  register char *rv;
+  char *rv;
 
   if (! size)
     return NULL;
@@ -1052,10 +1052,10 @@ replace_slashes (char *filename)
    Ignore the last element of `filename'.  */
 
 static void
-makedirs (register char *filename)
+makedirs (char *filename)
 {
-  register char *f;
-  register char *flim = replace_slashes (filename);
+  char *f;
+  char *flim = replace_slashes (filename);
 
   if (flim)
     {

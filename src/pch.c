@@ -314,18 +314,18 @@ there_is_another_patch (bool need_header)
 static enum diff
 intuit_diff_type (bool need_header)
 {
-    register file_offset this_line = 0;
-    register file_offset first_command_line = -1;
+    file_offset this_line = 0;
+    file_offset first_command_line = -1;
     char first_ed_command_letter = 0;
     lin fcl_line = 0; /* Pacify `gcc -W'.  */
-    register bool this_is_a_command = false;
-    register bool stars_this_line = false;
+    bool this_is_a_command = false;
+    bool stars_this_line = false;
     bool git_diff = false;
     enum nametype i;
     struct stat st[3];
     int stat_errno[3];
     int version_controlled[3];
-    register enum diff retval;
+    enum diff retval;
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
@@ -352,12 +352,12 @@ intuit_diff_type (bool need_header)
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
     for (;;) {
-	register char *s;
-	register char *t;
-	register file_offset previous_line = this_line;
-	register bool last_line_was_command = this_is_a_command;
-	register bool stars_last_line = stars_this_line;
-	register size_t indent = 0;
+	char *s;
+	char *t;
+	file_offset previous_line = this_line;
+	bool last_line_was_command = this_is_a_command;
+	bool stars_last_line = stars_this_line;
+	size_t indent = 0;
 	char ed_command_letter;
 	bool strip_trailing_cr;
 	size_t chars_read;
@@ -853,9 +853,9 @@ next_intuit_at (file_offset file_pos, lin file_line)
 static void
 skip_to (file_offset file_pos, lin file_line)
 {
-    register FILE *i = pfp;
-    register FILE *o = stdout;
-    register int c;
+    FILE *i = pfp;
+    FILE *o = stdout;
+    int c;
 
     assert(p_base <= file_pos);
     if ((verbosity == VERBOSE || !inname) && p_base < file_pos) {
@@ -926,9 +926,9 @@ scan_linenum (char *s0, lin *linenum)
 int
 another_hunk (enum diff difftype, bool rev)
 {
-    register char *s;
-    register lin context = 0;
-    register size_t chars_read;
+    char *s;
+    lin context = 0;
+    size_t chars_read;
     char numbuf0[LINENUM_LENGTH_BOUND + 1];
     char numbuf1[LINENUM_LENGTH_BOUND + 1];
     char numbuf2[LINENUM_LENGTH_BOUND + 1];
@@ -955,12 +955,12 @@ another_hunk (enum diff difftype, bool rev)
 	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
 	lin repl_beginning = 0;		/* index of --- line */
-	register lin fillcnt = 0;	/* #lines of missing ptrn or repl */
-	register lin fillsrc;		/* index of first line to copy */
-	register lin filldst;		/* index of first missing line */
+	lin fillcnt = 0;	/* #lines of missing ptrn or repl */
+	lin fillsrc;		/* index of first line to copy */
+	lin filldst;		/* index of first missing line */
 	bool ptrn_spaces_eaten = false;	/* ptrn was slightly misformed */
 	bool some_context = false;	/* (perhaps internal) context seen */
-	register bool repl_could_be_missing = true;
+	bool repl_could_be_missing = true;
 	bool ptrn_missing = false;	/* The pattern was missing.  */
 	bool repl_missing = false;	/* Likewise for replacement.  */
 	file_offset repl_backtrack_position = 0;
@@ -1360,8 +1360,8 @@ another_hunk (enum diff difftype, bool rev)
     }
     else if (difftype == UNI_DIFF) {
 	file_offset line_beginning = file_tell (pfp);  /* file pos of the current line */
-	register lin fillsrc;  /* index of old lines */
-	register lin filldst;  /* index of new lines */
+	lin fillsrc;  /* index of old lines */
+	lin filldst;  /* index of new lines */
 	char ch = '\0';
 
 	chars_read = get_line ();
@@ -1518,7 +1518,7 @@ another_hunk (enum diff difftype, bool rev)
     }
     else {				/* normal diff--fake it up */
 	char hunk_type;
-	register int i;
+	int i;
 	lin min, max;
 	file_offset line_beginning = file_tell (pfp);
 
@@ -1686,11 +1686,11 @@ static size_t
 pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	   bool pass_comments_through)
 {
-  register FILE *fp = pfp;
-  register int c;
-  register size_t i;
-  register char *b;
-  register size_t s;
+  FILE *fp = pfp;
+  int c;
+  size_t i;
+  char *b;
+  size_t s;
 
   do
     {
@@ -1777,9 +1777,9 @@ pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 static bool
 incomplete_line (void)
 {
-  register FILE *fp = pfp;
-  register int c;
-  register file_offset line_beginning = file_tell (fp);
+  FILE *fp = pfp;
+  int c;
+  file_offset line_beginning = file_tell (fp);
 
   if (getc (fp) == '\\')
     {
@@ -1803,10 +1803,10 @@ pch_swap (void)
     char **tp_line;		/* the text of the hunk */
     size_t *tp_len;		/* length of each line */
     char *tp_char;		/* +, -, and ! */
-    register lin i;
-    register lin n;
+    lin i;
+    lin n;
     bool blankline = false;
-    register char *s;
+    char *s;
 
     i = p_first;
     p_first = p_newfirst;
@@ -2089,9 +2089,9 @@ do_ed_script (FILE *ofp)
 {
     static char const editor_program[] = EDITOR_PROGRAM;
 
-    register file_offset beginning_of_this_line;
-    register FILE *pipefp = 0;
-    register size_t chars_read;
+    file_offset beginning_of_this_line;
+    FILE *pipefp = 0;
+    size_t chars_read;
 
     if (! dry_run && ! skip_rest_of_patch) {
 	int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;

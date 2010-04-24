@@ -211,11 +211,11 @@ get_input_file (char const *filename, char const *outname)
 static bool
 plan_a (char const *filename)
 {
-  register char const *s;
-  register char const *lim;
-  register char const **ptr;
-  register char *buffer;
-  register lin iline;
+  char const *s;
+  char const *lim;
+  char const **ptr;
+  char *buffer;
+  lin iline;
   size_t size = instat.st_size;
 
   /* Fail if the file size doesn't fit in a size_t,
@@ -316,15 +316,15 @@ plan_a (char const *filename)
 static void
 plan_b (char const *filename)
 {
-  register FILE *ifp;
-  register int c;
-  register size_t len;
-  register size_t maxlen;
-  register bool found_revision;
-  register size_t i;
-  register char const *rev;
-  register size_t revlen;
-  register lin line = 1;
+  FILE *ifp;
+  int c;
+  size_t len;
+  size_t maxlen;
+  bool found_revision;
+  size_t i;
+  char const *rev;
+  size_t revlen;
+  lin line = 1;
   int exclusive;
 
   if (instat.st_size == 0)
@@ -423,8 +423,8 @@ plan_b (char const *filename)
 char const *
 ifetch (lin line, bool whichbuf, size_t *psize)
 {
-    register char const *q;
-    register char const *p;
+    char const *q;
+    char const *p;
 
     if (line < 1 || line > input_lines) {
 	*psize = 0;
