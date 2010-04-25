@@ -51,7 +51,6 @@ AC_TYPE_OFF_T
 # FIXME: The utime module is obsolete; replace with utimens.
 gl_CHECK_TYPE_STRUCT_UTIMBUF
 
-AC_CHECK_HEADERS([fcntl.h utime.h])
 AC_CHECK_DECLS([mktemp])
 AC_CHECK_FUNCS(geteuid getuid mktemp raise sigaction sigprocmask sigsetmask)
 AC_FUNC_SETMODE_DOS

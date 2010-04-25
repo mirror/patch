@@ -1,3 +1,11 @@
+2009-04-25  Andreas Gruenbacher  <agruen@suse.de>
+
+	* bootstrap.conf: Use the gnulib fcntl-h and sys_stat modules.
+	* src/common.h: Remove the declarations provided by gnulib sys_stat.
+	Always include fcntl.h (and depend on gnulib fcntl-h).
+	* src/util.h: Remove duplicate include of <timespec.h>.
+	* configure.ac: Remove obsolete checks for fcntl.h and utime.h.
+
 	* src/common.h, src/patch.c, src/util.c, src/util.h: Do not declare
 	variables as "volatile" unnecessarily.
 

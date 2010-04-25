@@ -31,39 +31,6 @@
 #include <time.h>
 
 #include <sys/stat.h>
-#if ! defined S_ISDIR && defined S_IFDIR
-# define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#endif
-#if ! defined S_ISREG && defined S_IFREG
-# define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif
-#ifndef S_IXOTH
-#define S_IXOTH 1
-#endif
-#ifndef S_IWOTH
-#define S_IWOTH 2
-#endif
-#ifndef S_IROTH
-#define S_IROTH 4
-#endif
-#ifndef S_IXGRP
-#define S_IXGRP (S_IXOTH << 3)
-#endif
-#ifndef S_IWGRP
-#define S_IWGRP (S_IWOTH << 3)
-#endif
-#ifndef S_IRGRP
-#define S_IRGRP (S_IROTH << 3)
-#endif
-#ifndef S_IXUSR
-#define S_IXUSR (S_IXOTH << 6)
-#endif
-#ifndef S_IWUSR
-#define S_IWUSR (S_IWOTH << 6)
-#endif
-#ifndef S_IRUSR
-#define S_IRUSR (S_IROTH << 6)
-#endif
 
 #include <limits.h>
 
@@ -213,33 +180,7 @@ extern int errno;
 # endif
 #endif
 
-#if HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-#ifndef O_RDONLY
-#define O_RDONLY 0
-#endif
-#ifndef O_WRONLY
-#define O_WRONLY 1
-#endif
-#ifndef O_RDWR
-#define O_RDWR 2
-#endif
-#ifndef _O_BINARY
-#define _O_BINARY 0
-#endif
-#ifndef O_BINARY
-#define O_BINARY _O_BINARY
-#endif
-#ifndef O_CREAT
-#define O_CREAT 0
-#endif
-#ifndef O_EXCL
-#define O_EXCL 0
-#endif
-#ifndef O_TRUNC
-#define O_TRUNC 0
-#endif
+#include <fcntl.h>
 
 #ifdef MKDIR_TAKES_ONE_ARG
 # undef mkdir
