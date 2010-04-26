@@ -1,5 +1,8 @@
 2009-04-26  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Only check for reversed patches when
+	the input file is patchable in the first place.
+
 	* src/pch.c (get_input_file): If an input file is not a regular file,
 	only skip the patch instead of aborting.
 	* src/patch.c (main): If get_input_file() fails, skip the patch.

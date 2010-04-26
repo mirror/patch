@@ -713,6 +713,7 @@ intuit_diff_type (bool need_header)
 	      }
 
 	    if (i0 != NONE
+		&& (i == NONE || S_ISREG (st[i].st_mode))
 	        && maybe_reverse (p_name[i0], i == NONE,
 				  i == NONE || st[i].st_size == 0))
 		i = i0;
@@ -747,7 +748,8 @@ intuit_diff_type (bool need_header)
 	if (inname)
 	  {
 	    inerrno = stat (inname, &instat) == 0 ? 0 : errno;
-	    maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
+	    if (inerrno || S_ISREG (instat.st_mode))
+	      maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
 	  }
 	else
           inerrno = -1;
