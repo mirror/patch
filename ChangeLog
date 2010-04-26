@@ -1,3 +1,7 @@
+2009-04-27  Daniel Richard G. <skunk@iskunk.org>
+
+	* src/bestmatch.h: Do not use variable-length arrays.
+
 2009-04-26  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/inp.c (get_input_file), src/pch.c (there_is_another_patch,

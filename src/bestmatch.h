@@ -60,9 +60,12 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
     const OFFSET fmid = xoff - yoff;      /* Center diagonal. */
     OFFSET fmin = fmid;
     OFFSET fmax = fmid;
-    OFFSET V[2 * max + 3], *fd = V + max + 2 - fmid;
+    OFFSET *V, *fd;
     OFFSET fmid_plus_2_min, ymax = -1;
     OFFSET c;
+
+    V = malloc ((2 * max + 3) * sizeof (OFFSET));
+    fd = V + max + 2 - fmid;
 
     /*
        The number of elements that were matched in x and in y can be
@@ -150,6 +153,7 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
   done:
     if (py)
       *py = ymax;
+    free (V);
     return c;
 }
 
