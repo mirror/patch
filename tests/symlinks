@@ -1,0 +1,76 @@
+# Copyright (C) 2010 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+# Symlink related tests
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+cat > create.diff <<EOF
+--- /dev/null
++++ l
+@@ -0,0 +1 @@
++one
+EOF
+
+rm -f f l
+echo f > f
+ncheck 'ln -s f l'
+
+check 'patch < create.diff || echo "Status: $?"' <<EOF
+File l is not a regular file -- can't patch
+1 out of 1 hunk ignored -- saving rejects to file l.rej
+Status: 1
+EOF
+
+check 'cat f' <<EOF
+f
+EOF
+
+# --------------------------------------------------------------
+
+rm -f f l
+echo f > f
+ncheck 'ln -s f l'
+
+cat > modify.diff <<EOF
+--- l
++++ l
+@@ -1 +1 @@
+-one
++two
+EOF
+
+check 'patch < modify.diff || echo "Status: $?"' <<EOF
+File l is not a regular file -- can't patch
+1 out of 1 hunk ignored -- saving rejects to file l.rej
+Status: 1
+EOF
+# --------------------------------------------------------------
+
+rm -f f l
+echo f > f
+ncheck 'ln -s f l'
+
+cat > delete.diff <<EOF
+--- l
++++ /dev/null
+@@ -1 +0,0 @@
+-one
+EOF
+
+check 'patch < delete.diff || echo "Status: $?"' <<EOF
+File l is not a regular file -- can't patch
+1 out of 1 hunk ignored -- saving rejects to file l.rej
+Status: 1
+EOF
+
+# FIXME: Add tests for backup / reject file clashes with symlinks

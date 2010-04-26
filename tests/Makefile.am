@@ -38,6 +38,7 @@ TESTS = \
 	reject-format \
 	remember-backup-files \
 	remember-reject-files \
+	symlinks \
 	unmodified-files
 
 XFAIL_TESTS = \

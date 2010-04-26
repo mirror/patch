@@ -479,7 +479,7 @@ main (int argc, char **argv)
 			struct stat oldst;
 			int olderrno;
 
-			olderrno = stat (rej, &oldst) ? errno : 0;
+			olderrno = lstat (rej, &oldst) ? errno : 0;
 			if (olderrno && olderrno != ENOENT)
 			  write_fatal ();
 		        if (! olderrno && file_already_seen (&oldst))

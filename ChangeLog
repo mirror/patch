@@ -1,5 +1,13 @@
 2009-04-26  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/inp.c (get_input_file), src/pch.c (there_is_another_patch,
+	intuit_diff_type): Use lstat instead of stat.  This causes patch to
+	refuse patching symlinks (get_input_file() will refuse to read them).
+	* src/util.c (create_backup): Refuse to create backups of symlinks.
+	* tests/symlinks: New test case.
+	* tests/Makefile.am (TESTS): Add test case.
+	* bootstrap.conf: Use the gnulib lstat module.
+
 	* src/pch.c (intuit_diff_type): Only check for reversed patches when
 	the input file is patchable in the first place.
 

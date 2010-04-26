@@ -143,7 +143,7 @@ get_input_file (char const *filename, char const *outname)
     char *getbuf;
 
     if (inerrno == -1)
-      inerrno = stat (filename, &instat) == 0 ? 0 : errno;
+      inerrno = lstat (filename, &instat) == 0 ? 0 : errno;
 
     /* Perhaps look for RCS or SCCS versions.  */
     if (patch_get

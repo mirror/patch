@@ -157,7 +157,10 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
       to_st = &tmp_st;
       to_errno = &tmp_errno;
     }
-  *to_errno = stat (to, to_st) == 0 ? 0 : errno;
+  *to_errno = lstat (to, to_st) == 0 ? 0 : errno;
+
+  if (! to_errno && ! S_ISREG (to_st->st_mode))
+    fatal ("File %s is not a regular file -- can't create backup", to);
 
   if (! *to_errno && file_already_seen (to_st))
     {

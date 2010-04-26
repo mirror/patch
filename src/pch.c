@@ -283,7 +283,7 @@ there_is_another_patch (bool need_header)
 	  {
 	    inname = savebuf (buf, t - buf);
 	    inname[t - buf - 1] = 0;
-	    if (stat (inname, &instat) == 0)
+	    if (lstat (inname, &instat) == 0)
 	      {
 		inerrno = 0;
 		invc = -1;
@@ -656,7 +656,7 @@ intuit_diff_type (bool need_header)
 		  if (! stat_errno[i])
 		    st[i] = st[i0];
 		}
-	      else if (stat (p_name[i], &st[i]) != 0)
+	      else if (lstat (p_name[i], &st[i]) != 0)
 		stat_errno[i] = errno;
 	      else
 		{
@@ -747,7 +747,7 @@ intuit_diff_type (bool need_header)
       {
 	if (inname)
 	  {
-	    inerrno = stat (inname, &instat) == 0 ? 0 : errno;
+	    inerrno = lstat (inname, &instat) == 0 ? 0 : errno;
 	    if (inerrno || S_ISREG (instat.st_mode))
 	      maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
 	  }
