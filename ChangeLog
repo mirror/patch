@@ -1,3 +1,9 @@
+2009-04-26  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/pch.c (get_input_file): If an input file is not a regular file,
+	only skip the patch instead of aborting.
+	* src/patch.c (main): If get_input_file() fails, skip the patch.
+
 2009-04-25  Andreas Gruenbacher  <agruen@suse.de>
 
 	* bootstrap.conf: Use the gnulib fcntl-h and sys_stat modules.

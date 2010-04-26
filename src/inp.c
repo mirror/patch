@@ -134,7 +134,7 @@ too_many_lines (char const *filename)
 }
 
 
-void
+bool
 get_input_file (char const *filename, char const *outname)
 {
     bool elsewhere = strcmp (filename, outname) != 0;
@@ -201,8 +201,12 @@ get_input_file (char const *filename, char const *outname)
 	instat.st_size = 0;
       }
     else if (! S_ISREG (instat.st_mode))
-      fatal ("File %s is not a regular file -- can't patch",
+      {
+	say ("File %s is not a regular file -- can't patch\n",
 	     quotearg (filename));
+	return false;
+      }
+    return true;
 }
 
 

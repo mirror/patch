@@ -181,7 +181,11 @@ main (int argc, char **argv)
       if (! skip_rest_of_patch)
 	{
 	  outname = outfile ? outfile : inname;
-	  get_input_file (inname, outname);
+	  if (! get_input_file (inname, outname))
+	    {
+	      skip_rest_of_patch = true;
+	      somefailed = true;
+	    }
 	}
 
       if (diff_type == ED_DIFF) {

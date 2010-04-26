@@ -20,6 +20,6 @@
 XTERN lin input_lines;		/* how long is input file in lines */
 
 char const *ifetch (lin, bool, size_t *);
-void get_input_file (char const *, char const *);
+bool get_input_file (char const *, char const *);
 void re_input (void);
 void scan_input (char *);
