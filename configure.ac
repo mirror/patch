@@ -31,7 +31,7 @@ AC_ARG_ENABLE([merge],
     [disable support for merging])])
 AM_CONDITIONAL([ENABLE_MERGE], [test "$enableval" != no])
 AM_CONDITIONAL([ALPHA_VERSION],
-  [[echo "$PACKAGE_VERSION" | grep -q -- "-[0-9a-f][0-9a-f]*\\(-dirty\\)\\?$"]])
+  [[echo "$PACKAGE_VERSION" | grep -- "-[0-9a-f][0-9a-f]*\\(-dirty\\)\\?$" >/dev/null]])
 
 AM_INIT_AUTOMAKE([1.11.1 -Wall -Werror gnu dist-bzip2 dist-xz color-tests parallel-tests])
 AM_SILENT_RULES([yes])

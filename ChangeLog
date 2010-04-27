@@ -1,3 +1,7 @@
+2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
+
+	* configure.ac: Do not use grep -q.
+
 2009-04-27  Daniel Richard G. <skunk@iskunk.org>
 
 	* src/common.h (enum diff): Remove the trailing comma.
