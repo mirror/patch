@@ -49,5 +49,6 @@ EXTRA_DIST = \
 	test-lib.sh
 
 TESTS_ENVIRONMENT = \
-	export abs_top_builddir=$(abs_top_builddir); \
+	abs_top_builddir=$(abs_top_builddir); \
+	export abs_top_builddir; \
 	$(TEST_SHELL)

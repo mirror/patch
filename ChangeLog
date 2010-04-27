@@ -1,5 +1,7 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/Makefile.am (TESTS_ENVIRONMENT): Portability fix.
+
 	* src/bestmatch.h (bestmatch): Fix an off-by-one error causing an
 	out-of-bounds array access.
 
