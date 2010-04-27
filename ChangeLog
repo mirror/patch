@@ -1,5 +1,8 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/common.h: Do not redefine __attribute__ when it is already
+	defined.
+
 	* configure.ac: Do not use grep -q.
 
 2009-04-27  Daniel Richard G. <skunk@iskunk.org>
