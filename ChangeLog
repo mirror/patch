@@ -1,5 +1,9 @@
 2009-04-27  Daniel Richard G. <skunk@iskunk.org>
 
+	* src/common.h (enum diff): Remove the trailing comma.
+	* src/patch.c (main): Do not use non-constant expressions in an array
+	initializer.
+
 	* src/bestmatch.h: Do not use variable-length arrays.
 
 2009-04-26  Andreas Gruenbacher  <agruen@suse.de>

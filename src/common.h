@@ -123,7 +123,7 @@ enum diff
     ED_DIFF,
     NEW_CONTEXT_DIFF,
     UNI_DIFF,
-    GIT_BINARY_DIFF,
+    GIT_BINARY_DIFF
   };
 
 XTERN enum diff diff_type;

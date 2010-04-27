@@ -401,8 +401,10 @@ main (int argc, char **argv)
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
-			  struct timespec times[2] = { new_time, new_time };
+			  struct timespec times[2];
 			  struct timespec old_time = pch_timestamp (reverse);
+			  times[0] = new_time;
+			  times[1] = new_time;
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse) != 2
 			      && old_time.tv_sec != -1
