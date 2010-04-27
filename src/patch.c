@@ -372,7 +372,7 @@ main (int argc, char **argv)
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
-		  move_file (0, 0, 0, outname, 0, backup);
+		  move_file (0, 0, 0, outname, S_IFREG | 0, backup);
 		  removedirs (outname);
 		}
 	    }
@@ -457,7 +457,8 @@ main (int argc, char **argv)
 		      {
 			if (! written_to_rejname)
 			  {
-			    copy_file (TMPREJNAME, rejname, 0, 0, 0666, true);
+			    copy_file (TMPREJNAME, rejname, 0, 0,
+				       S_IFREG | 0666, true);
 			    written_to_rejname = true;
 			  }
 			else
@@ -475,7 +476,7 @@ main (int argc, char **argv)
 			  append_to_file (TMPREJNAME, rej);
 			else
 			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
-				     &rejst, rej, 0666, false);
+				     &rejst, rej, S_IFREG | 0666, false);
 		      }
 		  }
 		if (!rejname)

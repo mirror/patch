@@ -4,6 +4,16 @@
 
 2009-04-28  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.c (copy_file): Require the mode parameter to include the
+	file type.  Use that to decide whether to copy a regular file or a
+	symlink.
+	(create_backup): Refuse to back up files which are neither a regular
+	file nor a symlink.
+	(move_file): Add support for turning a temporary output file into a
+	symlink.
+	* src/patch.c (move_file, copy_file): Pass down the file type.
+	* src/pch.h (prefix_components): Do not follow symlinks.
+
 	* src/inp.c (get_input_file): Add a mode parameter specifying the
 	input file type (which can be either S_IFREG or S_IFLNK).  The file
 	type must match this mode parameter; for symbolic links, the --get

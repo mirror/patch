@@ -205,8 +205,9 @@ create_backup (char *to, struct stat *to_st, int *to_errno,
     }
   *to_errno = lstat (to, to_st) == 0 ? 0 : errno;
 
-  if (! to_errno && ! S_ISREG (to_st->st_mode))
-    fatal ("File %s is not a regular file -- can't create backup", to);
+  if (! to_errno && ! (S_ISREG (to_st->st_mode) || S_ISLNK (to_st->st_mode)))
+    fatal ("File %s is not a %s -- refusing to create backup",
+	   to, S_ISLNK (to_st->st_mode) ? "symbolic link" : "regular file");
 
   if (! *to_errno && file_already_seen (to_st))
     {
@@ -329,50 +330,84 @@ move_file (char const *from, int *from_needs_removal,
 
   if (from)
     {
-      if (debug & 4)
-	say ("Renaming file %s to %s\n",
-	     quotearg_n (0, from), quotearg_n (1, to));
-
-      if (rename (from, to) != 0)
+      if (S_ISLNK (mode))
 	{
 	  bool to_dir_known_to_exist = false;
 
-	  if (errno == ENOENT
-	      && (to_errno == -1 || to_errno == ENOENT))
-	    {
-	      makedirs (to);
-	      to_dir_known_to_exist = true;
-	      if (rename (from, to) == 0)
-		goto rename_succeeded;
-	    }
+	  /* FROM contains the contents of the symlink we have patched; need
+	     to convert that back into a symlink. */
+	  char *buffer = xmalloc (PATH_MAX);
+	  int fd, size = 0, i;
 
-	  if (errno == EXDEV)
-	    {
-	      struct stat tost;
-	      if (! backup)
-		{
-		  if (unlink (to) == 0)
-		    to_dir_known_to_exist = true;
-		  else if (errno != ENOENT)
-		    pfatal ("Can't remove file %s", quotearg (to));
-		}
-	      copy_file (from, to, &tost, 0, mode, to_dir_known_to_exist);
-	      insert_file (&tost);
-	      return;
-	    }
+	  if ((fd = open (from, O_RDONLY | O_BINARY)) < 0)
+	    pfatal ("Can't reopen file %s", quotearg (from));
+	  while ((i = read (fd, buffer + size, PATH_MAX - size)) > 0)
+	    size += i;
+	  if (i != 0 || close (fd) != 0)
+	    read_fatal ();
+	  buffer[size] = 0;
 
-	  pfatal ("Can't rename file %s to %s",
-		  quotearg_n (0, from), quotearg_n (1, to));
+	  if (! backup)
+	    {
+	      if (unlink (to) == 0)
+		to_dir_known_to_exist = true;
+	    }
+	  if (symlink (buffer, to) != 0)
+	    {
+	      if (errno == ENOENT && ! to_dir_known_to_exist)
+		makedirs (to);
+	      if (symlink (buffer, to) != 0)
+		pfatal ("Can't create %s %s", "symbolic link", to);
+	    }
+	  free (buffer);
 	}
+      else
+	{
+	  if (debug & 4)
+	    say ("Renaming file %s to %s\n",
+		 quotearg_n (0, from), quotearg_n (1, to));
 
-    rename_succeeded:
-      insert_file (fromst);
-      /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
-	 rename returned zero because FROM and TO are hard links to
-	 the same file.  */
-      if (0 < to_errno
-	  || (to_errno == 0 && to_st.st_nlink <= 1))
-	*from_needs_removal = 0;
+	  if (rename (from, to) != 0)
+	    {
+	      bool to_dir_known_to_exist = false;
+
+	      if (errno == ENOENT
+		  && (to_errno == -1 || to_errno == ENOENT))
+		{
+		  makedirs (to);
+		  to_dir_known_to_exist = true;
+		  if (rename (from, to) == 0)
+		    goto rename_succeeded;
+		}
+
+	      if (errno == EXDEV)
+		{
+		  struct stat tost;
+		  if (! backup)
+		    {
+		      if (unlink (to) == 0)
+			to_dir_known_to_exist = true;
+		      else if (errno != ENOENT)
+			pfatal ("Can't remove file %s", quotearg (to));
+		    }
+		  copy_file (from, to, &tost, 0, mode, to_dir_known_to_exist);
+		  insert_file (&tost);
+		  return;
+		}
+
+	      pfatal ("Can't rename file %s to %s",
+		      quotearg_n (0, from), quotearg_n (1, to));
+	    }
+
+	rename_succeeded:
+	  insert_file (fromst);
+	  /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
+	     rename returned zero because FROM and TO are hard links to
+	     the same file.  */
+	  if (0 < to_errno
+	      || (to_errno == 0 && to_st.st_nlink <= 1))
+	    *from_needs_removal = 0;
+	}
     }
   else if (! backup)
     {
@@ -441,14 +476,31 @@ copy_file (char const *from, char const *to, struct stat *tost,
   int tofd;
 
   if (debug & 4)
-    say ("Copying file %s to %s\n",
+    say ("Copying %s %s to %s\n",
+	 S_ISLNK (mode) ? "symbolic link" : "file",
 	 quotearg_n (0, from), quotearg_n (1, to));
-  tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
-		      to_dir_known_to_exist);
-  copy_to_fd (from, tofd);
-  if ((tost && fstat (tofd, tost) != 0)
-      || close (tofd) != 0)
-    write_fatal ();
+
+  if (S_ISLNK (mode))
+    {
+      char *buffer = xmalloc (PATH_MAX);
+
+      if (readlink (from, buffer, PATH_MAX) < 0)
+	pfatal ("Can't read %s %s", "symbolic link", from);
+      if (symlink (buffer, to) != 0)
+	pfatal ("Can't create %s %s", "symbolic link", to);
+
+      free (buffer);
+    }
+  else
+    {
+      assert (S_ISREG (mode));
+      tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
+			  to_dir_known_to_exist);
+      copy_to_fd (from, tofd);
+      if ((tost && fstat (tofd, tost) != 0)
+	  || close (tofd) != 0)
+	write_fatal ();
+    }
 }
 
 /* Append to file. */
