@@ -1,5 +1,8 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* configure.ac (gl_CHECK_TYPE_STRUCT_UTIMBUF), m4/utimbuf.m4: Remove;
+	utimbuf is no longer used.
+
 	* src/util.h: Include <backupfile.h> here and not in each C file
 	individually; this avoids a warning in merge.c with some compilers.
 
