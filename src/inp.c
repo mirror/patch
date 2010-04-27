@@ -19,7 +19,6 @@
 
 #define XTERN extern
 #include <common.h>
-#include <pch.h>
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
@@ -77,21 +76,31 @@ re_input (void)
 /* Construct the line index, somehow or other. */
 
 void
-scan_input (char *filename)
+scan_input (char *filename, mode_t file_type)
 {
     using_plan_a = ! (debug & 16) && plan_a (filename);
     if (!using_plan_a)
+      {
+	if (! S_ISREG (file_type))
+	  {
+	    assert (S_ISLNK (file_type));
+	    fatal ("Can't handle %s %s", "symbolic link", quotearg (filename));
+	  }
 	plan_b(filename);
+      }
 
     if (verbosity != SILENT)
       {
 	filename = quotearg (filename);
 
 	if (verbosity == VERBOSE)
-	  say ("Patching file %s using Plan %s...\n",
-	       filename, using_plan_a ? "A" : "B");
+	  say ("Patching %s %s using Plan %s...\n",
+	       S_ISLNK (file_type) ? "symbolic link" : "file",
+	       quotearg (filename), using_plan_a ? "A" : "B");
 	else
-	  say ("patching file %s\n", filename);
+	  say ("patching %s %s\n",
+	       S_ISLNK (file_type) ? "symbolic link" : "file",
+	       quotearg (filename));
       }
 }
 
@@ -134,7 +143,7 @@ too_many_lines (char const *filename)
 
 
 bool
-get_input_file (char const *filename, char const *outname)
+get_input_file (char const *filename, char const *outname, mode_t mode)
 {
     bool elsewhere = strcmp (filename, outname) != 0;
     char const *cs;
@@ -145,7 +154,8 @@ get_input_file (char const *filename, char const *outname)
       inerrno = lstat (filename, &instat) == 0 ? 0 : errno;
 
     /* Perhaps look for RCS or SCCS versions.  */
-    if (patch_get
+    if (S_ISREG (mode)
+	&& patch_get
 	&& invc != 0
 	&& (inerrno
 	    || (! elsewhere
@@ -199,10 +209,12 @@ get_input_file (char const *filename, char const *outname)
 	instat.st_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
 	instat.st_size = 0;
       }
-    else if (! S_ISREG (instat.st_mode))
+    else if (! ((S_ISREG (mode) || S_ISLNK (mode))
+	        && (mode & S_IFMT) == (instat.st_mode & S_IFMT)))
       {
-	say ("File %s is not a regular file -- can't patch\n",
-	     quotearg (filename));
+	say ("File %s is not a %s -- can't patch\n",
+	     quotearg (filename),
+	     S_ISLNK (mode) ? "symbolic link" : "regular file");
 	return false;
       }
     return true;
@@ -231,34 +243,47 @@ plan_a (char const *filename)
      When creating files, the files do not actually exist.  */
   if (size)
     {
-      int ifd = open (filename, O_RDONLY|binary_transput);
-      size_t buffered = 0, n;
-      if (ifd < 0)
-	pfatal ("can't open file %s", quotearg (filename));
+      if (S_ISREG (instat.st_mode))
+        {
+	  int ifd = open (filename, O_RDONLY|binary_transput);
+	  size_t buffered = 0, n;
+	  if (ifd < 0)
+	    pfatal ("can't open file %s", quotearg (filename));
 
-      while (size - buffered != 0)
-	{
-	  n = read (ifd, buffer + buffered, size - buffered);
-	  if (n == 0)
+	  while (size - buffered != 0)
 	    {
-	      /* Some non-POSIX hosts exaggerate st_size in text mode;
-		 or the file may have shrunk!  */
-	      size = buffered;
-	      break;
+	      n = read (ifd, buffer + buffered, size - buffered);
+	      if (n == 0)
+		{
+		  /* Some non-POSIX hosts exaggerate st_size in text mode;
+		     or the file may have shrunk!  */
+		  size = buffered;
+		  break;
+		}
+	      if (n == (size_t) -1)
+		{
+		  /* Perhaps size is too large for this host.  */
+		  close (ifd);
+		  free (buffer);
+		  return false;
+		}
+	      buffered += n;
 	    }
-	  if (n == (size_t) -1)
-	    {
-	      /* Perhaps size is too large for this host.  */
-	      close (ifd);
-	      free (buffer);
-	      return false;
-	    }
-	  buffered += n;
+
+	  if (close (ifd) != 0)
+	    read_fatal ();
 	}
-
-      if (close (ifd) != 0)
-	read_fatal ();
-    }
+      else if (S_ISLNK (instat.st_mode))
+	{
+	  ssize_t n;
+	  n = readlink (filename, buffer, size);
+	  if (n < 0)
+	    pfatal ("can't read %s %s", "symbolic link", quotearg (filename));
+	  size = n;
+	}
+      else
+	return false;
+  }
 
   /* Scan the buffer and build array of pointers to lines.  */
   lim = buffer + size;

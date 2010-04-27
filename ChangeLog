@@ -4,6 +4,17 @@
 
 2009-04-28  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/inp.c (get_input_file): Add a mode parameter specifying the
+	input file type (which can be either S_IFREG or S_IFLNK).  The file
+	type must match this mode parameter; for symbolic links, the --get
+	option is not supported.
+	(scan_input): Abort when plan_a() cannot handle a symbolic link.
+	Say when patching a symbolic link instead of a regular file.
+	(plan_a): Add support for reading symbolic links.
+	* src/patch.c: For now, always tell get_input_file() to read regular
+	files.
+	* bootstrap.conf: Use the gnulib readlink module.
+
 	* src/util.h (enum file_attributes): New type.
 	(set_file_attributes): New function.
 	* src/util.c (set_file_attributes): Move the code for setting file

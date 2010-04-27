@@ -180,7 +180,7 @@ main (int argc, char **argv)
       if (! skip_rest_of_patch)
 	{
 	  outname = outfile ? outfile : inname;
-	  if (! get_input_file (inname, outname))
+	  if (! get_input_file (inname, outname, S_IFREG))
 	    {
 	      skip_rest_of_patch = true;
 	      somefailed = true;
@@ -222,7 +222,7 @@ main (int argc, char **argv)
 
 	/* find out where all the lines are */
 	if (!skip_rest_of_patch)
-	    scan_input (inname);
+	    scan_input (inname, S_IFREG);
 
 	/* from here on, open no standard i/o files, because malloc */
 	/* might misfire and we can't catch it easily */
