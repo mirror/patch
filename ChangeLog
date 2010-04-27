@@ -1,5 +1,7 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* bootstrap: Update from gnulib.
+
 	* tests/Makefile.am (TESTS_ENVIRONMENT): Portability fix.
 
 	* src/bestmatch.h (bestmatch): Fix an off-by-one error causing an
