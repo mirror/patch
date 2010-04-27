@@ -1,5 +1,8 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/bestmatch.h (bestmatch): Fix an off-by-one error causing an
+	out-of-bounds array access.
+
 	* configure.ac (gl_CHECK_TYPE_STRUCT_UTIMBUF), m4/utimbuf.m4: Remove;
 	utimbuf is no longer used.
 

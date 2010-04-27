@@ -65,7 +65,7 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
     OFFSET c;
 
     V = malloc ((2 * max + 3) * sizeof (OFFSET));
-    fd = V + max + 2 - fmid;
+    fd = V + max + 1 - fmid;
 
     /*
        The number of elements that were matched in x and in y can be
