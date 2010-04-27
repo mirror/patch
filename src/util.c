@@ -20,7 +20,6 @@
 
 #define XTERN extern
 #include <common.h>
-#include <backupfile.h>
 #include <dirname.h>
 #include <hash.h>
 #include <quotearg.h>

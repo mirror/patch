@@ -21,6 +21,7 @@
 #include <utimens.h>
 #include <timespec.h>
 #include <stat-time.h>
+#include <backupfile.h>
 
 /* An upper bound on the print length of a signed decimal line number.
    Add one for the sign.  */

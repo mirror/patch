@@ -19,7 +19,6 @@
 
 #define XTERN extern
 #include <common.h>
-#include <backupfile.h>
 #include <pch.h>
 #include <quotearg.h>
 #include <util.h>

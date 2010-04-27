@@ -23,7 +23,6 @@
 #undef XTERN
 #define XTERN extern
 #include <argmatch.h>
-#include <backupfile.h>
 #include <exitfail.h>
 #include <getopt.h>
 #include <inp.h>

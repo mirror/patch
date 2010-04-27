@@ -1,5 +1,8 @@
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.h: Include <backupfile.h> here and not in each C file
+	individually; this avoids a warning in merge.c with some compilers.
+
 	* src/common.h: Do not redefine __attribute__ when it is already
 	defined.
 
