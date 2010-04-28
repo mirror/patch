@@ -25,6 +25,7 @@ lin pch_first (void);
 lin pch_hunk_beg (void);
 char const *pch_c_function (void);
 char const * pch_timestr (bool which);
+mode_t pch_mode (bool which);
 lin pch_newfirst (void);
 lin pch_prefix_context (void);
 lin pch_ptrn_lines (void);

@@ -4,6 +4,12 @@
 
 2009-04-28  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (p_mode): New variable.
+	(fetchmode, pch_mode): New functions.
+	(intuit_diff_type): Recognize git diffs which contain no hunks.
+	Parse and store the file modes in the "index", "old mode",
+	"new mode", "deleted file mode", and "new file mode" headers.
+
 	* src/util.c (copy_file): Require the mode parameter to include the
 	file type.  Use that to decide whether to copy a regular file or a
 	symlink.

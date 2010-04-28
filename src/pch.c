@@ -40,6 +40,7 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
 static char *p_timestr[2];		/* timestamps as strings */
+static mode_t p_mode[2];		/* file modes */
 static off_t p_filesize;		/* size of the patch file */
 static lin p_first;			/* 1st line number */
 static lin p_newfirst;			/* 1st line number of replacement */
@@ -308,6 +309,33 @@ there_is_another_patch (bool need_header)
     return true;
 }
 
+static mode_t
+fetchmode (char const *str)
+{
+   const char *s;
+   mode_t mode;
+
+   while (ISSPACE ((unsigned char) *str))
+     str++;
+
+   for (s = str, mode = 0; s < str + 6; s++)
+     {
+       if (*s >= '0' && *s <= '7')
+	mode = (mode << 3) + (*s - '0');
+       else
+	{
+	 mode = 0;
+	 break;
+	}
+     }
+   if (*s == '\r')
+     s++;
+   if (*s != '\n')
+     mode = 0;
+
+   return mode;
+}
+
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff
@@ -320,6 +348,7 @@ intuit_diff_type (bool need_header)
     bool this_is_a_command = false;
     bool stars_this_line = false;
     bool git_diff = false;
+    bool extended_headers = false;
     enum nametype i;
     struct stat st[3];
     int stat_errno[3];
@@ -337,6 +366,8 @@ intuit_diff_type (bool need_header)
 	  free(p_timestr[i]);
 	  p_timestr[i] = 0;
 	}
+    for (i = OLD; i <= NEW; i++)
+      p_mode[i] = 0;
 
     /* Ed and normal format patches don't have filename headers.  */
     if (diff_type == ED_DIFF || diff_type == NORMAL_DIFF)
@@ -376,6 +407,12 @@ intuit_diff_type (bool need_header)
 	    else {
 		p_start = this_line;
 		p_sline = p_input_line;
+		if (extended_headers)
+		  {
+		    /* Patch contains no hunks; any diff type will do. */
+		    retval = UNI_DIFF;
+		    goto scan_exit;
+		  }
 		return NO_DIFF;
 	    }
 	}
@@ -464,14 +501,23 @@ intuit_diff_type (bool need_header)
 	  }
 	else if (strnEQ (s, "diff --git ", 11))
 	  {
-	    char const *t;
+	    char const *u;
+
+	    if (extended_headers)
+	      {
+		p_start = this_line;
+		p_sline = p_input_line;
+		/* Patch contains no hunks; any diff type will do. */
+		retval = UNI_DIFF;
+		goto scan_exit;
+	      }
 
 	    if (! ((free (p_name[OLD]),
-		    (p_name[OLD] = parse_name (s + 11, strippath, &t)))
-		   && ISSPACE (*t)
+		    (p_name[OLD] = parse_name (s + 11, strippath, &u)))
+		   && ISSPACE (*u)
 		   && (free (p_name[NEW]),
-		       (p_name[NEW] = parse_name (t, strippath, &t)))
-		   && (t = skip_spaces (t), ! *t)))
+		       (p_name[NEW] = parse_name (u, strippath, &u)))
+		   && (u = skip_spaces (u), ! *u)))
 	      for (i = OLD; i <= NEW; i++)
 		{
 		  free (p_name[i]);
@@ -479,10 +525,38 @@ intuit_diff_type (bool need_header)
 		}
 	    git_diff = true;
 	  }
+	else if (git_diff && strnEQ (s, "index ", 6))
+	  {
+	    char const *u;
+
+	    for (u = s + 6;  *u && ! ISSPACE ((unsigned char) *u);  u++)
+	      /* do nothing */ ;
+	    if (*(u = skip_spaces (u)))
+	      p_mode[OLD] = p_mode[NEW] = fetchmode (u);
+	    extended_headers = true;
+	  }
+	else if (git_diff && strnEQ (s, "old mode ", 9))
+	  {
+	    p_mode[OLD] = fetchmode (s + 9);
+	    extended_headers = true;
+	  }
+	else if (git_diff && strnEQ (s, "new mode ", 9))
+	  {
+	    p_mode[NEW] = fetchmode (s + 9);
+	    extended_headers = true;
+	  }
 	else if (git_diff && strnEQ (s, "deleted file mode ", 18))
-	  p_says_nonexistent[NEW] = 2;
+	  {
+	    p_mode[OLD] = fetchmode (s + 18);
+	    p_says_nonexistent[NEW] = 2;
+	    extended_headers = true;
+	  }
 	else if (git_diff && strnEQ (s, "new file mode ", 14))
-	  p_says_nonexistent[OLD] = 2;
+	  {
+	    p_mode[NEW] = fetchmode (s + 14);
+	    p_says_nonexistent[OLD] = 2;
+	    extended_headers = true;
+	  }
 	else if (git_diff && strnEQ (s, "GIT binary patch", 16))
 	  {
 	    p_start = this_line;
@@ -2024,6 +2098,12 @@ char const *
 pch_timestr (bool which)
 {
   return p_timestr[which];
+}
+
+mode_t
+pch_mode (bool which)
+{
+  return p_mode[which];
 }
 
 /* Is the newline-terminated line a valid `ed' command for patch
