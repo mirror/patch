@@ -122,26 +122,73 @@ contains_slash (const char *s)
   return false;
 }
 
+void
+set_file_attributes (char const *to, enum file_attributes attr,
+		     struct stat *st, struct timespec *new_time)
+{
+  if (attr & FA_TIMES)
+    {
+      struct timespec times[2];
+      if (new_time)
+	times[0] = times[1] = *new_time;
+      else
+        {
+	  times[0] = get_stat_atime (st);
+	  times[1] = get_stat_mtime (st);
+	}
+      if (lutimens (to, times) != 0)
+	pfatal ("Failed to set the timestamps of %s %s",
+		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		quotearg (to));
+    }
+  if (attr & FA_IDS)
+    {
+      static uid_t euid = -1;
+      static gid_t egid = -1;
+      uid_t uid;
+      uid_t gid;
+
+      if (euid == -1)
+        {
+	  euid = geteuid ();
+	  egid = getegid ();
+	}
+      uid = (euid == st->st_uid) ? -1 : st->st_uid;
+      gid = (egid == st->st_gid) ? -1 : st->st_gid;
+
+      /* May fail if we are not privileged to set the file owner, or we are
+         not in group instat.st_gid.  Ignore those errors.  */
+      if ((uid != -1 || gid != -1)
+	  && lchown (to, uid, gid) != 0
+	  && (errno != EPERM
+	      || (uid != -1
+		  && lchown (to, (uid = -1), gid) != 0
+		  && errno != EPERM)))
+	pfatal ("Failed to set the %s of %s %s",
+		(uid == -1) ? "owner" : "owning group",
+		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		quotearg (to));
+    }
+  if (attr & FA_MODE)
+    {
+#ifdef HAVE_LCHMOD
+      if (lchmod (to, st->st_mode))
+#else
+      if (! S_ISLNK (st->st_mode) && chmod (to, st->st_mode) != 0)
+#endif
+	pfatal ("Failed to set the permissions of %s %s",
+		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		quotearg (to));
+    }
+  /* FIXME: There may be other attributes to preserve.  */
+}
+
 static void
 create_backup_copy (char const *from, char const *to, struct stat *st,
 		    bool to_dir_known_to_exist)
 {
-  struct timespec times[2];
-
   copy_file (from, to, 0, 0, st->st_mode, to_dir_known_to_exist);
-  times[0] = get_stat_atime (st);
-  times[1] = get_stat_mtime (st);
-  if (utimens (to, times) != 0)
-    pfatal ("Can't set timestamp on file %s",
-	    quotearg (to));
-  if (getegid () != st->st_gid)
-    {
-      /* Fails if we are not in group instat.st_gid.  */
-      chown (to, -1, st->st_gid);
-    }
-  if (chmod (to, st->st_mode) != 0)
-    pfatal ("Can't set timestamp on file %s",
-	    quotearg (to));
+  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, NULL);
 }
 
 void

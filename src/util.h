@@ -64,6 +64,15 @@ void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
 bool file_already_seen (struct stat const *);
 
+enum file_attributes {
+  FA_TIMES = 1,
+  FA_IDS = 2,
+  FA_MODE = 4
+};
+
+void set_file_attributes (char const *, enum file_attributes, struct stat *,
+			  struct timespec *);
+
 static inline char const *
 skip_spaces (char const *str)
 {

@@ -393,6 +393,7 @@ main (int argc, char **argv)
 		  /* Avoid replacing files when nothing has changed.  */
 		  if (failed < hunk || diff_type == ED_DIFF)
 		    {
+		      enum file_attributes attr = FA_IDS | FA_MODE;
 		      struct timespec new_time = pch_timestamp (! reverse);
 
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
@@ -400,10 +401,8 @@ main (int argc, char **argv)
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
-			  struct timespec times[2];
 			  struct timespec old_time = pch_timestamp (reverse);
-			  times[0] = new_time;
-			  times[1] = new_time;
+
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse) != 2
 			      && old_time.tv_sec != -1
@@ -416,23 +415,12 @@ main (int argc, char **argv)
 			    say ("Not setting time of file %s "
 				 "(contents mismatch)\n",
 				 quotearg (outname));
-			  else if (utimens (outname, times) != 0)
-			    pfatal ("Can't set timestamp on file %s",
-				    quotearg (outname));
+			  else
+			    attr |= FA_TIMES;
 			}
 
 		      if (! inerrno)
-			{
-			  if (chmod (outname, instat.st_mode) != 0)
-			    pfatal ("Can't set permissions on file %s",
-				    quotearg (outname));
-			  if (getegid () != instat.st_gid)
-			    {
-			      /* Fails if we are not in group instat.st_gid.  */
-			      chown (outname, -1, instat.st_gid);
-			    }
-			  /* FIXME: There may be other attributes to preserve.  */
-			}
+			set_file_attributes (outname, attr, &instat, &new_time);
 		    }
 		  else
 		    create_backup (outname, 0, 0, true);
