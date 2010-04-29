@@ -68,7 +68,7 @@ static lin p_bfake = -1;		/* beg of faked up lines */
 static char *p_c_function;		/* the C function a hunk is in */
 
 static char *scan_linenum (char *, lin *);
-static enum diff intuit_diff_type (bool);
+static enum diff intuit_diff_type (bool, mode_t *);
 static enum nametype best_name (char * const *, int const *);
 static int prefix_components (char *, bool);
 static size_t pget_line (size_t, int, bool, bool);
@@ -213,7 +213,7 @@ maybe_reverse (char const *name, bool nonexistent, bool is_empty)
 /* True if the remainder of the patch file contains a diff of some sort. */
 
 bool
-there_is_another_patch (bool need_header)
+there_is_another_patch (bool need_header, mode_t *file_type)
 {
     if (p_base != 0 && p_base >= p_filesize) {
 	if (verbosity == VERBOSE)
@@ -222,7 +222,7 @@ there_is_another_patch (bool need_header)
     }
     if (verbosity == VERBOSE)
 	say ("Hmm...");
-    diff_type = intuit_diff_type (need_header);
+    diff_type = intuit_diff_type (need_header, file_type);
     if (diff_type == NO_DIFF) {
 	if (verbosity == VERBOSE)
 	  say (p_base
@@ -339,7 +339,7 @@ fetchmode (char const *str)
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff
-intuit_diff_type (bool need_header)
+intuit_diff_type (bool need_header, mode_t *p_file_type)
 {
     file_offset this_line = 0;
     file_offset first_command_line = -1;
@@ -703,6 +703,7 @@ intuit_diff_type (bool need_header)
 	if (! file_type)
 	  file_type = S_IFREG;
       }
+    *p_file_type = file_type;
 
     /* To intuit `inname', the name of the file to patch,
        use the algorithm specified by POSIX 1003.1-2001 XCU lines 25680-26599

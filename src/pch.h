@@ -33,7 +33,7 @@ lin pch_repl_lines (void);
 lin pch_suffix_context (void);
 bool pch_swap (void);
 bool pch_write_line (lin, FILE *);
-bool there_is_another_patch (bool);
+bool there_is_another_patch (bool, mode_t *);
 char *pfetch (lin);
 char pch_char (lin);
 int another_hunk (enum diff, bool);

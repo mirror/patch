@@ -102,6 +102,7 @@ main (int argc, char **argv)
     char numbuf[LINENUM_LENGTH_BOUND + 1];
     bool written_to_rejname = false;
     bool apply_empty_patch = false;
+    mode_t file_type;
 
     exit_failure = 2;
     program_name = argv[0];
@@ -167,7 +168,7 @@ main (int argc, char **argv)
       }
     for (
 	open_patch_file (patchname);
-	there_is_another_patch (! (inname || posixly_correct))
+	there_is_another_patch (! (inname || posixly_correct), &file_type)
 	  || apply_empty_patch;
 	reinitialize_almost_everything(),
 	  apply_empty_patch = false
@@ -176,6 +177,16 @@ main (int argc, char **argv)
       int failed = 0;
       bool mismatch = false;
       char *outname = NULL;
+
+      if (! skip_rest_of_patch && ! file_type)
+	{
+	  say ("File %s: can't change file type from 0%o to 0%o.\n",
+	       quotearg (inname),
+	       pch_mode (reverse) & S_IFMT,
+	       pch_mode (! reverse) & S_IFMT);
+	  skip_rest_of_patch = true;
+	  somefailed = true;
+	}
 
       if (! skip_rest_of_patch)
 	{
