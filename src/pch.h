@@ -40,6 +40,8 @@ int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool);
 size_t pch_line_len (lin);
 const char *pch_name(enum nametype);
+bool pch_copy (void);
+bool pch_rename (void);
 void do_ed_script (FILE *);
 void open_patch_file (char const *);
 void re_patch (void);

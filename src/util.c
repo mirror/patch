@@ -1316,12 +1316,13 @@ strip_leading_slashes (char *name, int strip_leading)
 
 /* Make filenames more reasonable. */
 
-char *
-fetchname (char const *at, int strip_leading, char **ptimestr,
+void
+fetchname (char const *at, int strip_leading, char **pname, char **ptimestr,
 	   struct timespec *pstamp)
 {
     char *name;
     const char *t;
+    char *timestr = NULL;
     struct timespec stamp;
 
     stamp.tv_sec = -1;
@@ -1338,7 +1339,7 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	  {
 	    if (debug & 128)
 	      say ("ignoring malformed filename %s\n", quotearg (at));
-	    return 0;
+	    return;
 	  }
       }
     else
@@ -1372,19 +1373,18 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	    pstamp->tv_sec = 0;
 	    pstamp->tv_nsec = 0;
 	  }
-	return 0;
+	return;
       }
 
     /* Ignore the name if it doesn't have enough slashes to strip off.  */
     if (! strip_leading_slashes (name, strip_leading))
       {
 	free (name);
-	return 0;
+	return;
       }
 
     if (ptimestr)
       {
-	char *timestr;
 	char const *u = t + strlen (t);
 
 	if (u != t && *(u-1) == '\n')
@@ -1393,7 +1393,6 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	  u--;
 	timestr = savebuf (t, u - t + 1);
 	timestr[u - t] = 0;
-	*ptimestr = timestr;
       }
 
       if (*t == '\n')
@@ -1403,7 +1402,7 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	  if (! pstamp)
 	    {
 	      free (name);
-	      return 0;
+	      return;
 	    }
 
 	  if (set_time | set_utc)
@@ -1426,9 +1425,15 @@ fetchname (char const *at, int strip_leading, char **ptimestr,
 	    }
 	}
 
+    free (*pname);
+    *pname = name;
+    if (ptimestr)
+      {
+	free (*ptimestr);
+	*ptimestr = timestr;
+      }
     if (pstamp)
       *pstamp = stamp;
-    return name;
 }
 
 char *

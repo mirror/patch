@@ -1,5 +1,13 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (p_copy, p_rename): New variables.
+	(pch_copy, pch_rename): New functions.
+	(intuit_diff_type): Parse the "copy from", "copy to", "rename from",
+	and "rename to" headers.
+	* src/util.c (fetchname): Return the fetched name per reference (after
+	freeing the previous name if any).  Also free the previous timestamp
+	string if any.
+
 	* src/patch.c (main): When a git diff includes a file mode change,
 	change to the new mode.
 	* src/util.c (set_file_attributes): Add a mode parameter.

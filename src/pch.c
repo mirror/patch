@@ -39,6 +39,8 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 		2 for nonexistent */
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
+bool p_copy[2];				/* Does this patch create a copy? */
+bool p_rename[2];			/* Does this patch rename a file? */
 static char *p_timestr[2];		/* timestamps as strings */
 static mode_t p_mode[2];		/* file modes */
 static off_t p_filesize;		/* size of the patch file */
@@ -368,7 +370,11 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  p_timestr[i] = 0;
 	}
     for (i = OLD; i <= NEW; i++)
-      p_mode[i] = 0;
+      {
+	p_mode[i] = 0;
+	p_copy[i] = false;
+	p_rename[i] = false;
+      }
 
     /* Ed and normal format patches don't have filename headers.  */
     if (diff_type == ED_DIFF || diff_type == NORMAL_DIFF)
@@ -451,24 +457,21 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	  {
-	    free (p_name[OLD]);
-	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
-				     &p_timestamp[OLD]);
+	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
+		       &p_timestamp[OLD]);
 	    need_header = false;
 	  }
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
-	    free (p_name[OLD]);
-	    p_name[OLD] = fetchname (s+4, strippath, &p_timestr[OLD],
-				     &p_timestamp[OLD]);
+	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
+		       &p_timestamp[OLD]);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    free (p_name[INDEX]);
-	    p_name[INDEX] = fetchname (s+6, strippath, (char **) 0, NULL);
+	    fetchname (s+6, strippath, &p_name[INDEX], (char **) 0, NULL);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -513,11 +516,14 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		goto scan_exit;
 	      }
 
-	    if (! ((free (p_name[OLD]),
-		    (p_name[OLD] = parse_name (s + 11, strippath, &u)))
+	    for (i = OLD; i <= NEW; i++)
+	      {
+		free (p_name[i]);
+		p_name[i] = 0;
+	      }
+	    if (! ((p_name[OLD] = parse_name (s + 11, strippath, &u))
 		   && ISSPACE (*u)
-		   && (free (p_name[NEW]),
-		       (p_name[NEW] = parse_name (u, strippath, &u)))
+		   && (p_name[NEW] = parse_name (u, strippath, &u))
 		   && (u = skip_spaces (u), ! *u)))
 	      for (i = OLD; i <= NEW; i++)
 		{
@@ -558,6 +564,34 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    p_says_nonexistent[OLD] = 2;
 	    extended_headers = true;
 	  }
+	else if (git_diff && strnEQ (s, "rename from ", 12))
+	  {
+	    /* Git leaves out the prefix in the file name in this header,
+	       so we can only ignore the file name.  */
+	    p_rename[OLD] = true;
+	    extended_headers = true;
+	  }
+	else if (git_diff && strnEQ (s, "rename to ", 10))
+	  {
+	    /* Git leaves out the prefix in the file name in this header,
+	       so we can only ignore the file name.  */
+	    p_rename[NEW] = true;
+	    extended_headers = true;
+	  }
+	else if (git_diff && strnEQ (s, "copy from ", 10))
+	  {
+	    /* Git leaves out the prefix in the file name in this header,
+	       so we can only ignore the file name.  */
+	    p_copy[OLD] = true;
+	    extended_headers = true;
+	  }
+	else if (git_diff && strnEQ (s, "copy to ", 8))
+	  {
+	    /* Git leaves out the prefix in the file name in this header,
+	       so we can only ignore the file name.  */
+	    p_copy[NEW] = true;
+	    extended_headers = true;
+	  }
 	else if (git_diff && strnEQ (s, "GIT binary patch", 16))
 	  {
 	    p_start = this_line;
@@ -573,9 +607,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      {
 		struct timespec timestamp;
 		timestamp.tv_sec = -1;
-		free (p_name[NEW]);
-		p_name[NEW] = fetchname (t+4, strippath, &p_timestr[NEW],
-					 &timestamp);
+		fetchname (t+4, strippath, &p_name[NEW], &p_timestr[NEW],
+			   &timestamp);
 		need_header = false;
 		if (timestamp.tv_sec != -1)
 		  {
@@ -2004,6 +2037,18 @@ const char *
 pch_name (enum nametype type)
 {
   return type == NONE ? NULL : p_name[type];
+}
+
+bool pch_copy (void)
+{
+  return p_copy[OLD] && p_copy[NEW]
+	 && p_name[OLD] && p_name[NEW];
+}
+
+bool pch_rename (void)
+{
+  return p_rename[OLD] && p_rename[NEW]
+	 && p_name[OLD] && p_name[NEW];
 }
 
 /* Return the specified line position in the old file of the old context. */

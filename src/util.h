@@ -38,7 +38,7 @@ void fatal (char const *, ...)
 void pfatal (char const *, ...)
 	__attribute__ ((noreturn, format (printf, 1, 2)));
 
-char *fetchname (char const *, int, char **, struct timespec *);
+void fetchname (char const *, int, char **, char **, struct timespec *);
 char *parse_name (char const *, int, char const **);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
