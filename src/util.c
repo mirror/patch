@@ -124,7 +124,7 @@ contains_slash (const char *s)
 
 void
 set_file_attributes (char const *to, enum file_attributes attr,
-		     struct stat *st, struct timespec *new_time)
+		     struct stat *st, mode_t mode, struct timespec *new_time)
 {
   if (attr & FA_TIMES)
     {
@@ -171,10 +171,12 @@ set_file_attributes (char const *to, enum file_attributes attr,
     }
   if (attr & FA_MODE)
     {
+      if (! mode)
+	mode = st->st_mode;
 #ifdef HAVE_LCHMOD
-      if (lchmod (to, st->st_mode))
+      if (lchmod (to, mode))
 #else
-      if (! S_ISLNK (st->st_mode) && chmod (to, st->st_mode) != 0)
+      if (! S_ISLNK (mode) && chmod (to, mode) != 0)
 #endif
 	pfatal ("Failed to set the permissions of %s %s",
 		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
@@ -188,7 +190,7 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
 		    bool to_dir_known_to_exist)
 {
   copy_file (from, to, 0, 0, st->st_mode, to_dir_known_to_exist);
-  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, NULL);
+  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, 0, NULL);
 }
 
 void

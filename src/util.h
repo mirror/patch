@@ -71,7 +71,7 @@ enum file_attributes {
 };
 
 void set_file_attributes (char const *, enum file_attributes, struct stat *,
-			  struct timespec *);
+			  mode_t, struct timespec *);
 
 static inline char const *
 skip_spaces (char const *str)

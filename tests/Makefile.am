@@ -23,6 +23,7 @@ TESTS = \
 	create-delete \
 	crlf-handling \
 	dash-o-append \
+	file-modes \
 	filename-choice \
 	git-binary-diff \
 	global-reject-files \

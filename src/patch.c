@@ -406,12 +406,17 @@ main (int argc, char **argv)
 
 	      if (! dry_run)
 		{
+		  mode_t old_mode = pch_mode (reverse);
+		  mode_t new_mode = pch_mode (! reverse);
+		  bool set_mode = new_mode && old_mode != new_mode;
+
 		  /* Avoid replacing files when nothing has changed.  */
-		  if (failed < hunk || diff_type == ED_DIFF)
+		  if (failed < hunk || diff_type == ED_DIFF || set_mode)
 		    {
 		      enum file_attributes attr = FA_IDS | FA_MODE;
 		      struct timespec new_time = pch_timestamp (! reverse);
-		      mode_t mode = file_type | (instat.st_mode & S_IRWXUGO);
+		      mode_t mode = file_type |
+			  ((new_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
 				 outname, mode, backup);
@@ -437,9 +442,9 @@ main (int argc, char **argv)
 			}
 
 		      if (! inerrno)
-			set_file_attributes (outname, attr, &instat, &new_time);
+			set_file_attributes (outname, attr, &instat, mode, &new_time);
 		    }
-		  else
+		  else if (backup)
 		    create_backup (outname, 0, 0, true);
 		}
 	    }

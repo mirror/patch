@@ -1,5 +1,11 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (main): When a git diff includes a file mode change,
+	change to the new mode.
+	* src/util.c (set_file_attributes): Add a mode parameter.
+	* tests/file-modes: New test case.
+	* tests/Makefile.am (TESTS): Add test case.
+
 	* src/patch.c (main): Support git symlink diffs.
 	* tests/symlinks: Add git symlink diff test cases.
 
