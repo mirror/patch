@@ -1,5 +1,8 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (main): Support git symlink diffs.
+	* tests/symlinks: Add git symlink diff test cases.
+
 	* src/pch.c (intuit_diff_type, there_is_another_patch): Pass up the
 	file type.
 	* src/patch.c (main): Check for consistent file types.

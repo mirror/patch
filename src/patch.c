@@ -163,7 +163,11 @@ main (int argc, char **argv)
 
     if (inname && outfile)
       {
+	/* When an input and an output filename is given and the patch is
+	   empty, copy the input file to the output file.  In this case, the
+	   input file must be a regular file.  */
 	apply_empty_patch = true;
+	file_type = S_IFREG;
 	inerrno = -1;
       }
     for (
@@ -191,7 +195,7 @@ main (int argc, char **argv)
       if (! skip_rest_of_patch)
 	{
 	  outname = outfile ? outfile : inname;
-	  if (! get_input_file (inname, outname, S_IFREG))
+	  if (! get_input_file (inname, outname, file_type))
 	    {
 	      skip_rest_of_patch = true;
 	      somefailed = true;
@@ -233,7 +237,7 @@ main (int argc, char **argv)
 
 	/* find out where all the lines are */
 	if (!skip_rest_of_patch)
-	    scan_input (inname, S_IFREG);
+	    scan_input (inname, file_type);
 
 	/* from here on, open no standard i/o files, because malloc */
 	/* might misfire and we can't catch it easily */
@@ -376,14 +380,15 @@ main (int argc, char **argv)
 	  if (outstate.zero_output
 	      && (remove_empty_files
 		  || (pch_says_nonexistent (! reverse) == 2
-		      && ! posixly_correct)))
+		      && ! posixly_correct)
+		  || S_ISLNK (file_type)))
 	    {
 	      if (verbosity == VERBOSE)
 		say ("Removing file %s%s\n", quotearg (outname),
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
-		  move_file (0, 0, 0, outname, S_IFREG | 0, backup);
+		  move_file (0, 0, 0, outname, file_type | 0, backup);
 		  removedirs (outname);
 		}
 	    }
@@ -406,9 +411,10 @@ main (int argc, char **argv)
 		    {
 		      enum file_attributes attr = FA_IDS | FA_MODE;
 		      struct timespec new_time = pch_timestamp (! reverse);
+		      mode_t mode = file_type | (instat.st_mode & S_IRWXUGO);
 
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
-				 outname, instat.st_mode, backup);
+				 outname, mode, backup);
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
