@@ -194,7 +194,13 @@ main (int argc, char **argv)
 
       if (! skip_rest_of_patch)
 	{
-	  outname = outfile ? outfile : inname;
+	  if (outfile)
+	    outname = outfile;
+	  else if (pch_copy () || pch_rename ())
+	    outname = pch_name (! strcmp (inname, pch_name (OLD)));
+	  else
+	    outname = inname;
+
 	  if (! get_input_file (inname, outname, file_type))
 	    {
 	      skip_rest_of_patch = true;
@@ -411,7 +417,8 @@ main (int argc, char **argv)
 		  bool set_mode = new_mode && old_mode != new_mode;
 
 		  /* Avoid replacing files when nothing has changed.  */
-		  if (failed < hunk || diff_type == ED_DIFF || set_mode)
+		  if (failed < hunk || diff_type == ED_DIFF || set_mode
+		      || pch_copy () || pch_rename ())
 		    {
 		      enum file_attributes attr = FA_IDS | FA_MODE;
 		      struct timespec new_time = pch_timestamp (! reverse);
@@ -443,6 +450,14 @@ main (int argc, char **argv)
 
 		      if (! inerrno)
 			set_file_attributes (outname, attr, &instat, mode, &new_time);
+
+		      if (pch_rename ())
+		        {
+			  if (backup)
+			    create_backup (inname, 0, 0, false);
+			  else if (unlink (inname))
+			    pfatal ("Can't remove file %s", quotearg (inname));
+			}
 		    }
 		  else if (backup)
 		    create_backup (outname, 0, 0, true);

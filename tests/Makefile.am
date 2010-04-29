@@ -19,6 +19,7 @@
 TESTS = \
 	asymmetric-hunks \
 	backup-prefix-suffix \
+	copy-rename \
 	corrupt-reject-files \
 	create-delete \
 	crlf-handling \

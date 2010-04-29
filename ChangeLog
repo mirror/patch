@@ -1,5 +1,9 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/patch.c (main): Support git diffs which copy or rename files.
+	* tests/copy-rename: New test case.
+	* tests/Makefile.am (TESTS): Add test case.
+
 	* src/patch.c (main): Convert outname into a char const *.
 	* src/util.ch (create_backup, move_file, removedirs): Take char const *
 	filenames.
