@@ -319,8 +319,7 @@ move_file (char const *from, int *from_needs_removal,
 	}
 
     rename_succeeded:
-      if (fromst)
-	insert_file (fromst);
+      insert_file (fromst);
       /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
 	 rename returned zero because FROM and TO are hard links to
 	 the same file.  */

@@ -1,3 +1,7 @@
+2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/util.c (move_file): Remove test which is always true.
+
 2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
 	* bootstrap: Update from gnulib.
