@@ -1,5 +1,8 @@
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Only check for reversed patches when
+	the input file type matches the patch file type.
+
 	* src/util.c (move_file): Remove test which is always true.
 
 2009-04-28  Andreas Gruenbacher  <agruen@suse.de>

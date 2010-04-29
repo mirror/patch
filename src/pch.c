@@ -354,6 +354,7 @@ intuit_diff_type (bool need_header)
     int stat_errno[3];
     int version_controlled[3];
     enum diff retval;
+    mode_t file_type;
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
@@ -686,6 +687,23 @@ intuit_diff_type (bool need_header)
 
   scan_exit:
 
+    /* The old, new, or old and new file types may be defined.  When both
+       file types are defined, make sure they are the same, or else assume
+       we do not know the file type.  */
+    file_type = p_mode[OLD] & S_IFMT;
+    if (file_type)
+      {
+	mode_t new_file_type = p_mode[NEW] & S_IFMT;
+	if (new_file_type && file_type != new_file_type)
+	  file_type = 0;
+      }
+    else
+      {
+	file_type = p_mode[NEW] & S_IFMT;
+	if (! file_type)
+	  file_type = S_IFREG;
+      }
+
     /* To intuit `inname', the name of the file to patch,
        use the algorithm specified by POSIX 1003.1-2001 XCU lines 25680-26599
        (with some modifications if posixly_correct is zero):
@@ -786,7 +804,7 @@ intuit_diff_type (bool need_header)
 	      }
 
 	    if (i0 != NONE
-		&& (i == NONE || S_ISREG (st[i].st_mode))
+		&& (i == NONE || (st[i].st_mode & S_IFMT) == file_type)
 	        && maybe_reverse (p_name[i0], i == NONE,
 				  i == NONE || st[i].st_size == 0))
 		i = i0;
@@ -821,7 +839,7 @@ intuit_diff_type (bool need_header)
 	if (inname)
 	  {
 	    inerrno = lstat (inname, &instat) == 0 ? 0 : errno;
-	    if (inerrno || S_ISREG (instat.st_mode))
+	    if (inerrno || (instat.st_mode & S_IFMT) == file_type)
 	      maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
 	  }
 	else
