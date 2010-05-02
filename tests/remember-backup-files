@@ -82,29 +82,3 @@ EOF
 check 'cat g.orig' <<EOF
 one
 EOF
-
-# ==============================================================
-
-# This test case failed with a permission denied error with a
-# previous version of the remember-backup-files patch.
-
-cat > f.diff <<EOF
---- f.orig
-+++ f
-@@ -1 +1 @@
--one
-+two
---- f.orig
-+++ f
-@@ -1 +1 @@
--two
-+three
-EOF
-
-echo one > f
-chmod a=r f
-
-check 'patch -p0 < f.diff' <<EOF
-patching file f
-patching file f
-EOF

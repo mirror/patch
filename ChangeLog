@@ -1,3 +1,12 @@
+2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/patch.c (main): Refuse to patch read-only files, or at least warn
+	when patching such files with --force or --batch.
+	* patch.man: Document the changed behavior.
+	* tests/read-only-files: Split read-only file test case off from
+	tests/remember-backup-files.
+	* tests/Makefile.am: Add new test case.
+
 2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (main): Support git diffs which copy or rename files.

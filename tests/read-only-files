@@ -1,0 +1,48 @@
+# Copyright (C) 2009 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+# Patching read-only files
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+cat > f.diff <<EOF
+--- f.orig
++++ f
+@@ -1 +1 @@
+-one
++two
+--- f.orig
++++ f
+@@ -1 +1 @@
+-two
++three
+EOF
+
+echo one > f
+chmod a=r f
+
+check 'patch -p0 < f.diff || echo "Status: $?"' <<EOF
+File f is read-only; refusing to patch
+1 out of 1 hunk ignored -- saving rejects to file f.rej
+File f is read-only; refusing to patch
+1 out of 1 hunk ignored -- saving rejects to file f.rej
+Status: 1
+EOF
+
+rm -f f.rej
+
+check 'patch -f -p0 < f.diff || echo "Status: $?"' <<EOF
+File f is read-only; trying to patch anyway
+patching file f
+File f is read-only; trying to patch anyway
+patching file f
+EOF

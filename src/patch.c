@@ -229,7 +229,19 @@ main (int argc, char **argv)
 	  skip_rest_of_patch = true;
 	  somefailed = true;
 	}
-
+	if (! inerrno && ! S_ISLNK (instat.st_mode)
+	    && access (inname, W_OK) != 0)
+	  {
+	    say ("File %s is read-only; ", quotearg (inname));
+	    if (force || batch)
+	      say ("trying to patch anyway\n");
+	    else
+	      {
+		say ("refusing to patch\n");
+		skip_rest_of_patch = true;
+		somefailed = true;
+	      }
+	  }
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
 	  {
@@ -382,7 +394,6 @@ main (int argc, char **argv)
       if (! skip_rest_of_patch && ! outfile) {
 	  bool backup = make_backups
 			|| (backup_if_mismatch && (mismatch | failed));
-
 	  if (outstate.zero_output
 	      && (remove_empty_files
 		  || (pch_says_nonexistent (! reverse) == 2

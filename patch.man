@@ -356,8 +356,8 @@ removes a file, it also attempts to remove any empty ancestor directories.
 \fB\-f\fP  or  \fB\*=force\fP
 Assume that the user knows exactly what he or she is doing, and do not
 ask any questions.  Skip patches whose headers
-do not say which file is to be patched; patch files even though they have the
-wrong version for the
+do not say which file is to be patched; patch files even though they are
+read-only or have the wrong version for the
 .B Prereq:\&
 line in the patch; and assume that
 patches are not reversed even if they look like they are.

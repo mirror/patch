@@ -37,6 +37,7 @@ TESTS = \
 	preserve-c-function-names \
 	preserve-mode-and-timestamp \
 	quoted-filenames \
+	read-only-files \
 	reject-format \
 	remember-backup-files \
 	remember-reject-files \
