@@ -1,5 +1,9 @@
 2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
+	* NEWS: Update.
+	* gnulib: Update to latest.
+	* bootstrap: Update from gnulib.
+
 	* src/patch.c (main): Refuse to patch read-only files, or at least warn
 	when patching such files with --force or --batch.
 	* patch.man: Document the changed behavior.

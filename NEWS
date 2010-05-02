@@ -1,12 +1,18 @@
-* When a filename in a context diff starts with a double quote, it is
-  interpreted as a C string literal.  The escape sequences \\, \", \a,
-  \b, \f, \n, \r, \t, \v, and \ooo (a three-digit octal number between
-  0 and 255) are recognized.
-* When fed a git binary diff, patch complains and skips the diff.
-* Timestamps and --set-time or --set-utc: support for nanosecond precision.
-  Honor time zones in timestamps over the local time zone (--set-time) or
-  Universal Coordinated Time (--set-utc).
-* Many portability and several bug fixes.
+* Support for most features of the "diff --git" format: renames and copies,
+  permission changes, symlink diffs.  (Binary diffs are not supported yet;
+  patch will complain and skip them.)
+* Support for double-quoted filenames: when a filename in a context diff
+  starts with a double quote, it is interpreted as a C string literal.  The
+  escape sequences \\, \", \a, \b, \f, \n, \r, \t, \v, and \ooo (a three-digit
+  octal number between 0 and 255) are recognized.
+* Refuse to patch read-only files by default, or at least warn when patching
+  such files with --force or --batch.
+* Refuse to apply a normal patch to a symlink.  (Previous versions of patch
+  were wrongly replacing the symlink with a regular file.)
+* When a timestamp specifies a time zone, honor that instead of assuming the
+  local time zone (--set-date) or Universal Coordinated Time (--set-utc).
+* Support for nanosecond precision timestamps.
+* Many portability and bug fixes.
 
 Changes in version 2.6.1:
 
