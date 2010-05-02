@@ -31,8 +31,7 @@ patch_SOURCES = \
 	version.h
 
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
-patch_LDFLAGS = $(LIB_CLOCK_GETTIME)
-patch_LDADD = $(top_builddir)/lib/libpatch.a
+patch_LDADD = $(LDADD) $(top_builddir)/lib/libpatch.a $(LIB_CLOCK_GETTIME)
 
 if ENABLE_MERGE
   patch_SOURCES += merge.c
