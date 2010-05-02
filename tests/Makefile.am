@@ -24,6 +24,7 @@ TESTS = \
 	create-delete \
 	crlf-handling \
 	dash-o-append \
+	empty-files \
 	file-modes \
 	filename-choice \
 	git-binary-diff \
@@ -40,12 +41,15 @@ TESTS = \
 	read-only-files \
 	reject-format \
 	remember-backup-files \
+	remember-backup-files-2 \
 	remember-reject-files \
 	symlinks \
 	unmodified-files
 
 XFAIL_TESTS = \
-	dash-o-append
+	dash-o-append \
+	empty-files \
+	remember-backup-files-2
 
 EXTRA_DIST = \
 	$(TESTS) \

@@ -362,6 +362,7 @@ move_file (char const *from, int *from_needs_removal,
 		pfatal ("Can't create %s %s", "symbolic link", to);
 	    }
 	  free (buffer);
+	  /* FIXME: insert_file (&tost); */
 	}
       else
 	{
