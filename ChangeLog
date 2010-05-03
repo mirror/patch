@@ -1,8 +1,10 @@
-2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
+2009-05-03  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (intuit_diff_type): Fix a bug where the reversed-patch
 	check would wrongly pick the last name instead of the best name.
 	* src/create-delete: Add test cases for that.
+
+2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (fetchmode): Document that the "diff --git" format does
 	not store file permissions of symlinks.
