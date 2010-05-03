@@ -1,5 +1,9 @@
 2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/symlinks: Improve the backup file tests.
+
+2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
+
 	* src/Makefile.am (patch_LDADD): Add $(LIB_CLOCK_GETTIME) here, after
 	libpatch.a, so that clock_gettime is properly resolved on systems on
 	which the library order matters.

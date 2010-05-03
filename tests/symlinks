@@ -137,7 +137,7 @@ check 'patch -p1 < delete-symlink.diff || echo "Status: $?"' <<EOF
 patching symbolic link symlink
 EOF
 
-ncheck 'test ! -e symlink'
+ncheck 'test ! -L symlink'
 
 # --------------------------------------------------------------
 
@@ -147,7 +147,7 @@ check 'patch -p1 --backup < create-symlink.diff || echo "Status: $?"' <<EOF
 patching symbolic link symlink
 EOF
 
-ncheck 'test ! \( -L symlink.orig -o -s symlink.orig \)'
+ncheck 'test -f symlink.orig -a ! -s symlink.orig'
 
 # The backup file of a modified symlink is the old symlink.
 
