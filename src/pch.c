@@ -198,6 +198,13 @@ maybe_reverse (char const *name, bool nonexistent, bool is_empty)
 {
   bool looks_reversed = (! is_empty) < p_says_nonexistent[reverse ^ is_empty];
 
+  /* Allow to create and delete empty files when we know that they are empty:
+     in the "diff --git" format, we know that from the index header.  */
+  if (is_empty
+      && p_says_nonexistent[reverse ^ nonexistent] == 1
+      && p_says_nonexistent[! reverse ^ nonexistent] == 2)
+    return false;
+
   if (looks_reversed)
     reverse ^=
       ok_to_reverse ("The next patch%s would %s the file %s,\nwhich %s!",
@@ -340,6 +347,36 @@ fetchmode (char const *str)
        0777 permissions, so this is not even consistent.)  */
 
    return mode;
+}
+
+static int
+sha1_says_nonexistent(char const *sha1, char const *end)
+{
+  char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
+  char const *s;
+
+  /* Nonexisting files have an all-zero checksum.  */
+  for (s = sha1; s != end; s++)
+    if (*s != '0')
+      break;
+  if (s == end)
+    return 2;
+
+  /* Empty files have empty_sha1 as their checksum.  */
+  for (s = sha1; s != end; s++, empty_sha1++)
+    if (*s != *empty_sha1)
+      break;
+  return s == end;
+}
+
+char const *
+skip_hex_digits (char const *str)
+{
+  char const *s;
+
+  for (s = str; (*s >= '0' && *s <= '9') || (*s >= 'a' && *s <= 'f'); s++)
+    /* do nothing */ ;
+  return s == str ? NULL : s;
 }
 
 /* Determine what kind of diff is in the remaining part of the patch file. */
@@ -538,13 +575,24 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  }
 	else if (git_diff && strnEQ (s, "index ", 6))
 	  {
-	    char const *u;
-
-	    for (u = s + 6;  *u && ! ISSPACE ((unsigned char) *u);  u++)
-	      /* do nothing */ ;
-	    if (*(u = skip_spaces (u)))
-	      p_mode[OLD] = p_mode[NEW] = fetchmode (u);
-	    extended_headers = true;
+	    char const *u, *v;
+	    if ((u = skip_hex_digits (s + 6))
+		&& u[0] == '.' && u[1] == '.'
+		&& (v = skip_hex_digits (u + 2))
+		&& (! *v || ISSPACE ((unsigned char) *v)))
+	      {
+		p_says_nonexistent[OLD] = sha1_says_nonexistent (s + 6, u);
+		p_says_nonexistent[NEW] = sha1_says_nonexistent (u + 2, v);
+		/*printf("p_says_nonexistent[OLD]=%d "
+			"p_says_nonexistent[NEW]=%d\n",
+			p_says_nonexistent[OLD],
+			p_says_nonexistent[NEW]);*/
+		if (*(v = skip_spaces (v))) {
+		  p_mode[OLD] = p_mode[NEW] = fetchmode (v);
+		  //printf("p_mode[]=%06o\n", p_mode[OLD]);
+		}
+		extended_headers = true;
+	      }
 	  }
 	else if (git_diff && strnEQ (s, "old mode ", 9))
 	  {

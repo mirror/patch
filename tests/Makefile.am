@@ -48,7 +48,6 @@ TESTS = \
 
 XFAIL_TESTS = \
 	dash-o-append \
-	empty-files \
 	remember-backup-files-2
 
 EXTRA_DIST = \
