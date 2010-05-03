@@ -1,5 +1,10 @@
 2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (fetchmode): Document that the "diff --git" format does
+	not store file permissions of symlinks.
+	* src/util.c (set_file_attributes): Since we don't have symlink file
+	permissions, don't try to set them even on systems where we could.
+
 	* tests/symlinks: Improve the backup file tests.
 
 2009-05-02  Andreas Gruenbacher  <agruen@suse.de>

@@ -335,6 +335,10 @@ fetchmode (char const *str)
    if (*s != '\n')
      mode = 0;
 
+    /* NOTE: The "diff --git" format always sets the file mode permission
+       bits of symlinks to 0.  (On Linux, symlinks actually always have
+       0777 permissions, so this is not even consistent.)  */
+
    return mode;
 }
 

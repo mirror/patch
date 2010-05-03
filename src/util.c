@@ -173,7 +173,10 @@ set_file_attributes (char const *to, enum file_attributes attr,
     {
       if (! mode)
 	mode = st->st_mode;
-#ifdef HAVE_LCHMOD
+#if 0 && defined HAVE_LCHMOD
+      /* The "diff --git" format does not store the file permissions of
+         symlinks, so don't try to set symlink file permissions even on
+	 systems where we could.  */
       if (lchmod (to, mode))
 #else
       if (! S_ISLNK (mode) && chmod (to, mode) != 0)
