@@ -1,5 +1,9 @@
 2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Fix a bug where the reversed-patch
+	check would wrongly pick the last name instead of the best name.
+	* src/create-delete: Add test cases for that.
+
 	* src/pch.c (fetchmode): Document that the "diff --git" format does
 	not store file permissions of symlinks.
 	* src/util.c (set_file_attributes): Since we don't have symlink file

@@ -113,3 +113,33 @@ Hunk #1 FAILED at 1.
 1 out of 1 hunk FAILED -- saving rejects to file f.rej
 Status: 1
 EOF
+
+# ==============================================================
+
+: > f.orig
+echo f > f
+diff -u f f.orig > f.diff
+mv f.orig f
+check 'patch -p0 -t < f.diff || echo "Status: $?"' <<EOF
+The next patch would empty out the file f,
+which is already empty!  Assuming -R.
+patching file f
+EOF
+
+check 'cat f' <<EOF
+f
+EOF
+
+: > f.orig
+echo f > f
+diff -u f /dev/null > f.diff
+mv f.orig f
+check 'patch -p0 -t < f.diff || echo "Status: $?"' <<EOF
+The next patch would empty out the file f,
+which is already empty!  Assuming -R.
+patching file f
+EOF
+
+check 'cat f' <<EOF
+f
+EOF
