@@ -7,6 +7,9 @@
 
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/read-only-files: Remove the superuser test, and instead try
+	out if a read-only file can be written to.
+
 	* tests/test-lib.sh: Create temporary directories in builddir; this
 	removes the need to do it safely: some systems do not have mktemp -d.
 
