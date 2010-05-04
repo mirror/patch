@@ -190,11 +190,6 @@ extern int errno;
 
 #include <fcntl.h>
 
-#ifdef MKDIR_TAKES_ONE_ARG
-# undef mkdir
-# define mkdir(name, mode) ((mkdir) (name))
-#endif
-
 #ifdef HAVE_SETMODE_DOS
   XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
