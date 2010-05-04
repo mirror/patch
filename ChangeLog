@@ -7,6 +7,10 @@
 
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/version.c: Put the Free Software Foundation copyright first.
+	* tests/read-only-files: Skip when run as superuser: even files
+	without write permissions would be writable.
+
 	* src/util.c (create_backup): Document patch's backup file logic.
 	(create_backup, create_backup_copy): Add a flag to remember the backup
 	file; use when a patch deletes a file.
