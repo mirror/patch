@@ -9,7 +9,8 @@
 . $srcdir/test-lib.sh
 
 require_cat
-require_diff
+require_sed
+require_gnu_diff
 use_local_patch
 use_tmpdir
 

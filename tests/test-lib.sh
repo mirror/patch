@@ -5,21 +5,30 @@
 # in any medium, are permitted without royalty provided the copyright
 # notice and this notice are preserved.
 
+# FIXME: Requires a version of diff that understands "-u".
+
 require_cat() {
     if ! type cat > /dev/null 2> /dev/null; then
 	echo "This test requires the cat utility" >&2
-	exit 2
+	exit 77
     fi
 }
 
-require_diff() {
+require_gnu_diff() {
     case "`diff --version 2> /dev/null`" in
     *GNU*)
 	;;
     *)
 	echo "This test requires GNU diff" >&2
-	exit 2
+	exit 77
     esac
+}
+
+require_sed() {
+    if ! type sed > /dev/null 2> /dev/null; then
+	echo "This test requires the sed utility" >&2
+	exit 77
+    fi
 }
 
 have_ed() {
@@ -30,7 +39,7 @@ use_tmpdir() {
     tmpdir=`mktemp -d ${TMPDIR:-/tmp}/patch.XXXXXXXXXX`
     if test -z "$tmpdir" ; then
 	echo "This test requires the mktemp utility" >&2
-	exit 2
+	exit 77
     fi
     cd "$tmpdir"
 }
@@ -53,6 +62,17 @@ clean_env() {
 	  VERSION_CONTROL PATCH_VERSION_CONTROL GDB
 }
 
+if type sed > /dev/null 2> /dev/null; then
+    eval '_beautify() {
+	sed -e "1s:.*:--- expected:" \
+	    -e "2s:.*:+++ got:"
+    }'
+else
+    eval '_beautify() {
+	cat
+    }'
+fi
+
 _check() {
     _start_test "$@"
     expected=`cat`
@@ -65,7 +85,7 @@ _check() {
 	if test "$expected" != "$got" ; then
 	    echo "$expected" > expected~
 	    echo "$got" > got~
-	    diff -u -L expected -L got expected~ got~
+	    diff -u expected~ got~ | _beautify
 	    rm -f expected~ got~
 	fi
 	checks_failed="$checks_failed + 1"
@@ -81,12 +101,12 @@ ncheck() {
 }
 
 cleanup() {
+    status=$?
     checks_succeeded=`expr $checks_succeeded`
     checks_failed=`expr $checks_failed`
     checks_total=`expr $checks_succeeded + $checks_failed`
-    status=0
     if test $checks_total -gt 0 ; then
-	if test $checks_failed -gt 0 ; then
+	if test $checks_failed -gt 0 -a $status -eq 0 ; then
 	    status=1
 	fi
 	echo "$checks_total tests ($checks_succeeded passed," \

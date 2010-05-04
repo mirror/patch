@@ -1,5 +1,11 @@
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/test-lib.sh: Flag tests with missing pre-requirements as
+	SKIPped instead of PASSed.  Do not use GNU diff extensions, but
+	still require a diff that understands "-u".
+	* tests: Do not unnecessarily require GNU diff in a lot of tests.
+	Make the sed utility optional.
+
 	* src/pch.c (intuit_diff_type): Remove left-over debugging code.
 
 	* src/pch.c (maybe_reverse): Allow to create and delete empty files.
