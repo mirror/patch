@@ -55,7 +55,7 @@ void ignore_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 void xalloc_die (void) __attribute__ ((noreturn));
-void create_backup (char const *, struct stat *, int *, bool);
+void create_backup (char const *, struct stat *, int *, bool, bool);
 void move_file (char const *, int *, struct stat const *, char const *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);

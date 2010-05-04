@@ -1,5 +1,13 @@
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/util.c (create_backup): Document patch's backup file logic.
+	(create_backup, create_backup_copy): Add a flag to remember the backup
+	file; use when a patch deletes a file.
+	(move_file, copy_file): Better error messages.
+	* tests/Makefile.am (TESTS): Remove remember-backup-files-2.
+	* tests/remember-backup-files: Add tests from remember-backup-files-2.
+	* tests/symlinks: Add a symlink backup file test.
+
 	* tests/test-lib.sh: Flag tests with missing pre-requirements as
 	SKIPped instead of PASSed.  Do not use GNU diff extensions, but
 	still require a diff that understands "-u".

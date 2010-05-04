@@ -190,18 +190,38 @@ set_file_attributes (char const *to, enum file_attributes attr,
 
 static void
 create_backup_copy (char const *from, char const *to, struct stat *st,
-		    bool to_dir_known_to_exist)
+		    bool to_dir_known_to_exist, bool remember_backup)
 {
-  copy_file (from, to, 0, 0, st->st_mode, to_dir_known_to_exist);
+  struct stat backup_st;
+  copy_file (from, to, remember_backup ? &backup_st : NULL, 0, st->st_mode,
+	     to_dir_known_to_exist);
+  if (remember_backup)
+    insert_file (&backup_st);
   set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, 0, NULL);
 }
 
 void
 create_backup (char const *to, struct stat *to_st, int *to_errno,
-	       bool leave_original)
+	       bool leave_original, bool remember_backup)
 {
   struct stat tmp_st;
   int tmp_errno;
+
+  /* When the input to patch modifies the same file more than once, patch only
+     backs up the initial version of each file.
+
+     To figure out which files have already been backed up, patch remembers the
+     files that replace the original files.  Files not known already are backed
+     up; files already known have already been backed up before, and are
+     skipped.
+
+     When a patch deletes a file, this leaves patch without such a "sentinel"
+     file.  In that case, patch remembers the *backup file* instead; when a
+     patch creates a file, patch checks if the *backup file* is already known.
+
+     This strategy is not fully compatible with numbered backups: when a patch
+     deletes and later recreates a file with numbered backups, two numbered
+     backups will be created.  */
 
   if (! to_st || ! to_errno)
     {
@@ -265,25 +285,38 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 
       if (*to_errno)
 	{
+	  struct stat backup_st;
 	  int fd;
 
-	  if (debug & 4)
-	    say ("Creating empty file %s\n", quotearg (bakname));
-
-	  try_makedirs_errno = ENOENT;
-	  unlink (bakname);
-	  while ((fd = creat (bakname, 0666)) < 0)
+	  if (lstat (bakname, &backup_st) == 0
+	      && file_already_seen (&backup_st))
 	    {
-	      if (errno != try_makedirs_errno)
-		pfatal ("Can't create file %s", quotearg (bakname));
-	      makedirs (bakname);
-	      try_makedirs_errno = 0;
+	      if (debug & 4)
+		say ("File %s already seen\n", quotearg (to));
 	    }
-	  if (close (fd) != 0)
-	    pfatal ("Can't close file %s", quotearg (bakname));
+	  else
+	    {
+	      if (debug & 4)
+		say ("Creating empty file %s\n", quotearg (bakname));
+
+	      try_makedirs_errno = ENOENT;
+	      unlink (bakname);
+	      while ((fd = creat (bakname, 0666)) < 0)
+		{
+		  if (errno != try_makedirs_errno)
+		    pfatal ("Can't create file %s", quotearg (bakname));
+		  makedirs (bakname);
+		  try_makedirs_errno = 0;
+		}
+	      if (remember_backup && fstat (fd, &backup_st) == 0)
+		insert_file (&backup_st);
+	      if (close (fd) != 0)
+		pfatal ("Can't close file %s", quotearg (bakname));
+	    }
 	}
       else if (leave_original)
-	create_backup_copy (to, bakname, to_st, try_makedirs_errno == 0);
+	create_backup_copy (to, bakname, to_st, try_makedirs_errno == 0,
+			    remember_backup);
       else
 	{
 	  if (debug & 4)
@@ -299,7 +332,8 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 	      else if (errno == EXDEV)
 		{
 		  create_backup_copy (to, bakname, to_st,
-				      try_makedirs_errno == 0);
+				      try_makedirs_errno == 0,
+				      remember_backup);
 		  unlink (to);
 		  break;
 		}
@@ -307,6 +341,8 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 		pfatal ("Can't rename file %s to %s",
 			quotearg_n (0, to), quotearg_n (1, bakname));
 	    }
+	  if (remember_backup)
+	    insert_file (to_st);
 	}
       free (bakname);
     }
@@ -331,7 +367,7 @@ move_file (char const *from, int *from_needs_removal,
   int to_errno = -1;
 
   if (backup)
-    create_backup (to, &to_st, &to_errno, false);
+    create_backup (to, &to_st, &to_errno, false, from == NULL);
 
   if (from)
     {
@@ -365,7 +401,9 @@ move_file (char const *from, int *from_needs_removal,
 		pfatal ("Can't create %s %s", "symbolic link", to);
 	    }
 	  free (buffer);
-	  /* FIXME: insert_file (&tost); */
+	  if (lstat (to, &to_st) != 0)
+	    pfatal ("Can't get file attributes of %s %s", "symbolic link", to);
+	  insert_file (&to_st);
 	}
       else
 	{
@@ -494,7 +532,8 @@ copy_file (char const *from, char const *to, struct stat *tost,
 	pfatal ("Can't read %s %s", "symbolic link", from);
       if (symlink (buffer, to) != 0)
 	pfatal ("Can't create %s %s", "symbolic link", to);
-
+      if (tost && lstat (to, tost) != 0)
+	pfatal ("Can't get file attributes of %s %s", "symbolic link", to);
       free (buffer);
     }
   else
@@ -503,8 +542,9 @@ copy_file (char const *from, char const *to, struct stat *tost,
       tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
 			  to_dir_known_to_exist);
       copy_to_fd (from, tofd);
-      if ((tost && fstat (tofd, tost) != 0)
-	  || close (tofd) != 0)
+      if (tost && fstat (tofd, tost) != 0)
+	pfatal ("Can't get file attributes of %s %s", "file", to);
+      if (close (tofd) != 0)
 	write_fatal ();
     }
 }

@@ -465,13 +465,13 @@ main (int argc, char **argv)
 		      if (pch_rename ())
 		        {
 			  if (backup)
-			    create_backup (inname, 0, 0, false);
+			    create_backup (inname, 0, 0, false, true);
 			  else if (unlink (inname))
 			    pfatal ("Can't remove file %s", quotearg (inname));
 			}
 		    }
 		  else if (backup)
-		    create_backup (outname, 0, 0, true);
+		    create_backup (outname, 0, 0, true, false);
 		}
 	    }
       }

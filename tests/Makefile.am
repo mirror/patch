@@ -41,14 +41,12 @@ TESTS = \
 	read-only-files \
 	reject-format \
 	remember-backup-files \
-	remember-backup-files-2 \
 	remember-reject-files \
 	symlinks \
 	unmodified-files
 
 XFAIL_TESTS = \
-	dash-o-append \
-	remember-backup-files-2
+	dash-o-append
 
 EXTRA_DIST = \
 	$(TESTS) \
