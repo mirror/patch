@@ -7,6 +7,9 @@
 
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/test-lib.sh: Create temporary directories in builddir; this
+	removes the need to do it safely: some systems do not have mktemp -d.
+
 	* configure.ac, tests/Makefile: Remove $(TEST_SHELL) and use $(SHELL)
 	instead.
 

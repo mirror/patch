@@ -36,12 +36,8 @@ have_ed() {
 }
 
 use_tmpdir() {
-    tmpdir=`mktemp -d ${TMPDIR:-/tmp}/patch.XXXXXXXXXX`
-    if test -z "$tmpdir" ; then
-	echo "This test requires the mktemp utility" >&2
-	exit 77
-    fi
-    cd "$tmpdir"
+    tmpdir=$abs_top_builddir/tests/tmp.$$
+    mkdir "$tmpdir" && cd "$tmpdir" || exit 2
 }
 
 use_local_patch() {
