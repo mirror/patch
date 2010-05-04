@@ -583,14 +583,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      {
 		p_says_nonexistent[OLD] = sha1_says_nonexistent (s + 6, u);
 		p_says_nonexistent[NEW] = sha1_says_nonexistent (u + 2, v);
-		/*printf("p_says_nonexistent[OLD]=%d "
-			"p_says_nonexistent[NEW]=%d\n",
-			p_says_nonexistent[OLD],
-			p_says_nonexistent[NEW]);*/
-		if (*(v = skip_spaces (v))) {
+		if (*(v = skip_spaces (v)))
 		  p_mode[OLD] = p_mode[NEW] = fetchmode (v);
-		  //printf("p_mode[]=%06o\n", p_mode[OLD]);
-		}
 		extended_headers = true;
 	      }
 	  }

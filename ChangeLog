@@ -1,5 +1,7 @@
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* src/pch.c (intuit_diff_type): Remove left-over debugging code.
+
 	* src/pch.c (maybe_reverse): Allow to create and delete empty files.
 	(sha1_says_nonexistent): New function for recognizing the sha1
 	checksums of nonexistent and empty files.
