@@ -7,6 +7,9 @@
 
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
+	* configure.ac, tests/Makefile: Remove $(TEST_SHELL) and use $(SHELL)
+	instead.
+
 	* src/version.c: Put the Free Software Foundation copyright first.
 	* tests/read-only-files: Skip when run as superuser: even files
 	without write permissions would be writable.

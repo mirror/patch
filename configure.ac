@@ -56,7 +56,6 @@ PATCH_FUNC_MKDIR_TAKES_ONE_ARG
 
 AC_PATH_PROG([ED], [ed], [ed])
 AC_DEFINE_UNQUOTED([EDITOR_PROGRAM], ["$ED"], [Name of editor program.])
-AC_PATH_PROG(TEST_SHELL, [bash sh])
 
 AC_CONFIG_FILES([
   Makefile
