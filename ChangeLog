@@ -1,5 +1,7 @@
 2009-05-05  Andreas Gruenbacher  <agruen@suse.de>
 
+	* bootstrap.conf: Use the gnulib unistd module.
+
 	* bootstrap.conf: Use the gnulib mkdir module.
 	* m4/mkdir.m4: Delete.
 

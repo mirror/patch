@@ -151,26 +151,8 @@ extern int errno;
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-#if HAVE_UNISTD_H
-# include <unistd.h>
-#else
-# ifndef lseek
-   off_t lseek ();
-# endif
-#endif
-#ifndef SEEK_SET
-#define SEEK_SET 0
-#endif
-#ifndef STDIN_FILENO
-#define STDIN_FILENO 0
-#endif
-#ifndef STDOUT_FILENO
-#define STDOUT_FILENO 1
-#endif
-#ifndef STDERR_FILENO
-#define STDERR_FILENO 2
-#endif
 #if HAVE_FSEEKO
   typedef off_t file_offset;
 # define file_seek fseeko
@@ -180,6 +162,7 @@ extern int errno;
 # define file_seek fseek
 # define file_tell ftell
 #endif
+
 #if ! (HAVE_GETEUID || defined geteuid)
 # if ! (HAVE_GETUID || defined getuid)
 #  define geteuid() (-1)
