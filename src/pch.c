@@ -27,6 +27,9 @@
 #undef XTERN
 #define XTERN
 #include <pch.h>
+#if HAVE_SETMODE_DOS
+# include <io.h>
+#endif
 
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 
@@ -563,7 +566,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		p_name[i] = 0;
 	      }
 	    if (! ((p_name[OLD] = parse_name (s + 11, strippath, &u))
-		   && ISSPACE (*u)
+		   && ISSPACE ((unsigned char) *u)
 		   && (p_name[NEW] = parse_name (u, strippath, &u))
 		   && (u = skip_spaces (u), ! *u)))
 	      for (i = OLD; i <= NEW; i++)

@@ -76,7 +76,7 @@ void set_file_attributes (char const *, enum file_attributes, struct stat *,
 static inline char const *
 skip_spaces (char const *str)
 {
-  while (ISSPACE (*str))
+  while (ISSPACE ((unsigned char) *str))
     str++;
   return str;
 }

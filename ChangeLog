@@ -1,3 +1,10 @@
+2010-05-04  Eric Blake  <eblake@redhat.com>
+
+	* src/pch.c (includes): Add <io.h> for setmode.
+	(intuit_diff_type): Avoid 8-bit problems.
+	* src/util.c (parse_name): Likewise.
+	* src/util.h (skip_spaces): Likewise.
+
 2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/util.c (create_backup): Document patch's backup file logic.
@@ -3448,13 +3455,13 @@ Sun Dec 17 17:29:48 1989  Jim Kingdon  (kingdon at hobbes.ai.mit.edu)
 Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall.
 
 Copyright (C) 1989, 1990, 1991, 1992, 1993, 1997, 1998, 1999, 2000, 2001,
-2002, 2009 Free Software Foundation, Inc.
+2002, 2009, 2010 Free Software Foundation, Inc.
 
 This file is part of GNU Patch.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
+the Free Software Foundation; either version 3, or (at your option)
 any later version.
 
 This program is distributed in the hope that they will be useful,
