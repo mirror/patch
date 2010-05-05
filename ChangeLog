@@ -1,5 +1,8 @@
 2009-05-05  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/create-delete: Do not use 'diff' here.
+	* tests/merge: Require GNU diff.
+
 	* bootstrap.conf: Use the gnulib unistd module.
 
 	* bootstrap.conf: Use the gnulib mkdir module.
