@@ -58,14 +58,16 @@ clean_env() {
 	  VERSION_CONTROL PATCH_VERSION_CONTROL GDB
 }
 
-if type sed > /dev/null 2> /dev/null; then
-    eval '_beautify() {
-	sed -e "1s:.*:--- expected:" \
-	    -e "2s:.*:+++ got:"
+if diff -u -L expected -L got /dev/null /dev/null 2> /dev/null; then
+    eval '_compare() {
+	diff -u -L expected -L got "$1" "$2"
     }'
 else
-    eval '_beautify() {
-	cat
+    eval '_compare() {
+	echo "expected:"
+	cat "$1"
+	echo "got:"
+	cat "$2"
     }'
 fi
 
@@ -81,7 +83,7 @@ _check() {
 	if test "$expected" != "$got" ; then
 	    echo "$expected" > expected~
 	    echo "$got" > got~
-	    diff -u expected~ got~ | _beautify
+	    _compare expected~ got~
 	    rm -f expected~ got~
 	fi
 	checks_failed="$checks_failed + 1"

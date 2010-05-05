@@ -1,5 +1,8 @@
 2009-05-05  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/test-lib.sh: Only use GNU diff when available.
+	* tests/dash-o-append: Fix the expected result.
+
 	* tests/create-delete: Do not use 'diff' here.
 	* tests/merge: Require GNU diff.
 
