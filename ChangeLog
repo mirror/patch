@@ -1,5 +1,8 @@
 2009-05-06  Andreas Gruenbacher  <agruen@suse.de>
 
+	* tests/corrupt-reject-files, tests/crlf-handling: On Solaris, cat's
+	-e option is only effective if -v is specified as well.
+
 	* tests/test-lib.sh: Ignore error messages when cleaning up after a
 	test has finished.
 
