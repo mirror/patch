@@ -1,3 +1,8 @@
+2009-05-06  Andreas Gruenbacher  <agruen@suse.de>
+
+	* tests/test-lib.sh: Ignore error messages when cleaning up after a
+	test has finished.
+
 2009-05-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: Only use GNU diff when available.

@@ -111,10 +111,8 @@ cleanup() {
 	     "$checks_failed failed)"
     fi
     if test -n "$tmpdir" ; then
-	set -e
-	cd /
-	chmod -R u+rwx "$tmpdir"
-	rm -rf "$tmpdir"
+	chmod -R u+rwx "$tmpdir" 2>/dev/null
+	cd / && rm -rf "$tmpdir"
     fi
     exit $status
 }
