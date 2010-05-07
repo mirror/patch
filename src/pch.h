@@ -42,7 +42,7 @@ size_t pch_line_len (lin);
 const char *pch_name(enum nametype);
 bool pch_copy (void);
 bool pch_rename (void);
-void do_ed_script (FILE *);
+void do_ed_script (char const *, char const *, int *, FILE *);
 void open_patch_file (char const *);
 void re_patch (void);
 void set_hunkmax (void);

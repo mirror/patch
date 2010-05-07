@@ -229,7 +229,8 @@ main (int argc, char **argv)
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
-	do_ed_script (outstate.ofp);
+	do_ed_script (inname, TMPOUTNAME, &TMPOUTNAME_needs_removal,
+		      outstate.ofp);
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
 	    struct stat statbuf;

@@ -1,6 +1,11 @@
 	* src/patch.c (open_outfile): New function.
 	(init_output): Split into open_outfile() and the rest.
 
+	* src/pch.c (do_ed_script): Add inname, outname, and
+	outname_needs_removal arguments.  This isolates TMPOUTNAME and
+	TMPOUTNAME_needs_removal to patch.c.
+	* src/patch.c (main): Update do_ed_script() call.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

@@ -2280,7 +2280,8 @@ get_ed_command_letter (char const *line)
 /* Apply an ed script by feeding ed itself. */
 
 void
-do_ed_script (FILE *ofp)
+do_ed_script (char const *inname, char const *outname,
+	      int *outname_needs_removal, FILE *ofp)
 {
     static char const editor_program[] = EDITOR_PROGRAM;
 
@@ -2289,12 +2290,13 @@ do_ed_script (FILE *ofp)
     size_t chars_read;
 
     if (! dry_run && ! skip_rest_of_patch) {
-	int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
+	int exclusive = *outname_needs_removal ? 0 : O_EXCL;
 	assert (! inerrno);
-	TMPOUTNAME_needs_removal = 1;
-	copy_file (inname, TMPOUTNAME, 0, exclusive, instat.st_mode, true);
-	sprintf (buf, "%s %s%s", editor_program, verbosity == VERBOSE ? "" : "- ",
-		 TMPOUTNAME);
+	*outname_needs_removal = 1;
+	copy_file (inname, outname, 0, exclusive, instat.st_mode, true);
+	sprintf (buf, "%s %s%s", editor_program,
+		 verbosity == VERBOSE ? "" : "- ",
+		 outname);
 	fflush (stdout);
 	pipefp = popen(buf, binary_transput ? "wb" : "w");
 	if (!pipefp)
@@ -2340,10 +2342,10 @@ do_ed_script (FILE *ofp)
 
     if (ofp)
       {
-	FILE *ifp = fopen (TMPOUTNAME, binary_transput ? "rb" : "r");
+	FILE *ifp = fopen (outname, binary_transput ? "rb" : "r");
 	int c;
 	if (!ifp)
-	  pfatal ("can't open `%s'", TMPOUTNAME);
+	  pfatal ("can't open `%s'", outname);
 	while ((c = getc (ifp)) != EOF)
 	  if (putc (c, ofp) == EOF)
 	    write_fatal ();
