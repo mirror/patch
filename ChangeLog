@@ -1,3 +1,6 @@
+	* src/patch.c (open_outfile): New function.
+	(init_output): Split into open_outfile() and the rest.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

@@ -43,7 +43,8 @@ static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
 static void cleanup (void);
 static void get_some_switches (void);
-static void init_output (char const *, int, struct outstate *);
+static void init_output (struct outstate *);
+static FILE *open_outfile (char const *);
 static void init_reject (void);
 static void reinitialize_almost_everything (void);
 static void remove_if_needed (char const *, int *);
@@ -156,7 +157,9 @@ main (int argc, char **argv)
       backup_type = get_version (version_control_context, version_control);
 
     init_backup_hash_table ();
-    init_output (outfile, 0, &outstate);
+    init_output (&outstate);
+    if (outfile)
+      outstate.ofp = open_outfile (outfile);
 
     /* Make sure we clean up in case of disaster.  */
     set_signals (false);
@@ -165,7 +168,8 @@ main (int argc, char **argv)
       {
 	/* When an input and an output filename is given and the patch is
 	   empty, copy the input file to the output file.  In this case, the
-	   input file must be a regular file.  */
+	   input file must be a regular file (i.e., symlinks cannot be copied
+	   this way).  */
 	apply_empty_patch = true;
 	file_type = S_IFREG;
 	inerrno = -1;
@@ -248,7 +252,8 @@ main (int argc, char **argv)
 	  {
 	    int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
 	    TMPOUTNAME_needs_removal = 1;
-	    init_output (TMPOUTNAME, exclusive, &outstate);
+	    init_output (&outstate);
+	    outstate.ofp = create_output_file (TMPOUTNAME, exclusive);
 	  }
 
 	/* initialize reject file */
@@ -402,7 +407,9 @@ main (int argc, char **argv)
 		  || S_ISLNK (file_type)))
 	    {
 	      if (verbosity == VERBOSE)
-		say ("Removing file %s%s\n", quotearg (outname),
+		say ("Removing %s %s%s\n",
+		     S_ISLNK (file_type) ? "symbolic link" : "file",
+		     quotearg (outname),
 		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
 		{
@@ -489,7 +496,7 @@ main (int argc, char **argv)
 	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
 		char *rej = rejname;
 		if (!rejname) {
-		    /* FIXME: This should really be done differnely!  */
+		    /* FIXME: This should really be done differently!  */
 		    const char *s = simple_backup_suffix;
 		    size_t len;
 		    simple_backup_suffix = ".rej";
@@ -1412,24 +1419,29 @@ create_output_file (char const *name, int open_flags)
 /* Open the new file. */
 
 static void
-init_output (char const *name, int open_flags, struct outstate *outstate)
+init_output (struct outstate *outstate)
 {
-  if (! name)
-    outstate->ofp = (FILE *) 0;
-  else if (strcmp (name, "-") != 0)
-    outstate->ofp = create_output_file (name, open_flags);
+  outstate->ofp = NULL;
+  outstate->after_newline = true;
+  outstate->zero_output = true;
+}
+
+static FILE *
+open_outfile (char const *name)
+{
+  if (strcmp (name, "-") != 0)
+    return create_output_file (name, 0);
   else
     {
       int stdout_dup = dup (fileno (stdout));
-      outstate->ofp = fdopen (stdout_dup, "a");
-      if (stdout_dup == -1 || ! outstate->ofp)
+      FILE *ofp = fdopen (stdout_dup, "a");
+      if (stdout_dup == -1 || ! ofp)
 	pfatal ("Failed to duplicate standard output");
       if (dup2 (fileno (stderr), fileno (stdout)) == -1)
 	pfatal ("Failed to redirect messages to standard error");
+      /* FIXME: Do we need to switch stdout_dup into O_BINARY mode here? */
+      return ofp;
     }
-
-  outstate->after_newline = true;
-  outstate->zero_output = true;
 }
 
 /* Open a file to put hunks we can't locate. */
