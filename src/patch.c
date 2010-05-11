@@ -208,6 +208,20 @@ main (int argc, char **argv)
 	    }
 	}
 
+      if (! inerrno && ! S_ISLNK (instat.st_mode)
+	  && access (inname, W_OK) != 0)
+	{
+	  say ("File %s is read-only; ", quotearg (inname));
+	  if (force || batch)
+	    say ("trying to patch anyway\n");
+	  else
+	    {
+	      say ("refusing to patch\n");
+	      skip_rest_of_patch = true;
+	      somefailed = true;
+	    }
+	}
+
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
@@ -229,19 +243,6 @@ main (int argc, char **argv)
 	  skip_rest_of_patch = true;
 	  somefailed = true;
 	}
-	if (! inerrno && ! S_ISLNK (instat.st_mode)
-	    && access (inname, W_OK) != 0)
-	  {
-	    say ("File %s is read-only; ", quotearg (inname));
-	    if (force || batch)
-	      say ("trying to patch anyway\n");
-	    else
-	      {
-		say ("refusing to patch\n");
-		skip_rest_of_patch = true;
-		somefailed = true;
-	      }
-	  }
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
 	  {

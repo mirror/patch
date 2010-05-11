@@ -1,3 +1,8 @@
+2009-05-11  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/patch.c: The read-only file check was not done for ed scripts;
+	fix this.
+
 2009-05-06  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/corrupt-reject-files, tests/crlf-handling: On Solaris, cat's
