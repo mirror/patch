@@ -591,7 +591,7 @@ static struct option const longopts[] =
   {"remove-empty-files", no_argument, NULL, 'E'},
   {"force", no_argument, NULL, 'f'},
   {"fuzz", required_argument, NULL, 'F'},
-  {"get", no_argument, NULL, 'g'},
+  {"get", required_argument, NULL, 'g'},
   {"input", required_argument, NULL, 'i'},
   {"ignore-whitespace", no_argument, NULL, 'l'},
 #ifdef ENABLE_MERGE
