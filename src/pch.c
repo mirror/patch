@@ -128,13 +128,10 @@ open_patch_file (char const *filename)
 	else
 	  {
 	    size_t charsread;
-	    int exclusive = TMPPATNAME_needs_removal ? 0 : O_EXCL;
+	    int fd = make_tempfile (&TMPPATNAME, 'p', NULL, O_RDWR | O_BINARY, 0);
 	    TMPPATNAME_needs_removal = 1;
-	    pfp = fdopen (create_file (TMPPATNAME,
-				       O_RDWR | O_BINARY | exclusive,
-				       (mode_t) 0, true),
-			  "w+b");
-	    if (!pfp)
+	    pfp = fdopen (fd, "w+b");
+	    if (! pfp)
 	      pfatal ("Can't open stream for file %s", quotearg (TMPPATNAME));
 	    for (st.st_size = 0;
 		 (charsread = fread (buf, 1, bufsize, stdin)) != 0;

@@ -141,7 +141,6 @@ main (int argc, char **argv)
        Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
     TMPOUTNAME = make_temp ('o');
     TMPREJNAME = make_temp ('r');
-    TMPPATNAME = make_temp ('p');
 
     /* parse switches */
     Argc = argc;
