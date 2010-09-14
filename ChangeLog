@@ -6,6 +6,9 @@
 	TMPOUTNAME_needs_removal to patch.c.
 	* src/patch.c (main): Update do_ed_script() call.
 
+	* bootstrap.conf: Use the gnulib tempname module.
+	* src/util.c (make_tempfile): New function.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

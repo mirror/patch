@@ -80,3 +80,5 @@ skip_spaces (char const *str)
     str++;
   return str;
 }
+
+int make_tempfile(char const **, char, char const *, int, mode_t);
