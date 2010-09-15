@@ -1116,7 +1116,6 @@ print_header_line (FILE *fp, const char *tag, bool reverse)
 static void
 abort_hunk_unified (bool header, bool reverse)
 {
-  FILE *fp = rejfp;
   lin old = 1;
   lin lastline = pch_ptrn_lines ();
   lin new = lastline + 1;
@@ -1124,17 +1123,17 @@ abort_hunk_unified (bool header, bool reverse)
   if (header)
     {
       if (pch_name (INDEX))
-	fprintf(fp, "Index: %s\n", pch_name (INDEX));
+	fprintf(rejfp, "Index: %s\n", pch_name (INDEX));
       print_header_line (rejfp, "---", reverse);
       print_header_line (rejfp, "+++", ! reverse);
     }
 
   /* Add out_offset to guess the same as the previous successful hunk.  */
-  fprintf (fp, "@@ -");
-  print_unidiff_range (fp, pch_first () + out_offset, lastline);
-  fprintf (fp, " +");
-  print_unidiff_range (fp, pch_newfirst () + out_offset, pch_repl_lines ());
-  fprintf (fp, " @@\n");
+  fprintf (rejfp, "@@ -");
+  print_unidiff_range (rejfp, pch_first () + out_offset, lastline);
+  fprintf (rejfp, " +");
+  print_unidiff_range (rejfp, pch_newfirst () + out_offset, pch_repl_lines ());
+  fprintf (rejfp, " @@\n");
 
   while (pch_char (new) == '=' || pch_char (new) == '\n')
     new++;
@@ -1146,13 +1145,13 @@ abort_hunk_unified (bool header, bool reverse)
     {
       for (;  pch_char (old) == '-';  old++)
 	{
-	  fputc ('-', fp);
-	  pch_write_line (old, fp);
+	  fputc ('-', rejfp);
+	  pch_write_line (old, rejfp);
 	}
       for (;  pch_char (new) == '+';  new++)
 	{
-	  fputc ('+', fp);
-	  pch_write_line (new, fp);
+	  fputc ('+', rejfp);
+	  pch_write_line (new, rejfp);
 	}
 
       if (old > lastline)
@@ -1161,8 +1160,8 @@ abort_hunk_unified (bool header, bool reverse)
       if (pch_char (new) != pch_char (old))
 	mangled_patch (old, new);
 
-      fputc (' ', fp);
-      pch_write_line (old, fp);
+      fputc (' ', rejfp);
+      pch_write_line (old, rejfp);
     }
   if (pch_char (new) != '^')
     mangled_patch (old, new);
