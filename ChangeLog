@@ -9,6 +9,9 @@
 	* bootstrap.conf: Use the gnulib tempname module.
 	* src/util.c (make_tempfile): New function.
 
+	* src/inp.c (plan_b): Compute TMPINNAME with make_tempfile() if needed
+	instead of precomputing it in src/patch.c (main).
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

@@ -140,7 +140,6 @@ main (int argc, char **argv)
     /* Cons up the names of the global temporary files.
        Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
     TMPOUTNAME = make_temp ('o');
-    TMPINNAME = make_temp ('i');
     TMPREJNAME = make_temp ('r');
     TMPPATNAME = make_temp ('p');
 

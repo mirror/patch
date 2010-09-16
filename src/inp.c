@@ -353,16 +353,22 @@ plan_b (char const *filename)
   char const *rev;
   size_t revlen;
   lin line = 1;
-  int exclusive;
 
   if (instat.st_size == 0)
     filename = NULL_DEVICE;
   if (! (ifp = fopen (filename, binary_transput ? "rb" : "r")))
     pfatal ("Can't open file %s", quotearg (filename));
-  exclusive = TMPINNAME_needs_removal ? 0 : O_EXCL;
-  TMPINNAME_needs_removal = 1;
-  tifd = create_file (TMPINNAME, O_RDWR | O_BINARY | exclusive, (mode_t) 0,
-		      true);
+  if (TMPINNAME_needs_removal)
+    {
+      /* Reopen the existing temporary file. */
+      tifd = create_file (TMPINNAME, O_RDWR | O_BINARY, 0, true);
+    }
+  else
+    {
+      tifd = make_tempfile (&TMPINNAME, 'i', NULL, O_RDWR | O_BINARY,
+			    S_IRUSR | S_IWUSR);
+      TMPINNAME_needs_removal = 1;
+    }
   i = 0;
   len = 0;
   maxlen = 1;
