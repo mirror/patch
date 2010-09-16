@@ -2,12 +2,12 @@
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.
 
-2009-05-11  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-11  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c: The read-only file check was not done for ed scripts;
 	fix this.
 
-2009-05-06  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-06  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/corrupt-reject-files, tests/crlf-handling: On Solaris, cat's
 	-e option is only effective if -v is specified as well.
@@ -15,7 +15,7 @@
 	* tests/test-lib.sh: Ignore error messages when cleaning up after a
 	test has finished.
 
-2009-05-05  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-05  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/test-lib.sh: Only use GNU diff when available.
 	* tests/dash-o-append: Fix the expected result.
@@ -35,7 +35,7 @@
 	* src/util.c (parse_name): Likewise.
 	* src/util.h (skip_spaces): Likewise.
 
-2009-05-04  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-04  Andreas Gruenbacher  <agruen@suse.de>
 
 	* tests/read-only-files: Remove the superuser test, and instead try
 	out if a read-only file can be written to.
@@ -73,13 +73,13 @@
 	(intuit_diff_type): Parse the sha1 checksums in index lines.
 	* tests/Makefile.am (XFAIL_TESTS): Remove empty-files.
 
-2009-05-03  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-03  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (intuit_diff_type): Fix a bug where the reversed-patch
 	check would wrongly pick the last name instead of the best name.
 	* src/create-delete: Add test cases for that.
 
-2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (fetchmode): Document that the "diff --git" format does
 	not store file permissions of symlinks.
@@ -88,7 +88,7 @@
 
 	* tests/symlinks: Improve the backup file tests.
 
-2009-05-02  Andreas Gruenbacher  <agruen@suse.de>
+2010-05-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/Makefile.am (patch_LDADD): Add $(LIB_CLOCK_GETTIME) here, after
 	libpatch.a, so that clock_gettime is properly resolved on systems on
@@ -105,7 +105,7 @@
 	tests/remember-backup-files.
 	* tests/Makefile.am: Add new test case.
 
-2009-04-29  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-29  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (main): Support git diffs which copy or rename files.
 	* tests/copy-rename: New test case.
@@ -144,7 +144,7 @@
 
 	* src/util.c (move_file): Remove test which is always true.
 
-2009-04-28  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-28  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (p_mode): New variable.
 	(fetchmode, pch_mode): New functions.
@@ -183,7 +183,7 @@
 	* src/patch.c (main): Use set_file_attributes().
 	* bootstrap.conf: Use the gnulib lchmod module.
 
-2009-04-27  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-27  Andreas Gruenbacher  <agruen@suse.de>
 
 	* bootstrap: Update from gnulib.
 
@@ -203,7 +203,7 @@
 
 	* configure.ac: Do not use grep -q.
 
-2009-04-27  Daniel Richard G. <skunk@iskunk.org>
+2010-04-27  Daniel Richard G. <skunk@iskunk.org>
 
 	* src/common.h (enum diff): Remove the trailing comma.
 	* src/patch.c (main): Do not use non-constant expressions in an array
@@ -211,7 +211,7 @@
 
 	* src/bestmatch.h: Do not use variable-length arrays.
 
-2009-04-26  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-26  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/inp.c (get_input_file), src/pch.c (there_is_another_patch,
 	intuit_diff_type): Use lstat instead of stat.  This causes patch to
@@ -228,7 +228,7 @@
 	only skip the patch instead of aborting.
 	* src/patch.c (main): If get_input_file() fails, skip the patch.
 
-2009-04-25  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-25  Andreas Gruenbacher  <agruen@suse.de>
 
 	* bootstrap.conf: Use the gnulib fcntl-h and sys_stat modules.
 	* src/common.h: Remove the declarations provided by gnulib sys_stat.
@@ -239,20 +239,20 @@
 	* src/common.h, src/patch.c, src/util.c, src/util.h: Do not declare
 	variables as "volatile" unnecessarily.
 
-2009-04-24  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-24  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/inp.c, src/patch.c, src/pch.c, src/util.c: Stop declaring
 	local variables as "register" all over the place: a decent compiler
 	will do a good enough job of place variables into registers where it
 	makes sense.
 
-2009-04-23  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-23  Andreas Gruenbacher  <agruen@suse.de>
 
 	* patch.man: Describe the fixed behavior of --set-time and --set-utc
 	for timestamps that include time zones.
 	* NEWS: Update.
 
-2009-04-22  Andreas Gruenbacher  <agruen@suse.de>
+2010-04-22  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/common.h (enum diff): New enumeration GIT_BINARY_DIFF.
 	* src/pch.c (intuit_diff_type): Recognize git binary patches.
@@ -424,7 +424,7 @@
 
 	* tests/crlf-handling:  Skip another ed-dependent test.
 
-2009-01-02  Andreas Gruenbacher  <agruen@suse.de>
+2010-01-02  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/bestmatch.h, src/common.h, src/diffseq.h, src/inp.c, src/inp.h,
 	src/maketime.c, src/maketime.h, src/merge.c, src/partime.c,
@@ -437,7 +437,7 @@
 	effective group ID to determine if a chown() is necessary, not the
 	effective user ID.
 
-2009-01-01  Andreas Gruenbacher  <agruen@suse.de>
+2010-01-01  Andreas Gruenbacher  <agruen@suse.de>
 
 	* Makefile.in (LIBSRCS, LIBM4FILES): Add the missing files strnlen.c,
 	strnlen.m4, and safe-read.m4.
