@@ -45,12 +45,12 @@ static void cleanup (void);
 static void get_some_switches (void);
 static void init_output (struct outstate *);
 static FILE *open_outfile (char const *);
-static void init_reject (void);
+static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
 static void remove_if_needed (char const *, int *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
-static void abort_hunk (bool, bool);
+static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
@@ -140,7 +140,6 @@ main (int argc, char **argv)
     /* Cons up the names of the global temporary files.
        Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
     TMPOUTNAME = make_temp ('o');
-    TMPREJNAME = make_temp ('r');
 
     /* parse switches */
     Argc = argc;
@@ -183,6 +182,16 @@ main (int argc, char **argv)
       int failed = 0;
       bool mismatch = false;
       char const *outname = NULL;
+
+      if (TMPREJNAME_needs_removal)
+	{
+	  if (rejfp)
+	    {
+	      fclose (rejfp);
+	      rejfp = NULL;
+	    }
+	  remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
+	}
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -254,9 +263,6 @@ main (int argc, char **argv)
 	    init_output (&outstate);
 	    outstate.ofp = create_output_file (TMPOUTNAME, exclusive);
 	  }
-
-	/* initialize reject file */
-	init_reject ();
 
 	/* find out where all the lines are */
 	if (!skip_rest_of_patch)
@@ -345,7 +351,7 @@ main (int argc, char **argv)
 			|| ! where
 			|| ! apply_hunk (&outstate, where))))
 	      {
-		abort_hunk (! failed, reverse);
+		abort_hunk (outname, ! failed, reverse);
 		failed++;
 		if (verbosity == VERBOSE ||
 		    (! skip_rest_of_patch && verbosity != SILENT))
@@ -381,7 +387,6 @@ main (int argc, char **argv)
 		    fclose (outstate.ofp);
 		    outstate.ofp = 0;
 		  }
-		fclose (rejfp);
 		continue;
 	      }
 
@@ -485,10 +490,10 @@ main (int argc, char **argv)
       if (diff_type != ED_DIFF) {
 	struct stat rejst;
 
-	if ((failed && fstat (fileno (rejfp), &rejst) != 0)
-	    || fclose (rejfp) != 0)
-	    write_fatal ();
 	if (failed) {
+	    if (fstat (fileno (rejfp), &rejst) != 0 || fclose (rejfp) != 0)
+	      write_fatal ();
+	    rejfp = NULL;
 	    somefailed = true;
 	    say ("%d out of %d hunk%s %s", failed, hunk, "s" + (hunk == 1),
 		 skip_rest_of_patch ? "ignored" : "FAILED");
@@ -1239,8 +1244,10 @@ abort_hunk_context (bool header, bool reverse)
 /* Output the rejected hunk.  */
 
 static void
-abort_hunk (bool header, bool reverse)
+abort_hunk (char const *outname, bool header, bool reverse)
 {
+  if (! TMPREJNAME_needs_removal)
+    init_reject (outname);
   if (reject_format == UNI_DIFF
       || (reject_format == NO_DIFF && diff_type == UNI_DIFF))
     abort_hunk_unified (header, reverse);
@@ -1445,11 +1452,15 @@ open_outfile (char const *name)
 /* Open a file to put hunks we can't locate. */
 
 static void
-init_reject (void)
+init_reject (char const *outname)
 {
-  int exclusive = TMPREJNAME_needs_removal ? 0 : O_EXCL;
+  int fd;
+  fd = make_tempfile (&TMPREJNAME, 'r', outname, O_WRONLY | binary_transput,
+		      0666);
   TMPREJNAME_needs_removal = 1;
-  rejfp = create_output_file (TMPREJNAME, exclusive);
+  rejfp = fdopen (fd, binary_transput ? "wb" : "w");
+  if (! rejfp)
+    pfatal ("Can't open stream for file %s", quotearg (TMPREJNAME));
 }
 
 /* Copy input file to output, up to wherever hunk is to be applied. */

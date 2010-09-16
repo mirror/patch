@@ -17,6 +17,11 @@
 
 	* src/patch.c (abort_hunk_unified): Replace unnecessary local variable.
 
+	* src/patch.c (main): Compute TMPREJNAME with make_tempfile() only if
+	needed.
+	(abort_hunk, init_reject): Pass through the output file name, and base
+	TMPREJNAME on it.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.
