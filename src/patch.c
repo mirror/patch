@@ -39,7 +39,6 @@ static lin locate_hunk (lin);
 static bool apply_hunk (struct outstate *, lin);
 static bool patch_match (lin, lin, lin, lin);
 static bool spew_output (struct outstate *, struct stat *);
-static char const *make_temp (char);
 static int numeric_string (char const *, bool, char const *);
 static void cleanup (void);
 static void get_some_switches (void);
@@ -104,6 +103,7 @@ main (int argc, char **argv)
     bool written_to_rejname = false;
     bool apply_empty_patch = false;
     mode_t file_type;
+    int outfd = -1;
 
     exit_failure = 2;
     program_name = argv[0];
@@ -136,10 +136,6 @@ main (int argc, char **argv)
       version_control_context = "$PATCH_VERSION_CONTROL";
     else if ((version_control = getenv ("VERSION_CONTROL")))
       version_control_context = "$VERSION_CONTROL";
-
-    /* Cons up the names of the global temporary files.
-       Do this before `cleanup' can possibly be called (e.g. by `pfatal').  */
-    TMPOUTNAME = make_temp ('o');
 
     /* parse switches */
     Argc = argc;
@@ -192,6 +188,15 @@ main (int argc, char **argv)
 	    }
 	  remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
 	}
+      if (TMPOUTNAME_needs_removal)
+        {
+	  if (outfd != -1)
+	    {
+	      close (outfd);
+	      outfd = -1;
+	    }
+	  remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
+	}
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -233,6 +238,9 @@ main (int argc, char **argv)
 	    }
 	}
 
+      outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
+			     O_WRONLY | binary_transput, instat.st_mode);
+      TMPOUTNAME_needs_removal = 1;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
@@ -241,10 +249,12 @@ main (int argc, char **argv)
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
 	    struct stat statbuf;
-	    if (stat (TMPOUTNAME, &statbuf) != 0)
+	    if (fstat (outfd, &statbuf) != 0)
 	      pfatal ("%s", TMPOUTNAME);
 	    outstate.zero_output = statbuf.st_size == 0;
 	  }
+	close (outfd);
+	outfd = -1;
       } else {
 	int got_hunk;
 	bool apply_anyway = merge;  /* don't try to reverse when merging */
@@ -258,10 +268,10 @@ main (int argc, char **argv)
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
 	  {
-	    int exclusive = TMPOUTNAME_needs_removal ? 0 : O_EXCL;
-	    TMPOUTNAME_needs_removal = 1;
 	    init_output (&outstate);
-	    outstate.ofp = create_output_file (TMPOUTNAME, exclusive);
+	    outstate.ofp = fdopen(outfd, binary_transput ? "wb" : "w");
+	    if (! outstate.ofp)
+	      pfatal ("%s", TMPOUTNAME);
 	  }
 
 	/* find out where all the lines are */
@@ -337,6 +347,7 @@ main (int argc, char **argv)
 		    {
 		      fclose (outstate.ofp);
 		      outstate.ofp = 0;
+		      outfd = -1;
 		    }
 		}
 	    }
@@ -1580,45 +1591,6 @@ similar (char const *a, size_t alen, char const *b, size_t blen)
       else
 	alen--, blen--;
     }
-}
-
-/* Make a temporary file.  */
-
-#if HAVE_MKTEMP && ! HAVE_DECL_MKTEMP && ! defined mktemp
-char *mktemp (char *);
-#endif
-
-#ifndef TMPDIR
-#define TMPDIR "/tmp"
-#endif
-
-static char const *
-make_temp (char letter)
-{
-  char *r;
-#if HAVE_MKTEMP
-  char const *tmpdir = getenv ("TMPDIR");	/* Unix tradition */
-  if (!tmpdir) tmpdir = getenv ("TMP");		/* DOS tradition */
-  if (!tmpdir) tmpdir = getenv ("TEMP");	/* another DOS tradition */
-  if (!tmpdir) tmpdir = TMPDIR;
-  r = xmalloc (strlen (tmpdir) + 10);
-  sprintf (r, "%s/p%cXXXXXX", tmpdir, letter);
-
-  /* It is OK to use mktemp here, since the rest of the code always
-     opens temp files with O_EXCL.  It might be better to use mkstemp
-     to avoid some DoS problems, but simply substituting mkstemp for
-     mktemp here will not fix the DoS problems; a more extensive
-     change would be needed.  */
-  mktemp (r);
-
-  if (!*r)
-    pfatal ("mktemp");
-#else
-  r = xmalloc (L_tmpnam);
-  if (! (tmpnam (r) == r && *r))
-    pfatal ("tmpnam");
-#endif
-  return r;
 }
 
 /* Fatal exit with cleanup. */

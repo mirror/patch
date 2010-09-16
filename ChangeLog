@@ -22,6 +22,9 @@
 	(abort_hunk, init_reject): Pass through the output file name, and base
 	TMPREJNAME on it.
 
+	* src/patch.c (main): Compute TMPOUTNAME with make_tempfile().
+	(make_temp): Remove obsolete function.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.
