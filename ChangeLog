@@ -38,6 +38,8 @@
 	still.
 	* tests/criss-cross: Test case currently expected to fail.
 
+	* tests/criss-cross: Add copy-after-modify test case.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

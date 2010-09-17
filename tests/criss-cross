@@ -41,3 +41,46 @@ EOF
 check 'cat g' <<EOF
 1
 EOF
+
+# ==============================================================
+# Copy-after-modify test case
+
+ncheck 'seq 1 1000 > a'
+
+cat > modified-twice.diff <<EOF
+diff --git a/a b/a
+index 1179824..912fcbd 100644
+--- a/a
++++ b/a
+@@ -998,3 +998,4 @@
+ 998
+ 999
+ 1000
++a
+diff --git a/a b/b
+similarity index 99%
+copy from a
+copy to b
+index 1179824..1c5afa7 100644
+--- a/a
++++ b/b
+@@ -998,3 +998,4 @@
+ 998
+ 999
+ 1000
++b
+EOF
+
+check 'patch -p1 < modified-twice.diff || echo "Status: $?"' <<EOF
+patching file a
+patching file b (copied from a)
+EOF
+
+check 'cat a' <<EOF
+`seq 1 1000`
+a
+EOF
+check 'cat b' <<EOF
+`seq 1 1000`
+b
+EOF
