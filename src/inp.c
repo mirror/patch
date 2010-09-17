@@ -91,8 +91,6 @@ scan_input (char *filename, mode_t file_type)
 
     if (verbosity != SILENT)
       {
-	filename = quotearg (filename);
-
 	if (verbosity == VERBOSE)
 	  say ("Patching %s %s using Plan %s...\n",
 	       S_ISLNK (file_type) ? "symbolic link" : "file",

@@ -25,6 +25,8 @@
 	* src/patch.c (main): Compute TMPOUTNAME with make_tempfile().
 	(make_temp): Remove obsolete function.
 
+	* src/inp.c (scan_input): Remove double quotearg().
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.
