@@ -1,0 +1,43 @@
+# Copyright (C) 2010 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+# git diffs: criss-cross renames
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+# Criss-cross rename
+
+echo 1 > f
+echo 2 > g
+
+cat > criss-cross-rename.diff <<EOF
+diff --git a/g b/f
+similarity index 100%
+rename from g
+rename to f
+diff --git a/f b/g
+similarity index 100%
+rename from f
+rename to g
+EOF
+
+check 'patch -p1 < criss-cross-rename.diff || echo "Status: $?"' <<EOF
+patching file f (renamed from g)
+patching file g (renamed from f)
+EOF
+
+check 'cat f' <<EOF
+2
+EOF
+
+check 'cat g' <<EOF
+1
+EOF

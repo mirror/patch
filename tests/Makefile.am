@@ -22,6 +22,7 @@ TESTS = \
 	copy-rename \
 	corrupt-reject-files \
 	create-delete \
+	criss-cross \
 	crlf-handling \
 	dash-o-append \
 	empty-files \
@@ -46,6 +47,7 @@ TESTS = \
 	unmodified-files
 
 XFAIL_TESTS = \
+	criss-cross \
 	dash-o-append
 
 EXTRA_DIST = \

@@ -1,6 +1,9 @@
 * Support for most features of the "diff --git" format: renames and copies,
-  permission changes, symlink diffs.  (Binary diffs are not supported yet;
-  patch will complain and skip them.)
+  permission changes, symlink diffs.  Caveats:
+  + Binary diffs are not supported yet; patch will complain and skip them.
+  + In the "diff --git" format, all the patches are relative to the original
+    state of the files to patch, allowing things like criss-cross renames.
+    GNU patch will currently fail for such patches.
 * Support for double-quoted filenames: when a filename in a context diff
   starts with a double quote, it is interpreted as a C string literal.  The
   escape sequences \\, \", \a, \b, \f, \n, \r, \t, \v, and \ooo (a three-digit

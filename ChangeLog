@@ -34,6 +34,10 @@
 	generated here.
 	* tests/unmodified-files, tests/copy-rename: Update.
 
+	* NEWS: Document that "diff --git" criss-cross renames are broken
+	still.
+	* tests/criss-cross: Test case currently expected to fail.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.
