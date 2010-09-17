@@ -275,8 +275,25 @@ main (int argc, char **argv)
 	  }
 
 	/* find out where all the lines are */
-	if (!skip_rest_of_patch)
+	if (!skip_rest_of_patch) {
 	    scan_input (inname, file_type);
+
+	    if (verbosity != SILENT)
+	      {
+		bool renamed = strcmp (inname, outname);
+
+		say ("patching %s %s%c",
+		     S_ISLNK (file_type) ? "symbolic link" : "file",
+		     quotearg (outname), renamed ? ' ' : '\n');
+		if (renamed)
+		  say ("(%s from %s)\n",
+		       pch_copy () ? "copied" :
+		       (pch_rename () ? "renamed" : "read"),
+		       inname);
+		if (verbosity == VERBOSE)
+		  say ("Using Plan %s...\n", using_plan_a ? "A" : "B");
+	      }
+	}
 
 	/* from here on, open no standard i/o files, because malloc */
 	/* might misfire and we can't catch it easily */

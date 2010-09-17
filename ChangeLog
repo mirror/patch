@@ -27,6 +27,13 @@
 
 	* src/inp.c (scan_input): Remove double quotearg().
 
+	* src/patch.c (main): Generate the "patching file" message here.  When
+	the input and output file name is not he same, include both names in
+	the message.
+	* src/inp.c (scan_input): Previously the "patching file" message was
+	generated here.
+	* tests/unmodified-files, tests/copy-rename: Update.
+
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 
 	* src/patch.c: Stops "patch --get 1" from segfaulting.

@@ -88,18 +88,6 @@ scan_input (char *filename, mode_t file_type)
 	  }
 	plan_b(filename);
       }
-
-    if (verbosity != SILENT)
-      {
-	if (verbosity == VERBOSE)
-	  say ("Patching %s %s using Plan %s...\n",
-	       S_ISLNK (file_type) ? "symbolic link" : "file",
-	       quotearg (filename), using_plan_a ? "A" : "B");
-	else
-	  say ("patching %s %s\n",
-	       S_ISLNK (file_type) ? "symbolic link" : "file",
-	       quotearg (filename));
-      }
 }
 
 /* Report whether a desired revision was found.  */

@@ -51,7 +51,7 @@ EOF
 echo three > a
 
 check 'patch -o b a < a.diff' <<EOF
-patching file a
+patching file b (read from a)
 EOF
 
 check 'cat b' <<EOF

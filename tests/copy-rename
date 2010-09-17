@@ -28,9 +28,8 @@ copy to g
 +new
 EOF
 
-# FIXME: the message is confusing ...
 check 'patch -p1 < copy.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file g (copied from f)
 EOF
 
 check 'cat f' <<EOF
@@ -52,9 +51,8 @@ rename to h
 +new
 EOF
 
-# FIXME: the message is confusing ...
 check 'patch -p1 < rename.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file h (renamed from f)
 EOF
 
 ncheck 'test ! -e f'
@@ -75,9 +73,8 @@ copy from f
 copy to g
 EOF
 
-# FIXME: the message is confusing ...
 check 'patch -p1 < copy.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file g (copied from f)
 EOF
 
 check 'cat f' <<EOF
@@ -94,9 +91,8 @@ rename from f
 rename to h
 EOF
 
-# FIXME: the message is confusing ...
 check 'patch -p1 < rename.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file h (renamed from f)
 EOF
 
 ncheck 'test ! -e f'
@@ -111,9 +107,8 @@ EOF
 echo old > f
 rm -f g h
 
-# FIXME: the message is confusing ...
 check 'patch -p1 --backup < copy.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file g (copied from f)
 EOF
 
 ncheck 'test ! -e f.orig'
@@ -122,9 +117,8 @@ ncheck 'cat g.orig'
 
 rm -f f.orig g.orig
 
-# FIXME: the message is confusing ...
 check 'patch -p1 --backup < rename.diff || echo "Status: $?"' <<EOF
-patching file f
+patching file h (renamed from f)
 EOF
 
 check 'cat f.orig' <<EOF
