@@ -4,10 +4,11 @@
   + In the "diff --git" format, all the patches are relative to the original
     state of the files to patch, allowing things like criss-cross renames.
     GNU patch will currently fail for such patches.
-* Support for double-quoted filenames: when a filename in a context diff
-  starts with a double quote, it is interpreted as a C string literal.  The
-  escape sequences \\, \", \a, \b, \f, \n, \r, \t, \v, and \ooo (a three-digit
-  octal number between 0 and 255) are recognized.
+* Support for double-quoted filenames in the "diff --git" format: when a
+  filename in a context diff starts with a double quote, it is interpreted
+  as a C string literal.  The escape sequences \\, \", \a, \b, \f, \n, \r,
+  \t, \v, and \ooo (a three-digit octal number between 0 and 255) are
+  recognized.
 * Refuse to patch read-only files by default, or at least warn when patching
   such files with --force or --batch.
 * Refuse to apply a normal patch to a symlink.  (Previous versions of patch

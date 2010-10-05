@@ -1,3 +1,28 @@
+	* src/util.c: Add a maybe_quoted parameter to fetchname.
+	* src/pch.c: Only recognize quited filename in the "diff --git"
+	format, at least for now.
+	* tests/quoted-filenames: Update accordingly.
+	* NEWS: Update accordingly.
+
+2010-09-17  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/inp.c (scan_input): Remove double quotearg().
+
+	* src/patch.c (main): Generate the "patching file" message here.  When
+	the input and output file name is not he same, include both names in
+	the message.
+	* src/inp.c (scan_input): Previously the "patching file" message was
+	generated here.
+	* tests/unmodified-files, tests/copy-rename: Update.
+
+	* NEWS: Document that "diff --git" criss-cross renames are broken
+	still.
+	* tests/criss-cross: Test case currently expected to fail.
+
+	* tests/criss-cross: Add copy-after-modify test case.
+
+2010-09-16  Andreas Gruenbacher  <agruen@suse.de>
+
 	* src/patch.c (open_outfile): New function.
 	(init_output): Split into open_outfile() and the rest.
 
@@ -24,21 +49,6 @@
 
 	* src/patch.c (main): Compute TMPOUTNAME with make_tempfile().
 	(make_temp): Remove obsolete function.
-
-	* src/inp.c (scan_input): Remove double quotearg().
-
-	* src/patch.c (main): Generate the "patching file" message here.  When
-	the input and output file name is not he same, include both names in
-	the message.
-	* src/inp.c (scan_input): Previously the "patching file" message was
-	generated here.
-	* tests/unmodified-files, tests/copy-rename: Update.
-
-	* NEWS: Document that "diff --git" criss-cross renames are broken
-	still.
-	* tests/criss-cross: Test case currently expected to fail.
-
-	* tests/criss-cross: Add copy-after-modify test case.
 
 2010-07-27  Tim Waugh  <twaugh@redhat.com>
 

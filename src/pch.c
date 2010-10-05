@@ -498,21 +498,21 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	  {
-	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
+	    fetchname (s+4, strippath, git_diff, &p_name[OLD], &p_timestr[OLD],
 		       &p_timestamp[OLD]);
 	    need_header = false;
 	  }
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
-	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
+	    fetchname (s+4, strippath, git_diff, &p_name[OLD], &p_timestr[OLD],
 		       &p_timestamp[OLD]);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    fetchname (s+6, strippath, &p_name[INDEX], (char **) 0, NULL);
+	    fetchname (s+6, strippath, git_diff, &p_name[INDEX], (char **) 0, NULL);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -653,7 +653,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      {
 		struct timespec timestamp;
 		timestamp.tv_sec = -1;
-		fetchname (t+4, strippath, &p_name[NEW], &p_timestr[NEW],
+		fetchname (t+4, strippath, git_diff, &p_name[NEW], &p_timestr[NEW],
 			   &timestamp);
 		need_header = false;
 		if (timestamp.tv_sec != -1)
