@@ -257,14 +257,15 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	    diff_type == GIT_BINARY_DIFF ? "a git binary diff" :
 	    "an ed script" );
 
+    if (no_strip_trailing_cr)
+      p_strip_trailing_cr = false;
+
     if (verbosity != SILENT)
       {
 	if (p_indent)
 	  say ("(Patch is indented %lu space%s.)\n",
 	       (unsigned long int) p_indent, p_indent==1?"":"s");
-	if (no_strip_trailing_cr)
-	  p_strip_trailing_cr = false;
-	else if (p_strip_trailing_cr)
+	if (p_strip_trailing_cr)
 	  say ("(Stripping trailing CRs from patch.)\n");
 	if (! inname)
 	  {

@@ -1,3 +1,11 @@
+2010-10-14  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/pch.c (there_is_another_patch): Set p_strip_trailing_cr
+	to false if no_strip_trailing_cr is set independent of the verbosity.
+	This broke the --binary option in combination with --silent.
+
+2010-10-05  Andreas Gruenbacher  <agruen@suse.de>
+
 	* src/util.c: Add a maybe_quoted parameter to fetchname.
 	* src/pch.c: Only recognize quited filename in the "diff --git"
 	format, at least for now.
