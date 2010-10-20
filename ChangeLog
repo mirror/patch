@@ -1,3 +1,7 @@
+2010-10-20  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/patch.c (print_header_line): Remove obsolete comment.
+
 2010-10-14  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/pch.c (there_is_another_patch): Set p_strip_trailing_cr
