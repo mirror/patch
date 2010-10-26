@@ -1,3 +1,7 @@
+2010-10-26  Andreas Gruenbacher  <agruen@suse.de>
+
+	* configure.ac: Remove obsolete checks for mktemp.
+
 2010-10-20  Andreas Gruenbacher  <agruen@suse.de>
 
 	* src/patch.c (print_header_line): Remove obsolete comment.

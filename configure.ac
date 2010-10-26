@@ -49,8 +49,7 @@ gl_INIT
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 
-AC_CHECK_DECLS([mktemp])
-AC_CHECK_FUNCS(geteuid getuid mktemp raise sigaction sigprocmask sigsetmask)
+AC_CHECK_FUNCS(geteuid getuid raise sigaction sigprocmask sigsetmask)
 AC_FUNC_SETMODE_DOS
 
 AC_PATH_PROG([ED], [ed], [ed])
