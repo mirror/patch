@@ -1,3 +1,9 @@
+2010-10-27  Andreas Gruenbacher  <agruen@suse.de>
+
+	* src/util.c (set_file_attributes): Always expect the mode argument to
+	be set when FA_MODE is specified.
+	(create_backup_copy): Update accordingly.
+
 2010-10-26  Andreas Gruenbacher  <agruen@suse.de>
 
 	* configure.ac: Remove obsolete checks for mktemp.

@@ -172,8 +172,6 @@ set_file_attributes (char const *to, enum file_attributes attr,
     }
   if (attr & FA_MODE)
     {
-      if (! mode)
-	mode = st->st_mode;
 #if 0 && defined HAVE_LCHMOD
       /* The "diff --git" format does not store the file permissions of
 	 symlinks, so don't try to set symlink file permissions even on
@@ -198,7 +196,7 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
 	     to_dir_known_to_exist);
   if (remember_backup)
     insert_file (&backup_st);
-  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, 0, NULL);
+  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, st->st_mode, NULL);
 }
 
 void
