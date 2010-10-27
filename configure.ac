@@ -49,6 +49,8 @@ gl_INIT
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 
+gl_FUNC_XATTR
+
 AC_CHECK_FUNCS(geteuid getuid raise sigaction sigprocmask sigsetmask)
 AC_FUNC_SETMODE_DOS
 

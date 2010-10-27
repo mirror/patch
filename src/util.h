@@ -70,8 +70,8 @@ enum file_attributes {
   FA_MODE = 4
 };
 
-void set_file_attributes (char const *, enum file_attributes, struct stat *,
-			  mode_t, struct timespec *);
+void set_file_attributes (char const *, enum file_attributes, char const *,
+			  struct stat *, mode_t, struct timespec *);
 
 static inline char const *
 skip_spaces (char const *str)

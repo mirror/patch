@@ -4,6 +4,18 @@
 	be set when FA_MODE is specified.
 	(create_backup_copy): Update accordingly.
 
+	* src/patch.c (main): Set all file attributes of the temporary output
+	file before renaming it over the final output file (possibly replacing
+	the input file).  Pass the input file name to set_file_attributes().
+	* src/util.c (set_file_attributes): When enabled (USE_XATTR), also
+	copy extended attributes including attributes which define
+	permissions.
+	(copy_attr_error, copy_attr_quote, copy_attr_free, copy_attr_check,
+	copy_attr): Helper functions for copying extended attributes.
+	* m4/xattr.m4 (gl_FUNC_XATTR): Import from coreutils.
+	* src/Makefile.am (patch_LDADD): Add $(LIB_XATTR) here.
+	* bootstrap.conf: Use the gnulib verror module.
+
 2010-10-26  Andreas Gruenbacher  <agruen@suse.de>
 
 	* configure.ac: Remove obsolete checks for mktemp.

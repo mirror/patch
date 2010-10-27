@@ -15,7 +15,6 @@
 /config.status
 /configure
 /lib
-/m4
 /patch-*.tar.bz2
 /patch-*.tar.bz2.sig
 /patch-*.tar.gz

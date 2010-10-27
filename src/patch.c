@@ -476,9 +476,6 @@ main (int argc, char **argv)
 		      mode_t mode = file_type |
 			  ((new_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
-		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
-				 outname, mode, backup);
-
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
 			  struct timespec old_time = pch_timestamp (reverse);
@@ -500,7 +497,11 @@ main (int argc, char **argv)
 			}
 
 		      if (! inerrno)
-			set_file_attributes (outname, attr, &instat, mode, &new_time);
+			set_file_attributes (TMPOUTNAME, attr, inname, &instat,
+					     mode, &new_time);
+
+		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
+				 outname, mode, backup);
 
 		      if (pch_rename ())
 		        {

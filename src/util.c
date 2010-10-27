@@ -42,6 +42,13 @@
 #include <full-write.h>
 #include <tempname.h>
 
+#ifdef USE_XATTR
+# include <attr/error_context.h>
+# include <attr/libattr.h>
+# include <stdarg.h>
+# include "verror.h"
+#endif
+
 static void makedirs (char const *);
 
 typedef struct
@@ -123,9 +130,64 @@ contains_slash (const char *s)
   return false;
 }
 
+#ifdef USE_XATTR
+
+static void
+copy_attr_error (struct error_context *ctx, char const *fmt, ...)
+{
+  int err = errno;
+  va_list ap;
+
+  /* use verror module to print error message */
+  va_start (ap, fmt);
+  verror (0, err, fmt, ap);
+  va_end (ap);
+}
+
+static char const *
+copy_attr_quote (struct error_context *ctx, char const *str)
+{
+  return quotearg (str);
+}
+
+static void
+copy_attr_free (struct error_context *ctx, char const *str)
+{
+}
+
+static int
+copy_attr_check (const char *name, struct error_context *ctx)
+{
+	int action = attr_copy_action (name, ctx);
+	return action == 0 || action == ATTR_ACTION_PERMISSIONS;
+}
+
+static int
+copy_attr (char const *src_path, char const *dst_path)
+{
+  struct error_context ctx =
+  {
+    .error = copy_attr_error,
+    .quote = copy_attr_quote,
+    .quote_free = copy_attr_free
+  };
+  return attr_copy_file (src_path, dst_path, copy_attr_check, &ctx);
+}
+
+#else  /* USE_XATTR */
+
+static int
+copy_attr (char const *src_path, char const *dst_path)
+{
+  return 0;
+}
+
+#endif
+
 void
 set_file_attributes (char const *to, enum file_attributes attr,
-		     struct stat *st, mode_t mode, struct timespec *new_time)
+		     char const *from, struct stat *st, mode_t mode,
+		     struct timespec *new_time)
 {
   if (attr & FA_TIMES)
     {
@@ -170,6 +232,9 @@ set_file_attributes (char const *to, enum file_attributes attr,
 		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
+  if (copy_attr (from, to))
+    fatal_exit (0);
+  /* FIXME: There may be other attributes to preserve.  */
   if (attr & FA_MODE)
     {
 #if 0 && defined HAVE_LCHMOD
@@ -184,7 +249,6 @@ set_file_attributes (char const *to, enum file_attributes attr,
 		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
-  /* FIXME: There may be other attributes to preserve.  */
 }
 
 static void
@@ -196,7 +260,7 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
 	     to_dir_known_to_exist);
   if (remember_backup)
     insert_file (&backup_st);
-  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, st, st->st_mode, NULL);
+  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
 }
 
 void
