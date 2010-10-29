@@ -42,7 +42,7 @@
 #include <full-write.h>
 #include <tempname.h>
 
-#ifdef USE_XATTR
+#if USE_XATTR
 # include <attr/error_context.h>
 # include <attr/libattr.h>
 # include <stdarg.h>
@@ -130,7 +130,7 @@ contains_slash (const char *s)
   return false;
 }
 
-#ifdef USE_XATTR
+#if USE_XATTR
 
 static void
 copy_attr_error (struct error_context *ctx, char const *fmt, ...)
