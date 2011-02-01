@@ -1,0 +1,49 @@
+# Copyright (C) 2011 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+. $srcdir/test-lib.sh
+
+use_local_patch
+
+# ================================================================
+
+emit_patch()
+{
+cat <<EOF
+--- /dev/null
++++ $1
+@@ -0,0 +1 @@
++x
+EOF
+}
+
+# Ensure that patch rejects an output file name that is absolute
+# or that contains a ".." component.
+
+check 'emit_patch /absolute/path | patch -p0; echo status: $?' <<EOF
+$PATCH: **** rejecting absolute file name: /absolute/path
+status: 2
+EOF
+
+check 'emit_patch a/../z | patch -p0; echo status: $?' <<EOF
+$PATCH: **** rejecting file name with ".." component: a/../z
+status: 2
+EOF
+
+check 'emit_patch a/../z | patch -p1; echo status: $?' <<EOF
+$PATCH: **** rejecting file name with ".." component: ../z
+status: 2
+EOF
+
+check 'emit_patch a/.. | patch -p0; echo status: $?' <<EOF
+$PATCH: **** rejecting file name with ".." component: a/..
+status: 2
+EOF
+
+check 'emit_patch ../z | patch -p0; echo status: $?' <<EOF
+$PATCH: **** rejecting file name with ".." component: ../z
+status: 2
+EOF

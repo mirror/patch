@@ -3,7 +3,7 @@
 /* Copyright (C) 1986 Larry Wall
 
    Copyright (C) 1992, 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2006,
-   2009, 2010 Free Software Foundation, Inc.
+   2009, 2010, 2011 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1414,6 +1414,17 @@ strip_leading_slashes (char *name, int strip_leading)
 	  if (strip_leading < 0 || --s >= 0)
 	      n = p+1;
 	}
+    }
+  if (IS_ABSOLUTE_FILE_NAME (n))
+    fatal ("rejecting absolute file name: %s", quotearg (n));
+  for (p = n; *p; )
+    {
+      if (*p == '.' && *++p == '.' && ( ! *++p || ISSLASH (*p)))
+	fatal ("rejecting file name with \"..\" component: %s", quotearg (n));
+      while (*p && ! ISSLASH (*p))
+	p++;
+      while (ISSLASH (*p))
+	p++;
     }
   if ((strip_leading < 0 || s <= 0) && *n)
     {
