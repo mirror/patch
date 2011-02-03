@@ -1,3 +1,11 @@
+2011-02-03  Andreas Gruenbacher <agruen@linbit.com>
+
+	Also check if the input file is seekable if a filename is given (-i)
+	* src/pch.c (open_patch_file): Also check if the input file is
+	seekable if a filename is given (-i).
+	* tests/pipe: New file.  Test this.
+	* tests/Makefile.am (TESTS): Add it.
+
 2011-02-03  Jim Meyering  <meyering@redhat.com>
 
 	doc: mention the fix for CVE-2010-4651

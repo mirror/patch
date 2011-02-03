@@ -27,6 +27,7 @@ TESTS = \
 	crlf-handling \
 	dash-o-append \
 	empty-files \
+	fifo \
 	file-modes \
 	filename-choice \
 	git-binary-diff \
