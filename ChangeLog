@@ -1,3 +1,8 @@
+2011-02-03  Jim Meyering  <meyering@redhat.com>
+
+	doc: mention the fix for CVE-2010-4651
+	* NEWS: Mention the fix.
+
 2011-02-01  Jim Meyering  <meyering@redhat.com>
 	and Andreas Gruenbacher <agruen@linbit.com>
 

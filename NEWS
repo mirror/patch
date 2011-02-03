@@ -1,3 +1,5 @@
+* patch now rejects a destination file name that is absolute or that contains
+  a component of "..".  This addresses CVE-2010-4651,
 * Support for most features of the "diff --git" format: renames and copies,
   permission changes, symlink diffs.  Caveats:
   + Binary diffs are not supported yet; patch will complain and skip them.
