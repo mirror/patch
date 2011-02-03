@@ -1,3 +1,9 @@
+2011-02-03  Ozan Çağlayan <ozan@pardus.org.tr>
+
+	Create directory test case
+	* tests/create-delete: New test case creating a file in a new
+	sub-directory (bug fixed on 2010-12-04).
+
 2011-02-03  Andreas Gruenbacher <agruen@linbit.com>
 
 	Also check if the input file is seekable if a filename is given (-i)

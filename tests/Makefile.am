@@ -23,6 +23,7 @@ TESTS = \
 	copy-rename \
 	corrupt-reject-files \
 	create-delete \
+	create-directory \
 	criss-cross \
 	crlf-handling \
 	dash-o-append \
