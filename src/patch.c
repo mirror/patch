@@ -238,6 +238,7 @@ main (int argc, char **argv)
 	    }
 	}
 
+      outst.st_size = -1;
       outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
 			     O_WRONLY | binary_transput, instat.st_mode);
       TMPOUTNAME_needs_removal = 1;
@@ -248,10 +249,9 @@ main (int argc, char **argv)
 		      outstate.ofp);
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
-	    struct stat statbuf;
-	    if (fstat (outfd, &statbuf) != 0)
+	    if (fstat (outfd, &outst) != 0)
 	      pfatal ("%s", TMPOUTNAME);
-	    outstate.zero_output = statbuf.st_size == 0;
+	    outstate.zero_output = outst.st_size == 0;
 	  }
 	close (outfd);
 	outfd = -1;
@@ -500,6 +500,7 @@ main (int argc, char **argv)
 			set_file_attributes (TMPOUTNAME, attr, inname, &instat,
 					     mode, &new_time);
 
+		      assert (outst.st_size != -1);
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
 				 outname, mode, backup);
 

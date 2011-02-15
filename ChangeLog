@@ -1,3 +1,8 @@
+2011-02-15  Andreas Gruenbacher <agruen@linbit.com>
+
+	* src/patch.c (main): Fix use of initialized outst and add an
+	additional assert.  Reported by Jim Meyering.
+
 2011-02-03  Ozan Çağlayan <ozan@pardus.org.tr>
 
 	Create directory test case
