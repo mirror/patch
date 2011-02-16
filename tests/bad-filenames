@@ -7,6 +7,7 @@
 . $srcdir/test-lib.sh
 
 use_local_patch
+use_tmpdir
 
 # ================================================================
 
@@ -23,27 +24,93 @@ EOF
 # Ensure that patch rejects an output file name that is absolute
 # or that contains a ".." component.
 
-check 'emit_patch /absolute/path | patch -p0; echo status: $?' <<EOF
-$PATCH: **** rejecting absolute file name: /absolute/path
-status: 2
+check 'emit_patch ../z | patch -f -p1 --dry-run || echo status: $?' <<EOF
+patching file z
 EOF
 
-check 'emit_patch a/../z | patch -p0; echo status: $?' <<EOF
-$PATCH: **** rejecting file name with ".." component: a/../z
-status: 2
+check 'emit_patch /absolute/path | patch -f -p0 --dry-run || echo status: $?' <<EOF
+Ignoring potentially dangerous file name /absolute/path
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- /dev/null
+|+++ /absolute/path
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
 EOF
 
-check 'emit_patch a/../z | patch -p1; echo status: $?' <<EOF
-$PATCH: **** rejecting file name with ".." component: ../z
-status: 2
+check 'emit_patch a/../z | patch -f -p0 --dry-run || echo status: $?' <<EOF
+Ignoring potentially dangerous file name a/../z
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- /dev/null
+|+++ a/../z
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
 EOF
 
-check 'emit_patch a/.. | patch -p0; echo status: $?' <<EOF
-$PATCH: **** rejecting file name with ".." component: a/..
-status: 2
+check 'emit_patch a/../z | patch -f -p1 --dry-run || echo status: $?' <<EOF
+Ignoring potentially dangerous file name ../z
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- /dev/null
+|+++ a/../z
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
 EOF
 
-check 'emit_patch ../z | patch -p0; echo status: $?' <<EOF
-$PATCH: **** rejecting file name with ".." component: ../z
-status: 2
+check 'emit_patch ../z | patch -f -p0 --dry-run || echo status: $?' <<EOF
+Ignoring potentially dangerous file name ../z
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- /dev/null
+|+++ ../z
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
+EOF
+
+cat > d.diff <<EOF
+--- f
++++ ../g
+@@ -1 +1 @@
+-1
++1
+EOF
+
+check 'patch -f -p0 --dry-run < d.diff || echo status: $?' <<EOF
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- f
+|+++ ../g
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
+EOF
+
+echo 1 > f
+check 'patch -f -p0 --dry-run < d.diff || echo status: $?' <<EOF
+patching file f
+EOF
+
+echo 1 > g
+check 'patch -f -p1 --dry-run < d.diff || echo status: $?' <<EOF
+patching file g
 EOF

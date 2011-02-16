@@ -1,3 +1,13 @@
+2011-02-16  Andreas Gruenbacher <agruen@linbit.com>
+
+	* src/pch.c (name_is_valid): New function.
+	(intuit_diff_type, best_name): Use name_is_valid() here.
+	(strip_leading_slashes): Remove name validation tests from here.
+	* tests/bad-filenames: Add more tests for covering more of the
+	file name guessing corner cases in intuit_diff_type(), update the
+	existing tests.
+	* NEWS: Update.
+
 2011-02-15  Andreas Gruenbacher <agruen@linbit.com>
 
 	* src/patch.c (main): Fix use of initialized outst and add an

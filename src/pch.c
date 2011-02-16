@@ -376,6 +376,31 @@ skip_hex_digits (char const *str)
   return s == str ? NULL : s;
 }
 
+static bool
+name_is_valid (char const *name)
+{
+  const char *n = name;
+
+  if (IS_ABSOLUTE_FILE_NAME (name))
+    {
+      say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
+      return false;
+    }
+  for (n = name; *n; )
+    {
+      if (*n == '.' && *++n == '.' && ( ! *++n || ISSLASH (*n)))
+        {
+	  say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
+	  return false;
+	}
+      while (*n && ! ISSLASH (*n))
+	n++;
+      while (ISSLASH (*n))
+	n++;
+    }
+  return true;
+}
+
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff
@@ -829,7 +854,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      else
 		{
 		  stat_errno[i] = 0;
-		  if (posixly_correct)
+		  if (posixly_correct && name_is_valid (p_name[i]))
 		    break;
 		}
 	      i0 = i;
@@ -1002,6 +1027,7 @@ best_name (char *const *name, int const *ignore)
   /* Of those, take the first name.  */
   for (i = OLD;  i <= INDEX;  i++)
     if (name[i] && !ignore[i]
+	&& name_is_valid (name[i])
 	&& components[i] == components_min
 	&& basename_len[i] == basename_len_min
 	&& len[i] == len_min)
