@@ -114,3 +114,27 @@ echo 1 > g
 check 'patch -f -p1 --dry-run < d.diff || echo status: $?' <<EOF
 patching file g
 EOF
+
+mkdir d
+cd d
+cat > d.diff <<EOF
+--- ../h
++++ ../h
+@@ -0,0 +1 @@
++x
+EOF
+
+touch ../h
+check 'patch -f -p0 < d.diff || echo status: $?' <<EOF
+Ignoring potentially dangerous file name ../h
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- ../h
+|+++ ../h
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
+EOF

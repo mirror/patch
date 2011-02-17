@@ -379,11 +379,18 @@ skip_hex_digits (char const *str)
 static bool
 name_is_valid (char const *name)
 {
-  const char *n = name;
+  static char const *bad[2];
+  char const *n;
+
+  if (bad[0] && ! strcmp (bad[0], name))
+    return false;
+  if (bad[1] && ! strcmp (bad[1], name))
+    return false;
 
   if (IS_ABSOLUTE_FILE_NAME (name))
     {
       say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
+      bad[!! bad[0]] = name;
       return false;
     }
   for (n = name; *n; )
@@ -391,6 +398,7 @@ name_is_valid (char const *name)
       if (*n == '.' && *++n == '.' && ( ! *++n || ISSLASH (*n)))
         {
 	  say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
+	  bad[!! bad[0]] = name;
 	  return false;
 	}
       while (*n && ! ISSLASH (*n))
