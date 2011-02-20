@@ -22,6 +22,7 @@ SUBDIRS = lib src tests
 dist_man1_MANS = patch.man
 EXTRA_DIST = \
 	ChangeLog-2011 \
+	cfg.mk \
 	m4/mkdir.m4 \
 	m4/setmode.m4 \
 	m4/utimbuf.m4 \
