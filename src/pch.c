@@ -901,8 +901,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 				version_controlled[i] = 0;
 
 			      free (getbuf);
-			      if (diffbuf)
-				free (diffbuf);
+			      free (diffbuf);
 
 			      if (! stat_errno[i])
 				break;
@@ -2027,14 +2026,11 @@ pch_swap (void)
     p_Char = 0;
     set_hunkmax();
     if (!p_line || !p_len || !p_Char) {
-	if (p_line)
-	  free (p_line);
+	free (p_line);
 	p_line = tp_line;
-	if (p_len)
-	  free (p_len);
+	free (p_len);
 	p_len = tp_len;
-	if (p_Char)
-	  free (p_Char);
+	free (p_Char);
 	p_Char = tp_char;
 	return false;		/* not enough memory to swap hunk! */
     }
@@ -2093,12 +2089,9 @@ pch_swap (void)
     p_ptrn_lines = p_repl_lines;
     p_repl_lines = i;
     p_Char[p_end + 1] = '^';
-    if (tp_line)
-      free (tp_line);
-    if (tp_len)
-      free (tp_len);
-    if (tp_char)
-      free (tp_char);
+    free (tp_line);
+    free (tp_len);
+    free (tp_char);
     return true;
 }
 

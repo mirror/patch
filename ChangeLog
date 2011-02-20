@@ -1,3 +1,12 @@
+2011-02-20  Jim Meyering  <meyering@redhat.com>
+
+	maint: remove unnecessary tests before free
+	There is no longer any need to avoid "free(NULL)" (since SunOS 4),
+	so replace each "if (P) free (P);" with "free (P);".
+	* src/inp.c (get_input_file): Remove unnecessary test-before-free.
+	* src/patch.c (get_some_switches): Likewise.
+	* src/pch.c (intuit_diff_type, pch_swap): Likewise.
+
 2011-02-17  Jim Meyering  <meyering@redhat.com>
 	and Andreas Gruenbacher <agruen@linbit.com>
 

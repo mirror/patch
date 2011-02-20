@@ -186,8 +186,7 @@ get_input_file (char const *filename, char const *outname, mode_t mode)
 	      inerrno = 0;
 
 	    free (getbuf);
-	    if (diffbuf)
-	      free (diffbuf);
+	    free (diffbuf);
       }
 
     if (inerrno)

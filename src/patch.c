@@ -765,8 +765,7 @@ get_some_switches (void)
 {
     int optc;
 
-    if (rejname)
-	free (rejname);
+    free (rejname);
     rejname = 0;
     if (optind == Argc)
 	return;
