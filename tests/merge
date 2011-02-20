@@ -27,7 +27,7 @@ x2() {
     body=`seq 1 $1`
     shift
     echo "$body" > a
-    while test $# -gt 0 -a "$1" != -- ; do
+    while test $# -gt 0 && test "$1" != -- ; do
 	echo "$1"
 	shift
     done > a.sed

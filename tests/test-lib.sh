@@ -104,7 +104,7 @@ cleanup() {
     checks_failed=`expr $checks_failed`
     checks_total=`expr $checks_succeeded + $checks_failed`
     if test $checks_total -gt 0 ; then
-	if test $checks_failed -gt 0 -a $status -eq 0 ; then
+	if test $checks_failed -gt 0 && test $status -eq 0 ; then
 	    status=1
 	fi
 	echo "$checks_total tests ($checks_succeeded passed," \

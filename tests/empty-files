@@ -26,7 +26,7 @@ check 'patch < create-empty.diff || echo "Status: $?"' <<EOF
 patching file f
 EOF
 
-ncheck 'test -e f -a ! -s f'
+ncheck 'test -e f && test ! -s f'
 
 # --------------------------------------------------------------
 # Empty out a file
@@ -46,7 +46,7 @@ check 'patch < empty-out.diff || echo "Status: $?"' <<EOF
 patching file f
 EOF
 
-ncheck 'test -e f -a ! -s f'
+ncheck 'test -e f && test ! -s f'
 
 # --------------------------------------------------------------
 # Empty out a file and delete it with -E
