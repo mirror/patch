@@ -16,13 +16,14 @@ use_tmpdir
 
 echo one > f
 
+preserve_trailing_blank=
 cat > f.diff <<EOF
 --- f
 +++ f
 @@ -1,2 +1,2 @@
 -1
 +1a
- 
+ $preserve_trailing_blank
 \ No newline at end of file
 EOF
 

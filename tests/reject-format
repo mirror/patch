@@ -36,6 +36,8 @@ Hunk #1 FAILED at 2.
 Status: 1
 EOF
 
+preserve_trailing_blank=
+
 check 'cat f.rej' <<EOF
 *** f.orig
 --- f
@@ -43,14 +45,14 @@ check 'cat f.rej' <<EOF
 *** 2,7 ****
   2
   3
-  
+  $preserve_trailing_blank
 ! 5
   6
   }
 --- 2,7 ----
   2
   3
-  
+  $preserve_trailing_blank
 ! 5a
   6
   }
@@ -73,7 +75,7 @@ Index: f
 @@ -2,6 +2,6 @@
  2
  3
- 
+ $preserve_trailing_blank
 -5
 +5a
  6
@@ -96,7 +98,7 @@ check 'cat f.rej' <<EOF
 @@ -2,6 +2,6 @@
  2
  3
- 
+ $preserve_trailing_blank
 -5
 +5a
  6
@@ -121,14 +123,14 @@ Index: f
 *** 2,7 ****
   2
   3
-  
+  $preserve_trailing_blank
 ! 5
   6
   }
 --- 2,7 ----
   2
   3
-  
+  $preserve_trailing_blank
 ! 5a
   6
   }

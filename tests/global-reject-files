@@ -4,7 +4,7 @@
 # in any medium, are permitted without royalty provided the copyright
 # notice and this notice are preserved.
 
-# More than one reject to 
+# More than one reject to the same file.
 
 . $srcdir/test-lib.sh
 

@@ -65,10 +65,12 @@ cat > f.diff <<EOF
 EOF
 rm -f f
 
+preserve_trailing_blank=
+
 check 'patch -p0 < f.diff || echo "Status: $?"' <<EOF
 The next patch would delete the file f,
-which does not exist!  Assume -R? [n] 
-Apply anyway? [n] 
+which does not exist!  Assume -R? [n] $preserve_trailing_blank
+Apply anyway? [n] $preserve_trailing_blank
 Skipping patch.
 1 out of 1 hunk ignored
 Status: 1
