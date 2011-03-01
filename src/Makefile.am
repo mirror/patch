@@ -16,6 +16,8 @@
 
 ## Process this file with automake to produce Makefile.in.
 
+AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+
 bin_PROGRAMS = patch
 patch_SOURCES = \
 	bestmatch.h \
