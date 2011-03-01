@@ -2,8 +2,6 @@
 
 #define XTERN extern
 #include <common.h>
-#undef XTERN
-#define XTERN
 #include <version.h>
 
 static char const copyright_string[] = "\

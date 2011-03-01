@@ -1094,7 +1094,7 @@ locate_hunk (lin fuzz)
     return 0;
 }
 
-static void
+static void __attribute__ ((noreturn))
 mangled_patch (lin old, lin new)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];

@@ -54,7 +54,7 @@ XTERN struct timespec p_timestamp[2];  /* timestamps in patch headers */
    or a timestamp with tv_sec == -1 if there was no timestamp or an error in
    the timestamp.  */
 
-static inline const struct timespec pch_timestamp (bool which)
+static inline struct timespec pch_timestamp (bool which)
 {
   return p_timestamp[which];
 }
