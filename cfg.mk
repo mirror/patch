@@ -19,3 +19,20 @@ config_h_header = <(common|config)\.h>
 update-copyright-env = \
   UPDATE_COPYRIGHT_USE_INTERVALS=1 \
   UPDATE_COPYRIGHT_MAX_LINE_LENGTH=79
+
+local-checks-to-skip = \
+  sc_GPL_version \
+  sc_bindtextdomain \
+  sc_copyright_check \
+  sc_file_system \
+  sc_immutable_NEWS \
+  sc_obsolete_symbols \
+  sc_program_name \
+  sc_prohibit_always-defined_macros \
+  sc_prohibit_always_true_header_tests \
+  sc_prohibit_magic_number_exit \
+  sc_prohibit_strcmp \
+  sc_prohibit_test_minus_ao \
+  sc_require_test_exit_idiom \
+  sc_space_tab \
+  sc_useless_cpp_parens
