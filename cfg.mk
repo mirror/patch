@@ -23,7 +23,6 @@ update-copyright-env = \
 local-checks-to-skip = \
   sc_GPL_version \
   sc_bindtextdomain \
-  sc_copyright_check \
   sc_file_system \
   sc_immutable_NEWS \
   sc_obsolete_symbols \
