@@ -106,7 +106,7 @@ main (int argc, char **argv)
     int outfd = -1;
 
     exit_failure = 2;
-    program_name = argv[0];
+    set_program_name (argv[0]);
     init_time ();
 
     setbuf(stderr, serrbuf);

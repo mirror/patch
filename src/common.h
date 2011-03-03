@@ -59,6 +59,7 @@
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
 #endif
 
+#include <progname.h>
 
 /* handy definitions */
 
@@ -70,8 +71,6 @@
 typedef off_t lin;			/* must be signed */
 
 /* globals */
-
-XTERN char *program_name;	/* The name this program was run with. */
 
 XTERN char *buf;			/* general purpose buffer */
 XTERN size_t bufsize;			/* allocated size of buf */
