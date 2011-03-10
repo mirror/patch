@@ -366,7 +366,7 @@ sha1_says_nonexistent(char const *sha1, char const *end)
   return s == end;
 }
 
-char const *
+static char const *
 skip_hex_digits (char const *str)
 {
   char const *s;

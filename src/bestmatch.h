@@ -51,7 +51,7 @@
  * search.
  */
 
-OFFSET
+static OFFSET
 bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
 	  OFFSET min, OFFSET max, OFFSET *py)
 {

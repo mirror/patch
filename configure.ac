@@ -86,7 +86,6 @@ if test "$gl_gcc_warnings" = yes; then
   nw="$nw -Wstack-protector"        # not worth working around
   # things to fix soon:
   nw="$nw -Wshadow"
-  nw="$nw -Wmissing-prototypes"
   nw="$nw -Wmissing-format-attribute"
   nw="$nw -Wmissing-declarations"
   nw="$nw -Wstrict-overflow"
