@@ -26,7 +26,6 @@ local-checks-to-skip = \
   sc_file_system \
   sc_immutable_NEWS \
   sc_obsolete_symbols \
-  sc_prohibit_always-defined_macros \
   sc_prohibit_always_true_header_tests \
   sc_prohibit_magic_number_exit \
   sc_prohibit_strcmp \

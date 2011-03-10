@@ -39,9 +39,6 @@
 #elif HAVE_STDINT_H
 # include <stdint.h>
 #endif
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t) -1)
-#endif
 
 #include <ctype.h>
 /* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given

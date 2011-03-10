@@ -1094,15 +1094,6 @@ static int const sigs[] = {
 #endif
 #define sigaddset(s, sig) (*(s) |= sigmask (sig))
 #define sigismember(s, sig) ((*(s) & sigmask (sig)) != 0)
-#ifndef SIG_BLOCK
-#define SIG_BLOCK 0
-#endif
-#ifndef SIG_UNBLOCK
-#define SIG_UNBLOCK (SIG_BLOCK + 1)
-#endif
-#ifndef SIG_SETMASK
-#define SIG_SETMASK (SIG_BLOCK + 2)
-#endif
 #define sigprocmask(how, n, o) \
   ((how) == SIG_BLOCK \
    ? ((o) ? *(o) = sigblock (*(n)) : sigblock (*(n))) \
