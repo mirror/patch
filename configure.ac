@@ -84,10 +84,9 @@ if test "$gl_gcc_warnings" = yes; then
   nw="$nw -Wswitch-enum"            # Too many warnings for now
   nw="$nw -Wswitch-default"         # Too many warnings for now
   nw="$nw -Wstack-protector"        # not worth working around
+  nw="$nw -Wmissing-format-attribute" # not worth working around in patch
   # things to fix soon:
   nw="$nw -Wshadow"
-  nw="$nw -Wmissing-format-attribute"
-  nw="$nw -Wmissing-declarations"
   nw="$nw -Wstrict-overflow"
   nw="$nw -Wunsafe-loop-optimizations"
 #  nw="$nw -Wfloat-equal"            # sort.c, seq.c
