@@ -1,3 +1,9 @@
+2011-03-17  Jim Meyering  <meyering@redhat.com>
+
+	don't version-control ChangeLog; instead, generate it from git log
+	* Makefile.am (gen-ChangeLog): New rule.
+	* .gitignore: List ChangeLog.
+
 2011-02-20  Jim Meyering  <meyering@redhat.com>
 
 	maint: remove unnecessary tests before free

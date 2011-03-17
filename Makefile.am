@@ -21,6 +21,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = lib src tests
 dist_man1_MANS = patch.man
 EXTRA_DIST = \
+	ChangeLog-2011 \
 	m4/mkdir.m4 \
 	m4/setmode.m4 \
 	m4/utimbuf.m4 \
@@ -37,8 +38,18 @@ endif
 BUILT_SOURCES = $(top_srcdir)/.version
 $(top_srcdir)/.version:
 	echo $(VERSION) > $@-t && mv $@-t $@
-dist-hook:
+dist-hook: gen-ChangeLog
 	echo $(VERSION) > $(distdir)/.tarball-version
+
+gen_start_date = 2011-02-22
+.PHONY: gen-ChangeLog
+gen-ChangeLog:
+	$(AM_V_GEN)if test -d .git; then				\
+	  $(top_srcdir)/build-aux/gitlog-to-changelog			\
+	    --since=$(gen_start_date) > $(distdir)/cl-t;		\
+	  rm -f $(distdir)/ChangeLog;					\
+	  mv $(distdir)/cl-t $(distdir)/ChangeLog;			\
+	fi
 
 tell-upload:
 	echo; \

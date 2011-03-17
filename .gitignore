@@ -3,6 +3,7 @@
 .deps/
 /.pc/
 /.version
+/ChangeLog
 /INSTALL
 /VERSION
 /aclocal.m4
