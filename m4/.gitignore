@@ -68,6 +68,7 @@
 /safe-read.m4
 /safe-write.m4
 /setenv.m4
+/signal_h.m4
 /size_max.m4
 /ssize_t.m4
 /stat-time.m4
