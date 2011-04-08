@@ -1,4 +1,6 @@
-This version of `patch' has many changes made by the Free Software Foundation.
+This is GNU patch, which applies diff files to original files.
+
+This version of patch has many changes made by the Free Software Foundation.
 They add support for:
  * handling arbitrary binary data and large files
  * the unified context diff format that GNU diff can produce
@@ -7,13 +9,20 @@ They add support for:
  * improved interaction with RCS and SCCS
  * the GNU conventions for option parsing and configuring and compilation.
  * better POSIX compliance
-They also fix some bugs.  See the NEWS and ChangeLog files for details.
+They also fix some bugs.
+
+If you obtained this file as part of a "git clone", then see the
+README-hacking file.  If this file came to you as part of a tar archive,
+then see the file INSTALL for compilation and installation instructions.
+
+See the file NEWS for a list of major changes in the current release.
+A more detailed descripiton of all changes can be found in the file ChangeLog
+in tar archives, and with "git log" which shows the version control history.
 
 Tutorial-style documentation for patch is included in the GNU
 Diffutils package; get GNU Diffutils 2.8 or later for up-to-date
 documentation for patch.
 
-For GNU and Unix build and installation instructions, see the file INSTALL.
 Use `configure --disable-largefile' to disable large file support;
 this is reportedly necessary on Red Hat GNU/Linux 6.0 to avoid a C library bug.
 For MS-DOS using DJGPP tools, see the file pc/djgpp/README.
