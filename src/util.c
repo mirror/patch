@@ -1428,6 +1428,7 @@ fetchname (char const *at, int strip_leading, bool maybe_quoted, char **pname,
     struct timespec stamp;
 
     stamp.tv_sec = -1;
+    stamp.tv_nsec = 0;
 
     while (ISSPACE ((unsigned char) *at))
 	at++;
@@ -1497,9 +1498,7 @@ fetchname (char const *at, int strip_leading, bool maybe_quoted, char **pname,
 	timestr[u - t] = 0;
       }
 
-      if (*t == '\n')
-	stamp.tv_sec = -1;
-      else
+      if (*t != '\n')
 	{
 	  if (! pstamp)
 	    {
