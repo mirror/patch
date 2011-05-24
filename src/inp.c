@@ -267,7 +267,10 @@ plan_a (char const *filename)
 	  size = n;
 	}
       else
-	return false;
+	{
+	  free (buffer);
+	  return false;
+	}
   }
 
   /* Scan the buffer and build array of pointers to lines.  */
