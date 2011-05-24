@@ -1466,9 +1466,12 @@ open_outfile (char const *name)
     return create_output_file (name, 0);
   else
     {
+      FILE *ofp;
       int stdout_dup = dup (fileno (stdout));
-      FILE *ofp = fdopen (stdout_dup, "a");
-      if (stdout_dup == -1 || ! ofp)
+      if (stdout_dup == -1)
+	pfatal ("Failed to duplicate standard output");
+      ofp = fdopen (stdout_dup, "a");
+      if (! ofp)
 	pfatal ("Failed to duplicate standard output");
       if (dup2 (fileno (stderr), fileno (stdout)) == -1)
 	pfatal ("Failed to redirect messages to standard error");
