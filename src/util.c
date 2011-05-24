@@ -1503,6 +1503,7 @@ fetchname (char const *at, int strip_leading, bool maybe_quoted, char **pname,
 	  if (! pstamp)
 	    {
 	      free (name);
+	      free (timestr);
 	      return;
 	    }
 
