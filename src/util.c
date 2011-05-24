@@ -1319,7 +1319,8 @@ parse_c_string (char const *s, char const **endp)
 {
   char *u, *v;
 
-  assert (*s++ == '"');
+  assert (*s == '"');
+  s++;
   u = v = xmalloc (strlen (s));
   for (;;)
     {
