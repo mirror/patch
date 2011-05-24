@@ -36,7 +36,7 @@
  *
  * Returns the number of changes (insertions and deletions) required to get
  * from a[] to b[].  Returns MAX + 1 if a[] cannot be turned into b[] with
- * MAX or fewer changes.
+ * MAX or fewer changes, in which case *PY is not modified.
  *
  * MIN specifies the minimum number of elements in which a[] and b[] must
  * match. This allows to prevent trivial matches in which a sequence is
@@ -89,7 +89,10 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
 	fmid_plus_2_min = fmid + 2 * min;
 	min += yoff;
 	if (min > ylim)
-	  return max + 1;
+	  {
+	    c = max + 1;
+	    goto free_and_return;
+	  }
       }
     else
       fmid_plus_2_min = 0;  /* disable this check */
@@ -153,6 +156,8 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
   done:
     if (py)
       *py = ymax;
+
+  free_and_return:
     free (V);
     return c;
 }
