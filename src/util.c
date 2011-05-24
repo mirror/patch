@@ -30,6 +30,7 @@
 
 #include <getdate.h>
 #include "ignore-value.h"
+#include "error.h"
 
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
@@ -1006,8 +1007,7 @@ ask (char const *format, ...)
 	printf ("EOF\n");
       else if (r < 0)
 	{
-	  perror ("tty read");
-	  fflush (stderr);
+	  error (0, errno, "tty read failed");
 	  ignore_value (close (ttyfd));
 	  ttyfd = -1;
 	  r = 0;
