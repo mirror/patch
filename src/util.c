@@ -29,6 +29,7 @@
 #include <xalloc.h>
 
 #include <getdate.h>
+#include "ignore-value.h"
 
 #include <signal.h>
 #if !defined SIGCHLD && defined SIGCLD
@@ -1007,7 +1008,7 @@ ask (char const *format, ...)
 	{
 	  perror ("tty read");
 	  fflush (stderr);
-	  close (ttyfd);
+	  ignore_value (close (ttyfd));
 	  ttyfd = -1;
 	  r = 0;
 	}
