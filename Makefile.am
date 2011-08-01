@@ -36,6 +36,7 @@ else
   GNU_SERVER = ftp.gnu.org
 endif
 
+EXTRA_DIST += $(top_srcdir)/.version
 BUILT_SOURCES = $(top_srcdir)/.version
 $(top_srcdir)/.version:
 	echo $(VERSION) > $@-t && mv $@-t $@
