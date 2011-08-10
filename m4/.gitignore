@@ -37,6 +37,7 @@
 /inline.m4
 /intmax_t.m4
 /inttypes_h.m4
+/largefile.m4
 /lchmod.m4
 /localcharset.m4
 /locale-fr.m4
@@ -56,6 +57,7 @@
 /mktime.m4
 /mmap-anon.m4
 /multiarch.m4
+/nocrash.m4
 /parse-datetime.m4
 /pathmax.m4
 /printf.m4
@@ -85,6 +87,7 @@
 /strndup.m4
 /strnlen.m4
 /symlink.m4
+/sys_socket_h.m4
 /sys_stat_h.m4
 /sys_time_h.m4
 /tempname.m4
