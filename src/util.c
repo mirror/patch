@@ -123,7 +123,7 @@ file_already_seen (struct stat const *st)
   return hash_lookup (file_id_table, &f) != 0;
 }
 
-static bool
+static bool _GL_ATTRIBUTE_PURE
 contains_slash (const char *s)
 {
   for (; *s; s++)

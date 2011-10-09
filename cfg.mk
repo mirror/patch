@@ -33,3 +33,6 @@ local-checks-to-skip = \
   sc_require_test_exit_idiom \
   sc_space_tab \
   sc_useless_cpp_parens
+
+exclude_file_name_regexp--sc_prohibit_doubled_word = ^src/util\.c$$
+exclude_file_name_regexp--sc_unmarked_diagnostics = ^src/util\.c$$

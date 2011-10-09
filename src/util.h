@@ -74,7 +74,7 @@ enum file_attributes {
 void set_file_attributes (char const *, enum file_attributes, char const *,
 			  struct stat *, mode_t, struct timespec *);
 
-static inline char const *
+static inline char const * _GL_ATTRIBUTE_PURE
 skip_spaces (char const *str)
 {
   while (ISSPACE ((unsigned char) *str))

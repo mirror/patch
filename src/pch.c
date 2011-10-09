@@ -315,7 +315,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
     return true;
 }
 
-static mode_t
+static mode_t _GL_ATTRIBUTE_PURE
 fetchmode (char const *str)
 {
    const char *s;
@@ -366,7 +366,7 @@ sha1_says_nonexistent(char const *sha1, char const *end)
   return s == end;
 }
 
-static char const *
+static char const * _GL_ATTRIBUTE_PURE
 skip_hex_digits (char const *str)
 {
   char const *s;
@@ -2248,7 +2248,7 @@ pch_mode (bool which)
    This accepts just a subset of the valid commands, but it's
    good enough in practice.  */
 
-static char
+static char _GL_ATTRIBUTE_PURE
 get_ed_command_letter (char const *line)
 {
   char const *p = line;

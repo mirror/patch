@@ -202,7 +202,7 @@ XTERN lin out_offset;
 XTERN lin last_frozen_line;
 
 bool copy_till (struct outstate *, lin);
-bool similar (char const *, size_t, char const *, size_t);
+bool similar (char const *, size_t, char const *, size_t) _GL_ATTRIBUTE_PURE;
 
 #ifdef ENABLE_MERGE
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
