@@ -1,3 +1,4 @@
+* Patch no longer gets a failed assertion for certain mangled patches.
 * Patch now ignores destination file names that are absolute or that contain
   a component of "..".  This addresses CVE-2010-4651,
 * Support for most features of the "diff --git" format: renames and copies,

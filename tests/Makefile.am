@@ -36,6 +36,7 @@ TESTS = \
 	inname \
 	line-numbers \
 	merge \
+	mangled-numbers-abort \
 	munged-context-format \
 	need-filename \
 	no-newline-triggers-assert \

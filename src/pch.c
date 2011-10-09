@@ -1513,7 +1513,9 @@ another_hunk (enum diff difftype, bool rev)
 	p_suffix_context = ((ptrn_suffix_context != -1
 			     && ptrn_suffix_context < context)
 			    ? ptrn_suffix_context : context);
-	assert (p_prefix_context != -1 && p_suffix_context != -1);
+	if (p_prefix_context == -1 || p_suffix_context == -1)
+	    fatal ("replacement text or line numbers mangled in hunk at line %s",
+		   format_linenum (numbuf0, p_hunk_beg));
 
 	if (difftype == CONTEXT_DIFF
 	    && (fillcnt
