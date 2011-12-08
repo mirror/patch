@@ -67,7 +67,8 @@ bool file_already_seen (struct stat const *);
 enum file_attributes {
   FA_TIMES = 1,
   FA_IDS = 2,
-  FA_MODE = 4
+  FA_MODE = 4,
+  FA_XATTRS = 8
 };
 
 void set_file_attributes (char const *, enum file_attributes, char const *,

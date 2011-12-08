@@ -102,3 +102,20 @@ EOF
 check 'ls -l f.rej | sed "s,\(..........\).*,\1,"' <<EOF
 -rw-r-----
 EOF
+
+# ==============================================================
+
+cat > f.diff <<EOF
+--- /dev/null
++++ b/f	$timestamp2
+@@ -0,0 +1 @@
++one
+EOF
+
+rm -f f
+
+check 'patch -p1 --backup --set-utc < f.diff' <<EOF
+patching file f
+EOF
+
+ncheck 'test ! \( f -ot f.compare -o f -nt f.compare \) || echo "timstamp differs"'

@@ -471,7 +471,7 @@ main (int argc, char **argv)
 		  if (failed < hunk || diff_type == ED_DIFF || set_mode
 		      || pch_copy () || pch_rename ())
 		    {
-		      enum file_attributes attr = FA_IDS | FA_MODE;
+		      enum file_attributes attr = 0;
 		      struct timespec new_time = pch_timestamp (! reverse);
 		      mode_t mode = file_type |
 			  ((new_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
@@ -496,9 +496,15 @@ main (int argc, char **argv)
 			    attr |= FA_TIMES;
 			}
 
-		      if (! inerrno)
-			set_file_attributes (TMPOUTNAME, attr, inname, &instat,
+		      if (inerrno)
+			set_file_attributes (TMPOUTNAME, attr, NULL, NULL,
 					     mode, &new_time);
+		      else
+			{
+			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
+			  set_file_attributes (TMPOUTNAME, attr, inname, &instat,
+					       mode, &new_time);
+			}
 
 		      assert (outst.st_size != -1);
 		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,

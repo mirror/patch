@@ -203,7 +203,7 @@ set_file_attributes (char const *to, enum file_attributes attr,
 	}
       if (lutimens (to, times) != 0)
 	pfatal ("Failed to set the timestamps of %s %s",
-		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
   if (attr & FA_IDS)
@@ -231,11 +231,12 @@ set_file_attributes (char const *to, enum file_attributes attr,
 		  && errno != EPERM)))
 	pfatal ("Failed to set the %s of %s %s",
 		(uid == -1) ? "owner" : "owning group",
-		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
-  if (copy_attr (from, to))
-    fatal_exit (0);
+  if (attr & FA_XATTRS)
+    if (copy_attr (from, to))
+      fatal_exit (0);
   /* FIXME: There may be other attributes to preserve.  */
   if (attr & FA_MODE)
     {
@@ -248,7 +249,7 @@ set_file_attributes (char const *to, enum file_attributes attr,
       if (! S_ISLNK (mode) && chmod (to, mode) != 0)
 #endif
 	pfatal ("Failed to set the permissions of %s %s",
-		S_ISLNK (st->st_mode) ? "symbolic link" : "file",
+		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
 }
