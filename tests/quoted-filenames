@@ -18,13 +18,13 @@ use_tmpdir
 #   \ / : * ? " < > |
 
 cat > d.diff <<EOF
-diff --git " \\t\\040" " \\t\\040"
---- " \\t\\040"
-+++ " \\t\\040"
+diff --git "\\t \\040" "\\t \\040"
+--- "\\t \\040"
++++ "\\t \\040"
 @@ -1 +1 @@
 -one
 +two
 EOF
 
-ncheck 'echo one > " 	 "'
+ncheck 'echo one > "	  "'
 ncheck 'patch -s -p0 < d.diff'
