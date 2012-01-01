@@ -622,7 +622,7 @@ reinitialize_almost_everything (void)
 }
 
 static char const shortopts[] = "bB:cd:D:eEfF:g:i:l"
-#if 0 && defined(ENABLE_MERGE)
+#if 0 && defined ENABLE_MERGE
 				"m"
 #endif
 				"nNo:p:r:RstTuvV:x:Y:z:Z";
