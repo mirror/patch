@@ -1,6 +1,6 @@
 /* Find a best match between two vectors.
 
-   Copyright (C) 2009-2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2012 Free Software Foundation, Inc.
    Written by Andreas Gruenbacher <agruen@gnu.org>, 2009.
 
    This program is free software: you can redistribute it and/or modify

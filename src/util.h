@@ -2,7 +2,7 @@
 
 /* Copyright (C) 1986 Larry Wall
 
-   Copyright (C) 1992-1993, 1997-1999, 2001-2003, 2009-2011 Free Software
+   Copyright (C) 1992-1993, 1997-1999, 2001-2003, 2009-2012 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify

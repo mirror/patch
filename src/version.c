@@ -5,7 +5,7 @@
 #include <version.h>
 
 static char const copyright_string[] = "\
-Copyright (C) 2003, 2009-2011 Free Software Foundation, Inc.\n\
+Copyright (C) 2003, 2009-2012 Free Software Foundation, Inc.\n\
 Copyright (C) 1988 Larry Wall";
 
 static char const free_software_msgid[] = "\
