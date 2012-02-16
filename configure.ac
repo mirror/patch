@@ -44,6 +44,7 @@ gl_EARLY
 gl_USE_SYSTEM_EXTENSIONS
 AC_HEADER_STDC
 gl_INIT
+AM_PROG_AR
 
 AC_ARG_ENABLE([gcc-warnings],
   [AS_HELP_STRING([--enable-gcc-warnings],
