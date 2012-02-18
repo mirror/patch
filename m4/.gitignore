@@ -243,3 +243,4 @@ xalloc.m4
 xsize.m4
 xstrndup.m4
 xvasprintf.m4
+/close.m4
