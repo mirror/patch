@@ -62,6 +62,7 @@
 
 #define strEQ(s1,s2) (!strcmp(s1, s2))
 #define strnEQ(s1,s2,l) (!strncmp(s1, s2, l))
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 
 /* typedefs */
 

@@ -42,6 +42,7 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 		2 for nonexistent */
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
+static char const *invalid_names[2];
 bool p_copy[2];				/* Does this patch create a copy? */
 bool p_rename[2];			/* Does this patch rename a file? */
 static char *p_timestr[2];		/* timestamps as strings */
@@ -379,34 +380,41 @@ skip_hex_digits (char const *str)
 static bool
 name_is_valid (char const *name)
 {
-  static char const *bad[2];
   char const *n;
+  int i;
+  bool is_valid = true;
 
-  if (bad[0] && ! strcmp (bad[0], name))
-    return false;
-  if (bad[1] && ! strcmp (bad[1], name))
-    return false;
+  for (i = 0; i < ARRAY_SIZE (invalid_names); i++)
+    {
+      if (! invalid_names[i])
+	break;
+      if (! strcmp (invalid_names[i], name))
+	return false;
+    }
 
   if (IS_ABSOLUTE_FILE_NAME (name))
+    is_valid = false;
+  else
+    for (n = name; *n; )
+      {
+	if (*n == '.' && *++n == '.' && ( ! *++n || ISSLASH (*n)))
+	  {
+	    is_valid = false;
+	    break;
+	  }
+	while (*n && ! ISSLASH (*n))
+	  n++;
+	while (ISSLASH (*n))
+	  n++;
+      }
+
+  if (! is_valid)
     {
       say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
-      bad[!! bad[0]] = name;
-      return false;
+      if (i < ARRAY_SIZE (invalid_names))
+	invalid_names[i] = name;
     }
-  for (n = name; *n; )
-    {
-      if (*n == '.' && *++n == '.' && ( ! *++n || ISSLASH (*n)))
-        {
-	  say ("Ignoring potentially dangerous file name %s\n", quotearg (name));
-	  bad[!! bad[0]] = name;
-	  return false;
-	}
-      while (*n && ! ISSLASH (*n))
-	n++;
-      while (ISSLASH (*n))
-	n++;
-    }
-  return true;
+  return is_valid;
 }
 
 /* Determine what kind of diff is in the remaining part of the patch file. */
@@ -434,6 +442,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  free (p_name[i]);
 	  p_name[i] = 0;
         }
+    for (i = 0; i < ARRAY_SIZE (invalid_names); i++)
+	invalid_names[i] = NULL;
     for (i = OLD; i <= NEW; i++)
       if (p_timestr[i])
 	{
