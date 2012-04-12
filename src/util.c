@@ -519,8 +519,9 @@ move_file (char const *from, int *from_needs_removal,
 	  /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
 	     rename returned zero because FROM and TO are hard links to
 	     the same file.  */
-	  if (0 < to_errno
-	      || (to_errno == 0 && to_st.st_nlink <= 1))
+	  if ((0 < to_errno
+	       || (to_errno == 0 && to_st.st_nlink <= 1))
+	      && from_needs_removal)
 	    *from_needs_removal = 0;
 	}
     }

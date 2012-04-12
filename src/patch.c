@@ -53,6 +53,9 @@ static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
+static void output_file (char const *, int *, const struct stat *, char const *,
+			 mode_t, bool);
+
 #ifdef ENABLE_MERGE
 static bool merge;
 #else
@@ -438,16 +441,8 @@ main (int argc, char **argv)
 		      && ! posixly_correct)
 		  || S_ISLNK (file_type)))
 	    {
-	      if (verbosity == VERBOSE)
-		say ("Removing %s %s%s\n",
-		     S_ISLNK (file_type) ? "symbolic link" : "file",
-		     quotearg (outname),
-		     dry_run ? " and any empty ancestor directories" : "");
 	      if (! dry_run)
-		{
-		  move_file (0, 0, 0, outname, file_type | 0, backup);
-		  removedirs (outname);
-		}
+		output_file (NULL, NULL, NULL, outname, file_type | 0, backup);
 	    }
 	  else
 	    {
@@ -506,20 +501,14 @@ main (int argc, char **argv)
 					       mode, &new_time);
 			}
 
-		      assert (outst.st_size != -1);
-		      move_file (TMPOUTNAME, &TMPOUTNAME_needs_removal, &outst,
-				 outname, mode, backup);
+		      output_file (TMPOUTNAME, &TMPOUTNAME_needs_removal,
+				   &outst, outname, mode, backup);
 
 		      if (pch_rename ())
-		        {
-			  if (backup)
-			    create_backup (inname, 0, 0, false, true);
-			  else if (unlink (inname))
-			    pfatal ("Can't remove file %s", quotearg (inname));
-			}
+			output_file (NULL, NULL, NULL, inname, mode, backup);
 		    }
-		  else if (backup)
-		    create_backup (outname, 0, 0, true, false);
+		  else
+		    output_file (outname, NULL, &outst, NULL, file_type | 0, backup);
 		}
 	    }
       }
@@ -1616,6 +1605,34 @@ similar (char const *a, size_t alen, char const *b, size_t blen)
 	return false;
       else
 	alen--, blen--;
+    }
+}
+
+/* Putting output files into place and removing them. */
+
+static void
+output_file (char const *from, int *from_needs_removal,
+	     const struct stat *from_st, char const *to,
+	     mode_t mode, bool backup)
+{
+  if (from == NULL)
+    {
+      if (verbosity == VERBOSE)
+	say ("Removing %s %s\n",
+	     S_ISLNK (mode) ? "symbolic link" : "file",
+	     quotearg (to));
+	move_file (0, 0, 0, to, mode, backup);
+	removedirs (to);
+    }
+  else if (to == NULL)
+    {
+      if (backup)
+	create_backup (from, 0, 0, true, false);
+    }
+  else
+    {
+      assert (from_st->st_size != -1);
+      move_file (from, from_needs_removal, from_st, to, mode, backup);
     }
 }
 
