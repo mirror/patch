@@ -176,24 +176,3 @@ check 'echo b > symlink.orig && cat target2' <<EOF
 b
 EOF
 rm -f target2
-
-# --------------------------------------------------------------
-
-# Delete and then recreate the same symlink: make sure the original
-# symlink is backed up
-
-ncheck 'ln -s target2 symlink'
-rm -f symlink.orig
-
-check 'cat delete-symlink.diff create-symlink.diff | patch -p1 --backup || echo "Status: $?"' <<EOF
-patching symbolic link symlink
-patching symbolic link symlink
-EOF
-
-check 'echo a > symlink.orig && cat target2' <<EOF
-a
-EOF
-check 'echo b > symlink.orig && cat target2' <<EOF
-b
-EOF
-rm -f target2
