@@ -23,6 +23,7 @@ lin pch_end (void) _GL_ATTRIBUTE_PURE;
 lin pch_first (void) _GL_ATTRIBUTE_PURE;
 lin pch_hunk_beg (void) _GL_ATTRIBUTE_PURE;
 char const *pch_c_function (void) _GL_ATTRIBUTE_PURE;
+bool pch_git_diff (void) _GL_ATTRIBUTE_PURE;
 char const * pch_timestr (bool which) _GL_ATTRIBUTE_PURE;
 mode_t pch_mode (bool which) _GL_ATTRIBUTE_PURE;
 lin pch_newfirst (void) _GL_ATTRIBUTE_PURE;

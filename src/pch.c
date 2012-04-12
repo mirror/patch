@@ -72,6 +72,7 @@ static lin p_hunk_beg;			/* line number of current hunk */
 static lin p_efake = -1;		/* end of faked up lines--don't free */
 static lin p_bfake = -1;		/* beg of faked up lines */
 static char *p_c_function;		/* the C function a hunk is in */
+static bool p_git_diff;			/* true if this is a git style diff */
 
 static char *scan_linenum (char *, lin *);
 static enum diff intuit_diff_type (bool, mode_t *);
@@ -428,7 +429,6 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     lin fcl_line = 0; /* Pacify 'gcc -W'.  */
     bool this_is_a_command = false;
     bool stars_this_line = false;
-    bool git_diff = false;
     bool extended_headers = false;
     enum nametype i;
     struct stat st[3];
@@ -450,6 +450,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  free(p_timestr[i]);
 	  p_timestr[i] = 0;
 	}
+    p_git_diff = false;
     for (i = OLD; i <= NEW; i++)
       {
 	p_mode[i] = 0;
@@ -538,21 +539,21 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	}
 	if (!stars_last_line && strnEQ(s, "*** ", 4))
 	  {
-	    fetchname (s+4, strippath, git_diff, &p_name[OLD], &p_timestr[OLD],
+	    fetchname (s+4, strippath, p_git_diff, &p_name[OLD], &p_timestr[OLD],
 		       &p_timestamp[OLD]);
 	    need_header = false;
 	  }
 	else if (strnEQ(s, "+++ ", 4))
 	  {
 	    /* Swap with NEW below.  */
-	    fetchname (s+4, strippath, git_diff, &p_name[OLD], &p_timestr[OLD],
+	    fetchname (s+4, strippath, p_git_diff, &p_name[OLD], &p_timestr[OLD],
 		       &p_timestamp[OLD]);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    fetchname (s+6, strippath, git_diff, &p_name[INDEX], (char **) 0, NULL);
+	    fetchname (s+6, strippath, p_git_diff, &p_name[INDEX], (char **) 0, NULL);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -611,9 +612,9 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		  free (p_name[i]);
 		  p_name[i] = 0;
 		}
-	    git_diff = true;
+	    p_git_diff = true;
 	  }
-	else if (git_diff && strnEQ (s, "index ", 6))
+	else if (p_git_diff && strnEQ (s, "index ", 6))
 	  {
 	    char const *u, *v;
 	    if ((u = skip_hex_digits (s + 6))
@@ -628,57 +629,57 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		extended_headers = true;
 	      }
 	  }
-	else if (git_diff && strnEQ (s, "old mode ", 9))
+	else if (p_git_diff && strnEQ (s, "old mode ", 9))
 	  {
 	    p_mode[OLD] = fetchmode (s + 9);
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "new mode ", 9))
+	else if (p_git_diff && strnEQ (s, "new mode ", 9))
 	  {
 	    p_mode[NEW] = fetchmode (s + 9);
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "deleted file mode ", 18))
+	else if (p_git_diff && strnEQ (s, "deleted file mode ", 18))
 	  {
 	    p_mode[OLD] = fetchmode (s + 18);
 	    p_says_nonexistent[NEW] = 2;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "new file mode ", 14))
+	else if (p_git_diff && strnEQ (s, "new file mode ", 14))
 	  {
 	    p_mode[NEW] = fetchmode (s + 14);
 	    p_says_nonexistent[OLD] = 2;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "rename from ", 12))
+	else if (p_git_diff && strnEQ (s, "rename from ", 12))
 	  {
 	    /* Git leaves out the prefix in the file name in this header,
 	       so we can only ignore the file name.  */
 	    p_rename[OLD] = true;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "rename to ", 10))
+	else if (p_git_diff && strnEQ (s, "rename to ", 10))
 	  {
 	    /* Git leaves out the prefix in the file name in this header,
 	       so we can only ignore the file name.  */
 	    p_rename[NEW] = true;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "copy from ", 10))
+	else if (p_git_diff && strnEQ (s, "copy from ", 10))
 	  {
 	    /* Git leaves out the prefix in the file name in this header,
 	       so we can only ignore the file name.  */
 	    p_copy[OLD] = true;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "copy to ", 8))
+	else if (p_git_diff && strnEQ (s, "copy to ", 8))
 	  {
 	    /* Git leaves out the prefix in the file name in this header,
 	       so we can only ignore the file name.  */
 	    p_copy[NEW] = true;
 	    extended_headers = true;
 	  }
-	else if (git_diff && strnEQ (s, "GIT binary patch", 16))
+	else if (p_git_diff && strnEQ (s, "GIT binary patch", 16))
 	  {
 	    p_start = this_line;
 	    p_sline = p_input_line;
@@ -693,7 +694,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      {
 		struct timespec timestamp;
 		timestamp.tv_sec = -1;
-		fetchname (t+4, strippath, git_diff, &p_name[NEW], &p_timestr[NEW],
+		fetchname (t+4, strippath, p_git_diff, &p_name[NEW], &p_timestr[NEW],
 			   &timestamp);
 		need_header = false;
 		if (timestamp.tv_sec != -1)
@@ -2241,6 +2242,14 @@ char const *
 pch_c_function (void)
 {
     return p_c_function;
+}
+
+/* Return true if in a git-style patch. */
+
+bool
+pch_git_diff (void)
+{
+  return p_git_diff;
 }
 
 char const *
