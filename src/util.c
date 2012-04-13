@@ -57,6 +57,7 @@ typedef struct
 {
   dev_t dev;
   ino_t ino;
+  enum file_id_type type;
 } file_id;
 
 /* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
@@ -92,10 +93,11 @@ init_backup_hash_table (void)
     xalloc_die ();
 }
 
-/* Insert a file with status ST into the hash table.  */
+/* Insert a file with status ST and type TYPE into the hash table.
+   The type of an existing entry can be changed by re-inserting it.  */
 
 static void
-insert_file (struct stat const *st)
+insert_file_id (struct stat const *st, enum file_id_type type)
 {
    file_id *p;
    static file_id *next_slot;
@@ -109,18 +111,21 @@ insert_file (struct stat const *st)
      xalloc_die ();
    if (p == next_slot)
      next_slot = NULL;
+   p->type = type;
 }
 
 /* Has the file identified by ST already been inserted into the hash
-   table?  */
+   table, and what type does it have?  */
 
-bool
-file_already_seen (struct stat const *st)
+enum file_id_type
+lookup_file_id (struct stat const *st)
 {
-  file_id f;
+  file_id f, *p;
+
   f.dev = st->st_dev;
   f.ino = st->st_ino;
-  return hash_lookup (file_id_table, &f) != 0;
+  p = hash_lookup (file_id_table, &f);
+  return p ? p->type : UNKNOWN;
 }
 
 static bool _GL_ATTRIBUTE_PURE
@@ -262,7 +267,7 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
   copy_file (from, to, remember_backup ? &backup_st : NULL, 0, st->st_mode,
 	     to_dir_known_to_exist);
   if (remember_backup)
-    insert_file (&backup_st);
+    insert_file_id (&backup_st, CREATED);
   set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
 }
 
@@ -300,7 +305,7 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
     fatal ("File %s is not a %s -- refusing to create backup",
 	   to, S_ISLNK (to_st->st_mode) ? "symbolic link" : "regular file");
 
-  if (! *to_errno && file_already_seen (to_st))
+  if (! *to_errno && lookup_file_id (to_st) == CREATED)
     {
       if (debug & 4)
 	say ("File %s already seen\n", quotearg (to));
@@ -355,7 +360,7 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 	  int fd;
 
 	  if (lstat (bakname, &backup_st) == 0
-	      && file_already_seen (&backup_st))
+	      && lookup_file_id (&backup_st) == CREATED)
 	    {
 	      if (debug & 4)
 		say ("File %s already seen\n", quotearg (to));
@@ -375,7 +380,7 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 		  try_makedirs_errno = 0;
 		}
 	      if (remember_backup && fstat (fd, &backup_st) == 0)
-		insert_file (&backup_st);
+		insert_file_id (&backup_st, CREATED);
 	      if (close (fd) != 0)
 		pfatal ("Can't close file %s", quotearg (bakname));
 	    }
@@ -408,7 +413,7 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 			quotearg_n (0, to), quotearg_n (1, bakname));
 	    }
 	  if (remember_backup)
-	    insert_file (to_st);
+	    insert_file_id (to_st, CREATED);
 	}
       free (bakname);
     }
@@ -469,7 +474,7 @@ move_file (char const *from, int *from_needs_removal,
 	  free (buffer);
 	  if (lstat (to, &to_st) != 0)
 	    pfatal ("Can't get file attributes of %s %s", "symbolic link", to);
-	  insert_file (&to_st);
+	  insert_file_id (&to_st, CREATED);
 	}
       else
 	{
@@ -501,7 +506,7 @@ move_file (char const *from, int *from_needs_removal,
 			pfatal ("Can't remove file %s", quotearg (to));
 		    }
 		  copy_file (from, to, &tost, 0, mode, to_dir_known_to_exist);
-		  insert_file (&tost);
+		  insert_file_id (&tost, CREATED);
 		  return;
 		}
 
@@ -510,7 +515,7 @@ move_file (char const *from, int *from_needs_removal,
 	    }
 
 	rename_succeeded:
-	  insert_file (fromst);
+	  insert_file_id (fromst, CREATED);
 	  /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
 	     rename returned zero because FROM and TO are hard links to
 	     the same file.  */

@@ -27,6 +27,8 @@
    Add one for the sign.  */
 #define LINENUM_LENGTH_BOUND (sizeof (lin) * CHAR_BIT / 3 + 1)
 
+enum file_id_type { UNKNOWN, CREATED };
+
 XTERN enum backup_type backup_type;
 
 bool ok_to_reverse (char const *, ...) __attribute__ ((format (printf, 1, 2)));
@@ -62,7 +64,7 @@ void remove_prefix (char *, size_t);
 void removedirs (char const *);
 void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
-bool file_already_seen (struct stat const *);
+enum file_id_type lookup_file_id (struct stat const *);
 
 enum file_attributes {
   FA_TIMES = 1,

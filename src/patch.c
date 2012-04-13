@@ -568,7 +568,7 @@ main (int argc, char **argv)
 			olderrno = lstat (rej, &oldst) ? errno : 0;
 			if (olderrno && olderrno != ENOENT)
 			  write_fatal ();
-		        if (! olderrno && file_already_seen (&oldst))
+		        if (! olderrno && lookup_file_id (&oldst) == CREATED)
 			  append_to_file (TMPREJNAME, rej);
 			else
 			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
