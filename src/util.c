@@ -261,19 +261,14 @@ set_file_attributes (char const *to, enum file_attributes attr,
 
 static void
 create_backup_copy (char const *from, char const *to, const struct stat *st,
-		    bool to_dir_known_to_exist, bool remember_backup)
+		    bool to_dir_known_to_exist)
 {
-  struct stat backup_st;
-  copy_file (from, to, remember_backup ? &backup_st : NULL, 0, st->st_mode,
-	     to_dir_known_to_exist);
-  if (remember_backup)
-    insert_file_id (&backup_st, CREATED);
+  copy_file (from, to, NULL, 0, st->st_mode, to_dir_known_to_exist);
   set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
 }
 
 void
-create_backup (char const *to, const struct stat *to_st, bool leave_original,
-	       bool remember_backup)
+create_backup (char const *to, const struct stat *to_st, bool leave_original)
 {
   /* When the input to patch modifies the same file more than once, patch only
      backs up the initial version of each file.
@@ -283,13 +278,10 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original,
      up; files already known have already been backed up before, and are
      skipped.
 
-     When a patch deletes a file, this leaves patch without such a "sentinel"
-     file.  In that case, patch remembers the *backup file* instead; when a
-     patch creates a file, patch checks if the *backup file* is already known.
-
-     This strategy is not fully compatible with numbered backups: when a patch
-     deletes and later recreates a file with numbered backups, two numbered
-     backups will be created.  */
+     When a patch tries to delete a file, in order to not break the above
+     logic, we merely remember which file to delete.  After the entire patch
+     file has been read, we delete all files marked for deletion which have not
+     been recreated in the meantime.  */
 
   if (to_st && ! (S_ISREG (to_st->st_mode) || S_ISLNK (to_st->st_mode)))
     fatal ("File %s is not a %s -- refusing to create backup",
@@ -346,38 +338,25 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original,
 
       if (! to_st)
 	{
-	  struct stat backup_st;
 	  int fd;
 
-	  if (lstat (bakname, &backup_st) == 0
-	      && lookup_file_id (&backup_st) == CREATED)
-	    {
-	      if (debug & 4)
-		say ("File %s already seen\n", quotearg (to));
-	    }
-	  else
-	    {
-	      if (debug & 4)
-		say ("Creating empty file %s\n", quotearg (bakname));
+	  if (debug & 4)
+	    say ("Creating empty file %s\n", quotearg (bakname));
 
-	      try_makedirs_errno = ENOENT;
-	      unlink (bakname);
-	      while ((fd = creat (bakname, 0666)) < 0)
-		{
-		  if (errno != try_makedirs_errno)
-		    pfatal ("Can't create file %s", quotearg (bakname));
-		  makedirs (bakname);
-		  try_makedirs_errno = 0;
-		}
-	      if (remember_backup && fstat (fd, &backup_st) == 0)
-		insert_file_id (&backup_st, CREATED);
-	      if (close (fd) != 0)
-		pfatal ("Can't close file %s", quotearg (bakname));
+	  try_makedirs_errno = ENOENT;
+	  unlink (bakname);
+	  while ((fd = creat (bakname, 0666)) < 0)
+	    {
+	      if (errno != try_makedirs_errno)
+		pfatal ("Can't create file %s", quotearg (bakname));
+	      makedirs (bakname);
+	      try_makedirs_errno = 0;
 	    }
+	  if (close (fd) != 0)
+	    pfatal ("Can't close file %s", quotearg (bakname));
 	}
       else if (leave_original)
-	create_backup_copy (to, bakname, to_st, try_makedirs_errno == 0,
-			    remember_backup);
+	create_backup_copy (to, bakname, to_st, try_makedirs_errno == 0);
       else
 	{
 	  if (debug & 4)
@@ -393,8 +372,7 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original,
 	      else if (errno == EXDEV)
 		{
 		  create_backup_copy (to, bakname, to_st,
-				      try_makedirs_errno == 0,
-				      remember_backup);
+				      try_makedirs_errno == 0);
 		  unlink (to);
 		  break;
 		}
@@ -402,8 +380,6 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original,
 		pfatal ("Can't rename file %s to %s",
 			quotearg_n (0, to), quotearg_n (1, bakname));
 	    }
-	  if (remember_backup)
-	    insert_file_id (to_st, CREATED);
 	}
       free (bakname);
     }
@@ -429,7 +405,7 @@ move_file (char const *from, int *from_needs_removal,
 
   to_errno = lstat (to, &to_st) == 0 ? 0 : errno;
   if (backup)
-    create_backup (to, to_errno ? NULL : &to_st, false, from == NULL);
+    create_backup (to, to_errno ? NULL : &to_st, false);
   if (! to_errno)
     insert_file_id (&to_st, OVERWRITTEN);
 

@@ -1695,7 +1695,7 @@ output_file (char const *from, int *from_needs_removal,
   else if (to == NULL)
     {
       if (backup)
-	create_backup (from, from_st, true, false);
+	create_backup (from, from_st, true);
     }
   else
     {
