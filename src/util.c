@@ -430,7 +430,7 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
    Back up TO if BACKUP is true.  */
 
 void
-move_file (char const *from, int *from_needs_removal,
+move_file (char const *from, bool *from_needs_removal,
 	   struct stat const *fromst,
 	   char const *to, mode_t mode, bool backup)
 {
@@ -525,7 +525,7 @@ move_file (char const *from, int *from_needs_removal,
 	  if ((0 < to_errno
 	       || (to_errno == 0 && to_st.st_nlink <= 1))
 	      && from_needs_removal)
-	    *from_needs_removal = 0;
+	    *from_needs_removal = false;
 	}
     }
   else if (! backup)

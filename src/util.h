@@ -58,7 +58,7 @@ void init_backup_hash_table (void);
 void init_time (void);
 void xalloc_die (void) __attribute__ ((noreturn));
 void create_backup (char const *, const struct stat *, bool);
-void move_file (char const *, int *, struct stat const *, char const *, mode_t, bool);
+void move_file (char const *, bool *, struct stat const *, char const *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char const *);

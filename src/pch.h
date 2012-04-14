@@ -43,7 +43,7 @@ size_t pch_line_len (lin) _GL_ATTRIBUTE_PURE;
 const char *pch_name(enum nametype) _GL_ATTRIBUTE_PURE;
 bool pch_copy (void) _GL_ATTRIBUTE_PURE;
 bool pch_rename (void) _GL_ATTRIBUTE_PURE;
-void do_ed_script (char const *, char const *, int *, FILE *);
+void do_ed_script (char const *, char const *, bool *, FILE *);
 void open_patch_file (char const *);
 void re_patch (void);
 void set_hunkmax (void);

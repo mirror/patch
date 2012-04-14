@@ -48,14 +48,14 @@ static void init_output (struct outstate *);
 static FILE *open_outfile (char const *);
 static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
-static void remove_if_needed (char const *, int *);
+static void remove_if_needed (char const *, bool *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
 static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
-static void output_file (char const *, int *, const struct stat *, char const *,
+static void output_file (char const *, bool *, const struct stat *, char const *,
 			 const struct stat *, mode_t, bool);
 
 static void init_files_to_delete (void);
@@ -95,7 +95,7 @@ static FILE *rejfp;  /* reject file pointer */
 static char const *patchname;
 static char *rejname;
 static char const * TMPREJNAME;
-static int TMPREJNAME_needs_removal;
+static bool TMPREJNAME_needs_removal;
 
 static lin maxfuzz = 2;
 
@@ -299,7 +299,7 @@ main (int argc, char **argv)
       outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
 			     O_WRONLY | binary_transput,
 			     instat.st_mode & S_IRWXUGO);
-      TMPOUTNAME_needs_removal = 1;
+      TMPOUTNAME_needs_removal = true;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
@@ -1558,7 +1558,7 @@ init_reject (char const *outname)
   int fd;
   fd = make_tempfile (&TMPREJNAME, 'r', outname, O_WRONLY | binary_transput,
 		      0666);
-  TMPREJNAME_needs_removal = 1;
+  TMPREJNAME_needs_removal = true;
   rejfp = fdopen (fd, binary_transput ? "wb" : "w");
   if (! rejfp)
     pfatal ("Can't open stream for file %s", quotearg (TMPREJNAME));
@@ -1759,7 +1759,7 @@ struct file_to_output {
 static gl_list_t files_to_output;
 
 static void
-output_file_later (char const *from, int *from_needs_removal, const struct stat *from_st,
+output_file_later (char const *from, bool *from_needs_removal, const struct stat *from_st,
 		   char const *to, mode_t mode, bool backup)
 {
   struct file_to_output *file_to_output;
@@ -1772,11 +1772,11 @@ output_file_later (char const *from, int *from_needs_removal, const struct stat 
   file_to_output->backup = backup;
   gl_list_add_last (files_to_output, file_to_output);
   if (from_needs_removal)
-    *from_needs_removal = 0;
+    *from_needs_removal = false;
 }
 
 static void
-output_file_now (char const *from, int *from_needs_removal,
+output_file_now (char const *from, bool *from_needs_removal,
 		 const struct stat *from_st, char const *to,
 		 mode_t mode, bool backup)
 {
@@ -1793,7 +1793,7 @@ output_file_now (char const *from, int *from_needs_removal,
 }
 
 static void
-output_file (char const *from, int *from_needs_removal,
+output_file (char const *from, bool *from_needs_removal,
 	     const struct stat *from_st, char const *to,
 	     const struct stat *to_st, mode_t mode, bool backup)
 {
@@ -1860,7 +1860,7 @@ output_files (struct stat const *st)
   while (gl_list_iterator_next (&iter, &elt, NULL))
     {
       const struct file_to_output *file_to_output = elt;
-      int from_needs_removal = 1;
+      bool from_needs_removal = true;
       struct stat const *from_st = &file_to_output->from_st;
 
       output_file_now (file_to_output->from, &from_needs_removal,
@@ -1917,12 +1917,12 @@ fatal_exit (int sig)
 }
 
 static void
-remove_if_needed (char const *name, int *needs_removal)
+remove_if_needed (char const *name, bool *needs_removal)
 {
   if (*needs_removal)
     {
       unlink (name);
-      *needs_removal = 0;
+      *needs_removal = false;
     }
 }
 

@@ -138,7 +138,7 @@ open_patch_file (char const *filename)
 	size_t charsread;
 	int fd = make_tempfile (&TMPPATNAME, 'p', NULL, O_RDWR | O_BINARY, 0);
 	FILE *read_pfp = pfp;
-	TMPPATNAME_needs_removal = 1;
+	TMPPATNAME_needs_removal = true;
 	pfp = fdopen (fd, "w+b");
 	if (! pfp)
 	  pfatal ("Can't open stream for file %s", quotearg (TMPPATNAME));
@@ -2350,7 +2350,7 @@ get_ed_command_letter (char const *line)
 
 void
 do_ed_script (char const *inname, char const *outname,
-	      int *outname_needs_removal, FILE *ofp)
+	      bool *outname_needs_removal, FILE *ofp)
 {
     static char const editor_program[] = EDITOR_PROGRAM;
 
@@ -2361,7 +2361,7 @@ do_ed_script (char const *inname, char const *outname,
     if (! dry_run && ! skip_rest_of_patch) {
 	int exclusive = *outname_needs_removal ? 0 : O_EXCL;
 	assert (! inerrno);
-	*outname_needs_removal = 1;
+	*outname_needs_removal = true;
 	copy_file (inname, outname, 0, exclusive, instat.st_mode, true);
 	sprintf (buf, "%s %s%s", editor_program,
 		 verbosity == VERBOSE ? "" : "- ",

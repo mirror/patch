@@ -356,7 +356,7 @@ plan_b (char const *filename)
     {
       tifd = make_tempfile (&TMPINNAME, 'i', NULL, O_RDWR | O_BINARY,
 			    S_IRUSR | S_IWUSR);
-      TMPINNAME_needs_removal = 1;
+      TMPINNAME_needs_removal = true;
     }
   i = 0;
   len = 0;
