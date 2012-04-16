@@ -93,7 +93,7 @@ EOF
 # Check the file mode of backups of new files
 
 umask 022
-rm -f f
+rm -f f.orig f
 
 check 'patch -f f < f.diff || echo "Status: $?"' <<EOF
 The next patch would delete the file f,
@@ -104,9 +104,7 @@ Hunk #1 FAILED at 1.
 Status: 1
 EOF
 
-check 'ls -l f.orig | sed "s,\(..........\).*,\1,"' <<EOF
--rw-r--r--
-EOF
+ncheck '! test -s f.orig'
 
 # ==============================================================
 
