@@ -1,4 +1,4 @@
-/* utility functions for `patch' */
+/* utility functions for 'patch' */
 
 /* Copyright (C) 1986 Larry Wall
 
@@ -811,7 +811,7 @@ version_get (char const *filename, char const *cs, bool exists, bool readonly,
   if (dry_run)
     {
       if (! exists)
-	fatal ("can't do dry run on nonexistent version-controlled file %s; invoke `%s' and try again",
+	fatal ("can't do dry run on nonexistent version-controlled file %s; invoke '%s' and try again",
 	       quotearg (filename), getbuf);
     }
   else
@@ -977,7 +977,7 @@ ask (char const *format, ...)
       /* If standard output is not a tty, don't bother opening /dev/tty,
 	 since it's unlikely that stdout will be seen by the tty user.
 	 The isatty test also works around a bug in GNU Emacs 19.34 under Linux
-	 which makes a call-process `patch' hang when it reads from /dev/tty.
+	 which makes a call-process 'patch' hang when it reads from /dev/tty.
 	 POSIX.1-2001 XCU line 26599 requires that we read /dev/tty,
 	 though.  */
       ttyfd = (posixly_correct || isatty (STDOUT_FILENO)
@@ -1251,7 +1251,7 @@ replace_slashes (char *filename)
 }
 
 /* Make sure we'll have the directories to create a file.
-   Ignore the last element of `filename'.  */
+   Ignore the last element of 'filename'.  */
 
 static void
 makedirs (char const *name)

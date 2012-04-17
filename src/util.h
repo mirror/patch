@@ -1,4 +1,4 @@
-/* utility functions for `patch' */
+/* utility functions for 'patch' */
 
 /* Copyright (C) 1986 Larry Wall
 

@@ -301,7 +301,7 @@ main (int argc, char **argv)
 	/* apply each hunk of patch */
 	while (0 < (got_hunk = another_hunk (diff_type, reverse)))
 	  {
-	    lin where = 0; /* Pacify `gcc -Wall'.  */
+	    lin where = 0; /* Pacify 'gcc -Wall'.  */
 	    lin newwhere;
 	    lin fuzz = 0;
 	    lin mymaxfuzz;
@@ -351,7 +351,7 @@ main (int argc, char **argv)
 			    if (where)
 			      {
 				apply_anyway = true;
-				fuzz--; /* Undo `++fuzz' below.  */
+				fuzz--; /* Undo '++fuzz' below.  */
 				where = 0;
 			      }
 			  }
@@ -750,7 +750,7 @@ usage (FILE *stream, int status)
 
   if (status != 0)
     {
-      fprintf (stream, "%s: Try `%s --help' for more information.\n",
+      fprintf (stream, "%s: Try '%s --help' for more information.\n",
 	       program_name, Argv[0]);
     }
   else
@@ -781,8 +781,8 @@ get_some_switches (void)
 	    case 'b':
 		make_backups = true;
 		 /* Special hack for backward compatibility with CVS 1.9.
-		    If the last 4 args are `-b SUFFIX ORIGFILE PATCHFILE',
-		    treat `-b' as if it were `-b -z'.  */
+		    If the last 4 args are '-b SUFFIX ORIGFILE PATCHFILE',
+		    treat '-b' as if it were '-b -z'.  */
 		if (Argc - optind == 3
 		    && strcmp (Argv[optind - 1], "-b") == 0
 		    && ! (Argv[optind + 0][0] == '-' && Argv[optind + 0][1])
@@ -791,7 +791,7 @@ get_some_switches (void)
 		  {
 		    optarg = Argv[optind++];
 		    if (verbosity != SILENT)
-		      say ("warning: the `-b %s' option is obsolete; use `-b -z %s' instead\n",
+		      say ("warning: the '-b %s' option is obsolete; use '-b -z %s' instead\n",
 			   optarg, optarg);
 		    goto case_z;
 		  }

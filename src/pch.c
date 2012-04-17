@@ -425,7 +425,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     file_offset this_line = 0;
     file_offset first_command_line = -1;
     char first_ed_command_letter = 0;
-    lin fcl_line = 0; /* Pacify `gcc -W'.  */
+    lin fcl_line = 0; /* Pacify 'gcc -W'.  */
     bool this_is_a_command = false;
     bool stars_this_line = false;
     bool git_diff = false;
@@ -717,7 +717,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	if ((diff_type == NO_DIFF || diff_type == UNI_DIFF)
 	    && strnEQ(s, "@@ -", 4)) {
 
-	    /* `p_name', `p_timestr', and `p_timestamp' are backwards;
+	    /* 'p_name', 'p_timestr', and 'p_timestamp' are backwards;
 	       swap them.  */
 	    struct timespec ti = p_timestamp[OLD];
 	    p_timestamp[OLD] = p_timestamp[NEW];
@@ -824,12 +824,12 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
       }
     *p_file_type = file_type;
 
-    /* To intuit `inname', the name of the file to patch,
+    /* To intuit 'inname', the name of the file to patch,
        use the algorithm specified by POSIX 1003.1-2001 XCU lines 25680-26599
        (with some modifications if posixly_correct is zero):
 
        - Take the old and new names from the context header if present,
-	 and take the index name from the `Index:' line if present and
+	 and take the index name from the 'Index:' line if present and
 	 if either the old and new names are both absent
 	 or posixly_correct is nonzero.
 	 Consider the file names to be in the order (old, new, index).
@@ -842,7 +842,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	 some names are given, posixly_correct is zero,
 	 and the patch appears to create a file, then use the best name
 	 requiring the creation of the fewest directories.
-       - Otherwise, report failure by setting `inname' to 0;
+       - Otherwise, report failure by setting 'inname' to 0;
 	 this causes our invoker to ask the user for a file name.  */
 
     i = NONE;
@@ -1187,7 +1187,7 @@ another_hunk (enum diff difftype, bool rev)
 	lin ptrn_copiable = 0;		/* # of copiable lines in ptrn */
 	lin repl_copiable = 0;		/* Likewise for replacement.  */
 
-	/* Pacify `gcc -Wall'.  */
+	/* Pacify 'gcc -Wall'.  */
 	fillsrc = filldst = repl_patch_line = repl_context = 0;
 
 	chars_read = get_line ();
@@ -1250,7 +1250,7 @@ another_hunk (enum diff difftype, bool rev)
 			repl_missing = true;
 			goto hunk_done;
 		    }
-		    fatal ("unexpected `***' at line %s: %s",
+		    fatal ("unexpected '***' at line %s: %s",
 			   format_linenum (numbuf0, p_input_line), buf);
 		}
 		context = 0;
@@ -1294,8 +1294,8 @@ another_hunk (enum diff difftype, bool rev)
 		  {
 		    if (p_end == 1)
 		      {
-			/* `Old' lines were omitted.  Set up to fill
-			   them in from `new' context lines.  */
+			/* 'Old' lines were omitted.  Set up to fill
+			   them in from 'new' context lines.  */
 			ptrn_missing = true;
 			p_end = p_ptrn_lines + 1;
 			ptrn_prefix_context = ptrn_suffix_context = -1;
@@ -1304,14 +1304,14 @@ another_hunk (enum diff difftype, bool rev)
 			fillcnt = p_ptrn_lines;
 		      }
 		    else if (! repl_beginning)
-		      fatal ("%s `---' at line %s; check line numbers at line %s",
+		      fatal ("%s '---' at line %s; check line numbers at line %s",
 			     (p_end <= p_ptrn_lines
 			      ? "Premature"
 			      : "Overdue"),
 			     format_linenum (numbuf0, p_input_line),
 			     format_linenum (numbuf1, p_hunk_beg));
 		    else if (! repl_could_be_missing)
-		      fatal ("duplicate `---' at line %s; check line numbers at line %s",
+		      fatal ("duplicate '---' at line %s; check line numbers at line %s",
 			     format_linenum (numbuf0, p_input_line),
 			     format_linenum (numbuf1,
 					     p_hunk_beg + repl_beginning));
@@ -1476,7 +1476,7 @@ another_hunk (enum diff difftype, bool rev)
 
     hunk_done:
 	if (p_end >=0 && !repl_beginning)
-	  fatal ("no `---' found in patch at line %s",
+	  fatal ("no '---' found in patch at line %s",
 		 format_linenum (numbuf0, pch_hunk_beg ()));
 
 	if (repl_missing) {
@@ -1790,7 +1790,7 @@ another_hunk (enum diff difftype, bool rev)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
 	    if (buf[0] != '<' || (buf[1] != ' ' && buf[1] != '\t'))
-	      fatal ("`<' expected at line %s of patch",
+	      fatal ("'<' expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_ptrn_lines && incomplete_line ());
 	    p_len[i] = chars_read;
@@ -1812,7 +1812,7 @@ another_hunk (enum diff difftype, bool rev)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
 	    if (*buf != '-')
-	      fatal ("`---' expected at line %s of patch",
+	      fatal ("'---' expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	}
 	sprintf (buf, "--- %s,%s\n",
@@ -1835,7 +1835,7 @@ another_hunk (enum diff difftype, bool rev)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
 	    if (buf[0] != '>' || (buf[1] != ' ' && buf[1] != '\t'))
-	      fatal ("`>' expected at line %s of patch",
+	      fatal ("'>' expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_end && incomplete_line ());
 	    p_len[i] = chars_read;
@@ -2253,7 +2253,7 @@ pch_mode (bool which)
   return p_mode[which];
 }
 
-/* Is the newline-terminated line a valid `ed' command for patch
+/* Is the newline-terminated line a valid 'ed' command for patch
    input?  If so, return the command character; if not, return 0.
    This accepts just a subset of the valid commands, but it's
    good enough in practice.  */
@@ -2378,7 +2378,7 @@ do_ed_script (char const *inname, char const *outname,
 	FILE *ifp = fopen (outname, binary_transput ? "rb" : "r");
 	int c;
 	if (!ifp)
-	  pfatal ("can't open `%s'", outname);
+	  pfatal ("can't open '%s'", outname);
 	while ((c = getc (ifp)) != EOF)
 	  if (putc (c, ofp) == EOF)
 	    write_fatal ();

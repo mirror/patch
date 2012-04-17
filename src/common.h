@@ -1,4 +1,4 @@
-/* common definitions for `patch' */
+/* common definitions for 'patch' */
 
 /* Copyright (C) 1986, 1988 Larry Wall
 
@@ -42,7 +42,7 @@
 
 #include <ctype.h>
 /* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
-   as an argument to <ctype.h> macros like `isspace'.  */
+   as an argument to <ctype.h> macros like 'isspace'.  */
 #if STDC_HEADERS
 #define CTYPE_DOMAIN(c) 1
 #else
