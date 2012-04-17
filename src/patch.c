@@ -345,7 +345,8 @@ main (int argc, char **argv)
 	      {
 		bool renamed = strcmp (inname, outname);
 
-		say ("patching %s %s%c",
+		say ("%s %s %s%c",
+		     dry_run ? "checking" : "patching",
 		     S_ISLNK (file_type) ? "symbolic link" : "file",
 		     quotearg (outname), renamed ? ' ' : '\n');
 		if (renamed)
@@ -602,9 +603,9 @@ main (int argc, char **argv)
 		      rej[len - 1] = '#';
 		    simple_backup_suffix = s;
 		}
-		say (" -- saving rejects to file %s\n", quotearg (rej));
 		if (! dry_run)
 		  {
+		    say (" -- saving rejects to file %s\n", quotearg (rej));
 		    if (rejname)
 		      {
 			if (! written_to_rejname)
@@ -631,6 +632,8 @@ main (int argc, char **argv)
 				     &rejst, rej, S_IFREG | 0666, false);
 		      }
 		  }
+		else
+		  say ("\n");
 		if (!rejname)
 		    free (rej);
 	    } else

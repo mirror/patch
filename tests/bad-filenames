@@ -25,7 +25,7 @@ EOF
 # or that contains a ".." component.
 
 check 'emit_patch ../z | patch -f -p1 --dry-run || echo status: $?' <<EOF
-patching file z
+checking file z
 EOF
 
 check 'emit_patch /absolute/path | patch -f -p0 --dry-run || echo status: $?' <<EOF
@@ -50,7 +50,7 @@ for dir in "$TMPDIR" "$TMP" "$TEMP" "/tmp"; do
 done
 
 check 'emit_patch $filename | (cd / && patch -f -p0 --dry-run) || echo status: $?' <<EOF
-patching file $filename
+checking file $filename
 EOF
 
 check 'emit_patch a/../z | patch -f -p0 --dry-run || echo status: $?' <<EOF
@@ -118,12 +118,12 @@ EOF
 
 echo 1 > f
 check 'patch -f -p0 --dry-run < d.diff || echo status: $?' <<EOF
-patching file f
+checking file f
 EOF
 
 echo 1 > g
 check 'patch -f -p1 --dry-run < d.diff || echo status: $?' <<EOF
-patching file g
+checking file g
 EOF
 
 mkdir d

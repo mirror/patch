@@ -29,6 +29,13 @@ EOF
 sed -e 's/5/5a/' f.orig > f
 diff -p -c -L f.orig -L f f.orig f > f.diff
 
+check 'patch -f -F0 --no-backup-if-mismatch --dry-run f < f.diff || echo "Status: $?"' <<EOF
+checking file f
+Hunk #1 FAILED at 2.
+1 out of 1 hunk FAILED
+Status: 1
+EOF
+
 check 'patch -f -F0 --no-backup-if-mismatch f < f.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.

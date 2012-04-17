@@ -22,21 +22,21 @@ cat > f.diff <<EOF
 EOF
 
 check 'patch --dry-run < f.diff' <<EOF
-patching file f
+checking file f
 EOF
 
 check 'patch --dry-run -i f.diff' <<EOF
-patching file f
+checking file f
 EOF
 
 mkfifo fifo
 
 cat f.diff > fifo &
 check 'patch --dry-run < fifo' <<EOF
-patching file f
+checking file f
 EOF
 
 cat f.diff > fifo &
 check 'patch --dry-run -i fifo' <<EOF
-patching file f
+checking file f
 EOF
