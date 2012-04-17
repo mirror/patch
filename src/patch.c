@@ -76,6 +76,7 @@ static char const *version_control;
 static char const *version_control_context;
 static bool remove_empty_files;
 static bool explicit_inname;
+static enum { RO_IGNORE, RO_WARN, RO_FAIL } read_only_behavior = RO_WARN;
 
 /* true if -R was specified on command line.  */
 static bool reverse_flag_specified;
@@ -244,11 +245,12 @@ main (int argc, char **argv)
 	    }
 	}
 
-      if (! inerrno && ! S_ISLNK (instat.st_mode)
+      if (read_only_behavior != RO_IGNORE
+	  && ! inerrno && ! S_ISLNK (instat.st_mode)
 	  && access (inname, W_OK) != 0)
 	{
 	  say ("File %s is read-only; ", quotearg (inname));
-	  if (force || batch)
+	  if (read_only_behavior == RO_WARN)
 	    say ("trying to patch anyway\n");
 	  else
 	    {
@@ -682,6 +684,7 @@ static struct option const longopts[] =
   {"posix", no_argument, NULL, CHAR_MAX + 7},
   {"quoting-style", required_argument, NULL, CHAR_MAX + 8},
   {"reject-format", required_argument, NULL, CHAR_MAX + 9},
+  {"read-only", required_argument, NULL, CHAR_MAX + 10},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -747,6 +750,8 @@ static char const *const option_help[] =
 "  -d DIR  --directory=DIR  Change the working directory to DIR first.",
 "  --reject-format=FORMAT  Create 'context' or 'unified' rejects.",
 "  --binary  Read and write data in binary mode.",
+"  --read-only=BEHAVIOR  How to handle read-only input files: 'ignore' that they",
+"                        are read-only, 'warn' (default), or 'fail'.",
 "",
 "  -v  --version  Output version info.",
 "  --help  Output this help.",
@@ -958,6 +963,16 @@ get_some_switches (void)
 		  reject_format = NEW_CONTEXT_DIFF;
 		else if (strcmp (optarg, "unified") == 0)
 		  reject_format = UNI_DIFF;
+		else
+		  usage (stderr, 2);
+		break;
+	    case CHAR_MAX + 10:
+		if (strcmp (optarg, "ignore") == 0)
+		  read_only_behavior = RO_IGNORE;
+		else if (strcmp (optarg, "warn") == 0)
+		  read_only_behavior = RO_WARN;
+		else if (strcmp (optarg, "fail") == 0)
+		  read_only_behavior = RO_FAIL;
 		else
 		  usage (stderr, 2);
 		break;

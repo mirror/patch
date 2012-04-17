@@ -41,7 +41,7 @@ EOF
 echo one > f
 chmod a=r f
 
-check 'patch -p0 < f.diff || echo "Status: $?"' <<EOF
+check 'patch -p0 --read-only=fail < f.diff || echo "Status: $?"' <<EOF
 File f is read-only; refusing to patch
 1 out of 1 hunk ignored -- saving rejects to file f.rej
 File f is read-only; refusing to patch
@@ -51,9 +51,18 @@ EOF
 
 rm -f f.rej
 
-check 'patch -f -p0 < f.diff || echo "Status: $?"' <<EOF
+check 'patch -f -p0 --read-only=warn < f.diff || echo "Status: $?"' <<EOF
 File f is read-only; trying to patch anyway
 patching file f
 File f is read-only; trying to patch anyway
+patching file f
+EOF
+
+rm -f f
+echo one > f
+chmod a=r f
+
+check 'patch -f -p0 --read-only=ignore < f.diff || echo "Status: $?"' <<EOF
+patching file f
 patching file f
 EOF
