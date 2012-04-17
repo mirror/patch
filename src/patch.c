@@ -59,7 +59,9 @@ static void output_file (char const *, int *, const struct stat *, char const *,
 			 const struct stat *, mode_t, bool);
 
 static void init_files_to_delete (void);
+static void init_files_to_output (void);
 static void delete_files (void);
+static void output_files (void);
 
 #ifdef ENABLE_MERGE
 static bool merge;
@@ -112,6 +114,7 @@ main (int argc, char **argv)
     bool apply_empty_patch = false;
     mode_t file_type;
     int outfd = -1;
+    bool have_git_diff = false;
 
     exit_failure = 2;
     set_program_name (argv[0]);
@@ -159,6 +162,7 @@ main (int argc, char **argv)
 
     init_backup_hash_table ();
     init_files_to_delete ();
+    init_files_to_output ();
 
     init_output (&outstate);
     if (outfile)
@@ -188,6 +192,12 @@ main (int argc, char **argv)
       int failed = 0;
       bool mismatch = false;
       char const *outname = NULL;
+
+      if (have_git_diff != pch_git_diff ())
+	{
+	  have_git_diff = ! have_git_diff;
+	  output_files ();
+	}
 
       if (TMPREJNAME_needs_removal)
 	{
@@ -585,6 +595,7 @@ main (int argc, char **argv)
     }
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
+    output_files ();
     delete_files ();
     cleanup ();
     if (somefailed)
@@ -1685,14 +1696,39 @@ delete_files (void)
 
 /* Putting output files into place and removing them. */
 
+struct file_to_output {
+  char *from;
+  struct stat from_st;
+  char *to;
+  mode_t mode;
+  bool backup;
+};
+
+static gl_list_t files_to_output;
+
 static void
-output_file (char const *from, int *from_needs_removal,
-	     const struct stat *from_st, char const *to,
-	     const struct stat *to_st, mode_t mode, bool backup)
+output_file_later (char const *from, int *from_needs_removal, const struct stat *from_st,
+		   char const *to, mode_t mode, bool backup)
 {
-  if (from == NULL)
-    delete_file_later (to, to_st, backup);
-  else if (to == NULL)
+  struct file_to_output *file_to_output;
+
+  file_to_output = xmalloc (sizeof *file_to_output);
+  file_to_output->from = xstrdup (from);
+  file_to_output->from_st = *from_st;
+  file_to_output->to = xstrdup (to);
+  file_to_output->mode = mode;
+  file_to_output->backup = backup;
+  gl_list_add_last (files_to_output, file_to_output);
+  if (from_needs_removal)
+    *from_needs_removal = 0;
+}
+
+static void
+output_file_now (char const *from, int *from_needs_removal,
+		 const struct stat *from_st, char const *to,
+		 mode_t mode, bool backup)
+{
+  if (to == NULL)
     {
       if (backup)
 	create_backup (from, from_st, true);
@@ -1702,6 +1738,80 @@ output_file (char const *from, int *from_needs_removal,
       assert (from_st->st_size != -1);
       move_file (from, from_needs_removal, from_st, to, mode, backup);
     }
+}
+
+static void
+output_file (char const *from, int *from_needs_removal,
+	     const struct stat *from_st, char const *to,
+	     const struct stat *to_st, mode_t mode, bool backup)
+{
+  if (from == NULL)
+    delete_file_later (to, to_st, backup);
+  else if (pch_git_diff())
+    output_file_later (from, from_needs_removal, from_st, to, mode, backup);
+  else
+    output_file_now (from, from_needs_removal, from_st, to, mode, backup);
+}
+
+static void
+dispose_file_to_output (const void *elt)
+{
+  const struct file_to_output *file_to_output = elt;
+
+  free (file_to_output->from);
+  free (file_to_output->to);
+}
+
+static void
+init_files_to_output (void)
+{
+  files_to_output = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL,
+					  dispose_file_to_output, true);
+}
+
+static void
+gl_list_clear (gl_list_t list)
+{
+  while (gl_list_size (list) > 0)
+    gl_list_remove_at (list, 0);
+}
+
+static void
+output_files (void)
+{
+  gl_list_iterator_t iter;
+  const void *elt;
+
+  iter = gl_list_iterator (files_to_output);
+  while (gl_list_iterator_next (&iter, &elt, NULL))
+    {
+      const struct file_to_output *file_to_output = elt;
+      int from_needs_removal = 1;
+
+      output_file_now (file_to_output->from, &from_needs_removal,
+		       &file_to_output->from_st, file_to_output->to,
+		       file_to_output->mode, file_to_output->backup);
+      if (from_needs_removal)
+	unlink (file_to_output->from);
+    }
+  gl_list_iterator_free (&iter);
+  gl_list_clear (files_to_output);
+}
+
+static void
+forget_output_files (void)
+{
+  gl_list_iterator_t iter = gl_list_iterator (files_to_output);
+  const void *elt;
+
+  while (gl_list_iterator_next (&iter, &elt, NULL))
+    {
+      const struct file_to_output *file_to_output = elt;
+
+      unlink (file_to_output->from);
+    }
+  gl_list_iterator_free (&iter);
+  gl_list_clear (files_to_output);
 }
 
 /* Fatal exit with cleanup. */
@@ -1734,4 +1844,5 @@ cleanup (void)
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
   remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
   remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
+  forget_output_files ();
 }

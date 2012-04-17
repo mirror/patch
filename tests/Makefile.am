@@ -37,6 +37,7 @@ TESTS = \
 	line-numbers \
 	merge \
 	mangled-numbers-abort \
+	mixed-patch-types \
 	munged-context-format \
 	need-filename \
 	no-newline-triggers-assert \
@@ -51,7 +52,6 @@ TESTS = \
 	unmodified-files
 
 XFAIL_TESTS = \
-	criss-cross \
 	dash-o-append
 
 EXTRA_DIST = \
