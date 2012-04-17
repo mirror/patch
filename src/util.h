@@ -27,7 +27,7 @@
    Add one for the sign.  */
 #define LINENUM_LENGTH_BOUND (sizeof (lin) * CHAR_BIT / 3 + 1)
 
-enum file_id_type { UNKNOWN, CREATED };
+enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
 XTERN enum backup_type backup_type;
 
@@ -57,13 +57,14 @@ void ignore_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 void xalloc_die (void) __attribute__ ((noreturn));
-void create_backup (char const *, struct stat *, int *, bool, bool);
+void create_backup (char const *, const struct stat *, bool, bool);
 void move_file (char const *, int *, struct stat const *, char const *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char const *);
 void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
+void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);
 
 enum file_attributes {
@@ -74,7 +75,7 @@ enum file_attributes {
 };
 
 void set_file_attributes (char const *, enum file_attributes, char const *,
-			  struct stat *, mode_t, struct timespec *);
+			  const struct stat *, mode_t, struct timespec *);
 
 static inline char const * _GL_ATTRIBUTE_PURE
 skip_spaces (char const *str)

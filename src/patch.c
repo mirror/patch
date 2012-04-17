@@ -31,6 +31,8 @@
 #include <util.h>
 #include <version.h>
 #include <xalloc.h>
+#include <gl_linked_list.h>
+#include <gl_xlist.h>
 
 /* procedures */
 
@@ -54,7 +56,10 @@ static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
 static void output_file (char const *, int *, const struct stat *, char const *,
-			 mode_t, bool);
+			 const struct stat *, mode_t, bool);
+
+static void init_files_to_delete (void);
+static void delete_files (void);
 
 #ifdef ENABLE_MERGE
 static bool merge;
@@ -153,6 +158,8 @@ main (int argc, char **argv)
       backup_type = get_version (version_control_context, version_control);
 
     init_backup_hash_table ();
+    init_files_to_delete ();
+
     init_output (&outstate);
     if (outfile)
       outstate.ofp = open_outfile (outfile);
@@ -442,7 +449,9 @@ main (int argc, char **argv)
 		  || S_ISLNK (file_type)))
 	    {
 	      if (! dry_run)
-		output_file (NULL, NULL, NULL, outname, file_type | 0, backup);
+		output_file (NULL, NULL, NULL, outname,
+			     (inname == outname) ? &instat : NULL,
+			     file_type | 0, backup);
 	    }
 	  else
 	    {
@@ -502,13 +511,15 @@ main (int argc, char **argv)
 			}
 
 		      output_file (TMPOUTNAME, &TMPOUTNAME_needs_removal,
-				   &outst, outname, mode, backup);
+				   &outst, outname, NULL, mode, backup);
 
 		      if (pch_rename ())
-			output_file (NULL, NULL, NULL, inname, mode, backup);
+			output_file (NULL, NULL, NULL, inname, &instat,
+				     mode, backup);
 		    }
 		  else
-		    output_file (outname, NULL, &outst, NULL, file_type | 0, backup);
+		    output_file (outname, NULL, &outst, NULL, NULL,
+				 file_type | 0, backup);
 		}
 	    }
       }
@@ -574,6 +585,7 @@ main (int argc, char **argv)
     }
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
+    delete_files ();
     cleanup ();
     if (somefailed)
       exit (1);
@@ -1608,26 +1620,82 @@ similar (char const *a, size_t alen, char const *b, size_t blen)
     }
 }
 
+/* Deferred deletion of files. */
+
+struct file_to_delete {
+  char *name;
+  struct stat st;
+  bool backup;
+};
+
+static gl_list_t files_to_delete;
+
+static void
+init_files_to_delete (void)
+{
+  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL, NULL, true);
+}
+
+static void
+delete_file_later (const char *name, const struct stat *st, bool backup)
+{
+  struct file_to_delete *file_to_delete;
+  struct stat st_tmp;
+
+  if (! st)
+    {
+      if (lstat (name, &st_tmp) != 0)
+	pfatal ("Can't get file attributes of %s %s", "file", name);
+      st = &st_tmp;
+    }
+  file_to_delete = xmalloc (sizeof *file_to_delete);
+  file_to_delete->name = xstrdup (name);
+  file_to_delete->st = *st;
+  file_to_delete->backup = backup;
+  gl_list_add_last (files_to_delete, file_to_delete);
+  insert_file_id (st, DELETE_LATER);
+}
+
+static void
+delete_files (void)
+{
+  gl_list_iterator_t iter;
+  const void *elt;
+
+  iter = gl_list_iterator (files_to_delete);
+  while (gl_list_iterator_next (&iter, &elt, NULL))
+    {
+      const struct file_to_delete *file_to_delete = elt;
+
+      if (lookup_file_id (&file_to_delete->st) == DELETE_LATER)
+	{
+	  mode_t mode = file_to_delete->st.st_mode;
+
+	  if (verbosity == VERBOSE)
+	    say ("Removing %s %s\n",
+		 S_ISLNK (mode) ? "symbolic link" : "file",
+		 quotearg (file_to_delete->name));
+	    move_file (0, 0, 0, file_to_delete->name, mode,
+		       file_to_delete->backup);
+	    removedirs (file_to_delete->name);
+	}
+    }
+  gl_list_iterator_free (&iter);
+}
+
 /* Putting output files into place and removing them. */
 
 static void
 output_file (char const *from, int *from_needs_removal,
 	     const struct stat *from_st, char const *to,
-	     mode_t mode, bool backup)
+	     const struct stat *to_st, mode_t mode, bool backup)
 {
   if (from == NULL)
-    {
-      if (verbosity == VERBOSE)
-	say ("Removing %s %s\n",
-	     S_ISLNK (mode) ? "symbolic link" : "file",
-	     quotearg (to));
-	move_file (0, 0, 0, to, mode, backup);
-	removedirs (to);
-    }
+    delete_file_later (to, to_st, backup);
   else if (to == NULL)
     {
       if (backup)
-	create_backup (from, 0, 0, true, false);
+	create_backup (from, from_st, true, false);
     }
   else
     {

@@ -244,3 +244,4 @@ xsize.m4
 xstrndup.m4
 xvasprintf.m4
 /close.m4
+/gl_list.m4

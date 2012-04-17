@@ -869,6 +869,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		}
 	      else if (lstat (p_name[i], &st[i]) != 0)
 		stat_errno[i] = errno;
+	      else if (lookup_file_id (&st[i]) == DELETE_LATER)
+		stat_errno[i] = ENOENT;
 	      else
 		{
 		  stat_errno[i] = 0;

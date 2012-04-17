@@ -96,7 +96,7 @@ init_backup_hash_table (void)
 /* Insert a file with status ST and type TYPE into the hash table.
    The type of an existing entry can be changed by re-inserting it.  */
 
-static void
+void
 insert_file_id (struct stat const *st, enum file_id_type type)
 {
    file_id *p;
@@ -193,7 +193,7 @@ copy_attr (char const *src_path, char const *dst_path)
 
 void
 set_file_attributes (char const *to, enum file_attributes attr,
-		     char const *from, struct stat *st, mode_t mode,
+		     char const *from, const struct stat *st, mode_t mode,
 		     struct timespec *new_time)
 {
   if (attr & FA_TIMES)
@@ -260,7 +260,7 @@ set_file_attributes (char const *to, enum file_attributes attr,
 }
 
 static void
-create_backup_copy (char const *from, char const *to, struct stat *st,
+create_backup_copy (char const *from, char const *to, const struct stat *st,
 		    bool to_dir_known_to_exist, bool remember_backup)
 {
   struct stat backup_st;
@@ -272,12 +272,9 @@ create_backup_copy (char const *from, char const *to, struct stat *st,
 }
 
 void
-create_backup (char const *to, struct stat *to_st, int *to_errno,
-	       bool leave_original, bool remember_backup)
+create_backup (char const *to, const struct stat *to_st, bool leave_original,
+	       bool remember_backup)
 {
-  struct stat tmp_st;
-  int tmp_errno;
-
   /* When the input to patch modifies the same file more than once, patch only
      backs up the initial version of each file.
 
@@ -294,18 +291,11 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
      deletes and later recreates a file with numbered backups, two numbered
      backups will be created.  */
 
-  if (! to_st || ! to_errno)
-    {
-      to_st = &tmp_st;
-      to_errno = &tmp_errno;
-    }
-  *to_errno = lstat (to, to_st) == 0 ? 0 : errno;
-
-  if (! to_errno && ! (S_ISREG (to_st->st_mode) || S_ISLNK (to_st->st_mode)))
+  if (to_st && ! (S_ISREG (to_st->st_mode) || S_ISLNK (to_st->st_mode)))
     fatal ("File %s is not a %s -- refusing to create backup",
 	   to, S_ISLNK (to_st->st_mode) ? "symbolic link" : "regular file");
 
-  if (! *to_errno && lookup_file_id (to_st) == CREATED)
+  if (to_st && lookup_file_id (to_st) == CREATED)
     {
       if (debug & 4)
 	say ("File %s already seen\n", quotearg (to));
@@ -354,7 +344,7 @@ create_backup (char const *to, struct stat *to_st, int *to_errno,
 	    xalloc_die ();
 	}
 
-      if (*to_errno)
+      if (! to_st)
 	{
 	  struct stat backup_st;
 	  int fd;
@@ -435,10 +425,13 @@ move_file (char const *from, int *from_needs_removal,
 	   char const *to, mode_t mode, bool backup)
 {
   struct stat to_st;
-  int to_errno = -1;
+  int to_errno;
 
+  to_errno = lstat (to, &to_st) == 0 ? 0 : errno;
   if (backup)
-    create_backup (to, &to_st, &to_errno, false, from == NULL);
+    create_backup (to, to_errno ? NULL : &to_st, false, from == NULL);
+  if (! to_errno)
+    insert_file_id (&to_st, OVERWRITTEN);
 
   if (from)
     {
