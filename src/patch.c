@@ -1730,7 +1730,7 @@ output_file_later (char const *from, int *from_needs_removal, const struct stat 
   file_to_output = xmalloc (sizeof *file_to_output);
   file_to_output->from = xstrdup (from);
   file_to_output->from_st = *from_st;
-  file_to_output->to = xstrdup (to);
+  file_to_output->to = to ? xstrdup (to) : NULL;
   file_to_output->mode = mode;
   file_to_output->backup = backup;
   gl_list_add_last (files_to_output, file_to_output);

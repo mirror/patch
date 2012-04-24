@@ -168,3 +168,24 @@ EOF
 check 'cat f' <<EOF
 f
 EOF
+#
+# ----------------------------------------------------------------
+
+# This test deletes the target file.
+
+echo data > target
+cat > p.diff <<EOF
+diff --git a/target b/target
+index 1..0
+EOF
+
+check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
+patching file target
+File target is not empty after patch, as expected
+EOF
+
+ncheck 'test ! -e target'
+
+check 'cat target.orig' <<EOF
+data
+EOF
