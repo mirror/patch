@@ -24,6 +24,7 @@
 #include <inp.h>
 #include <quotearg.h>
 #include <util.h>
+#include <xalloc.h>
 #undef XTERN
 #define XTERN
 #include <pch.h>
@@ -46,6 +47,7 @@ static char const *invalid_names[2];
 bool p_copy[2];				/* Does this patch create a copy? */
 bool p_rename[2];			/* Does this patch rename a file? */
 static char *p_timestr[2];		/* timestamps as strings */
+static char *p_sha1[2];			/* SHA1 checksums */
 static mode_t p_mode[2];		/* file modes */
 static off_t p_filesize;		/* size of the patch file */
 static lin p_first;			/* 1st line number */
@@ -348,24 +350,33 @@ fetchmode (char const *str)
    return mode;
 }
 
+static void
+get_sha1(char **sha1, char const *start, char const *end)
+{
+  unsigned int len = end - start;
+  *sha1 = xmalloc (len + 1);
+  memcpy (*sha1, start, len);
+  (*sha1)[len] = 0;
+}
+
 static int
-sha1_says_nonexistent(char const *sha1, char const *end)
+sha1_says_nonexistent(char const *sha1)
 {
   char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
   char const *s;
 
   /* Nonexisting files have an all-zero checksum.  */
-  for (s = sha1; s != end; s++)
+  for (s = sha1; *s; s++)
     if (*s != '0')
       break;
-  if (s == end)
+  if (! *s)
     return 2;
 
   /* Empty files have empty_sha1 as their checksum.  */
-  for (s = sha1; s != end; s++, empty_sha1++)
+  for (s = sha1; *s; s++, empty_sha1++)
     if (*s != *empty_sha1)
       break;
-  return s == end;
+  return ! *s;
 }
 
 static char const * _GL_ATTRIBUTE_PURE
@@ -449,6 +460,12 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	{
 	  free(p_timestr[i]);
 	  p_timestr[i] = 0;
+	}
+    for (i = OLD; i <= NEW; i++)
+      if (p_sha1[i])
+	{
+	  free (p_sha1[i]);
+	  p_sha1[i] = 0;
 	}
     p_git_diff = false;
     for (i = OLD; i <= NEW; i++)
@@ -622,8 +639,10 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		&& (v = skip_hex_digits (u + 2))
 		&& (! *v || ISSPACE ((unsigned char) *v)))
 	      {
-		p_says_nonexistent[OLD] = sha1_says_nonexistent (s + 6, u);
-		p_says_nonexistent[NEW] = sha1_says_nonexistent (u + 2, v);
+		get_sha1(&p_sha1[OLD], s + 6, u);
+		get_sha1(&p_sha1[NEW], u + 2, v);
+		p_says_nonexistent[OLD] = sha1_says_nonexistent (p_sha1[OLD]);
+		p_says_nonexistent[NEW] = sha1_says_nonexistent (p_sha1[NEW]);
 		if (*(v = skip_spaces (v)))
 		  p_mode[OLD] = p_mode[NEW] = fetchmode (v);
 		extended_headers = true;
@@ -2256,6 +2275,12 @@ char const *
 pch_timestr (bool which)
 {
   return p_timestr[which];
+}
+
+char const *
+pch_sha1 (bool which)
+{
+  return p_sha1[which];
 }
 
 mode_t
