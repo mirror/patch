@@ -245,6 +245,31 @@ main (int argc, char **argv)
 	    }
 	}
 
+      if (pch_git_diff () && ! skip_rest_of_patch && ! inerrno)
+	{
+	  /* Try to recognize concatenated git diffs based on the SHA1 hashes
+	     in the headers.  Will not always succeed for patches that rename
+	     or copy files.  */
+
+	  char const *previous_sha1 = lookup_sha1 (&instat);
+
+	  if (previous_sha1)
+	    {
+	      char const *sha1 = pch_sha1 (reverse);
+
+	      for (; *previous_sha1 && *sha1; previous_sha1++, sha1++)
+		if (*previous_sha1 != *sha1)
+		  break;
+	      if (*previous_sha1 && *sha1)
+		{
+		  output_files (&instat);
+		  update_sha1 (&instat, pch_sha1 (reverse));
+		}
+	    }
+	  else
+	    update_sha1 (&instat, pch_sha1 (reverse));
+	}
+
       if (read_only_behavior != RO_IGNORE
 	  && ! inerrno && ! S_ISLNK (instat.st_mode)
 	  && access (inname, W_OK) != 0)

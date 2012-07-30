@@ -1,0 +1,41 @@
+# Copyright (C) 2010-2012 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# in any medium, are permitted without royalty provided the copyright
+# notice and this notice are preserved.
+
+. $srcdir/test-lib.sh
+
+require_cat
+use_local_patch
+use_tmpdir
+
+# ==============================================================
+
+ncheck 'echo one > f'
+
+cat > concatenated.diff <<EOF
+diff --git a/f b/f
+index 5626abf..f719efd 100644
+--- a/f
++++ b/f
+@@ -1 +1 @@
+-one
++two
+diff --git a/f b/f
+index f719efd..2bdf67a 100644
+--- a/f
++++ b/f
+@@ -1 +1 @@
+-two
++three
+EOF
+
+check 'patch -p1 < concatenated.diff || echo "Status: $?"' <<EOF
+patching file f
+patching file f
+EOF
+
+check 'cat f' <<EOF
+three
+EOF
