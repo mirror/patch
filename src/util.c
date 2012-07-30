@@ -58,6 +58,7 @@ typedef struct
   dev_t dev;
   ino_t ino;
   enum file_id_type type;
+  char *sha1;
 } file_id;
 
 /* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
@@ -93,11 +94,8 @@ init_backup_hash_table (void)
     xalloc_die ();
 }
 
-/* Insert a file with status ST and type TYPE into the hash table.
-   The type of an existing entry can be changed by re-inserting it.  */
-
-void
-insert_file_id (struct stat const *st, enum file_id_type type)
+static file_id *
+__insert_file_id (struct stat const *st, enum file_id_type type)
 {
    file_id *p;
    static file_id *next_slot;
@@ -106,12 +104,33 @@ insert_file_id (struct stat const *st, enum file_id_type type)
      next_slot = xmalloc (sizeof *next_slot);
    next_slot->dev = st->st_dev;
    next_slot->ino = st->st_ino;
+   next_slot->sha1 = 0;
    p = hash_insert (file_id_table, next_slot);
    if (!p)
      xalloc_die ();
    if (p == next_slot)
      next_slot = NULL;
    p->type = type;
+   return p;
+}
+
+static file_id *
+__lookup_file_id (struct stat const *st)
+{
+  file_id f;
+
+  f.dev = st->st_dev;
+  f.ino = st->st_ino;
+  return hash_lookup (file_id_table, &f);
+}
+
+/* Insert a file with status ST and type TYPE into the hash table.
+   The type of an existing entry can be changed by re-inserting it.  */
+
+void
+insert_file_id (struct stat const *st, enum file_id_type type)
+{
+  __insert_file_id (st, type);
 }
 
 /* Has the file identified by ST already been inserted into the hash
@@ -120,12 +139,30 @@ insert_file_id (struct stat const *st, enum file_id_type type)
 enum file_id_type
 lookup_file_id (struct stat const *st)
 {
-  file_id f, *p;
+  file_id *p = __lookup_file_id (st);
 
-  f.dev = st->st_dev;
-  f.ino = st->st_ino;
-  p = hash_lookup (file_id_table, &f);
   return p ? p->type : UNKNOWN;
+}
+
+void
+update_sha1 (struct stat const *st, char const *sha1)
+{
+  file_id *p = __lookup_file_id (st);
+
+  if (! p)
+    p = __insert_file_id (st, UNKNOWN);
+  else
+    if (p->sha1)
+      free (p->sha1);
+  p->sha1 = sha1 ? xstrdup (sha1) : 0;
+}
+
+char const *
+lookup_sha1 (struct stat const *st)
+{
+  file_id *p = __lookup_file_id (st);
+
+  return p ? p->sha1 : NULL;
 }
 
 static bool _GL_ATTRIBUTE_PURE

@@ -66,6 +66,8 @@ void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
 void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);
+void update_sha1(struct stat const *, char const *);
+char const *lookup_sha1 (struct stat const *);
 
 enum file_attributes {
   FA_TIMES = 1,
