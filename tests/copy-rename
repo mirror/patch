@@ -21,6 +21,7 @@ cat > copy.diff <<EOF
 diff --git a/f b/g
 copy from f
 copy to g
+index 3367afd..3e75765 100644
 --- a/f
 +++ b/g
 @@ -1 +1 @@
@@ -44,6 +45,7 @@ cat > rename.diff <<EOF
 diff --git a/f b/h
 rename from f
 rename to h
+index 3367afd..3e75765 100644
 --- a/f
 +++ b/h
 @@ -1 +1 @@

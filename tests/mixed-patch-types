@@ -20,6 +20,8 @@ diff a/f b/f
 @@ -0,0 +1 @@
 +f
 diff --git a/g b/g
+new file mode 100644
+index 0000000..01058d8
 --- a/g
 +++ b/g
 @@ -0,0 +1 @@
@@ -35,6 +37,8 @@ EOF
 
 cat > mixed2.diff <<EOF
 diff --git a/f b/f
+new file mode 100644
+index 0000000..6a69f92
 --- a/f
 +++ b/f
 @@ -0,0 +1 @@

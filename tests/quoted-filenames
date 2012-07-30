@@ -19,6 +19,7 @@ use_tmpdir
 
 cat > d.diff <<EOF
 diff --git "\\t \\040" "\\t \\040"
+index 5626abf..f719efd 100644
 --- "\\t \\040"
 +++ "\\t \\040"
 @@ -1 +1 @@
