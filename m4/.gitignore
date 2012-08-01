@@ -245,3 +245,5 @@ xstrndup.m4
 xvasprintf.m4
 /close.m4
 /gl_list.m4
+/off_t.m4
+/sys_types_h.m4
