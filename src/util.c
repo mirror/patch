@@ -152,8 +152,7 @@ update_sha1 (struct stat const *st, char const *sha1)
   if (! p)
     p = __insert_file_id (st, UNKNOWN);
   else
-    if (p->sha1)
-      free (p->sha1);
+    free (p->sha1);
   p->sha1 = sha1 ? xstrdup (sha1) : 0;
 }
 
