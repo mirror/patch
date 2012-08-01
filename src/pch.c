@@ -359,7 +359,7 @@ get_sha1(char **sha1, char const *start, char const *end)
   (*sha1)[len] = 0;
 }
 
-static int
+static int _GL_ATTRIBUTE_PURE
 sha1_says_nonexistent(char const *sha1)
 {
   char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
