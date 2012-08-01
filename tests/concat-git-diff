@@ -12,9 +12,14 @@ use_tmpdir
 
 # ==============================================================
 
-ncheck 'echo one > f'
-
 cat > concatenated.diff <<EOF
+diff --git a/f b/f
+new file mode 100644
+index 0000000..5626abf
+--- /dev/null
++++ b/f
+@@ -0,0 +1 @@
++one
 diff --git a/f b/f
 index 5626abf..f719efd 100644
 --- a/f
