@@ -61,7 +61,7 @@ static void output_file (char const *, int *, const struct stat *, char const *,
 static void init_files_to_delete (void);
 static void init_files_to_output (void);
 static void delete_files (void);
-static void output_files (void);
+static void output_files (struct stat const *);
 
 #ifdef ENABLE_MERGE
 static bool merge;
@@ -197,7 +197,7 @@ main (int argc, char **argv)
       if (have_git_diff != pch_git_diff ())
 	{
 	  have_git_diff = ! have_git_diff;
-	  output_files ();
+	  output_files (NULL);
 	}
 
       if (TMPREJNAME_needs_removal)
@@ -597,7 +597,7 @@ main (int argc, char **argv)
     }
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
-    output_files ();
+    output_files (NULL);
     delete_files ();
     cleanup ();
     if (somefailed)
@@ -1792,7 +1792,7 @@ gl_list_clear (gl_list_t list)
 }
 
 static void
-output_files (void)
+output_files (struct stat const *st)
 {
   gl_list_iterator_t iter;
   const void *elt;
@@ -1802,12 +1802,27 @@ output_files (void)
     {
       const struct file_to_output *file_to_output = elt;
       int from_needs_removal = 1;
+      struct stat const *from_st = &file_to_output->from_st;
 
       output_file_now (file_to_output->from, &from_needs_removal,
-		       &file_to_output->from_st, file_to_output->to,
+		       from_st, file_to_output->to,
 		       file_to_output->mode, file_to_output->backup);
       if (from_needs_removal)
 	unlink (file_to_output->from);
+
+      if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)
+	{
+	  /* Free the list up to here. */
+	  for (;;)
+	    {
+	      const void *elt2 = gl_list_get_at (files_to_output, 0);
+	      gl_list_remove_at (files_to_output, 0);
+	      if (elt == elt2)
+		break;
+	    }
+	  gl_list_iterator_free (&iter);
+	  return;
+	}
     }
   gl_list_iterator_free (&iter);
   gl_list_clear (files_to_output);
