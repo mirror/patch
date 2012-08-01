@@ -61,7 +61,8 @@ re_input (void)
 	}
     }
     else {
-	close (tifd);
+	if (tifd >= 0)
+	  close (tifd);
 	tifd = -1;
 	if (tibuf[0])
 	  {
