@@ -39,6 +39,7 @@ EOF
 check 'patch -p1 < concatenated.diff || echo "Status: $?"' <<EOF
 patching file f
 patching file f
+patching file f
 EOF
 
 check 'cat f' <<EOF

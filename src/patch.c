@@ -1786,9 +1786,31 @@ output_file (char const *from, int *from_needs_removal,
 	     const struct stat *to_st, mode_t mode, bool backup)
 {
   if (from == NULL)
-    delete_file_later (to, to_st, backup);
-  else if (pch_git_diff())
-    output_file_later (from, from_needs_removal, from_st, to, mode, backup);
+    {
+      /* Remember which files should be deleted and only delete them when the
+	 entire input to patch has been processed.  This allows to correctly
+	 determine for which files backup files have already been created.  */
+
+      delete_file_later (to, to_st, backup);
+    }
+  else if (pch_git_diff () && pch_says_nonexistent (reverse) != 2)
+    {
+      /* In git-style diffs, the "before" state of each patch refers to the initial
+	 state before modifying any files, input files can be referenced more than
+	 once (when creating copies), and output files are modified at most once.
+	 However, the input to GNU patch may consist of multiple concatenated
+	 git-style diffs, which must be processed separately.  (The same output
+	 file may go through multiple revisions.)
+
+	 To implement this, we remember which files to /modify/ instead of
+	 modifying the files immediately, but we create /new/ output files
+	 immediately.  The new output files serve as markers to detect when a
+	 file is modified more than once; this allows to recognize most
+	 concatenated git-style diffs.
+      */
+
+      output_file_later (from, from_needs_removal, from_st, to, mode, backup);
+    }
   else
     output_file_now (from, from_needs_removal, from_st, to, mode, backup);
 }
