@@ -237,37 +237,47 @@ main (int argc, char **argv)
 	    outname = pch_name (! strcmp (inname, pch_name (OLD)));
 	  else
 	    outname = inname;
+	}
 
+      if (pch_git_diff () && ! skip_rest_of_patch)
+	{
+	  struct stat outstat;
+	  int outerrno = 0;
+
+	  /* Try to recognize concatenated git diffs based on the SHA1 hashes
+	     in the headers.  Will not always succeed for patches that rename
+	     or copy files.  */
+
+	  if (! strcmp (inname, outname))
+	    {
+	      if (inerrno == -1)
+		inerrno = lstat (inname, &instat) ? errno : 0;
+	      outstat = instat;
+	      outerrno = inerrno;
+	    }
+	  else
+	    outerrno = lstat (outname, &outstat) ? errno : 0;
+
+	  if (! outerrno)
+	    {
+	      if (has_queued_output (&outstat))
+		{
+		  output_files (&outstat);
+		  outerrno = lstat (outname, &outstat) ? errno : 0;
+		  inerrno = -1;
+		}
+	      if (! outerrno)
+		set_queued_output (&outstat, true);
+	    }
+	}
+
+      if (! skip_rest_of_patch)
+	{
 	  if (! get_input_file (inname, outname, file_type))
 	    {
 	      skip_rest_of_patch = true;
 	      somefailed = true;
 	    }
-	}
-
-      if (pch_git_diff () && ! skip_rest_of_patch && ! inerrno)
-	{
-	  /* Try to recognize concatenated git diffs based on the SHA1 hashes
-	     in the headers.  Will not always succeed for patches that rename
-	     or copy files.  */
-
-	  char const *previous_sha1 = lookup_sha1 (&instat);
-
-	  if (previous_sha1)
-	    {
-	      char const *sha1 = pch_sha1 (reverse);
-
-	      for (; *previous_sha1 && *sha1; previous_sha1++, sha1++)
-		if (*previous_sha1 != *sha1)
-		  break;
-	      if (*previous_sha1 && *sha1)
-		{
-		  output_files (&instat);
-		  update_sha1 (&instat, pch_sha1 (reverse));
-		}
-	    }
-	  else
-	    update_sha1 (&instat, pch_sha1 (reverse));
 	}
 
       if (read_only_behavior != RO_IGNORE

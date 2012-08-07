@@ -12,20 +12,29 @@ use_tmpdir
 
 # ==============================================================
 
+echo zero > f
+
 cat > concatenated.diff <<EOF
 diff --git a/f b/f
-new file mode 100644
-index 0000000..5626abf
---- /dev/null
-+++ b/f
-@@ -0,0 +1 @@
-+one
-diff --git a/f b/f
-index 5626abf..f719efd 100644
+index 26af6a8..5626abf 100644
 --- a/f
 +++ b/f
 @@ -1 +1 @@
+-zero
++one
+diff --git a/f b/f
+deleted file mode 100644
+index 5626abf..0000000
+--- a/f
++++ /dev/null
+@@ -1 +0,0 @@
 -one
+diff --git a/f b/f
+new file mode 100644
+index 0000000..f719efd
+--- /dev/null
++++ b/f
+@@ -0,0 +1 @@
 +two
 diff --git a/f b/f
 index f719efd..2bdf67a 100644
@@ -37,6 +46,7 @@ index f719efd..2bdf67a 100644
 EOF
 
 check 'patch -p1 < concatenated.diff || echo "Status: $?"' <<EOF
+patching file f
 patching file f
 patching file f
 patching file f
