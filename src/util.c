@@ -58,6 +58,7 @@ typedef struct
   dev_t dev;
   ino_t ino;
   enum file_id_type type;
+  bool queued_output;
   char *sha1;
 } file_id;
 
@@ -104,6 +105,7 @@ __insert_file_id (struct stat const *st, enum file_id_type type)
      next_slot = xmalloc (sizeof *next_slot);
    next_slot->dev = st->st_dev;
    next_slot->ino = st->st_ino;
+   next_slot->queued_output = false;
    next_slot->sha1 = 0;
    p = hash_insert (file_id_table, next_slot);
    if (!p)
@@ -142,6 +144,24 @@ lookup_file_id (struct stat const *st)
   file_id *p = __lookup_file_id (st);
 
   return p ? p->type : UNKNOWN;
+}
+
+void
+set_queued_output (struct stat const *st, bool queued_output)
+{
+  file_id *p = __lookup_file_id (st);
+
+  if (! p)
+    p = __insert_file_id (st, UNKNOWN);
+  p->queued_output = queued_output;
+}
+
+bool
+has_queued_output (struct stat const *st)
+{
+  file_id *p = __lookup_file_id (st);
+
+  return p && p->queued_output;
 }
 
 void
