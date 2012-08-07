@@ -109,7 +109,7 @@ main (int argc, char **argv)
     char const *val;
     bool somefailed = false;
     struct outstate outstate;
-    struct stat outst;
+    struct stat tmpoutst;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
     bool written_to_rejname = false;
     bool apply_empty_patch = false;
@@ -285,7 +285,7 @@ main (int argc, char **argv)
 	    }
 	}
 
-      outst.st_size = -1;
+      tmpoutst.st_size = -1;
       outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
 			     O_WRONLY | binary_transput, instat.st_mode);
       TMPOUTNAME_needs_removal = 1;
@@ -296,9 +296,9 @@ main (int argc, char **argv)
 		      outstate.ofp);
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
-	    if (fstat (outfd, &outst) != 0)
+	    if (fstat (outfd, &tmpoutst) != 0)
 	      pfatal ("%s", TMPOUTNAME);
-	    outstate.zero_output = outst.st_size == 0;
+	    outstate.zero_output = tmpoutst.st_size == 0;
 	  }
 	close (outfd);
 	outfd = -1;
@@ -466,7 +466,7 @@ main (int argc, char **argv)
 	      }
 
 	    /* Finish spewing out the new file.  */
-	    if (! spew_output (&outstate, &outst))
+	    if (! spew_output (&outstate, &tmpoutst))
 	      {
 		say ("Skipping patch.\n");
 		skip_rest_of_patch = true;
@@ -548,14 +548,14 @@ main (int argc, char **argv)
 			}
 
 		      output_file (TMPOUTNAME, &TMPOUTNAME_needs_removal,
-				   &outst, outname, NULL, mode, backup);
+				   &tmpoutst, outname, NULL, mode, backup);
 
 		      if (pch_rename ())
 			output_file (NULL, NULL, NULL, inname, &instat,
 				     mode, backup);
 		    }
 		  else
-		    output_file (outname, NULL, &outst, NULL, NULL,
+		    output_file (outname, NULL, &tmpoutst, NULL, NULL,
 				 file_type | 0, backup);
 		}
 	    }
