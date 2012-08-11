@@ -1431,7 +1431,7 @@ strip_leading_slashes (char *name, int strip_leading)
 /* Make filenames more reasonable. */
 
 void
-fetchname (char const *at, int strip_leading, bool maybe_quoted, char **pname,
+fetchname (char const *at, int strip_leading, char **pname,
 	   char **ptimestr, struct timespec *pstamp)
 {
     char *name;
@@ -1447,7 +1447,7 @@ fetchname (char const *at, int strip_leading, bool maybe_quoted, char **pname,
     if (debug & 128)
 	say ("fetchname %s %d\n", at, strip_leading);
 
-    if (maybe_quoted && *at == '"')
+    if (*at == '"')
       {
 	name = parse_c_string (at, &t);
 	if (! name)
