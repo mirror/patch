@@ -247,3 +247,4 @@ xvasprintf.m4
 /gl_list.m4
 /off_t.m4
 /sys_types_h.m4
+/extern-inline.m4
