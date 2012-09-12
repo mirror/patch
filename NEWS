@@ -1,6 +1,8 @@
+Changes in version 2.7:
+
 * Patch no longer gets a failed assertion for certain mangled patches.
-* Patch now ignores destination file names that are absolute or that contain
-  a component of "..".  This addresses CVE-2010-4651.
+* Ignore destination file names that are absolute or that contain a component
+  of "..".  This addresses CVE-2010-4651.
 * Support for most features of the "diff --git" format, including renames and
   copies, permission changes, and symlink diffs.  Binary diffs are not
   supported yet; patch will complain and skip them.
@@ -13,8 +15,8 @@
 * When trying to modify a read-only file, warn about the potential problem
   by default.  The --read-only command line option allows to change this
   behavior.
-* Files that should be deleted are now deleted once the entire patch file has
-  been read.  This fixes a bug with numbered backup files.
+* Files to be deleted are deleted once the entire input has been processed, not
+  immediately.  This fixes a bug with numbered backup files.
 * When a timestamp specifies a time zone, honor that instead of assuming the
   local time zone (--set-date) or Universal Coordinated Time (--set-utc).
 * Support for nanosecond precision timestamps.
