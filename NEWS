@@ -80,6 +80,7 @@ Changes in version 2.6:
   particularly with Perforce.)
 * Handle missing timestamps better.
 * Various bug fixes.
+* Switch to GNU General Public License version 3.
 
 Changes in versions 2.5.8 and 2.5.9: bug fixes only.
 
