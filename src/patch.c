@@ -508,6 +508,7 @@ main (int argc, char **argv)
 		  && ! (merge && somefailed))
 		{
 		  mismatch = true;
+		  somefailed = true;
 		  if (verbosity != SILENT)
 		    say ("File %s is not empty after patch, as expected\n",
 			 quotearg (outname));
@@ -1865,7 +1866,7 @@ output_files (struct stat const *st)
       output_file_now (file_to_output->from, &from_needs_removal,
 		       from_st, file_to_output->to,
 		       file_to_output->mode, file_to_output->backup);
-      if (from_needs_removal)
+      if (file_to_output->to && from_needs_removal)
 	unlink (file_to_output->from);
 
       if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)

@@ -176,12 +176,37 @@ EOF
 echo data > target
 cat > p.diff <<EOF
 diff --git a/target b/target
-index 1..0
+deleted file mode 100644
+index 1269488..0000000
 EOF
 
 check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
 patching file target
 File target is not empty after patch, as expected
+status: 1
+EOF
+
+check 'cat target' <<EOF
+data
+EOF
+
+# Patch creates a backup file even when the original file remains unchanged:
+check 'cat target.orig' <<EOF
+data
+EOF
+
+cat > p.diff <<EOF
+diff --git a/target b/target
+deleted file mode 100644
+index 1269488..0000000
+--- a/target
++++ /dev/null
+@@ -1 +0,0 @@
+-data
+EOF
+
+check 'patch -p1 -b -f < p.diff || echo status: $?' <<EOF
+patching file target
 EOF
 
 ncheck 'test ! -e target'
