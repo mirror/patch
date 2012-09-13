@@ -297,7 +297,8 @@ main (int argc, char **argv)
 
       tmpoutst.st_size = -1;
       outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
-			     O_WRONLY | binary_transput, instat.st_mode);
+			     O_WRONLY | binary_transput,
+			     instat.st_mode & S_IRWXUGO);
       TMPOUTNAME_needs_removal = 1;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
