@@ -196,12 +196,18 @@ copy_attr_free (struct error_context *ctx, char const *str)
 {
 }
 
+#ifdef HAVE_ATTR_COPY_ACTION
+
 static int
 copy_attr_check (const char *name, struct error_context *ctx)
 {
 	int action = attr_copy_action (name, ctx);
 	return action == 0 || action == ATTR_ACTION_PERMISSIONS;
 }
+
+#else
+#define copy_attr_check NULL
+#endif
 
 static int
 copy_attr (char const *src_path, char const *dst_path)
