@@ -26,7 +26,7 @@ echo one > f
 ncheck 'ln -s f l'
 
 check 'patch < create.diff || echo "Status: $?"' <<EOF
-File l is not a regular file -- can't patch
+File l is not a regular file -- refusing to patch
 1 out of 1 hunk ignored -- saving rejects to file l.rej
 Status: 1
 EOF
@@ -50,7 +50,7 @@ cat > modify.diff <<EOF
 EOF
 
 check 'patch < modify.diff || echo "Status: $?"' <<EOF
-File l is not a regular file -- can't patch
+File l is not a regular file -- refusing to patch
 1 out of 1 hunk ignored -- saving rejects to file l.rej
 Status: 1
 EOF
@@ -68,7 +68,7 @@ cat > delete.diff <<EOF
 EOF
 
 check 'patch < delete.diff || echo "Status: $?"' <<EOF
-File l is not a regular file -- can't patch
+File l is not a regular file -- refusing to patch
 1 out of 1 hunk ignored -- saving rejects to file l.rej
 Status: 1
 EOF

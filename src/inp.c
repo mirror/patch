@@ -198,7 +198,7 @@ get_input_file (char const *filename, char const *outname, mode_t mode)
     else if (! ((S_ISREG (mode) || S_ISLNK (mode))
 	        && (mode & S_IFMT) == (instat.st_mode & S_IFMT)))
       {
-	say ("File %s is not a %s -- can't patch\n",
+	say ("File %s is not a %s -- refusing to patch\n",
 	     quotearg (filename),
 	     S_ISLNK (mode) ? "symbolic link" : "regular file");
 	return false;
