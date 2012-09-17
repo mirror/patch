@@ -30,7 +30,8 @@ AC_DEFUN([gl_FUNC_XATTR],
                         LIB_XATTR=$ac_cv_search_attr_copy_file])
       AC_CHECK_FUNCS([attr_copy_file attr_copy_action])
       LIBS=$xattr_saved_LIBS
-      if test $ac_cv_func_attr_copy_file = yes; then
+      if test $ac_cv_func_attr_copy_file = yes \
+	 && test $ac_cv_func_attr_copy_action = yes; then
         use_xattr=yes
       fi
     fi
