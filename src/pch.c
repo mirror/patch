@@ -389,6 +389,29 @@ skip_hex_digits (char const *str)
   return s == str ? NULL : s;
 }
 
+/* Check if we are in the root of a particular filesystem namespace ("/" on
+   UNIX or a particular drive's root on DOS-like systems).  */
+static bool
+cwd_is_root (char const *name)
+{
+  unsigned int prefix_len = FILE_SYSTEM_PREFIX_LEN (name);
+  char root[prefix_len + 2];
+  struct stat st;
+  dev_t root_dev;
+  ino_t root_ino;
+
+  memcpy (root, name, prefix_len);
+  root[prefix_len] = '/';
+  root[prefix_len + 1] = 0;
+  if (lstat (root, &st))
+    return false;
+  root_dev = st.st_dev;
+  root_ino = st.st_ino;
+  if (lstat (".", &st))
+    return false;
+  return root_dev == st.st_dev && root_ino == st.st_ino;
+}
+
 static bool
 name_is_valid (char const *name)
 {
@@ -419,6 +442,10 @@ name_is_valid (char const *name)
 	while (ISSLASH (*n))
 	  n++;
       }
+
+  /* Allow any filename if we are in the filesystem root.  */
+  if (! is_valid && cwd_is_root (name))
+    is_valid = true;
 
   if (! is_valid)
     {

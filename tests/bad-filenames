@@ -42,6 +42,17 @@ No file to patch.  Skipping patch.
 status: 1
 EOF
 
+for dir in "$TMPDIR" "$TMP" "$TEMP" "/tmp"; do
+    if test -n "$dir"; then
+	filename=$dir/patch-$$-$RANDOM
+	break
+    fi
+done
+
+check 'emit_patch $filename | (cd / && patch -f -p0 --dry-run) || echo status: $?' <<EOF
+patching file $filename
+EOF
+
 check 'emit_patch a/../z | patch -f -p0 --dry-run || echo status: $?' <<EOF
 Ignoring potentially dangerous file name a/../z
 can't find file to patch at input line 3
