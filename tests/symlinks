@@ -22,7 +22,7 @@ cat > create.diff <<EOF
 EOF
 
 rm -f f l
-echo f > f
+echo one > f
 ncheck 'ln -s f l'
 
 check 'patch < create.diff || echo "Status: $?"' <<EOF
@@ -32,13 +32,13 @@ Status: 1
 EOF
 
 check 'cat f' <<EOF
-f
+one
 EOF
 
 # --------------------------------------------------------------
 
 rm -f f l
-echo f > f
+echo one > f
 ncheck 'ln -s f l'
 
 cat > modify.diff <<EOF
@@ -57,7 +57,7 @@ EOF
 # --------------------------------------------------------------
 
 rm -f f l
-echo f > f
+echo one > f
 ncheck 'ln -s f l'
 
 cat > delete.diff <<EOF

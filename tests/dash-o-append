@@ -33,8 +33,8 @@ EOF
 echo one > a
 
 check 'patch -o a.new a < a.diff' <<EOF
-patching file a
-patching file a
+patching file a.new (read from a)
+patching file a.new (read from a)
 EOF
 
 check 'cat a.new' <<EOF
