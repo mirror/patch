@@ -255,19 +255,19 @@ main (int argc, char **argv)
 	  if (! strcmp (inname, outname))
 	    {
 	      if (inerrno == -1)
-		inerrno = lstat (inname, &instat) ? errno : 0;
+		inerrno = stat_file (inname, &instat);
 	      outstat = instat;
 	      outerrno = inerrno;
 	    }
 	  else
-	    outerrno = lstat (outname, &outstat) ? errno : 0;
+	    outerrno = stat_file (outname, &outstat);
 
 	  if (! outerrno)
 	    {
 	      if (has_queued_output (&outstat))
 		{
 		  output_files (&outstat);
-		  outerrno = lstat (outname, &outstat) ? errno : 0;
+		  outerrno = stat_file (outname, &outstat);
 		  inerrno = -1;
 		}
 	      if (! outerrno)
@@ -618,7 +618,7 @@ main (int argc, char **argv)
 			struct stat oldst;
 			int olderrno;
 
-			olderrno = lstat (rej, &oldst) ? errno : 0;
+			olderrno = stat_file (rej, &oldst);
 			if (olderrno && olderrno != ENOENT)
 			  write_fatal ();
 		        if (! olderrno && lookup_file_id (&oldst) == CREATED)
@@ -1711,7 +1711,7 @@ delete_file_later (const char *name, const struct stat *st, bool backup)
 
   if (! st)
     {
-      if (lstat (name, &st_tmp) != 0)
+      if (stat_file (name, &st_tmp) != 0)
 	pfatal ("Can't get file attributes of %s %s", "file", name);
       st = &st_tmp;
     }

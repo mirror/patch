@@ -437,7 +437,7 @@ move_file (char const *from, bool *from_needs_removal,
   struct stat to_st;
   int to_errno;
 
-  to_errno = lstat (to, &to_st) == 0 ? 0 : errno;
+  to_errno = stat_file (to, &to_st);
   if (backup)
     create_backup (to, to_errno ? NULL : &to_st, false);
   if (! to_errno)
@@ -1648,4 +1648,9 @@ make_tempfile (char const **name, char letter, char const *real_name,
       *name = template;
       return fd;
     }
+}
+
+int stat_file (char const *filename, struct stat *st)
+{
+  return lstat (filename, st) == 0 ? 0 : errno;
 }

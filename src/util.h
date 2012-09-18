@@ -68,6 +68,7 @@ void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);
 void set_queued_output (struct stat const *, bool);
 bool has_queued_output (struct stat const *);
+int stat_file (char const *, struct stat *);
 
 enum file_attributes {
   FA_TIMES = 1,

@@ -293,18 +293,16 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	  {
 	    inname = savebuf (buf, t - buf);
 	    inname[t - buf - 1] = 0;
-	    if (lstat (inname, &instat) == 0)
-	      {
-		inerrno = 0;
-		invc = -1;
-	      }
-	    else
+	    inerrno = stat_file (inname, &instat);
+	    if (inerrno)
 	      {
 		perror (inname);
 		fflush (stderr);
 		free (inname);
 		inname = 0;
 	      }
+	    else
+	      invc = -1;
 	  }
 	if (!inname) {
 	    ask ("Skip this patch? [y] ");
@@ -914,15 +912,16 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		  if (! stat_errno[i])
 		    st[i] = st[i0];
 		}
-	      else if (lstat (p_name[i], &st[i]) != 0)
-		stat_errno[i] = errno;
-	      else if (lookup_file_id (&st[i]) == DELETE_LATER)
-		stat_errno[i] = ENOENT;
 	      else
 		{
-		  stat_errno[i] = 0;
-		  if (posixly_correct && name_is_valid (p_name[i]))
-		    break;
+		  stat_errno[i] = stat_file (p_name[i], &st[i]);
+		  if (! stat_errno[i])
+		    {
+		      if (lookup_file_id (&st[i]) == DELETE_LATER)
+			stat_errno[i] = ENOENT;
+		      else if (posixly_correct && name_is_valid (p_name[i]))
+			break;
+		    }
 		}
 	      i0 = i;
 	    }
@@ -1007,7 +1006,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
       {
 	if (inname)
 	  {
-	    inerrno = lstat (inname, &instat) == 0 ? 0 : errno;
+	    inerrno = stat_file (inname, &instat);
 	    if (inerrno || (instat.st_mode & S_IFMT) == file_type)
 	      maybe_reverse (inname, inerrno, inerrno || instat.st_size == 0);
 	  }
