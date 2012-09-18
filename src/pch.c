@@ -403,11 +403,11 @@ cwd_is_root (char const *name)
   memcpy (root, name, prefix_len);
   root[prefix_len] = '/';
   root[prefix_len + 1] = 0;
-  if (lstat (root, &st))
+  if (stat (root, &st))
     return false;
   root_dev = st.st_dev;
   root_ino = st.st_ino;
-  if (lstat (".", &st))
+  if (stat (".", &st))
     return false;
   return root_dev == st.st_dev && root_ino == st.st_ino;
 }
@@ -1042,7 +1042,7 @@ prefix_components (char *filename, bool checkdirs)
 	  if (checkdirs)
 	    {
 	      *f = '\0';
-	      stat_result = lstat (filename, &stat_buf);
+	      stat_result = stat (filename, &stat_buf);
 	      *f = '/';
 	      if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
 		break;
