@@ -196,8 +196,12 @@ main (int argc, char **argv)
 
       if (have_git_diff != pch_git_diff ())
 	{
+	  if (have_git_diff)
+	    {
+	      output_files (NULL);
+	      inerrno = -1;
+	    }
 	  have_git_diff = ! have_git_diff;
-	  output_files (NULL);
 	}
 
       if (TMPREJNAME_needs_removal)

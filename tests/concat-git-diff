@@ -56,11 +56,7 @@ check 'cat f' <<EOF
 three
 EOF
 
-cat > f <<EOF
-1
-2
-3
-EOF
+seq 3 > f
 
 cat > concat2.diff <<EOF
 diff --git a/f b/f
@@ -84,6 +80,41 @@ index 0d0b976..6b2348d 100644
 EOF
 
 check 'patch -p1 < concat2.diff || echo "Status: $?"' <<EOF
+patching file f
+patching file f
+EOF
+
+check 'cat f' <<EOF
+a
+1
+2
+3
+b
+EOF
+
+seq 3 > f
+
+cat > concat3.diff <<EOF
+diff --git a/f b/f
+index 01e79c3..0d0b976 100644
+--- a/f
++++ b/f
+@@ -1,3 +1,4 @@
+ 1
+ 2
+ 3
++b
+diff a/f b/f
+--- a/f
++++ b/f
+@@ -1,3 +1,4 @@
++a
+ 1
+ 2
+ 3
+EOF
+
+check 'patch -p1 < concat3.diff || echo "Status: $?"' <<EOF
 patching file f
 patching file f
 EOF
