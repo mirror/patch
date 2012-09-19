@@ -1652,5 +1652,8 @@ make_tempfile (char const **name, char letter, char const *real_name,
 
 int stat_file (char const *filename, struct stat *st)
 {
-  return lstat (filename, st) == 0 ? 0 : errno;
+  int (*xstat)(char const *, struct stat *) =
+    follow_symlinks ? stat : lstat;
+
+  return xstat (filename, st) == 0 ? 0 : errno;
 }

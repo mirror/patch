@@ -54,6 +54,11 @@ File l is not a regular file -- refusing to patch
 1 out of 1 hunk ignored -- saving rejects to file l.rej
 Status: 1
 EOF
+
+check 'patch --follow-symlinks < modify.diff || echo "Status: $?"' <<EOF
+patching file l
+EOF
+
 # --------------------------------------------------------------
 
 rm -f f l

@@ -600,6 +600,13 @@ diff form.
 \fB\-s\fP  or  \fB\*=silent\fP  or  \fB\*=quiet\fP
 Work silently, unless an error occurs.
 .TP
+\fB\*=follow\-symlinks\fP
+When looking for input files, follow symbolic links.  Replaces the symbolic
+links, instead of modifying the files the symbolic links point to.  Git-style
+patches to symbolic links will no longer apply.  This option exists for
+backwards compatibility with previous versions of patch; its use is
+discouraged.
+.TP
 \fB\-t\fP  or  \fB\*=batch\fP
 Suppress questions like
 .BR \-f ,

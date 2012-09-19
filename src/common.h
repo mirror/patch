@@ -111,6 +111,7 @@ XTERN bool canonicalize;
 XTERN int patch_get;
 XTERN bool set_time;
 XTERN bool set_utc;
+XTERN bool follow_symlinks;
 
 enum diff
   {
