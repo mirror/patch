@@ -179,6 +179,10 @@ EOF
 
 # ==============================================================
 
+# Line endings of @@ lines are not used for guessing if a patch needs CR
+# stripping: if the -p / --show-c-function option of GNU diff is used, these
+# lines can have different line endings than the rest of the patch.
+
 echo 1 > a
 echo 2 > b
 diff -u a b | sed -e 's,@@$,@@ context\r,' > ab.diff
