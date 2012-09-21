@@ -179,10 +179,13 @@ copy_attr_error (struct error_context *ctx, char const *fmt, ...)
   int err = errno;
   va_list ap;
 
-  /* use verror module to print error message */
-  va_start (ap, fmt);
-  verror (0, err, fmt, ap);
-  va_end (ap);
+  if (err != ENOSYS && err != ENOTSUP && err != EPERM)
+    {
+      /* use verror module to print error message */
+      va_start (ap, fmt);
+      verror (0, err, fmt, ap);
+      va_end (ap);
+    }
 }
 
 static char const *
@@ -274,9 +277,9 @@ set_file_attributes (char const *to, enum file_attributes attr,
 		quotearg (to));
     }
   if (attr & FA_XATTRS)
-    if (copy_attr (from, to))
+    if (copy_attr (from, to) != 0
+	&& errno != ENOSYS && errno != ENOTSUP && errno != EPERM)
       fatal_exit (0);
-  /* FIXME: There may be other attributes to preserve.  */
   if (attr & FA_MODE)
     {
 #if 0 && defined HAVE_LCHMOD

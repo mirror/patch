@@ -214,3 +214,7 @@ bool merge_hunk (int hunk, struct outstate *, lin where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false
 #endif
+
+#ifndef ENOTSUP
+#define ENOTSUP (-1)
+#endif
