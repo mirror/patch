@@ -85,6 +85,7 @@ if test "$gl_gcc_warnings" = yes; then
   nw="$nw -Wswitch-default"         # Too many warnings for now
   nw="$nw -Wstack-protector"        # not worth working around
   nw="$nw -Wmissing-format-attribute" # not worth working around in patch
+  nw="$nw -Wsuggest-attribute=format" # warns about util.c
   # things to fix soon:
   nw="$nw -Wshadow"
   nw="$nw -Wstrict-overflow"
