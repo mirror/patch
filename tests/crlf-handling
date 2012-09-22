@@ -23,21 +23,21 @@ echo 1b > b
 diff a b | lf2crlf > ab.diff
 echo 1 > c
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 
 diff -c a b | lf2crlf > ab.diff
 echo 1 > c
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 
 diff -u a b | lf2crlf > ab.diff
 echo 1 > c
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 
@@ -109,8 +109,16 @@ echo 1b > b
 
 diff a b | lf2crlf > ab.diff
 cp a c
+
+check 'patch --binary c < ab.diff || echo status: $?' <<EOF
+patching file c
+Hunk #1 FAILED at 1 (different line endings).
+1 out of 1 hunk FAILED -- saving rejects to file c.rej
+status: 1
+EOF
+
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 
@@ -132,7 +140,7 @@ EOF
 diff -u a b | lf2crlf > ab.diff
 cp a c
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 
@@ -154,7 +162,7 @@ EOF
 diff -c a b | lf2crlf > ab.diff
 cp a c
 check 'patch c < ab.diff' <<EOF
-(Stripping trailing CRs from patch.)
+(Stripping trailing CRs from patch; use --binary to disable.)
 patching file c
 EOF
 

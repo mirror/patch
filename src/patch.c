@@ -38,6 +38,7 @@
 
 static FILE *create_output_file (char const *, int);
 static lin locate_hunk (lin);
+static bool check_line_endings (lin);
 static bool apply_hunk (struct outstate *, lin);
 static bool patch_match (lin, lin, lin, lin);
 static bool spew_output (struct outstate *, struct stat *);
@@ -445,9 +446,11 @@ main (int argc, char **argv)
 		failed++;
 		if (verbosity == VERBOSE ||
 		    (! skip_rest_of_patch && verbosity != SILENT))
-		  say ("Hunk #%d %s at %s.\n", hunk,
+		  say ("Hunk #%d %s at %s%s.\n", hunk,
 		       skip_rest_of_patch ? "ignored" : "FAILED",
-		       format_linenum (numbuf, newwhere));
+		       format_linenum (numbuf, newwhere),
+		       ! skip_rest_of_patch && check_line_endings (newwhere)
+			 ?  " (different line endings)" : "");
 	      }
 	    else if (! merge &&
 		     (verbosity == VERBOSE
@@ -1657,6 +1660,33 @@ patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 	    return false;
     }
     return true;
+}
+
+/* Check if the line endings in the input file and in the patch differ. */
+
+static bool
+check_line_endings (lin where)
+{
+  char const *p;
+  size_t size;
+  bool input_crlf, patch_crlf;
+
+  p = pfetch (1);
+  size = pch_line_len (1);
+  if (! size)
+    return false;
+  patch_crlf = size >= 2 && p[size - 2] == '\r' && p[size - 1] == '\n';
+
+  if (! input_lines)
+    return false;
+  if (where > input_lines)
+    where = input_lines;
+  p = ifetch (where, false, &size);
+  if (! size)
+    return false;
+  input_crlf = size >= 2 && p[size - 2] == '\r' && p[size - 1] == '\n';
+
+  return patch_crlf != input_crlf;
 }
 
 /* Do two lines match with canonicalized white space? */

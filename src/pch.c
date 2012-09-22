@@ -266,7 +266,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	  say ("(Patch is indented %lu space%s.)\n",
 	       (unsigned long int) p_indent, p_indent==1?"":"s");
 	if (p_strip_trailing_cr)
-	  say ("(Stripping trailing CRs from patch.)\n");
+	  say ("(Stripping trailing CRs from patch; use --binary to disable.)\n");
 	if (! inname)
 	  {
 	    char numbuf[LINENUM_LENGTH_BOUND + 1];
