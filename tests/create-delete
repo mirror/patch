@@ -182,7 +182,7 @@ EOF
 
 check 'patch -p0 -b < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch, as expected
+File target is not empty after patch; not deleting
 status: 1
 EOF
 
@@ -208,7 +208,7 @@ EOF
 
 check 'patch -p0 < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch, as expected
+File target is not empty after patch; not deleting
 status: 1
 EOF
 
@@ -227,7 +227,7 @@ EOF
 
 check 'patch -p1 < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch, as expected
+File target is not empty after patch; not deleting
 status: 1
 EOF
 
@@ -251,6 +251,13 @@ EOF
 check 'cat target' <<EOF
 EOF
 
+echo 1 > target
+check 'patch -p0 -E < p.diff || echo status: $?' <<EOF
+patching file target
+EOF
+
+ncheck 'test ! -e target'
+
 # ================================================================
 # File expected to become empty does become empty
 
@@ -270,6 +277,19 @@ patching file target
 EOF
 
 ncheck 'test ! -e target'
+
+check 'cat target.orig' <<EOF
+data
+EOF
+
+echo data > target
+
+check 'patch -p1 -b --posix -f < p.diff || echo status: $?' <<EOF
+patching file target
+EOF
+
+check 'cat target' <<EOF
+EOF
 
 check 'cat target.orig' <<EOF
 data

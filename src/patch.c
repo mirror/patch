@@ -513,12 +513,13 @@ main (int argc, char **argv)
 	    {
 	      if (! outstate.zero_output
 		  && pch_says_nonexistent (! reverse) == 2
+		  && (remove_empty_files || ! posixly_correct)
 		  && ! (merge && somefailed))
 		{
 		  mismatch = true;
 		  somefailed = true;
 		  if (verbosity != SILENT)
-		    say ("File %s is not empty after patch, as expected\n",
+		    say ("File %s is not empty after patch; not deleting\n",
 			 quotearg (outname));
 		}
 
