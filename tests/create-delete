@@ -168,33 +168,93 @@ EOF
 check 'cat f' <<EOF
 f
 EOF
-#
-# ----------------------------------------------------------------
 
-# This test deletes the target file.
+# ================================================================
+# File expected to become empty doesn't become empty
 
-echo data > target
+seq 2 > target
 cat > p.diff <<EOF
-diff --git a/target b/target
-deleted file mode 100644
-index 1269488..0000000
+--- target
++++ /dev/null
+@@ -1 +0,0 @@
+-1
 EOF
 
-check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
+check 'patch -p0 -b < p.diff || echo status: $?' <<EOF
 patching file target
 File target is not empty after patch, as expected
 status: 1
 EOF
 
 check 'cat target' <<EOF
-data
+2
 EOF
 
 # Patch creates a backup file even when the original file remains unchanged:
 check 'cat target.orig' <<EOF
-data
+1
+2
 EOF
 
+# --------------------------------------------------------------
+
+seq 2 > target
+cat > p.diff <<EOF
+--- target	2012-09-25 03:09:15
++++ target	1970-01-01 00:00:00
+@@ -1 +0,0 @@
+-1
+EOF
+
+check 'patch -p0 < p.diff || echo status: $?' <<EOF
+patching file target
+File target is not empty after patch, as expected
+status: 1
+EOF
+
+check 'cat target' <<EOF
+2
+EOF
+
+# --------------------------------------------------------------
+printf '\0' > target
+cat > p.diff <<EOF
+diff --git a/target b/target
+deleted file mode 100644
+index f76dd23..0000000
+Binary files a/target and /dev/null differ
+EOF
+
+check 'patch -p1 < p.diff || echo status: $?' <<EOF
+patching file target
+File target is not empty after patch, as expected
+status: 1
+EOF
+
+ncheck 'test -e target'
+
+# ================================================================
+# File not expected to become empty does become empty
+
+echo 1 > target
+cat > p.diff <<EOF
+--- target
++++ target
+@@ -1 +0,0 @@
+-1
+EOF
+
+check 'patch -p0 < p.diff || echo status: $?' <<EOF
+patching file target
+EOF
+
+check 'cat target' <<EOF
+EOF
+
+# ================================================================
+# File expected to become empty does become empty
+
+echo data > target
 cat > p.diff <<EOF
 diff --git a/target b/target
 deleted file mode 100644

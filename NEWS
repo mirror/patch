@@ -1,4 +1,6 @@
 * Two critical bug fixes in the "diff --git" format support.
+* Only expect files to become empty if the patch says so (the "other" file
+  must be /dev/null or dated the Epoch).
 * Various improvements to messages when applying a patch to a file of different
   type (regular file vs. symlink), when there are line ending differences (LF
   vs. CRLF), and when in --dry-run mode.

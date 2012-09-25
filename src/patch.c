@@ -512,7 +512,7 @@ main (int argc, char **argv)
 	  else
 	    {
 	      if (! outstate.zero_output
-		  && pch_says_nonexistent (! reverse)
+		  && pch_says_nonexistent (! reverse) == 2
 		  && ! (merge && somefailed))
 		{
 		  mismatch = true;
