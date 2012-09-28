@@ -180,19 +180,13 @@ cat > p.diff <<EOF
 -1
 EOF
 
-check 'patch -p0 -b < p.diff || echo status: $?' <<EOF
+check 'patch -p0 < p.diff || echo status: $?' <<EOF
 patching file target
 File target is not empty after patch; not deleting
 status: 1
 EOF
 
 check 'cat target' <<EOF
-2
-EOF
-
-# Patch creates a backup file even when the original file remains unchanged:
-check 'cat target.orig' <<EOF
-1
 2
 EOF
 
@@ -225,13 +219,16 @@ index f76dd23..0000000
 Binary files a/target and /dev/null differ
 EOF
 
-check 'patch -p1 < p.diff || echo status: $?' <<EOF
+check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
 patching file target
 File target is not empty after patch; not deleting
 status: 1
 EOF
 
 ncheck 'test -e target'
+
+# Patch creates a backup file even when the original file remains unchanged:
+ncheck 'test -e target.orig'
 
 # ================================================================
 # File not expected to become empty does become empty
