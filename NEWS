@@ -1,3 +1,5 @@
+Changes in version 2.7.1:
+
 * Two critical bug fixes in the "diff --git" format support.
 * Clarify the message printed when a patch is expected to empty out and delete
   a file, but the file does not become empty.
