@@ -212,23 +212,27 @@ EOF
 
 # --------------------------------------------------------------
 printf '\0' > target
-cat > p.diff <<EOF
+if ! test -s target; then
+    echo "Failed to printf a null character; skipping this test"
+else
+    cat > p.diff <<EOF
 diff --git a/target b/target
 deleted file mode 100644
 index f76dd23..0000000
 Binary files a/target and /dev/null differ
 EOF
 
-check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
+    check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
 patching file target
 File target is not empty after patch; not deleting
 status: 1
 EOF
 
-ncheck 'test -e target'
+    ncheck 'test -e target'
 
 # Patch creates a backup file even when the original file remains unchanged:
-ncheck 'test -e target.orig'
+    ncheck 'test -e target.orig'
+fi
 
 # ================================================================
 # File not expected to become empty does become empty
