@@ -20,6 +20,7 @@ TESTS = \
 	asymmetric-hunks \
 	backup-prefix-suffix \
 	bad-filenames \
+	bad-usage \
 	concat-git-diff \
 	copy-rename \
 	corrupt-reject-files \

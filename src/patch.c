@@ -150,6 +150,10 @@ main (int argc, char **argv)
     else if ((version_control = getenv ("VERSION_CONTROL")))
       version_control_context = "$VERSION_CONTROL";
 
+    init_backup_hash_table ();
+    init_files_to_delete ();
+    init_files_to_output ();
+
     /* parse switches */
     Argc = argc;
     Argv = argv;
@@ -161,10 +165,6 @@ main (int argc, char **argv)
 
     if (make_backups | backup_if_mismatch)
       backup_type = get_version (version_control_context, version_control);
-
-    init_backup_hash_table ();
-    init_files_to_delete ();
-    init_files_to_output ();
 
     init_output (&outstate);
     if (outfile)
