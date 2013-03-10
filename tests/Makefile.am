@@ -50,6 +50,7 @@ TESTS = \
 	reject-format \
 	remember-backup-files \
 	remember-reject-files \
+	remove-directories \
 	symlinks \
 	unmodified-files
 

@@ -646,8 +646,8 @@ main (int argc, char **argv)
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
     output_files (NULL);
-    delete_files ();
     cleanup ();
+    delete_files ();
     if (somefailed)
       exit (1);
     return 0;
