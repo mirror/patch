@@ -33,7 +33,7 @@ AM_CONDITIONAL([ENABLE_MERGE], [test "$enableval" != no])
 AM_CONDITIONAL([ALPHA_VERSION],
   [[echo "$PACKAGE_VERSION" | grep -- "-[0-9a-f][0-9a-f]*\\(-dirty\\)\\?$" >/dev/null]])
 
-AM_INIT_AUTOMAKE([1.11.2 -Wall -Werror gnu dist-bzip2 dist-xz color-tests parallel-tests])
+AM_INIT_AUTOMAKE([1.11.2 -Wall gnu dist-bzip2 dist-xz color-tests parallel-tests])
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_HEADER([config.h:config.hin])
