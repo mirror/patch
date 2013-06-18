@@ -1,14 +1,10 @@
 .\" patch man page
-.de Id
-.ds Dt \\$4
-..
 .ds = \-\^\-
 .de Sp
 .if t .sp .3
 .if n .sp
 ..
-.TH PATCH 1 \*(Dt GNU
-.ta 3n
+.TH PATCH 1 "" GNU
 .SH NAME
 patch \- apply a diff file to an original
 .SH SYNOPSIS
@@ -241,7 +237,9 @@ asks for confirmation before proceeding.
 The upshot of all this is that you should be able to say, while in a news
 interface, something like the following:
 .Sp
-	\fB| patch \-d /usr/src/local/blurfl\fP
+.RS
+\fB| patch \-d /usr/src/local/blurfl\fP
+.RE
 .Sp
 and patch a file in the
 .B blurfl
@@ -470,7 +468,9 @@ you keep your files in a different directory than the person who sent
 out the patch.
 For example, supposing the file name in the patch file was
 .Sp
-	\fB/u/howard/src/blurfl/blurfl.c\fP
+.RS
+\fB/u/howard/src/blurfl/blurfl.c\fP
+.RE
 .Sp
 setting
 .B \-p0
@@ -478,13 +478,17 @@ gives the entire file name unmodified,
 .B \-p1
 gives
 .Sp
-	\fBu/howard/src/blurfl/blurfl.c\fP
+.RS
+\fBu/howard/src/blurfl/blurfl.c\fP
+.RE
 .Sp
 without the leading slash,
 .B \-p4
 gives
 .Sp
-	\fBblurfl/blurfl.c\fP
+.RS
+\fBblurfl/blurfl.c\fP
+.RE
 .Sp
 and not specifying
 .B \-p
@@ -876,7 +880,9 @@ or
 option.
 Here is an example command, using Bourne shell syntax:
 .Sp
-	\fBLC_ALL=C TZ=UTC0 diff \-Naur gcc\-2.7 gcc\-2.8\fP
+.RS
+\fBLC_ALL=C TZ=UTC0 diff \-Naur gcc\-2.7 gcc\-2.8\fP
+.RE
 .PP
 Tell your recipients how to apply the patch
 by telling them which directory to
@@ -925,14 +931,16 @@ If the recipient is supposed to use the
 .BI \-p N
 option, do not send output that looks like this:
 .Sp
-.ft B
+.RS
+.ft CW
 .ne 3
-	diff \-Naur v2.0.29/prog/README prog/README
+diff \-Naur v2.0.29/prog/README prog/README
 .br
-	\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
 .br
-	+\^+\^+ prog/README   Mon Mar 17 14:58:22 1997
++\^+\^+ prog/README   Mon Mar 17 14:58:22 1997
 .ft
+.RE
 .Sp
 because the two file names have different numbers of slashes,
 and different versions of
@@ -940,14 +948,16 @@ and different versions of
 interpret the file names differently.
 To avoid confusion, send output that looks like this instead:
 .Sp
-.ft B
+.RS
+.ft CW
 .ne 3
-	diff \-Naur v2.0.29/prog/README v2.0.30/prog/README
+diff \-Naur v2.0.29/prog/README v2.0.30/prog/README
 .br
-	\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
 .br
-	+\^+\^+ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
++\^+\^+ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
 .ft
+.RE
 .Sp
 .PP
 Avoid sending patches that compare backup file names like
