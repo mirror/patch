@@ -1599,7 +1599,7 @@ make_tempfile (char const **name, char letter, char const *real_name,
   int try_makedirs_errno = ENOENT;
   char *template;
 
-  if (real_name)
+  if (real_name && ! dry_run)
     {
       char *dirname, *basename;
 
