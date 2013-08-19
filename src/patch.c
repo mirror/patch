@@ -1237,6 +1237,7 @@ abort_hunk_unified (bool header, bool reverse)
   lin old = 1;
   lin lastline = pch_ptrn_lines ();
   lin new = lastline + 1;
+  char const *c_function = pch_c_function();
 
   if (header)
     {
@@ -1251,7 +1252,7 @@ abort_hunk_unified (bool header, bool reverse)
   print_unidiff_range (rejfp, pch_first () + out_offset, lastline);
   fprintf (rejfp, " +");
   print_unidiff_range (rejfp, pch_newfirst () + out_offset, pch_repl_lines ());
-  fprintf (rejfp, " @@\n");
+  fprintf (rejfp, " @@%s\n", c_function ? c_function : "");
 
   while (pch_char (new) == '=' || pch_char (new) == '\n')
     new++;

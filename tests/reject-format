@@ -79,7 +79,7 @@ check 'cat f.rej' <<EOF
 Index: f
 --- f.orig
 +++ f
-@@ -2,6 +2,6 @@
+@@ -2,6 +2,6 @@ a() {
  2
  3
  $preserve_trailing_blank
@@ -102,7 +102,7 @@ EOF
 check 'cat f.rej' <<EOF
 --- f.orig
 +++ f
-@@ -2,6 +2,6 @@
+@@ -2,6 +2,6 @@ a() {
  2
  3
  $preserve_trailing_blank
