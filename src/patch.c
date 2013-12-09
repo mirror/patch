@@ -762,7 +762,7 @@ static char const *const option_help[] =
 "",
 "  -D NAME  --ifdef=NAME  Make merged if-then-else output using NAME.",
 #ifdef ENABLE_MERGE
-"  -m  --merge  Merge using conflict markers instead of creating reject files.",
+"  --merge  Merge using conflict markers instead of creating reject files.",
 #endif
 "  -E  --remove-empty-files  Remove output files that are empty after patching.",
 "",
