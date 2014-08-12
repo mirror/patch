@@ -519,7 +519,7 @@ main (int argc, char **argv)
 		  mismatch = true;
 		  somefailed = true;
 		  if (verbosity != SILENT)
-		    say ("File %s is not empty after patch; not deleting\n",
+		    say ("Not deleting file %s as content differs from patch\n",
 			 quotearg (outname));
 		}
 

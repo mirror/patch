@@ -182,7 +182,7 @@ EOF
 
 check 'patch -p0 < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch; not deleting
+Not deleting file target as content differs from patch
 status: 1
 EOF
 
@@ -202,7 +202,7 @@ EOF
 
 check 'patch -p0 < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch; not deleting
+Not deleting file target as content differs from patch
 status: 1
 EOF
 
@@ -224,7 +224,7 @@ EOF
 
     check 'patch -p1 -b < p.diff || echo status: $?' <<EOF
 patching file target
-File target is not empty after patch; not deleting
+Not deleting file target as content differs from patch
 status: 1
 EOF
 
