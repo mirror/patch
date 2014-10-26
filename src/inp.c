@@ -46,6 +46,7 @@ static bool plan_a (char const *);	/* yield false if memory runs out */
 static void plan_b (char const *);
 static void report_revision (bool);
 static void too_many_lines (char const *) __attribute__((noreturn));
+static void lines_too_long (char const *) __attribute__((noreturn));
 
 /* New patch--prepare to edit another file. */
 
@@ -128,6 +129,11 @@ too_many_lines (char const *filename)
   fatal ("File %s has too many lines", quotearg (filename));
 }
 
+static void
+lines_too_long (char const *filename)
+{
+  fatal ("Lines in file %s are too long", quotearg (filename));
+}
 
 bool
 get_input_file (char const *filename, char const *outname, mode_t file_type)
@@ -367,7 +373,8 @@ plan_b (char const *filename)
 
   while ((c = getc (ifp)) != EOF)
     {
-      len++;
+      if (++len > ((size_t) -1) / 2)
+	lines_too_long (filename);
 
       if (c == '\n')
 	{
