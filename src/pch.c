@@ -1651,7 +1651,7 @@ another_hunk (enum diff difftype, bool rev)
 	if (*s == ' ') s++;
 	if (*s++ != '@')
 	    malformed ();
-	if (*s++ == '@' && *s == ' ' && *s != '\0')
+	if (*s++ == '@' && *s == ' ')
 	  {
 	    p_c_function = s;
 	    while (*s != '\n')
