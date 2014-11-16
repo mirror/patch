@@ -865,7 +865,7 @@ get_some_switches (void)
 	    case 'B':
 		if (!*optarg)
 		  fatal ("backup prefix is empty");
-		origprae = savestr (optarg);
+		origprae = xstrdup (optarg);
 		break;
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
@@ -875,7 +875,7 @@ get_some_switches (void)
 		  pfatal ("Can't change to directory %s", quotearg (optarg));
 		break;
 	    case 'D':
-		do_defines = savestr (optarg);
+		do_defines = xstrdup (optarg);
 		break;
 	    case 'e':
 		diff_type = ED_DIFF;
@@ -893,7 +893,7 @@ get_some_switches (void)
 		patch_get = numeric_string (optarg, true, "get option value");
 		break;
 	    case 'i':
-		patchname = savestr (optarg);
+		patchname = xstrdup (optarg);
 		break;
 	    case 'l':
 		canonicalize = true;
@@ -921,13 +921,13 @@ get_some_switches (void)
 		noreverse = true;
 		break;
 	    case 'o':
-		outfile = savestr (optarg);
+		outfile = xstrdup (optarg);
 		break;
 	    case 'p':
 		strippath = numeric_string (optarg, false, "strip count");
 		break;
 	    case 'r':
-		rejname = savestr (optarg);
+		rejname = xstrdup (optarg);
 		break;
 	    case 'R':
 		reverse = true;
@@ -961,13 +961,13 @@ get_some_switches (void)
 	    case 'Y':
 		if (!*optarg)
 		  fatal ("backup basename prefix is empty");
-		origbase = savestr (optarg);
+		origbase = xstrdup (optarg);
 		break;
 	    case 'z':
 	    case_z:
 		if (!*optarg)
 		  fatal ("backup suffix is empty");
-		origsuff = savestr (optarg);
+		origsuff = xstrdup (optarg);
 		break;
 	    case 'Z':
 		set_utc = true;
@@ -1036,12 +1036,12 @@ get_some_switches (void)
     /* Process any filename args.  */
     if (optind < Argc)
       {
-	inname = savestr (Argv[optind++]);
+	inname = xstrdup (Argv[optind++]);
 	explicit_inname = true;
 	invc = -1;
 	if (optind < Argc)
 	  {
-	    patchname = savestr (Argv[optind++]);
+	    patchname = xstrdup (Argv[optind++]);
 	    if (optind < Argc)
 	      {
 		fprintf (stderr, "%s: %s: extra operand\n",
