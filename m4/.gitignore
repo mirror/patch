@@ -37,7 +37,6 @@
 /gnulib-tool.m4
 /hash.m4
 /include_next.m4
-/inline.m4
 /intmax_t.m4
 /inttypes_h.m4
 /largefile.m4
@@ -165,7 +164,6 @@ gnulib-comp.m4
 gnulib-tool.m4
 hash.m4
 include_next.m4
-inline.m4
 intmax_t.m4
 inttypes_h.m4
 lchmod.m4
@@ -244,7 +242,8 @@ xsize.m4
 xstrndup.m4
 xvasprintf.m4
 /close.m4
-/gl_list.m4
 /off_t.m4
 /sys_types_h.m4
 /extern-inline.m4
+/absolute-header.m4
+/secure_getenv.m4
