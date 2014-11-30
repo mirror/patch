@@ -39,6 +39,7 @@
 #elif HAVE_STDINT_H
 # include <stdint.h>
 #endif
+#include <intprops.h>
 
 #include <ctype.h>
 /* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
@@ -67,6 +68,9 @@
 /* typedefs */
 
 typedef off_t lin;			/* must be signed */
+
+#define LINENUM_MIN TYPE_MINIMUM (lin)
+#define LINENUM_MAX TYPE_MAXIMUM (lin)
 
 /* globals */
 

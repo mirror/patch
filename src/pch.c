@@ -1319,6 +1319,8 @@ another_hunk (enum diff difftype, bool rev)
 		      s++;
 		    scan_linenum (s, &p_ptrn_lines);
 		    p_ptrn_lines += 1 - p_first;
+		    if (p_ptrn_lines < 0)
+		      malformed ();
 		}
 		else if (p_first)
 		    p_ptrn_lines = 1;
@@ -1326,6 +1328,9 @@ another_hunk (enum diff difftype, bool rev)
 		    p_ptrn_lines = 0;
 		    p_first = 1;
 		}
+		if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+		    p_ptrn_lines >= LINENUM_MAX - 6)
+		  malformed ();
 		p_max = p_ptrn_lines + 6;	/* we need this much at least */
 		while (p_max + 1 >= hunkmax)
 		    if (! grow_hunkmax ())
@@ -1395,6 +1400,8 @@ another_hunk (enum diff difftype, bool rev)
 		    while (! ISDIGIT (*s));
 		    scan_linenum (s, &p_repl_lines);
 		    p_repl_lines += 1 - p_newfirst;
+		    if (p_repl_lines < 0)
+		      malformed ();
 		  }
 		else if (p_newfirst)
 		  p_repl_lines = 1;
@@ -1403,6 +1410,9 @@ another_hunk (enum diff difftype, bool rev)
 		    p_repl_lines = 0;
 		    p_newfirst = 1;
 		  }
+		if (p_newfirst >= LINENUM_MAX - p_repl_lines ||
+		    p_repl_lines >= LINENUM_MAX - p_end)
+		  malformed ();
 		p_max = p_repl_lines + p_end;
 		while (p_max + 1 >= hunkmax)
 		  if (! grow_hunkmax ())
@@ -1642,6 +1652,8 @@ another_hunk (enum diff difftype, bool rev)
 	    s = scan_linenum (s + 1, &p_ptrn_lines);
 	else
 	    p_ptrn_lines = 1;
+	if (p_first >= LINENUM_MAX - p_ptrn_lines)
+	  malformed ();
 	if (*s == ' ') s++;
 	if (*s != '+')
 	    malformed ();
@@ -1650,6 +1662,8 @@ another_hunk (enum diff difftype, bool rev)
 	    s = scan_linenum (s + 1, &p_repl_lines);
 	else
 	    p_repl_lines = 1;
+	if (p_newfirst >= LINENUM_MAX - p_repl_lines)
+	  malformed ();
 	if (*s == ' ') s++;
 	if (*s++ != '@')
 	    malformed ();
@@ -1667,6 +1681,8 @@ another_hunk (enum diff difftype, bool rev)
 	    p_first++;			/* do append rather than insert */
 	if (!p_repl_lines)
 	    p_newfirst++;
+	if (p_ptrn_lines >= LINENUM_MAX - (p_repl_lines + 1))
+	  malformed ();
 	p_max = p_ptrn_lines + p_repl_lines + 1;
 	while (p_max + 1 >= hunkmax)
 	    if (! grow_hunkmax ())
@@ -1803,6 +1819,8 @@ another_hunk (enum diff difftype, bool rev)
 	}
 	else
 	    p_ptrn_lines = (*s != 'a');
+	if (p_first >= LINENUM_MAX - p_ptrn_lines)
+	  malformed ();
 	hunk_type = *s;
 	if (hunk_type == 'a')
 	    p_first++;			/* do append rather than insert */
@@ -1811,17 +1829,23 @@ another_hunk (enum diff difftype, bool rev)
 	    scan_linenum (s + 1, &max);
 	else
 	    max = min;
+	if (min > max || max - min == LINENUM_MAX)
+	  malformed ();
 	if (hunk_type == 'd')
 	    min++;
-	p_end = p_ptrn_lines + 1 + max - min + 1;
+	p_newfirst = min;
+	p_repl_lines = max - min + 1;
+	if (p_newfirst >= LINENUM_MAX - p_repl_lines)
+	  malformed ();
+	if (p_ptrn_lines >= LINENUM_MAX - (p_repl_lines + 1))
+	  malformed ();
+	p_end = p_ptrn_lines + p_repl_lines + 1;
 	while (p_end + 1 >= hunkmax)
 	  if (! grow_hunkmax ())
 	    {
 	      p_end = -1;
 	      return -1;
 	    }
-	p_newfirst = min;
-	p_repl_lines = max - min + 1;
 	sprintf (buf, "*** %s,%s\n",
 		 format_linenum (numbuf0, p_first),
 		 format_linenum (numbuf1, p_first + p_ptrn_lines - 1));
