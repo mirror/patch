@@ -27,6 +27,7 @@
 #define XTERN
 #include <util.h>
 #include <xalloc.h>
+#include <xmemdup0.h>
 
 #include <getdate.h>
 #include "ignore-value.h"
@@ -1476,8 +1477,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 		break;
 	      }
 	  }
-	name = savebuf (at, t - at + 1);
-	name[t - at] = 0;
+	name = xmemdup0 (at, t - at);
       }
 
     /* If the name is "/dev/null", ignore the name and mark the file
@@ -1509,8 +1509,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 	  u--;
 	if (u != t && *(u-1) == '\r')
 	  u--;
-	timestr = savebuf (t, u - t + 1);
-	timestr[u - t] = 0;
+	timestr = xmemdup0 (t, u - t);
       }
 
       if (*t != '\n')
@@ -1568,8 +1567,7 @@ parse_name (char const *s, int strip_leading, char const **endp)
 
       for (t = s; *t && ! ISSPACE ((unsigned char) *t); t++)
 	/* do nothing*/ ;
-      ret = savebuf (s, t - s + 1);
-      ret[t - s] = 0;
+      ret = xmemdup0 (s, t - s);
       if (endp)
 	*endp = t;
     }

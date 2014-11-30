@@ -25,6 +25,7 @@
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
+#include <xmemdup0.h>
 #undef XTERN
 #define XTERN
 #include <pch.h>
@@ -291,8 +292,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	t = buf + strlen (buf);
 	if (t > buf + 1 && *(t - 1) == '\n')
 	  {
-	    inname = savebuf (buf, t - buf);
-	    inname[t - buf - 1] = 0;
+	    inname = xmemdup0 (buf, t - buf - 1);
 	    inerrno = stat_file (inname, &instat);
 	    if (inerrno)
 	      {
@@ -623,7 +623,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    else {
 		char oldc = *t;
 		*t = '\0';
-		revision = savestr (revision);
+		revision = xstrdup (revision);
 		*t = oldc;
 	    }
 	  }
@@ -1015,7 +1015,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
       }
     else
       {
-	inname = savestr(p_name[i]);
+	inname = xstrdup (p_name[i]);
 	inerrno = stat_errno[i];
 	invc = version_controlled[i];
 	instat = st[i];
@@ -1255,6 +1255,8 @@ another_hunk (enum diff difftype, bool rev)
 		s++;
 	    *s = '\0';
 	    p_c_function = savestr (p_c_function);
+	    if (! p_c_function)
+	      return -1;
 	  }
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
@@ -1658,6 +1660,8 @@ another_hunk (enum diff difftype, bool rev)
 		s++;
 	    *s = '\0';
 	    p_c_function = savestr (p_c_function);
+	    if (! p_c_function)
+	      return -1;
 	  }
 	if (!p_ptrn_lines)
 	    p_first++;			/* do append rather than insert */
