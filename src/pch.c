@@ -454,6 +454,60 @@ name_is_valid (char const *name)
   return is_valid;
 }
 
+bool
+symlink_target_is_valid (char const *target, char const *to)
+{
+  bool is_valid;
+
+  if (IS_ABSOLUTE_FILE_NAME (to))
+    is_valid = true;
+  else if (IS_ABSOLUTE_FILE_NAME (target))
+    is_valid = false;
+  else
+    {
+      unsigned int depth = 0;
+      char const *t;
+
+      is_valid = true;
+      t = to;
+      while (*t)
+	{
+	  while (*t && ! ISSLASH (*t))
+	    t++;
+	  if (ISSLASH (*t))
+	    {
+	      while (ISSLASH (*t))
+		t++;
+	      depth++;
+	    }
+	}
+
+      t = target;
+      while (*t)
+	{
+	  if (*t == '.' && *++t == '.' && (! *++t || ISSLASH (*t)))
+	    {
+	      if (! depth--)
+		{
+		  is_valid = false;
+		  break;
+		}
+	    }
+	  else
+	    {
+	      while (*t && ! ISSLASH (*t))
+		t++;
+	      depth++;
+	    }
+	  while (ISSLASH (*t))
+	    t++;
+	}
+    }
+
+  /* Allow any symlink target if we are in the filesystem root.  */
+  return is_valid || cwd_is_root (to);
+}
+
 /* Determine what kind of diff is in the remaining part of the patch file. */
 
 static enum diff

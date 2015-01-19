@@ -466,6 +466,13 @@ move_file (char const *from, bool *from_needs_removal,
 	    read_fatal ();
 	  buffer[size] = 0;
 
+	  if (! symlink_target_is_valid (buffer, to))
+	    {
+	      fprintf (stderr, "symbolic link target '%s' is invalid\n",
+		       buffer);
+	      fatal_exit (0);
+	    }
+
 	  if (! backup)
 	    {
 	      if (unlink (to) == 0)

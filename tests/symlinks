@@ -146,6 +146,59 @@ ncheck 'test ! -L symlink'
 
 # --------------------------------------------------------------
 
+# Patch should not create symlinks which point outside the working directory.
+
+cat > symlink-target.diff <<EOF
+diff --git a/dir/foo b/dir/foo
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/dir/foo
+@@ -0,0 +1 @@
++../foo
+\ No newline at end of file
+EOF
+
+check 'patch -p1 < symlink-target.diff || echo "Status: $?"' <<EOF
+patching symbolic link dir/foo
+EOF
+
+cat > bad-symlink-target1.diff <<EOF
+diff --git a/bar b/bar
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/bar
+@@ -0,0 +1 @@
++/bar
+\ No newline at end of file
+EOF
+
+check 'patch -p1 < bad-symlink-target1.diff || echo "Status: $?"' <<EOF
+patching symbolic link bar
+symbolic link target '/bar' is invalid
+Status: 2
+EOF
+
+cat > bad-symlink-target2.diff <<EOF
+diff --git a/baz b/baz
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/baz
+@@ -0,0 +1 @@
++../baz
+\ No newline at end of file
+EOF
+
+check 'patch -p1 < bad-symlink-target2.diff || echo "Status: $?"' <<EOF
+patching symbolic link baz
+symbolic link target '../baz' is invalid
+Status: 2
+EOF
+
+# --------------------------------------------------------------
+
 # The backup file of a new symlink is an empty regular file.
 
 check 'patch -p1 --backup < create-symlink.diff || echo "Status: $?"' <<EOF
