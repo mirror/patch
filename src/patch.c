@@ -33,6 +33,7 @@
 #include <xalloc.h>
 #include <gl_linked_list.h>
 #include <gl_xlist.h>
+#include <minmax.h>
 
 /* procedures */
 
@@ -1107,8 +1108,8 @@ locate_hunk (lin fuzz)
     lin min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
     lin max_pos_offset = max_where - first_guess;
     lin max_neg_offset = first_guess - min_where;
-    lin max_offset = (max_pos_offset < max_neg_offset
-			  ? max_neg_offset : max_pos_offset);
+    lin max_offset = MAX(max_pos_offset, max_neg_offset);
+    lin min_offset;
 
     if (!pat_lines)			/* null range matches always */
 	return first_guess;
@@ -1154,7 +1155,10 @@ locate_hunk (lin fuzz)
 	  return 0;
       }
 
-    for (offset = 0;  offset <= max_offset;  offset++) {
+    min_offset = max_pos_offset < 0 ? first_guess - max_where
+	       : max_neg_offset < 0 ? first_guess - min_where
+	       : 0;
+    for (offset = min_offset;  offset <= max_offset;  offset++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
 	char numbuf1[LINENUM_LENGTH_BOUND + 1];
 	if (offset <= max_pos_offset
@@ -1166,7 +1170,7 @@ locate_hunk (lin fuzz)
 	    in_offset += offset;
 	    return first_guess+offset;
 	}
-	if (0 < offset && offset <= max_neg_offset
+	if (offset <= max_neg_offset
 	    && patch_match (first_guess, -offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
 	      say ("Offset changing from %s to %s\n",
