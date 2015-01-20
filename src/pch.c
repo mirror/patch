@@ -387,29 +387,6 @@ skip_hex_digits (char const *str)
   return s == str ? NULL : s;
 }
 
-/* Check if we are in the root of a particular filesystem namespace ("/" on
-   UNIX or a particular drive's root on DOS-like systems).  */
-static bool
-cwd_is_root (char const *name)
-{
-  unsigned int prefix_len = FILE_SYSTEM_PREFIX_LEN (name);
-  char root[prefix_len + 2];
-  struct stat st;
-  dev_t root_dev;
-  ino_t root_ino;
-
-  memcpy (root, name, prefix_len);
-  root[prefix_len] = '/';
-  root[prefix_len + 1] = 0;
-  if (stat (root, &st))
-    return false;
-  root_dev = st.st_dev;
-  root_ino = st.st_ino;
-  if (stat (".", &st))
-    return false;
-  return root_dev == st.st_dev && root_ino == st.st_ino;
-}
-
 static bool
 name_is_valid (char const *name)
 {
@@ -452,60 +429,6 @@ name_is_valid (char const *name)
 	invalid_names[i] = name;
     }
   return is_valid;
-}
-
-bool
-symlink_target_is_valid (char const *target, char const *to)
-{
-  bool is_valid;
-
-  if (IS_ABSOLUTE_FILE_NAME (to))
-    is_valid = true;
-  else if (IS_ABSOLUTE_FILE_NAME (target))
-    is_valid = false;
-  else
-    {
-      unsigned int depth = 0;
-      char const *t;
-
-      is_valid = true;
-      t = to;
-      while (*t)
-	{
-	  while (*t && ! ISSLASH (*t))
-	    t++;
-	  if (ISSLASH (*t))
-	    {
-	      while (ISSLASH (*t))
-		t++;
-	      depth++;
-	    }
-	}
-
-      t = target;
-      while (*t)
-	{
-	  if (*t == '.' && *++t == '.' && (! *++t || ISSLASH (*t)))
-	    {
-	      if (! depth--)
-		{
-		  is_valid = false;
-		  break;
-		}
-	    }
-	  else
-	    {
-	      while (*t && ! ISSLASH (*t))
-		t++;
-	      depth++;
-	    }
-	  while (ISSLASH (*t))
-	    t++;
-	}
-    }
-
-  /* Allow any symlink target if we are in the filesystem root.  */
-  return is_valid || cwd_is_root (to);
 }
 
 /* Determine what kind of diff is in the remaining part of the patch file. */

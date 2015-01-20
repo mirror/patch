@@ -37,7 +37,6 @@ bool pch_write_line (lin, FILE *);
 bool there_is_another_patch (bool, mode_t *);
 char *pfetch (lin) _GL_ATTRIBUTE_PURE;
 char pch_char (lin) _GL_ATTRIBUTE_PURE;
-bool symlink_target_is_valid (char const *, char const *);
 int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool) _GL_ATTRIBUTE_PURE;
 size_t pch_line_len (lin) _GL_ATTRIBUTE_PURE;
