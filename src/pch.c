@@ -158,20 +158,19 @@ open_patch_file (char const *filename)
     if (p_filesize != (file_offset) p_filesize)
       fatal ("patch file is too long");
     next_intuit_at (file_pos, 1);
-    set_hunkmax();
 }
 
 /* Make sure our dynamically realloced tables are malloced to begin with. */
 
-void
+static void
 set_hunkmax (void)
 {
     if (!p_line)
-	p_line = (char **) malloc (hunkmax * sizeof *p_line);
+	p_line = (char **) xmalloc (hunkmax * sizeof *p_line);
     if (!p_len)
-	p_len = (size_t *) malloc (hunkmax * sizeof *p_len);
+	p_len = (size_t *) xmalloc (hunkmax * sizeof *p_len);
     if (!p_Char)
-	p_Char = malloc (hunkmax * sizeof *p_Char);
+	p_Char = xmalloc (hunkmax * sizeof *p_Char);
 }
 
 /* Enlarge the arrays containing the current hunk of patch. */
@@ -1172,6 +1171,8 @@ another_hunk (enum diff difftype, bool rev)
     char numbuf1[LINENUM_LENGTH_BOUND + 1];
     char numbuf2[LINENUM_LENGTH_BOUND + 1];
     char numbuf3[LINENUM_LENGTH_BOUND + 1];
+
+    set_hunkmax();
 
     while (p_end >= 0) {
 	if (p_end == p_efake)

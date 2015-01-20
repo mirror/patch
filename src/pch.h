@@ -46,7 +46,6 @@ bool pch_rename (void) _GL_ATTRIBUTE_PURE;
 void do_ed_script (char const *, char const *, bool *, FILE *);
 void open_patch_file (char const *);
 void re_patch (void);
-void set_hunkmax (void);
 void pch_normalize (enum diff);
 
 XTERN struct timespec p_timestamp[2];  /* timestamps in patch headers */
