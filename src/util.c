@@ -423,55 +423,18 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
     }
 }
 
+/* Only allow symlink targets which are relative and free of ".." components:
+ * otherwise, the operating system may follow one of those symlinks in a
+ * pathname component, leading to a path traversal vulnerability.
+ *
+ * An alternative to disallowing many kinds of symlinks would be to implement
+ * path traversal in user space using openat() without following symlinks
+ * altogether.
+ */
 static bool
 symlink_target_is_valid (char const *target, char const *to)
 {
-  bool is_valid;
-
-  if (IS_ABSOLUTE_FILE_NAME (to))
-    is_valid = true;
-  else if (IS_ABSOLUTE_FILE_NAME (target))
-    is_valid = false;
-  else
-    {
-      unsigned int depth = 0;
-      char const *t;
-
-      is_valid = true;
-      t = to;
-      while (*t)
-	{
-	  while (*t && ! ISSLASH (*t))
-	    t++;
-	  if (ISSLASH (*t))
-	    {
-	      while (ISSLASH (*t))
-		t++;
-	      depth++;
-	    }
-	}
-
-      t = target;
-      while (*t)
-	{
-	  if (*t == '.' && *++t == '.' && (! *++t || ISSLASH (*t)))
-	    {
-	      if (! depth--)
-		{
-		  is_valid = false;
-		  break;
-		}
-	    }
-	  else
-	    {
-	      while (*t && ! ISSLASH (*t))
-		t++;
-	      depth++;
-	    }
-	  while (ISSLASH (*t))
-	    t++;
-	}
-    }
+  bool is_valid = filename_is_safe (target);
 
   /* Allow any symlink target if we are in the filesystem root.  */
   return is_valid || cwd_is_root (to);
@@ -520,7 +483,11 @@ move_file (char const *from, bool *from_needs_removal,
 	    read_fatal ();
 	  buffer[size] = 0;
 
-	  if (! symlink_target_is_valid (buffer, to))
+	  /* If we are allowed to create a file with an absolute path name,
+	     anywhere, we also don't need to worry about symlinks that can
+	     leave the working directory.  */
+	  if (! (IS_ABSOLUTE_FILE_NAME (to)
+		 || symlink_target_is_valid (buffer, to)))
 	    {
 	      fprintf (stderr, "symbolic link target '%s' is invalid\n",
 		       buffer);
@@ -1718,6 +1685,28 @@ int stat_file (char const *filename, struct stat *st)
     follow_symlinks ? stat : lstat;
 
   return xstat (filename, st) == 0 ? 0 : errno;
+}
+
+/* Check if a filename is relative and free of ".." components.
+   Such a path cannot lead to files outside the working tree
+   as long as the working tree only contains symlinks that are
+   "filename_is_safe" when followed.  */
+bool
+filename_is_safe (char const *name)
+{
+  if (IS_ABSOLUTE_FILE_NAME (name))
+    return false;
+  while (*name)
+    {
+      if (*name == '.' && *++name == '.'
+	  && ( ! *++name || ISSLASH (*name)))
+	return false;
+      while (*name && ! ISSLASH (*name))
+	name++;
+      while (ISSLASH (*name))
+	name++;
+    }
+  return true;
 }
 
 /* Check if we are in the root of a particular filesystem namespace ("/" on

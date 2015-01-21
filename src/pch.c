@@ -401,21 +401,7 @@ name_is_valid (char const *name)
 	return false;
     }
 
-  if (IS_ABSOLUTE_FILE_NAME (name))
-    is_valid = false;
-  else
-    for (n = name; *n; )
-      {
-	if (*n == '.' && *++n == '.' && ( ! *++n || ISSLASH (*n)))
-	  {
-	    is_valid = false;
-	    break;
-	  }
-	while (*n && ! ISSLASH (*n))
-	  n++;
-	while (ISSLASH (*n))
-	  n++;
-      }
+  is_valid = filename_is_safe (name);
 
   /* Allow any filename if we are in the filesystem root.  */
   if (! is_valid && cwd_is_root (name))

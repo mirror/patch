@@ -148,20 +148,24 @@ ncheck 'test ! -L symlink'
 
 # Patch should not create symlinks which point outside the working directory.
 
-cat > symlink-target.diff <<EOF
-diff --git a/dir/foo b/dir/foo
-new file mode 120000
-index 0000000..cad2309
---- /dev/null
-+++ b/dir/foo
-@@ -0,0 +1 @@
-+../foo
-\ No newline at end of file
-EOF
-
-check 'patch -p1 < symlink-target.diff || echo "Status: $?"' <<EOF
-patching symbolic link dir/foo
-EOF
+# We cannot even ensure that symlinks with ".." components are safe: we cannot
+# guarantee that they won't end up higher up in the working tree than we think;
+# the path to the symlink may follow symlinks itself.
+#
+#cat > symlink-target.diff <<EOF
+#diff --git a/dir/foo b/dir/foo
+#new file mode 120000
+#index 0000000..cad2309
+#--- /dev/null
+#+++ b/dir/foo
+#@@ -0,0 +1 @@
+#+../foo
+#\ No newline at end of file
+#EOF
+#
+#check 'patch -p1 < symlink-target.diff || echo "Status: $?"' <<EOF
+#patching symbolic link dir/foo
+#EOF
 
 cat > bad-symlink-target1.diff <<EOF
 diff --git a/bar b/bar
