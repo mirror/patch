@@ -978,6 +978,16 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  }
       }
 
+    if ((pch_rename () || pch_copy ())
+	&& ! inname
+	&& ! ((i == OLD || i == NEW) &&
+	      p_name[! reverse] &&
+	      name_is_valid (p_name[! reverse])))
+      {
+	say ("Cannot %s file without two valid file names\n", pch_rename () ? "rename" : "copy");
+	skip_rest_of_patch = true;
+      }
+
     if (i == NONE)
       {
 	if (inname)
@@ -2178,14 +2188,12 @@ pch_name (enum nametype type)
 
 bool pch_copy (void)
 {
-  return p_copy[OLD] && p_copy[NEW]
-	 && p_name[OLD] && p_name[NEW];
+  return p_copy[OLD] && p_copy[NEW];
 }
 
 bool pch_rename (void)
 {
-  return p_rename[OLD] && p_rename[NEW]
-	 && p_name[OLD] && p_name[NEW];
+  return p_rename[OLD] && p_rename[NEW];
 }
 
 /* Return the specified line position in the old file of the old context. */

@@ -196,6 +196,9 @@ main (int argc, char **argv)
       bool mismatch = false;
       char const *outname = NULL;
 
+      if (skip_rest_of_patch)
+	somefailed = true;
+
       if (have_git_diff != pch_git_diff ())
 	{
 	  if (have_git_diff)
