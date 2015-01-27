@@ -543,7 +543,7 @@ main (int argc, char **argv)
 		      enum file_attributes attr = 0;
 		      struct timespec new_time = pch_timestamp (! reverse);
 		      mode_t mode = file_type |
-			  ((new_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
+			  ((set_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
