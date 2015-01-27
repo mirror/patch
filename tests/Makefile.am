@@ -42,6 +42,7 @@ TESTS = \
 	mixed-patch-types \
 	munged-context-format \
 	need-filename \
+	no-mode-change-git-diff \
 	no-newline-triggers-assert \
 	preserve-c-function-names \
 	preserve-mode-and-timestamp \
