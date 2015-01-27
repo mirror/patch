@@ -8,7 +8,7 @@
 
 . $srcdir/test-lib.sh
 
-require_cat
+require cat
 use_local_patch
 use_tmpdir
 umask 022

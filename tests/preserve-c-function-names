@@ -8,8 +8,8 @@
 
 . $srcdir/test-lib.sh
 
-require_cat
-require_gnu_diff
+require cat
+require gnu_diff
 use_local_patch
 use_tmpdir
 

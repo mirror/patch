@@ -7,13 +7,6 @@
 
 # FIXME: Requires a version of diff that understands "-u".
 
-require_cat() {
-    if ! type cat > /dev/null 2> /dev/null; then
-	echo "This test requires the cat utility" >&2
-	exit 77
-    fi
-}
-
 require_gnu_diff() {
     case "`diff --version 2> /dev/null`" in
     *GNU*)
@@ -24,9 +17,12 @@ require_gnu_diff() {
     esac
 }
 
-require_sed() {
-    if ! type sed > /dev/null 2> /dev/null; then
-	echo "This test requires the sed utility" >&2
+require() {
+    utility="$1"
+    if type require_${utility} > /dev/null 2> /dev/null; then
+	require_${utility}
+    elif ! type "${utility}" > /dev/null 2> /dev/null; then
+	echo "This test requires the ${utility} utility" >&2
 	exit 77
     fi
 }
@@ -163,7 +159,7 @@ if ! type seq > /dev/null 2> /dev/null; then
     )}
 fi
 
-require_cat
+require cat
 clean_env
 
 checks_succeeded=0
