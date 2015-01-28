@@ -389,7 +389,6 @@ skip_hex_digits (char const *str)
 static bool
 name_is_valid (char const *name)
 {
-  char const *n;
   int i;
   bool is_valid = true;
 
