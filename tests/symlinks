@@ -152,20 +152,45 @@ ncheck 'test ! -L symlink'
 # guarantee that they won't end up higher up in the working tree than we think;
 # the path to the symlink may follow symlinks itself.
 #
-#cat > symlink-target.diff <<EOF
-#diff --git a/dir/foo b/dir/foo
-#new file mode 120000
-#index 0000000..cad2309
-#--- /dev/null
-#+++ b/dir/foo
-#@@ -0,0 +1 @@
-#+../foo
-#\ No newline at end of file
-#EOF
-#
-#check 'patch -p1 < symlink-target.diff || echo "Status: $?"' <<EOF
-#patching symbolic link dir/foo
-#EOF
+cat > symlink-target.diff <<EOF
+diff --git a/dir/foo b/dir/foo
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/dir/foo
+@@ -0,0 +1 @@
++../foo
+\ No newline at end of file
+EOF
+
+check 'patch -p1 < symlink-target.diff || echo "Status: $?"' <<EOF
+patching symbolic link dir/foo
+EOF
+
+rm -f dir/foo
+cat > follow-symlink.diff <<EOF
+diff --git a/dir/foo b/dir/foo
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/dir/foo
+@@ -0,0 +1 @@
++..
+\ No newline at end of file
+diff --git a/dir/foo/bar b/dir/foo/bar
+new file mode 100644
+index 0000000..2ab772d
+--- /dev/null
++++ b/dir/foo/bar
+@@ -0,0 +1 @@
++created in ..
+EOF
+
+check 'patch -f -p1 < follow-symlink.diff || echo "Status: $?"' <<EOF
+patching symbolic link dir/foo
+Refusing to follow symbolic link dir/foo
+Status: 2
+EOF
 
 cat > bad-symlink-target1.diff <<EOF
 diff --git a/bar b/bar
@@ -180,8 +205,6 @@ EOF
 
 check 'patch -p1 < bad-symlink-target1.diff || echo "Status: $?"' <<EOF
 patching symbolic link bar
-symbolic link target '/bar' is invalid
-Status: 2
 EOF
 
 cat > bad-symlink-target2.diff <<EOF
@@ -197,8 +220,6 @@ EOF
 
 check 'patch -p1 < bad-symlink-target2.diff || echo "Status: $?"' <<EOF
 patching symbolic link baz
-symbolic link target '../baz' is invalid
-Status: 2
 EOF
 
 # --------------------------------------------------------------

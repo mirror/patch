@@ -428,23 +428,6 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
     }
 }
 
-/* Only allow symlink targets which are relative and free of ".." components:
- * otherwise, the operating system may follow one of those symlinks in a
- * pathname component, leading to a path traversal vulnerability.
- *
- * An alternative to disallowing many kinds of symlinks would be to implement
- * path traversal in user space using openat() without following symlinks
- * altogether.
- */
-static bool
-symlink_target_is_valid (char const *target, char const *to)
-{
-  bool is_valid = filename_is_safe (target);
-
-  /* Allow any symlink target if we are in the filesystem root.  */
-  return is_valid || cwd_is_root (to);
-}
-
 /* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
    needs removal when cleaning up at the end of execution, and where
    *FROMST is FROM's status if known),
@@ -487,17 +470,6 @@ move_file (char const *from, bool *from_needs_removal,
 	  if (i != 0 || close (fd) != 0)
 	    read_fatal ();
 	  buffer[size] = 0;
-
-	  /* If we are allowed to create a file with an absolute path name,
-	     anywhere, we also don't need to worry about symlinks that can
-	     leave the working directory.  */
-	  if (! (IS_ABSOLUTE_FILE_NAME (to)
-		 || symlink_target_is_valid (buffer, to)))
-	    {
-	      fprintf (stderr, "symbolic link target '%s' is invalid\n",
-		       buffer);
-	      fatal_exit (0);
-	    }
 
 	  if (! backup)
 	    {
