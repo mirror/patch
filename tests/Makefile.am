@@ -52,7 +52,8 @@ TESTS = \
 	remember-reject-files \
 	remove-directories \
 	symlinks \
-	unmodified-files
+	unmodified-files \
+	deep-directories
 
 XFAIL_TESTS = \
 	dash-o-append

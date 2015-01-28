@@ -27,6 +27,8 @@ patch_SOURCES = \
 	patch.c \
 	pch.c \
 	pch.h \
+	safe.c \
+	safe.h \
 	util.c \
 	util.h \
 	version.c \
