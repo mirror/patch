@@ -339,6 +339,8 @@ main (int argc, char **argv)
 	    outstate.ofp = fdopen(outfd, binary_transput ? "wb" : "w");
 	    if (! outstate.ofp)
 	      pfatal ("%s", TMPOUTNAME);
+	    /* outstate.ofp now owns the file descriptor */
+	    outfd = -1;
 	  }
 
 	/* find out where all the lines are */
