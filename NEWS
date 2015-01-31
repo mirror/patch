@@ -1,10 +1,14 @@
+Changes until version 2.7.4:
+
 * When a file isn't being deleted because the file contents don't match the
   patch, the resulting message is now "Not deleting file ... as content
   differs from patch" instead of "File ... is not empty after patch; not
   deleting".
 * Function names in hunks (from diff -p) are now preserved in reject files.
-* With git-style patches, symlinks that point outside the working directory
-  will no longer be created (CVE-2015-1196).
+* Patch no longer follows symbolic links to input and output files.  This
+  ensures that symbolic links created by git-style patches cannot cause
+  patch to write outside the working directory (CVE-2015-1196).
+* Various fixes.
 
 Changes in version 2.7.1:
 
