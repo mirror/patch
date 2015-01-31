@@ -259,3 +259,20 @@ check 'echo b > symlink.orig && cat target2' <<EOF
 b
 EOF
 rm -f target2
+
+# --------------------------------------------------------------
+# Make sure we do follow symlinks to patch files.
+
+ncheck 'mkdir d'
+cat > d/ab.diff <<EOF
+--- /dev/null
++++ b/foo
+@@ -0,0 +1 @@
++foo
+EOF
+
+ncheck 'ln -sf d l'
+
+check 'patch -p1 -i l/ab.diff' <<EOF
+patching file foo
+EOF
