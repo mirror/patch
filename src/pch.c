@@ -434,6 +434,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     int version_controlled[3];
     enum diff retval;
     mode_t file_type;
+    size_t indent = -1;
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
@@ -480,11 +481,12 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	file_offset previous_line = this_line;
 	bool last_line_was_command = this_is_a_command;
 	bool stars_last_line = stars_this_line;
-	size_t indent = 0;
+	size_t indent_last_line = indent;
 	char ed_command_letter;
 	bool strip_trailing_cr;
 	size_t chars_read;
 
+	indent = 0;
 	this_line = file_tell (pfp);
 	chars_read = pget_line (0, 0, false, false);
 	if (chars_read == (size_t) -1)
@@ -763,7 +765,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	if ((diff_type == NO_DIFF
 	     || diff_type == CONTEXT_DIFF
 	     || diff_type == NEW_CONTEXT_DIFF)
-	    && stars_last_line && strnEQ (s, "*** ", 4)) {
+	    && stars_last_line && indent_last_line == indent
+	    && strnEQ (s, "*** ", 4)) {
 	    s += 4;
 	    if (s[0] == '0' && !ISDIGIT (s[1]))
 	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;

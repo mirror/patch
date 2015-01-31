@@ -34,6 +34,7 @@ TESTS = \
 	file-modes \
 	filename-choice \
 	git-binary-diff \
+	garbage \
 	global-reject-files \
 	inname \
 	line-numbers \
