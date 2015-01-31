@@ -32,6 +32,7 @@
 #if HAVE_SETMODE_DOS
 # include <io.h>
 #endif
+#include <safe.h>
 
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 
@@ -1012,7 +1013,7 @@ prefix_components (char *filename, bool checkdirs)
 	  if (checkdirs)
 	    {
 	      *f = '\0';
-	      stat_result = stat (filename, &stat_buf);
+	      stat_result = safe_stat (filename, &stat_buf);
 	      *f = '/';
 	      if (! (stat_result == 0 && S_ISDIR (stat_buf.st_mode)))
 		break;

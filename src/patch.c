@@ -34,6 +34,7 @@
 #include <gl_linked_list.h>
 #include <gl_xlist.h>
 #include <minmax.h>
+#include <safe.h>
 
 /* procedures */
 
@@ -291,7 +292,7 @@ main (int argc, char **argv)
 
       if (read_only_behavior != RO_IGNORE
 	  && ! inerrno && ! S_ISLNK (instat.st_mode)
-	  && access (inname, W_OK) != 0)
+	  && safe_access (inname, W_OK) != 0)
 	{
 	  say ("File %s is read-only; ", quotearg (inname));
 	  if (read_only_behavior == RO_WARN)
@@ -1919,7 +1920,7 @@ output_files (struct stat const *st)
 		       from_st, file_to_output->to,
 		       file_to_output->mode, file_to_output->backup);
       if (file_to_output->to && from_needs_removal)
-	unlink (file_to_output->from);
+	safe_unlink (file_to_output->from);
 
       if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)
 	{
@@ -1949,7 +1950,7 @@ forget_output_files (void)
     {
       const struct file_to_output *file_to_output = elt;
 
-      unlink (file_to_output->from);
+      safe_unlink (file_to_output->from);
     }
   gl_list_iterator_free (&iter);
   gl_list_clear (files_to_output);
@@ -1973,7 +1974,7 @@ remove_if_needed (char const *name, bool *needs_removal)
 {
   if (*needs_removal)
     {
-      unlink (name);
+      safe_unlink (name);
       *needs_removal = false;
     }
 }

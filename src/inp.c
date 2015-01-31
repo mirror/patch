@@ -25,6 +25,7 @@
 #undef XTERN
 #define XTERN
 #include <inp.h>
+#include <safe.h>
 
 /* Input-file-with-indexable-lines abstract type */
 
@@ -237,7 +238,7 @@ plan_a (char const *filename)
     {
       if (S_ISREG (instat.st_mode))
         {
-	  int ifd = open (filename, O_RDONLY|binary_transput);
+	  int ifd = safe_open (filename, O_RDONLY|binary_transput, 0);
 	  size_t buffered = 0, n;
 	  if (ifd < 0)
 	    pfatal ("can't open file %s", quotearg (filename));
@@ -268,7 +269,7 @@ plan_a (char const *filename)
       else if (S_ISLNK (instat.st_mode))
 	{
 	  ssize_t n;
-	  n = readlink (filename, buffer, size);
+	  n = safe_readlink (filename, buffer, size);
 	  if (n < 0)
 	    pfatal ("can't read %s %s", "symbolic link", quotearg (filename));
 	  size = n;
@@ -339,6 +340,7 @@ plan_a (char const *filename)
 static void
 plan_b (char const *filename)
 {
+  int ifd;
   FILE *ifp;
   int c;
   size_t len;
@@ -351,7 +353,8 @@ plan_b (char const *filename)
 
   if (instat.st_size == 0)
     filename = NULL_DEVICE;
-  if (! (ifp = fopen (filename, binary_transput ? "rb" : "r")))
+  if ((ifd = safe_open (filename, O_RDONLY | binary_transput, 0)) < 0
+      || ! (ifp = fdopen (ifd, binary_transput ? "rb" : "r")))
     pfatal ("Can't open file %s", quotearg (filename));
   if (TMPINNAME_needs_removal)
     {
