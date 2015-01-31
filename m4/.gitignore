@@ -3,7 +3,6 @@
 /argmatch.m4
 /backupfile.m4
 /bison.m4
-/canonicalize.m4
 /clock_time.m4
 /closedir.m4
 /codeset.m4
@@ -25,7 +24,6 @@
 /fcntl.m4
 /fcntl_h.m4
 /float_h.m4
-/fstat.m4
 /getdtablesize.m4
 /getopt.m4
 /gettime.m4
@@ -40,7 +38,6 @@
 /intmax_t.m4
 /inttypes_h.m4
 /largefile.m4
-/lchmod.m4
 /localcharset.m4
 /locale-fr.m4
 /locale-ja.m4
@@ -56,7 +53,6 @@
 /mbstate_t.m4
 /memchr.m4
 /minmax.m4
-/mkdir.m4
 /mktime.m4
 /mmap-anon.m4
 /msvc-inval.m4
@@ -73,8 +69,6 @@
 /readdir.m4
 /readlink.m4
 /realloc.m4
-/rename.m4
-/rmdir.m4
 /safe-read.m4
 /safe-write.m4
 /setenv.m4
@@ -94,7 +88,6 @@
 /string_h.m4
 /strndup.m4
 /strnlen.m4
-/symlink.m4
 /sys_socket_h.m4
 /sys_stat_h.m4
 /sys_time_h.m4
@@ -105,10 +98,6 @@
 /tm_gmtoff.m4
 /unistd-safer.m4
 /unistd_h.m4
-/unlink.m4
-/utimbuf.m4
-/utimens.m4
-/utimes.m4
 /vasnprintf.m4
 /vasprintf.m4
 /warn-on-use.m4
@@ -127,7 +116,6 @@ alloca.m4
 argmatch.m4
 backupfile.m4
 bison.m4
-canonicalize.m4
 clock_time.m4
 codeset.m4
 configmake.m4
@@ -166,7 +154,6 @@ hash.m4
 include_next.m4
 intmax_t.m4
 inttypes_h.m4
-lchmod.m4
 localcharset.m4
 locale-fr.m4
 locale-ja.m4
@@ -182,7 +169,6 @@ mbsinit.m4
 mbstate_t.m4
 memchr.m4
 minmax.m4
-mkdir.m4
 mktime.m4
 mmap-anon.m4
 multiarch.m4
@@ -194,8 +180,6 @@ quote.m4
 quotearg.m4
 readlink.m4
 realloc.m4
-rename.m4
-rmdir.m4
 safe-read.m4
 safe-write.m4
 setenv.m4
@@ -214,7 +198,6 @@ strerror.m4
 string_h.m4
 strndup.m4
 strnlen.m4
-symlink.m4
 sys_stat_h.m4
 sys_time_h.m4
 tempname.m4
@@ -224,10 +207,6 @@ timespec.m4
 tm_gmtoff.m4
 unistd-safer.m4
 unistd_h.m4
-unlink.m4
-utimbuf.m4
-utimens.m4
-utimes.m4
 vasnprintf.m4
 vasprintf.m4
 warn-on-use.m4
@@ -247,3 +226,35 @@ xvasprintf.m4
 /extern-inline.m4
 /absolute-header.m4
 /secure_getenv.m4
+/canonicalize.m4
+/chdir-long.m4
+/chown.m4
+/fchdir.m4
+/fchmodat.m4
+/fchownat.m4
+/filenamecat.m4
+/fstat.m4
+/fstatat.m4
+/getcwd.m4
+/lchown.m4
+/mempcpy.m4
+/memrchr.m4
+/mkdir.m4
+/mkdirat.m4
+/mode_t.m4
+/open.m4
+/openat.m4
+/readlinkat.m4
+/rename.m4
+/renameat.m4
+/rmdir.m4
+/save-cwd.m4
+/strdup.m4
+/symlink.m4
+/symlinkat.m4
+/unlink.m4
+/unlinkat.m4
+/utimbuf.m4
+/utimens.m4
+/utimensat.m4
+/utimes.m4
