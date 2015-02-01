@@ -434,7 +434,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     int version_controlled[3];
     enum diff retval;
     mode_t file_type;
-    size_t indent = -1;
+    size_t indent = 0;
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
