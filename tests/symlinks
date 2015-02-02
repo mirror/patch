@@ -59,6 +59,14 @@ check 'patch --follow-symlinks < modify.diff || echo "Status: $?"' <<EOF
 patching file l
 EOF
 
+check 'cat f' <<EOF
+one
+EOF
+
+check 'cat l' <<EOF
+two
+EOF
+
 # --------------------------------------------------------------
 
 rm -f f l
