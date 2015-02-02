@@ -14,7 +14,7 @@ use_tmpdir
 # Exercise the directory file descriptor cache
 
 # Artificially limit to 8 cache entries
-ulimit -n 32 >& /dev/null || exit 77
+ulimit -n 32 > /dev/null 2>&1 || exit 77
 
 cat > ab.diff <<EOF
 --- /dev/null

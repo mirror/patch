@@ -29,6 +29,6 @@ check 'patch -p1 < simple.diff || echo "Status:  $?"' <<EOF
 patching file f
 EOF
 
-check 'stat -c "%a" f'<<EOF
-755
+check 'ls -l f | sed "s,\(..........\).*,\1,"' <<EOF
+-rwxr-xr-x
 EOF
