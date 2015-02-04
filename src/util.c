@@ -1598,12 +1598,39 @@ Fseek (FILE *stream, file_offset offset, int ptrname)
 #define TMPDIR "/tmp"
 #endif
 
+struct try_safe_open_args
+  {
+    int flags;
+    mode_t mode;
+  };
+
+static int try_safe_open (char *template, void *__args)
+{
+  struct try_safe_open_args *args = __args;
+  int try_makedirs_errno = ENOENT;
+  int fd;
+
+repeat:
+  fd = safe_open (template, O_CREAT | O_EXCL | args->flags, args->mode);
+  if (fd < 0 && errno == try_makedirs_errno)
+    {
+      makedirs (template);
+      try_makedirs_errno = 0;
+      goto repeat;
+    }
+  return fd;
+}
+
 int
 make_tempfile (char const **name, char letter, char const *real_name,
 	       int flags, mode_t mode)
 {
-  int try_makedirs_errno = ENOENT;
   char *template;
+  struct try_safe_open_args args = {
+    .flags = flags,
+    .mode = mode,
+  };
+  int fd;
 
   if (real_name && ! dry_run)
     {
@@ -1632,36 +1659,11 @@ make_tempfile (char const **name, char letter, char const *real_name,
       template = xmalloc (strlen (tmpdir) + 10);
       sprintf (template, "%s/p%cXXXXXX", tmpdir, letter);
     }
-  for(;;)
-    {
-      int fd;
-
-      /* gen_tempname(..., GT_NOCREATE) calls lstat() to check if a file
-	 already exists.  In the worst case, this leads to a template that
-	 follows a symbolic link and that we cannot use; safe_open() will
-	 detect that. */
-
-      if (gen_tempname (template, 0, flags, GT_NOCREATE))
-        pfatal ("Can't create temporary file %s", template);
-    retry:
-      fd = safe_open (template, O_CREAT | O_EXCL | flags, mode);
-      if (fd == -1)
-        {
-	  if (errno == try_makedirs_errno)
-	    {
-	      makedirs (template);
-	      /* FIXME: When patch fails, this may leave around empty
-	         directories.  */
-	      try_makedirs_errno = 0;
-	      goto retry;
-	    }
-	  if (errno == EEXIST)
-	    continue;
-	  pfatal ("Can't create temporary file %s", template);
-	}
-      *name = template;
-      return fd;
-    }
+  fd = try_tempname(template, 0, &args, try_safe_open);
+  if (fd == -1)
+    pfatal ("Can't create temporary file %s", template);
+  *name = template;
+  return fd;
 }
 
 int stat_file (char const *filename, struct stat *st)
