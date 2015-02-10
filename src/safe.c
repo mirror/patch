@@ -39,6 +39,12 @@
 #define XTERN extern
 #include "common.h"
 
+#include "util.h"
+
+#ifndef EFTYPE
+# define EFTYPE 0
+#endif
+
 /* Path lookup results are cached in a hash table + LRU list. When the
    cache is full, the oldest entries are removed.  */
 
@@ -278,11 +284,14 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	      printf (" (failed)\n");
 	      fflush (stdout);
 	    }
-	  if (errno == ELOOP)
+	  if (errno == ELOOP
+	      || errno == EMLINK  /* FreeBSD 10.1: Too many links */
+	      || errno == EFTYPE  /* NetBSD 6.1: Inappropriate file type or format */
+	      || errno == ENOTDIR)
 	    {
-	      fprintf (stderr, "Refusing to follow symbolic link %.*s\n",
-		       (int) (path - *pathname), *pathname);
-	      fatal_exit (0);
+	      say ("file %.*s is not a directory\n",
+		   (int) (path - *pathname), *pathname);
+	      skip_rest_of_patch = true;
 	    }
 	  return dirfd;
 	}

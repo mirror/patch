@@ -196,8 +196,9 @@ EOF
 
 check 'patch -f -p1 < follow-symlink.diff || echo "Status: $?"' <<EOF
 patching symbolic link dir/foo
-Refusing to follow symbolic link dir/foo
-Status: 2
+file dir/foo is not a directory
+1 out of 1 hunk ignored
+Status: 1
 EOF
 
 cat > bad-symlink-target1.diff <<EOF
