@@ -64,7 +64,7 @@ bestmatch(OFFSET xoff, OFFSET xlim, OFFSET yoff, OFFSET ylim,
     OFFSET fmid_plus_2_min, ymax = -1;
     OFFSET c;
 
-    V = malloc ((2 * max + 3) * sizeof (OFFSET));
+    V = xmalloc ((2 * max + 3) * sizeof (OFFSET));
     fd = V + max + 1 - fmid;
 
     /*
