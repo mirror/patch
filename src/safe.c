@@ -190,35 +190,35 @@ static void invalidate_cached_dirfd (int dirfd, const char *name)
     remove_cached_dirfd (entry);
 }
 
-static int openat_cached (int dirfd, const char *name, int keepfd)
+static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char *name, int keepfd)
 {
   int fd;
-  struct cached_dirfd *entry = lookup_cached_dirfd (dirfd, name);
+  struct cached_dirfd *entry = lookup_cached_dirfd (dir->fd, name);
 
   if (entry)
-    return entry->fd;
+    return entry;
   dirfd_cache_misses++;
 
   /* Actually get the new directory file descriptor. Don't follow
      symbolic links. */
-  fd = openat (dirfd, name, O_DIRECTORY | O_NOFOLLOW);
+  fd = openat (dir->fd, name, O_DIRECTORY | O_NOFOLLOW);
 
   /* Don't cache errors. */
   if (fd < 0)
-    return fd;
+    return NULL;
 
   /* Store new cache entry */
   entry = xmalloc (sizeof (struct cached_dirfd));
-  entry->dirfd = dirfd;
+  entry->dirfd = dir->fd;
   entry->name = xstrdup (name);
   entry->fd = fd;
   insert_cached_dirfd (entry, keepfd);
 
-  return fd;
+  return entry;
 }
 
 /* Resolve the next path component in PATH inside DIRFD. */
-static int traverse_next (int dirfd, const char **path, int keepfd)
+static struct cached_dirfd *traverse_next (struct cached_dirfd *dir, const char **path, int keepfd)
 {
   const char *p = *path;
   char *name;
@@ -231,17 +231,17 @@ static int traverse_next (int dirfd, const char **path, int keepfd)
   memcpy(name, *path, p - *path);
   name[p - *path] = 0;
 
-  dirfd = openat_cached (dirfd, name, keepfd);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
+  dir = openat_cached (dir, name, keepfd);
+  if (! dir)
     {
       *path = p;
-      return -1;
+      return NULL;
     }
 skip:
   while (ISSLASH (*p))
     p++;
   *path = p;
-  return dirfd;
+  return dir;
 }
 
 /* Traverse PATHNAME.  Updates PATHNAME to point to the last path component and
@@ -251,12 +251,16 @@ skip:
    beyond MAX_CACHED_FDS entries. */
 static int traverse_another_path (const char **pathname, int keepfd)
 {
+  static struct cached_dirfd cwd = {
+    .fd = AT_FDCWD,
+  };
+
   unsigned long misses = dirfd_cache_misses;
   const char *path = *pathname, *last;
-  int dirfd = AT_FDCWD;
+  struct cached_dirfd *dir = &cwd;
 
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
-    return dirfd;
+    return dir->fd;
 
   /* Find the last pathname component */
   last = strrchr (path, 0) - 1;
@@ -269,15 +273,15 @@ static int traverse_another_path (const char **pathname, int keepfd)
   while (last != path && ! ISSLASH (*(last - 1)))
     last--;
   if (last == path)
-    return dirfd;
+    return dir->fd;
 
   if (debug & 32)
     printf ("Resolving path \"%.*s\"", (int) (last - path), path);
 
   while (path != last)
     {
-      dirfd = traverse_next (dirfd, &path, keepfd);
-      if (dirfd < 0 && dirfd != AT_FDCWD)
+      dir = traverse_next (dir, &path, keepfd);
+      if (! dir)
 	{
 	  if (debug & 32)
 	    {
@@ -293,7 +297,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
 		   (int) (path - *pathname), *pathname);
 	      skip_rest_of_patch = true;
 	    }
-	  return dirfd;
+	  return -1;
 	}
     }
   *pathname = last;
@@ -306,7 +310,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	printf (" (%lu miss%s)\n", misses, misses == 1 ? "" : "es");
       fflush (stdout);
     }
-  return dirfd;
+  return dir->fd;
 }
 
 /* Just traverse PATHNAME; see traverse_another_path(). */
