@@ -239,38 +239,119 @@ out:
   return entry;
 }
 
-/* Resolve the next path component in PATH inside DIRFD. */
-static struct cached_dirfd *traverse_next (struct cached_dirfd *dir, const char **path, int keepfd)
+/* A symlink to resolve. */
+struct symlink {
+  struct symlink *prev;
+  const char *path;
+  char buffer[0];
+};
+
+static void push_symlink (struct symlink **stack, struct symlink *symlink)
+{
+  symlink->prev = *stack;
+  *stack = symlink;
+}
+
+static void pop_symlink (struct symlink **stack)
+{
+  struct symlink *top = *stack;
+  *stack = top->prev;
+  free (top);
+}
+
+static struct symlink *read_symlink(int dirfd, const char *name)
+{
+  int saved_errno = errno;
+  struct stat st;
+  struct symlink *symlink;
+  ssize_t ret;
+
+  if (fstatat (dirfd, name, &st, AT_SYMLINK_NOFOLLOW)
+      || ! S_ISLNK (st.st_mode))
+    {
+      errno = saved_errno;
+      return NULL;
+    }
+  symlink = xmalloc (sizeof (*symlink) + st.st_size + 1);
+  ret = readlinkat (dirfd, name, symlink->buffer, st.st_size);
+  if (ret <= 0)
+    goto fail;
+  symlink->buffer[ret] = 0;
+  symlink->path = symlink->buffer;
+  if (ISSLASH (*symlink->path))
+    {
+      errno = EXDEV;
+      goto fail;
+    }
+  /* FIXME: Limit the depth of recursion and the number of symlinks
+   * that will be followed. */
+  return symlink;
+
+fail:
+  free (symlink);
+  return NULL;
+}
+
+/* Resolve the next path component in PATH inside DIR.  If it is a symlink,
+   read it and returned it in TOP. */
+static struct cached_dirfd *
+traverse_next (struct cached_dirfd *dir, const char **path, int keepfd,
+	       struct symlink **symlink)
 {
   const char *p = *path;
+  struct cached_dirfd *entry = dir;
   char *name;
 
   while (*p && ! ISSLASH (*p))
     p++;
   if (**path == '.' && *path + 1 == p)
     goto skip;
+  if (**path == '.' && *(*path + 1) == '.' && *path + 2 == p)
+    {
+      entry = dir->parent;
+      if (! entry)
+	{
+	  /* Must not leave the working tree. */
+	  errno = EXDEV;
+	  goto out;
+	}
+      assert (dir->next == dir);
+      lru_list_add (dir, &lru_list);
+      goto skip;
+    }
   name = alloca (p - *path + 1);
   memcpy(name, *path, p - *path);
   name[p - *path] = 0;
 
-  dir = openat_cached (dir, name, keepfd);
-  if (! dir)
+  entry = openat_cached (dir, name, keepfd);
+  if (! entry)
     {
-      *path = p;
-      return NULL;
+      if (errno == ELOOP
+	  || errno == EMLINK  /* FreeBSD 10.1: Too many links */
+	  || errno == EFTYPE  /* NetBSD 6.1: Inappropriate file type or format */
+	  || errno == ENOTDIR)
+	{
+	  if ((*symlink = read_symlink (dir->fd, name)))
+	    {
+	      entry = dir;
+	      goto skip;
+	    }
+	  errno = ELOOP;
+	}
+      goto out;
     }
 skip:
   while (ISSLASH (*p))
     p++;
+out:
   *path = p;
-  return dir;
+  return entry;
 }
 
 /* Traverse PATHNAME.  Updates PATHNAME to point to the last path component and
    returns a file descriptor to its parent directory (which can be AT_FDCWD).
    When KEEPFD is given, make sure that the cache entry for DIRFD is not
-   removed from the cache (and KEEPFD remains open) even if the cache grows
-   beyond MAX_CACHED_FDS entries. */
+   removed from the cache (and KEEPFD remains open). */
 static int traverse_another_path (const char **pathname, int keepfd)
 {
   static struct cached_dirfd cwd = {
@@ -280,6 +361,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
   unsigned long misses = dirfd_cache_misses;
   const char *path = *pathname, *last;
   struct cached_dirfd *dir = &cwd;
+  struct symlink *stack = NULL;
 
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
     return AT_FDCWD;
@@ -300,9 +382,11 @@ static int traverse_another_path (const char **pathname, int keepfd)
   if (debug & 32)
     printf ("Resolving path \"%.*s\"", (int) (last - path), path);
 
-  while (path != last)
+  while (stack || path != last)
     {
-      struct cached_dirfd *entry = traverse_next (dir, &path, keepfd);
+      struct cached_dirfd *entry;
+      struct symlink *symlink = NULL;
+      entry = traverse_next (dir, stack ? &stack->path : &path, keepfd, &symlink);
       if (! entry)
 	{
 	  if (debug & 32)
@@ -322,6 +406,10 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	  goto fail;
 	}
       dir = entry;
+      if (stack && ! *stack->path)
+	pop_symlink (&stack);
+      if (symlink)
+	push_symlink (&stack, symlink);
     }
   *pathname = last;
   if (debug & 32)
@@ -337,6 +425,8 @@ static int traverse_another_path (const char **pathname, int keepfd)
 
 fail:
   put_path (dir);
+  while (stack)
+    pop_symlink (&stack);
   return -1;
 }
 

@@ -196,10 +196,14 @@ EOF
 
 check 'patch -f -p1 < follow-symlink.diff || echo "Status: $?"' <<EOF
 patching symbolic link dir/foo
-file dir/foo is not a directory
-1 out of 1 hunk ignored
-Status: 1
+patching file dir/foo/bar
 EOF
+
+check 'cat bar' <<EOF
+created in ..
+EOF
+
+rm -f bar
 
 cat > bad-symlink-target1.diff <<EOF
 diff --git a/bar b/bar
