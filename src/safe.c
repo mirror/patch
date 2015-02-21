@@ -53,12 +53,9 @@ unsigned long dirfd_cache_misses;
 struct cached_dirfd {
   /* lru list */
   struct cached_dirfd *prev, *next;
+  struct cached_dirfd *parent;
 
-  /* key (openat arguments) */
-  int dirfd;
   char *name;
-
-  /* value (openat result) */
   int fd;
 };
 
@@ -73,7 +70,7 @@ static size_t hash_cached_dirfd (const void *entry, size_t table_size)
 {
   const struct cached_dirfd *d = entry;
   size_t strhash = hash_string (d->name, table_size);
-  return (strhash * 31 + d->dirfd) % table_size;
+  return (strhash * 31 + d->parent->fd) % table_size;
 }
 
 static bool compare_cached_dirfds (const void *_a,
@@ -82,7 +79,7 @@ static bool compare_cached_dirfds (const void *_a,
   const struct cached_dirfd *a = _a;
   const struct cached_dirfd *b = _b;
 
-  return (a->dirfd == b->dirfd &&
+  return (a->parent->fd == b->parent->fd &&
 	  !strcmp (a->name, b->name));
 }
 
@@ -127,22 +124,22 @@ static void lru_list_del (struct cached_dirfd *entry)
   next->prev = prev;
 }
 
-static struct cached_dirfd *lookup_cached_dirfd (int dirfd, const char *name)
+static void lru_list_del_init (struct cached_dirfd *entry)
+{
+  lru_list_del (entry);
+  entry->next = entry->prev = entry;
+}
+
+static struct cached_dirfd *lookup_cached_dirfd (struct cached_dirfd *dir, const char *name)
 {
   struct cached_dirfd *entry = NULL;
 
   if (cached_dirfds)
     {
       struct cached_dirfd key;
-      key.dirfd = dirfd;
+      key.parent = dir;
       key.name = (char *) name;
       entry = hash_lookup (cached_dirfds, &key);
-      if (entry)
-	{
-	  /* Move this most recently used entry to the head of the lru list */
-	  lru_list_del (entry);
-	  lru_list_add (entry, &lru_list);
-	}
     }
 
   return entry;
@@ -164,39 +161,62 @@ static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
   while (hash_get_n_entries (cached_dirfds) >= max_cached_fds)
     {
       struct cached_dirfd *last = lru_list.prev;
-      assert (last != &lru_list);
+      if (last == &lru_list)
+	break;
       if (last->fd == keepfd)
 	{
 	  last = last->prev;
-	  assert (last != &lru_list);
+	  if (last == &lru_list)
+	    break;
 	}
       remove_cached_dirfd (last);
     }
 
   assert (hash_insert (cached_dirfds, entry) == entry);
-  lru_list_add (entry, &lru_list);
 }
 
 static void invalidate_cached_dirfd (int dirfd, const char *name)
 {
-  struct cached_dirfd key, *entry;
+  struct cached_dirfd dir, key, *entry;
   if (!cached_dirfds)
     return;
 
-  key.dirfd = dirfd;
+  dir.fd = dirfd;
+  key.parent = &dir;
   key.name = (char *) name;
   entry = hash_lookup (cached_dirfds, &key);
   if (entry)
     remove_cached_dirfd (entry);
 }
 
+/* Put the looked up path back onto the lru list.  Return the file descriptor
+   of the top entry.  */
+static int put_path (struct cached_dirfd *entry)
+{
+  int fd = entry->fd;
+
+  while (entry)
+    {
+      struct cached_dirfd *parent = entry->parent;
+      if (! parent)
+	break;
+      lru_list_add (entry, &lru_list);
+      entry = parent;
+    }
+
+  return fd;
+}
+
 static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char *name, int keepfd)
 {
   int fd;
-  struct cached_dirfd *entry = lookup_cached_dirfd (dir->fd, name);
+  struct cached_dirfd *entry = lookup_cached_dirfd (dir, name);
 
   if (entry)
-    return entry;
+    {
+      lru_list_del_init (entry);
+      goto out;
+    }
   dirfd_cache_misses++;
 
   /* Actually get the new directory file descriptor. Don't follow
@@ -209,11 +229,13 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
 
   /* Store new cache entry */
   entry = xmalloc (sizeof (struct cached_dirfd));
-  entry->dirfd = dir->fd;
+  entry->prev = entry->next = entry;
+  entry->parent = dir;
   entry->name = xstrdup (name);
   entry->fd = fd;
   insert_cached_dirfd (entry, keepfd);
 
+out:
   return entry;
 }
 
@@ -260,7 +282,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
   struct cached_dirfd *dir = &cwd;
 
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
-    return dir->fd;
+    return AT_FDCWD;
 
   /* Find the last pathname component */
   last = strrchr (path, 0) - 1;
@@ -273,15 +295,15 @@ static int traverse_another_path (const char **pathname, int keepfd)
   while (last != path && ! ISSLASH (*(last - 1)))
     last--;
   if (last == path)
-    return dir->fd;
+    return AT_FDCWD;
 
   if (debug & 32)
     printf ("Resolving path \"%.*s\"", (int) (last - path), path);
 
   while (path != last)
     {
-      dir = traverse_next (dir, &path, keepfd);
-      if (! dir)
+      struct cached_dirfd *entry = traverse_next (dir, &path, keepfd);
+      if (! entry)
 	{
 	  if (debug & 32)
 	    {
@@ -297,8 +319,9 @@ static int traverse_another_path (const char **pathname, int keepfd)
 		   (int) (path - *pathname), *pathname);
 	      skip_rest_of_patch = true;
 	    }
-	  return -1;
+	  goto fail;
 	}
+      dir = entry;
     }
   *pathname = last;
   if (debug & 32)
@@ -310,7 +333,11 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	printf (" (%lu miss%s)\n", misses, misses == 1 ? "" : "es");
       fflush (stdout);
     }
-  return dir->fd;
+  return put_path (dir);
+
+fail:
+  put_path (dir);
+  return -1;
 }
 
 /* Just traverse PATHNAME; see traverse_another_path(). */
