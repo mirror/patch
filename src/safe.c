@@ -355,11 +355,11 @@ int safe_rename (const char *oldpath, const char *newpath)
   int ret;
 
   olddirfd = traverse_path (&oldpath);
-  if (olddirfd != AT_FDCWD && olddirfd < 0)
+  if (olddirfd < 0 && olddirfd != AT_FDCWD)
     return olddirfd;
 
   newdirfd = traverse_another_path (&newpath, olddirfd);
-  if (newdirfd != AT_FDCWD && newdirfd < 0)
+  if (newdirfd < 0 && newdirfd != AT_FDCWD)
     return newdirfd;
 
   ret = renameat (olddirfd, oldpath, newdirfd, newpath);
@@ -450,7 +450,7 @@ int safe_lutimens (const char *pathname, struct timespec const times[2])
 }
 
 /* Replacement for readlink() */
-ssize_t safe_readlink(const char *pathname, char *buf, size_t bufsiz)
+ssize_t safe_readlink (const char *pathname, char *buf, size_t bufsiz)
 {
   int dirfd;
 
@@ -461,7 +461,7 @@ ssize_t safe_readlink(const char *pathname, char *buf, size_t bufsiz)
 }
 
 /* Replacement for access() */
-int safe_access(const char *pathname, int mode)
+int safe_access (const char *pathname, int mode)
 {
   int dirfd;
 
