@@ -244,7 +244,7 @@ main (int argc, char **argv)
 	  if (outfile)
 	    outname = outfile;
 	  else if (pch_copy () || pch_rename ())
-	    outname = pch_name (! strcmp (inname, pch_name (OLD)));
+	    outname = pch_name (! reverse);
 	  else
 	    outname = inname;
 	}
@@ -351,16 +351,18 @@ main (int argc, char **argv)
 	    if (verbosity != SILENT)
 	      {
 		bool renamed = strcmp (inname, outname);
+		bool skip_rename = ! renamed && pch_rename ();
 
 		say ("%s %s %s%c",
 		     dry_run ? "checking" : "patching",
 		     S_ISLNK (file_type) ? "symbolic link" : "file",
-		     quotearg (outname), renamed ? ' ' : '\n');
-		if (renamed)
-		  say ("(%s from %s)\n",
+		     quotearg (outname), renamed || skip_rename ? ' ' : '\n');
+		if (renamed || skip_rename)
+		  say ("(%s%s from %s)\n",
+		       skip_rename ? "already " : "",
 		       pch_copy () ? "copied" :
 		       (pch_rename () ? "renamed" : "read"),
-		       inname);
+		       ! skip_rename ? inname : pch_name (! strcmp (inname, pch_name (OLD))));
 		if (verbosity == VERBOSE)
 		  say ("Using Plan %s...\n", using_plan_a ? "A" : "B");
 	      }

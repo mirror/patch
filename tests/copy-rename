@@ -63,6 +63,30 @@ check 'cat h' <<EOF
 new
 EOF
 
+echo old > h
+
+check 'patch -p1 < rename.diff || echo "Status: $?"' <<EOF
+patching file h (already renamed from f)
+EOF
+
+ncheck 'test ! -e f'
+
+check 'cat h' <<EOF
+new
+EOF
+
+mv h f
+
+check 'patch -p1 -R < rename.diff || echo "Status: $?"' <<EOF
+patching file f (already renamed from h)
+EOF
+
+ncheck 'test ! -e h'
+
+check 'cat f' <<EOF
+old
+EOF
+
 # --------------------------------------------------------------
 # Patches with no hunks
 
