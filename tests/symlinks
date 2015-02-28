@@ -154,12 +154,113 @@ ncheck 'test ! -L symlink'
 
 # --------------------------------------------------------------
 
+# Recursive symlinks
+
+ln -s l1 l2
+ln -s l2 l1
+
+cat > f.diff <<EOF
+--- l1/f
++++ l1/f
+@@ -0,0 +1 @@
++new
+EOF
+
+check 'patch -p0 < f.diff || echo "Status: $?"' <<EOF
+Invalid file name l1/f -- skipping patch
+Status: 1
+EOF
+
+rm -f l1 l2
+
+# --------------------------------------------------------------
+
+cat > retraverse.diff <<EOF
+--- abc/def/ghi/jkl
++++ abc/def/ghi/jkl
+@@ -0,0 +1 @@
++Parent directory traversal
+EOF
+
+ncheck 'mkdir abc'
+ncheck 'mkdir abc/def'
+ln -sf ../../abc/def abc/def/ghi
+check 'patch -p0 < retraverse.diff || echo "Status: $?"' << EOF
+patching file abc/def/ghi/jkl
+EOF
+
+# --------------------------------------------------------------
+
 # Patch should not create symlinks which point outside the working directory.
 
-# We cannot even ensure that symlinks with ".." components are safe: we cannot
-# guarantee that they won't end up higher up in the working tree than we think;
-# the path to the symlink may follow symlinks itself.
-#
+mkdir d
+echo one > d/f
+ln -s d ld
+
+cat > ld.diff <<EOF
+--- ld/f
++++ ld/f
+@@ -1 +1 @@
+-one
++two
+EOF
+
+check 'patch -p0 < ld.diff' <<EOF
+patching file ld/f
+EOF
+
+mkdir e
+ln -s ../d e/ld
+
+cat > eld.diff <<EOF
+--- e/ld/f
++++ e/ld/f
+@@ -1 +1 @@
+-two
++three
+EOF
+
+check 'patch -p0 < eld.diff' <<EOF
+patching file e/ld/f
+EOF
+
+rm -f e/ld
+ln -sf ../ld e/ld
+
+check 'patch -p0 -R < eld.diff' <<EOF
+patching file e/ld/f
+EOF
+
+mkdir g
+ln -sf ../../z g/bad-rel
+ln -sf .. bad-rel-step2
+ln -sf ../bad-rel-step2/z g/bad-rel-step1
+ln -sf /z g/bad-abs
+
+cat > follow-bad-symlink.diff <<EOF
+--- g/bad-rel/x
++++ g/bad-rel/x
+@@ -0,0 +1 @@
++relative
+--- g/bad-rel-step1/x
++++ g/bad-rel-step1/x
+@@ -0,0 +1 @@
++relative, 2 steps
+--- g/bad-abs/x
++++ g/bad-abs/x
+@@ -0,0 +1 @@
++absolute
+EOF
+
+check 'patch -p0 < follow-bad-symlink.diff || echo "Status: $?"' <<EOF
+Invalid file name g/bad-rel/x -- skipping patch
+Invalid file name g/bad-rel-step1/x -- skipping patch
+Invalid file name g/bad-abs/x -- skipping patch
+Status: 1
+EOF
+
+rm -rf ld d e g
+
 cat > symlink-target.diff <<EOF
 diff --git a/dir/foo b/dir/foo
 new file mode 120000
@@ -192,11 +293,29 @@ index 0000000..2ab772d
 +++ b/dir/foo/bar
 @@ -0,0 +1 @@
 +created in ..
+diff --git a/dir/bad b/dir/bad
+new file mode 120000
+index 0000000..cad2309
+--- /dev/null
++++ b/dir/bad
+@@ -0,0 +1 @@
++../..
+\ No newline at end of file
+diff --git a/dir/bad/baz b/dir/bad/baz
+new file mode 100644
+index 0000000..2ab772d
+--- /dev/null
++++ b/dir/bad/baz
+@@ -0,0 +1 @@
++created in ../..
 EOF
 
 check 'patch -f -p1 < follow-symlink.diff || echo "Status: $?"' <<EOF
 patching symbolic link dir/foo
 patching file dir/foo/bar
+patching symbolic link dir/bad
+Invalid file name dir/bad/baz -- skipping patch
+Status: 1
 EOF
 
 check 'cat bar' <<EOF
