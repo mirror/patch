@@ -309,6 +309,8 @@ main (int argc, char **argv)
       outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
 			     O_WRONLY | binary_transput,
 			     instat.st_mode & S_IRWXUGO);
+      if (outfd == -1)
+	pfatal ("Can't create temporary file %s", TMPOUTNAME);
       TMPOUTNAME_needs_removal = true;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
@@ -1586,6 +1588,8 @@ init_reject (char const *outname)
   int fd;
   fd = make_tempfile (&TMPREJNAME, 'r', outname, O_WRONLY | binary_transput,
 		      0666);
+  if (fd == -1)
+    pfatal ("Can't create temporary file %s", TMPREJNAME);
   TMPREJNAME_needs_removal = true;
   rejfp = fdopen (fd, binary_transput ? "wb" : "w");
   if (! rejfp)

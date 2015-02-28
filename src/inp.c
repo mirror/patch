@@ -365,6 +365,8 @@ plan_b (char const *filename)
     {
       tifd = make_tempfile (&TMPINNAME, 'i', NULL, O_RDWR | O_BINARY,
 			    S_IRUSR | S_IWUSR);
+      if (tifd == -1)
+	pfatal ("Can't create temporary file %s", TMPINNAME);
       TMPINNAME_needs_removal = true;
     }
   i = 0;

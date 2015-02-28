@@ -138,8 +138,11 @@ open_patch_file (char const *filename)
     else
       {
 	size_t charsread;
-	int fd = make_tempfile (&TMPPATNAME, 'p', NULL, O_RDWR | O_BINARY, 0);
+	int fd;
 	FILE *read_pfp = pfp;
+	fd = make_tempfile (&TMPPATNAME, 'p', NULL, O_RDWR | O_BINARY, 0);
+	if (fd == -1)
+	  pfatal ("Can't create temporary file %s", TMPPATNAME);
 	TMPPATNAME_needs_removal = true;
 	pfp = fdopen (fd, "w+b");
 	if (! pfp)

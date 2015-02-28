@@ -1660,8 +1660,6 @@ make_tempfile (char const **name, char letter, char const *real_name,
       sprintf (template, "%s/p%cXXXXXX", tmpdir, letter);
     }
   fd = try_tempname(template, 0, &args, try_safe_open);
-  if (fd == -1)
-    pfatal ("Can't create temporary file %s", template);
   *name = template;
   return fd;
 }
