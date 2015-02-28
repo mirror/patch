@@ -508,8 +508,11 @@ int safe_rename (const char *oldpath, const char *newpath)
     return newdirfd;
 
   ret = renameat (olddirfd, oldpath, newdirfd, newpath);
-  invalidate_cached_dirfd (olddirfd, oldpath);
-  invalidate_cached_dirfd (newdirfd, newpath);
+  if (! ret)
+    {
+      invalidate_cached_dirfd (olddirfd, oldpath);
+      invalidate_cached_dirfd (newdirfd, newpath);
+    }
   return ret;
 }
 
@@ -535,7 +538,8 @@ int safe_rmdir (const char *pathname)
     return dirfd;
 
   ret = unlinkat (dirfd, pathname, AT_REMOVEDIR);
-  invalidate_cached_dirfd (dirfd, pathname);
+  if (! ret)
+    invalidate_cached_dirfd (dirfd, pathname);
   return ret;
 }
 
