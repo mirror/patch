@@ -419,15 +419,6 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	      printf (" (failed)\n");
 	      fflush (stdout);
 	    }
-	  if (errno == ELOOP
-	      || errno == EMLINK  /* FreeBSD 10.1: Too many links */
-	      || errno == EFTYPE  /* NetBSD 6.1: Inappropriate file type or format */
-	      || errno == ENOTDIR)
-	    {
-	      say ("file %.*s is not a directory\n",
-		   (int) (path - *pathname), *pathname);
-	      skip_rest_of_patch = true;
-	    }
 	  goto fail;
 	}
       dir = entry;
