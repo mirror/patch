@@ -45,6 +45,8 @@
 # define EFTYPE 0
 #endif
 
+static const unsigned int MAX_PATH_COMPONENTS = 1024;
+
 /* Path lookup results are cached in a hash table + LRU list. When the
    cache is full, the oldest entries are removed.  */
 
@@ -239,6 +241,24 @@ out:
   return entry;
 }
 
+static unsigned int count_path_components (const char *path)
+{
+  unsigned int components;
+
+  while (ISSLASH (*path))
+    path++;
+  if (! *path)
+    return 1;
+  for (components = 0; *path; components++)
+    {
+      while (*path && ! ISSLASH (*path))
+	path++;
+      while (ISSLASH (*path))
+	path++;
+    }
+  return components;
+}
+
 /* A symlink to resolve. */
 struct symlink {
   struct symlink *prev;
@@ -283,8 +303,6 @@ static struct symlink *read_symlink(int dirfd, const char *name)
       errno = EXDEV;
       goto fail;
     }
-  /* FIXME: Limit the depth of recursion and the number of symlinks
-   * that will be followed. */
   return symlink;
 
 fail:
@@ -362,6 +380,13 @@ static int traverse_another_path (const char **pathname, int keepfd)
   const char *path = *pathname, *last;
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = NULL;
+  unsigned int steps = count_path_components (path);
+
+  if (steps > MAX_PATH_COMPONENTS)
+    {
+      errno = ELOOP;
+      return -1;
+    }
 
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
     return AT_FDCWD;
@@ -409,7 +434,15 @@ static int traverse_another_path (const char **pathname, int keepfd)
       if (stack && ! *stack->path)
 	pop_symlink (&stack);
       if (symlink)
-	push_symlink (&stack, symlink);
+	{
+	  push_symlink (&stack, symlink);
+	  steps += count_path_components (symlink->path);
+	  if (steps > MAX_PATH_COMPONENTS)
+	    {
+	      errno = ELOOP;
+	      goto fail;
+	    }
+	}
     }
   *pathname = last;
   if (debug & 32)
