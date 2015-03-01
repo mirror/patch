@@ -40,6 +40,7 @@
 #include "common.h"
 
 #include "util.h"
+#include "list.h"
 
 #ifndef EFTYPE
 # define EFTYPE 0
@@ -53,8 +54,7 @@ static const unsigned int MAX_PATH_COMPONENTS = 1024;
 unsigned long dirfd_cache_misses;
 
 struct cached_dirfd {
-  /* lru list */
-  struct cached_dirfd *prev, *next;
+  struct list_head lru_link;
   struct cached_dirfd *parent;
 
   char *name;
@@ -63,10 +63,7 @@ struct cached_dirfd {
 
 static Hash_table *cached_dirfds = NULL;
 static size_t max_cached_fds;
-static struct cached_dirfd lru_list = {
-  .prev = &lru_list,
-  .next = &lru_list,
-};
+LIST_HEAD (lru_list);
 
 static size_t hash_cached_dirfd (const void *entry, size_t table_size)
 {
@@ -110,28 +107,6 @@ static void init_dirfd_cache (void)
     xalloc_die ();
 }
 
-static void lru_list_add (struct cached_dirfd *entry, struct cached_dirfd *head)
-{
-  struct cached_dirfd *next = head->next;
-  entry->prev = head;
-  entry->next = next;
-  head->next = next->prev = entry;
-}
-
-static void lru_list_del (struct cached_dirfd *entry)
-{
-  struct cached_dirfd *prev = entry->prev;
-  struct cached_dirfd *next = entry->next;
-  prev->next = next;
-  next->prev = prev;
-}
-
-static void lru_list_del_init (struct cached_dirfd *entry)
-{
-  lru_list_del (entry);
-  entry->next = entry->prev = entry;
-}
-
 static struct cached_dirfd *lookup_cached_dirfd (struct cached_dirfd *dir, const char *name)
 {
   struct cached_dirfd *entry = NULL;
@@ -149,7 +124,7 @@ static struct cached_dirfd *lookup_cached_dirfd (struct cached_dirfd *dir, const
 
 static void remove_cached_dirfd (struct cached_dirfd *entry)
 {
-  lru_list_del (entry);
+  list_del (&entry->lru_link);
   hash_delete (cached_dirfds, entry);
   free_cached_dirfd (entry);
 }
@@ -162,13 +137,14 @@ static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
   /* Trim off the least recently used entries */
   while (hash_get_n_entries (cached_dirfds) >= max_cached_fds)
     {
-      struct cached_dirfd *last = lru_list.prev;
-      if (last == &lru_list)
+      struct cached_dirfd *last =
+	list_entry (lru_list.prev, struct cached_dirfd, lru_link);
+      if (&last->lru_link == &lru_list)
 	break;
       if (last->fd == keepfd)
 	{
-	  last = last->prev;
-	  if (last == &lru_list)
+	  last = list_entry (last->lru_link.prev, struct cached_dirfd, lru_link);
+	  if (&last->lru_link == &lru_list)
 	    break;
 	}
       remove_cached_dirfd (last);
@@ -202,7 +178,7 @@ static int put_path (struct cached_dirfd *entry)
       struct cached_dirfd *parent = entry->parent;
       if (! parent)
 	break;
-      lru_list_add (entry, &lru_list);
+      list_add (&entry->lru_link, &lru_list);
       entry = parent;
     }
 
@@ -216,7 +192,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
 
   if (entry)
     {
-      lru_list_del_init (entry);
+      list_del_init (&entry->lru_link);
       goto out;
     }
   dirfd_cache_misses++;
@@ -231,7 +207,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
 
   /* Store new cache entry */
   entry = xmalloc (sizeof (struct cached_dirfd));
-  entry->prev = entry->next = entry;
+  INIT_LIST_HEAD (&entry->lru_link);
   entry->parent = dir;
   entry->name = xstrdup (name);
   entry->fd = fd;
@@ -333,8 +309,8 @@ traverse_next (struct cached_dirfd *dir, const char **path, int keepfd,
 	  errno = EXDEV;
 	  goto out;
 	}
-      assert (dir->next == dir);
-      lru_list_add (dir, &lru_list);
+      assert (list_empty (&dir->lru_link));
+      list_add (&dir->lru_link, &lru_list);
       goto skip;
     }
   name = alloca (p - *path + 1);
