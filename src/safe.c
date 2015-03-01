@@ -83,11 +83,11 @@ static bool compare_cached_dirfds (const void *_a,
 	  !strcmp (a->name, b->name));
 }
 
-static void free_cached_dirfd (struct cached_dirfd *d)
+static void free_cached_dirfd (struct cached_dirfd *entry)
 {
-  close (d->fd);
-  free (d->name);
-  free (d);
+  list_del (&entry->children_link);
+  free (entry->name);
+  free (entry);
 }
 
 static void init_dirfd_cache (void)
@@ -132,9 +132,9 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
       list_del_init (&child->children_link);
       hash_delete (cached_dirfds, child);
     }
-  list_del (&entry->children_link);
   list_del (&entry->lru_link);
   hash_delete (cached_dirfds, entry);
+  close (entry->fd);
   free_cached_dirfd (entry);
 }
 
@@ -159,7 +159,9 @@ static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
       remove_cached_dirfd (last);
     }
 
-  assert (hash_insert (cached_dirfds, entry) == entry);
+  /* Only insert if the parent still exists. */
+  if (! list_empty (&entry->children_link))
+    assert (hash_insert (cached_dirfds, entry) == entry);
 }
 
 static void invalidate_cached_dirfd (int dirfd, const char *name)
@@ -194,6 +196,19 @@ static int put_path (struct cached_dirfd *entry)
   return fd;
 }
 
+static struct cached_dirfd *new_cached_dirfd (struct cached_dirfd *dir, const char *name, int fd)
+{
+  struct cached_dirfd *entry = xmalloc (sizeof (struct cached_dirfd));
+
+  INIT_LIST_HEAD (&entry->lru_link);
+  list_add (&entry->children_link, &dir->children);
+  INIT_LIST_HEAD (&entry->children);
+  entry->parent = dir;
+  entry->name = xstrdup (name);
+  entry->fd = fd;
+  return entry;
+}
+
 static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char *name, int keepfd)
 {
   int fd;
@@ -215,13 +230,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
     return NULL;
 
   /* Store new cache entry */
-  entry = xmalloc (sizeof (struct cached_dirfd));
-  INIT_LIST_HEAD (&entry->lru_link);
-  list_add (&entry->children_link, &dir->children);
-  INIT_LIST_HEAD (&entry->children);
-  entry->parent = dir;
-  entry->name = xstrdup (name);
-  entry->fd = fd;
+  entry = new_cached_dirfd (dir, name, fd);
   insert_cached_dirfd (entry, keepfd);
 
 out:
@@ -368,6 +377,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = NULL;
   unsigned int steps = count_path_components (path);
+  struct cached_dirfd *traversed_symlink = NULL;
 
   INIT_LIST_HEAD (&cwd.children);
 
@@ -400,6 +410,8 @@ static int traverse_another_path (const char **pathname, int keepfd)
     {
       struct cached_dirfd *entry;
       struct symlink *symlink = NULL;
+      const char *prev = path;
+
       entry = traverse_next (dir, stack ? &stack->path : &path, keepfd, &symlink);
       if (! entry)
 	{
@@ -411,6 +423,19 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	  goto fail;
 	}
       dir = entry;
+      if (! stack && symlink)
+	{
+	  const char *p = prev;
+	  char *name;
+
+	  while (*p && ! ISSLASH (*p))
+	    p++;
+	  name = alloca (p - prev + 1);
+	  memcpy (name, prev, p - prev);
+	  name[p - prev] = 0;
+
+	  traversed_symlink = new_cached_dirfd (dir, name, -1);
+	}
       if (stack && ! *stack->path)
 	pop_symlink (&stack);
       if (symlink)
@@ -422,6 +447,19 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	      errno = ELOOP;
 	      goto fail;
 	    }
+	}
+      if (traversed_symlink && ! stack)
+	{
+	  traversed_symlink->fd =
+	    entry->fd == AT_FDCWD ? AT_FDCWD : dup (entry->fd);
+	  if (traversed_symlink->fd != -1)
+	    {
+	      insert_cached_dirfd (traversed_symlink, keepfd);
+	      list_add (&traversed_symlink->lru_link, &lru_list);
+	    }
+	  else
+	    free_cached_dirfd (traversed_symlink);
+	  traversed_symlink = NULL;
 	}
     }
   *pathname = last;
@@ -437,6 +475,8 @@ static int traverse_another_path (const char **pathname, int keepfd)
   return put_path (dir);
 
 fail:
+  if (traversed_symlink)
+    free_cached_dirfd (traversed_symlink);
   put_path (dir);
   while (stack)
     pop_symlink (&stack);
