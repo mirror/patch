@@ -55,6 +55,7 @@ unsigned long dirfd_cache_misses;
 
 struct cached_dirfd {
   struct list_head lru_link;
+  struct list_head children_link, children;
   struct cached_dirfd *parent;
 
   char *name;
@@ -124,6 +125,14 @@ static struct cached_dirfd *lookup_cached_dirfd (struct cached_dirfd *dir, const
 
 static void remove_cached_dirfd (struct cached_dirfd *entry)
 {
+  while (! list_empty (&entry->children))
+    {
+      struct cached_dirfd *child =
+	list_entry (entry->children.next, struct cached_dirfd, children_link);
+      list_del_init (&child->children_link);
+      hash_delete (cached_dirfds, child);
+    }
+  list_del (&entry->children_link);
   list_del (&entry->lru_link);
   hash_delete (cached_dirfds, entry);
   free_cached_dirfd (entry);
@@ -208,6 +217,8 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
   /* Store new cache entry */
   entry = xmalloc (sizeof (struct cached_dirfd));
   INIT_LIST_HEAD (&entry->lru_link);
+  list_add (&entry->children_link, &dir->children);
+  INIT_LIST_HEAD (&entry->children);
   entry->parent = dir;
   entry->name = xstrdup (name);
   entry->fd = fd;
@@ -357,6 +368,8 @@ static int traverse_another_path (const char **pathname, int keepfd)
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = NULL;
   unsigned int steps = count_path_components (path);
+
+  INIT_LIST_HEAD (&cwd.children);
 
   if (steps > MAX_PATH_COMPONENTS)
     {
