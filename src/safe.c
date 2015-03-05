@@ -130,10 +130,11 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
       struct cached_dirfd *child =
 	list_entry (entry->children.next, struct cached_dirfd, children_link);
       list_del_init (&child->children_link);
-      hash_delete (cached_dirfds, child);
+      /* assert (list_empty (&child->children_link)); */
+      hash_delete (cached_dirfds, child);  /* noop when not hashed */
     }
   list_del (&entry->lru_link);
-  hash_delete (cached_dirfds, entry);
+  hash_delete (cached_dirfds, entry);  /* noop when not hashed */
   close (entry->fd);
   free_cached_dirfd (entry);
 }
@@ -217,6 +218,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
   if (entry)
     {
       list_del_init (&entry->lru_link);
+      /* assert (list_empty (&entry->lru_link)); */
       goto out;
     }
   dirfd_cache_misses++;
@@ -365,7 +367,13 @@ out:
 /* Traverse PATHNAME.  Updates PATHNAME to point to the last path component and
    returns a file descriptor to its parent directory (which can be AT_FDCWD).
    When KEEPFD is given, make sure that the cache entry for DIRFD is not
-   removed from the cache (and KEEPFD remains open). */
+   removed from the cache (and KEEPFD remains open).
+
+   When this function is not running, all cache entries are on the lru list,
+   and all cache entries which still have a parent are also in the hash table.
+   While this function is running, all cache entries on the path being looked
+   up are off the lru list but in the hash table.
+    */
 static int traverse_another_path (const char **pathname, int keepfd)
 {
   static struct cached_dirfd cwd = {
