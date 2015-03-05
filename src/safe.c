@@ -51,7 +51,7 @@ static const unsigned int MAX_PATH_COMPONENTS = 1024;
 /* Path lookup results are cached in a hash table + LRU list. When the
    cache is full, the oldest entries are removed.  */
 
-unsigned long dirfd_cache_misses;
+unsigned int dirfd_cache_misses;
 
 struct cached_dirfd {
   struct list_head lru_link;
@@ -372,7 +372,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
     .fd = AT_FDCWD,
   };
 
-  unsigned long misses = dirfd_cache_misses;
+  unsigned int misses = dirfd_cache_misses;
   const char *path = *pathname, *last;
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = NULL;
@@ -465,11 +465,11 @@ static int traverse_another_path (const char **pathname, int keepfd)
   *pathname = last;
   if (debug & 32)
     {
-      misses = dirfd_cache_misses - misses;
+      misses = (signed int) dirfd_cache_misses - (signed int) misses;
       if (! misses)
 	printf(" (cached)\n");
       else
-	printf (" (%lu miss%s)\n", misses, misses == 1 ? "" : "es");
+	printf (" (%u miss%s)\n", misses, misses == 1 ? "" : "es");
       fflush (stdout);
     }
   return put_path (dir);
