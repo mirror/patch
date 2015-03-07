@@ -1,3 +1,9 @@
+Changes in version 2.7.5:
+
+* There are users which expect patch to follow symbolic links in the working
+  directory, so patch now again follows symbolic links as long as they do not
+  leave the working directory.
+
 Changes until version 2.7.4:
 
 * When a file isn't being deleted because the file contents don't match the
