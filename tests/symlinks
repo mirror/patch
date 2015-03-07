@@ -356,6 +356,32 @@ EOF
 
 # --------------------------------------------------------------
 
+# Absolute symlinks that point back into the working directory
+
+mkdir d
+ln -s $PWD here
+ln -s $PWD/here/d here_d
+
+cat > good-absolute.diff <<EOF
+--- /dev/null
++++ here/d/foo
+@@ -0,0 +1 @@
++foo
+--- /dev/null
++++ here_d/bar
+@@ -0,0 +1 @@
++bar
+EOF
+
+check 'patch -p0 < good-absolute.diff' <<EOF
+patching file here/d/foo
+patching file here_d/bar
+EOF
+
+rm -rf d
+
+# --------------------------------------------------------------
+
 # The backup file of a new symlink is an empty regular file.
 
 check 'patch -p1 --backup < create-symlink.diff || echo "Status: $?"' <<EOF

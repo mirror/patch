@@ -277,6 +277,9 @@ static void pop_symlink (struct symlink **stack)
   free (top);
 }
 
+int cwd_stat_errno = -1;
+struct stat cwd_stat;
+
 static struct symlink *read_symlink(int dirfd, const char *name)
 {
   int saved_errno = errno;
@@ -298,11 +301,47 @@ static struct symlink *read_symlink(int dirfd, const char *name)
   symlink->path = symlink->buffer;
   if (ISSLASH (*symlink->path))
     {
-      errno = EXDEV;
-      goto fail;
+      char *end;
+
+      if (cwd_stat_errno == -1)
+	{
+	  cwd_stat_errno = stat (".", &cwd_stat) == 0 ? 0 : errno;
+	  if (cwd_stat_errno)
+	    goto fail_exdev;
+	}
+      end = symlink->buffer + ret;
+      for (;;)
+	{
+	  char slash;
+	  int rv;
+
+	  slash = *end; *end = 0;
+	  rv = stat (symlink->path, &st);
+	  *end = slash;
+
+	  if (rv == 0
+	      && st.st_dev == cwd_stat.st_dev
+	      && st.st_ino == cwd_stat.st_ino)
+	    {
+	      while (ISSLASH (*end))
+		end++;
+	      symlink->path = end;
+	      return symlink;
+	    }
+	  end--;
+	  if (end == symlink->path)
+	    break;
+	  while (end != symlink->path + 1 && ! ISSLASH (*end))
+	    end--;
+	  while (end != symlink->path + 1 && ISSLASH (*(end - 1)))
+	    end--;
+	}
+      goto fail_exdev;
     }
   return symlink;
 
+fail_exdev:
+  errno = EXDEV;
 fail:
   free (symlink);
   return NULL;
@@ -446,7 +485,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	}
       if (stack && ! *stack->path)
 	pop_symlink (&stack);
-      if (symlink)
+      if (symlink && *symlink->path)
 	{
 	  push_symlink (&stack, symlink);
 	  steps += count_path_components (symlink->path);
@@ -456,6 +495,8 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	      goto fail;
 	    }
 	}
+      else if (symlink)
+	pop_symlink (&symlink);
       if (traversed_symlink && ! stack)
 	{
 	  traversed_symlink->fd =
