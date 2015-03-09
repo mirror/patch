@@ -23,6 +23,7 @@ TESTS = \
 	bad-usage \
 	concat-git-diff \
 	copy-rename \
+	corrupt-patch \
 	corrupt-reject-files \
 	create-delete \
 	create-directory \

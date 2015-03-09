@@ -622,6 +622,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		  p_name[i] = 0;
 		}
 	    p_git_diff = true;
+	    need_header = false;
 	  }
 	else if (p_git_diff && strnEQ (s, "index ", 6))
 	  {
