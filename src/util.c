@@ -610,10 +610,12 @@ copy_file (char const *from, char const *to, struct stat *tost,
 
   if (S_ISLNK (mode))
     {
-      char *buffer = xmalloc (PATH_MAX);
+      char *buffer = xmalloc (PATH_MAX + 1);
+      ssize_t r;
 
-      if (safe_readlink (from, buffer, PATH_MAX) < 0)
+      if ((r = safe_readlink (from, buffer, PATH_MAX)) < 0)
 	pfatal ("Can't read %s %s", "symbolic link", from);
+      buffer[r] = '\0';
       if (safe_symlink (buffer, to) != 0)
 	pfatal ("Can't create %s %s", "symbolic link", to);
       if (tost && safe_lstat (to, tost) != 0)
