@@ -4,8 +4,6 @@
 # in any medium, are permitted without royalty provided the copyright
 # notice and this notice are preserved.
 
-# Don't recognize hunks before a filename has been specified/seen
-
 . $srcdir/test-lib.sh
 
 require cat
@@ -36,4 +34,22 @@ EOF
 
 check 'cat x' <<EOF
 three
+EOF
+
+# --------------------------------------------------------------
+
+echo aa > file1
+
+mkdir 1
+cd 1
+cat > g.diff <<EOF
+--- file1
++++ file2
+@@ -1 +1 @@
+-aa
++bb
+EOF
+
+check 'patch ../file1 < g.diff' <<EOF
+patching file ../file
 EOF
