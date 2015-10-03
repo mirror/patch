@@ -261,7 +261,6 @@ static unsigned int count_path_components (const char *path)
 struct symlink {
   struct symlink *prev;
   const char *path;
-  char buffer[0];
 };
 
 static void push_symlink (struct symlink **stack, struct symlink *symlink)
@@ -285,6 +284,7 @@ static struct symlink *read_symlink(int dirfd, const char *name)
   int saved_errno = errno;
   struct stat st;
   struct symlink *symlink;
+  char *buffer;
   ssize_t ret;
 
   if (fstatat (dirfd, name, &st, AT_SYMLINK_NOFOLLOW)
@@ -294,12 +294,13 @@ static struct symlink *read_symlink(int dirfd, const char *name)
       return NULL;
     }
   symlink = xmalloc (sizeof (*symlink) + st.st_size + 1);
-  ret = readlinkat (dirfd, name, symlink->buffer, st.st_size);
+  buffer = (char *)(symlink + 1);
+  ret = readlinkat (dirfd, name, buffer, st.st_size);
   if (ret <= 0)
     goto fail;
-  symlink->buffer[ret] = 0;
-  symlink->path = symlink->buffer;
-  if (ISSLASH (*symlink->path))
+  buffer[ret] = 0;
+  symlink->path = buffer;
+  if (ISSLASH (*buffer))
     {
       char *end;
 
@@ -309,7 +310,7 @@ static struct symlink *read_symlink(int dirfd, const char *name)
 	  if (cwd_stat_errno)
 	    goto fail_exdev;
 	}
-      end = symlink->buffer + ret;
+      end = buffer + ret;
       for (;;)
 	{
 	  char slash;
