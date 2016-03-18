@@ -22,6 +22,7 @@ TESTS = \
 	bad-filenames \
 	bad-usage \
 	concat-git-diff \
+	context-format \
 	copy-rename \
 	corrupt-patch \
 	corrupt-reject-files \
