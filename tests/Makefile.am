@@ -36,6 +36,7 @@ TESTS = \
 	file-modes \
 	filename-choice \
 	git-binary-diff \
+	git-cleanup \
 	garbage \
 	global-reject-files \
 	inname \

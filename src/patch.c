@@ -1966,22 +1966,6 @@ output_files (struct stat const *st)
   gl_list_clear (files_to_output);
 }
 
-static void
-forget_output_files (void)
-{
-  gl_list_iterator_t iter = gl_list_iterator (files_to_output);
-  const void *elt;
-
-  while (gl_list_iterator_next (&iter, &elt, NULL))
-    {
-      const struct file_to_output *file_to_output = elt;
-
-      safe_unlink (file_to_output->from);
-    }
-  gl_list_iterator_free (&iter);
-  gl_list_clear (files_to_output);
-}
-
 /* Fatal exit with cleanup. */
 
 void
@@ -2012,5 +1996,5 @@ cleanup (void)
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
   remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
   remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
-  forget_output_files ();
+  output_files (NULL);
 }
