@@ -176,6 +176,12 @@ main (int argc, char **argv)
     /* Make sure we clean up in case of disaster.  */
     set_signals (false);
 
+    /* When the file to patch is specified on the command line, allow that file
+       to lie outside the current working tree.  Still doesn't allow to follow
+       symlinks.  */
+    if (inname)
+      unsafe = true;
+
     if (inname && outfile)
       {
 	/* When an input and an output filename is given and the patch is

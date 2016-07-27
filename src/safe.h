@@ -18,6 +18,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include <stdbool.h>
+
+extern bool unsafe;
+
 int safe_stat (const char *pathname, struct stat *buf);
 int safe_lstat (const char *pathname, struct stat *buf);
 int safe_open (const char *pathname, int flags, mode_t mode);

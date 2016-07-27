@@ -51,5 +51,5 @@ cat > g.diff <<EOF
 EOF
 
 check 'patch ../file1 < g.diff' <<EOF
-patching file ../file
+patching file ../file1
 EOF
