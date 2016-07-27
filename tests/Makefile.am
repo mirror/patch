@@ -60,7 +60,8 @@ TESTS = \
 	deep-directories
 
 XFAIL_TESTS = \
-	dash-o-append
+	dash-o-append \
+	context-format
 
 EXTRA_DIST = \
 	$(TESTS) \
