@@ -47,7 +47,7 @@ patching file g
 Hunk #1 FAILED at 1.
 1 out of 1 hunk FAILED -- saving rejects to file g.rej
 patching file h
-/home/agruenba/git/patch/src/patch: **** malformed patch at line 20: BAD PATCH
+$PATCH: **** malformed patch at line 20: BAD PATCH
 
 status: 2
 EOF
