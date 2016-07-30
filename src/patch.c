@@ -241,8 +241,8 @@ main (int argc, char **argv)
 	{
 	  say ("File %s: can't change file type from 0%o to 0%o.\n",
 	       quotearg (inname),
-	       pch_mode (reverse) & S_IFMT,
-	       pch_mode (! reverse) & S_IFMT);
+	       (unsigned int) (pch_mode (reverse) & S_IFMT),
+	       (unsigned int) (pch_mode (! reverse) & S_IFMT));
 	  skip_rest_of_patch = true;
 	  somefailed = true;
 	}
@@ -1817,9 +1817,9 @@ delete_files (void)
 	    say ("Removing %s %s\n",
 		 S_ISLNK (mode) ? "symbolic link" : "file",
 		 quotearg (file_to_delete->name));
-	    move_file (0, 0, 0, file_to_delete->name, mode,
-		       file_to_delete->backup);
-	    removedirs (file_to_delete->name);
+	  move_file (0, 0, 0, file_to_delete->name, mode,
+		     file_to_delete->backup);
+	  removedirs (file_to_delete->name);
 	}
     }
   gl_list_iterator_free (&iter);
