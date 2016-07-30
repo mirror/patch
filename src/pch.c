@@ -170,9 +170,9 @@ static void
 set_hunkmax (void)
 {
     if (!p_line)
-	p_line = (char **) xmalloc (hunkmax * sizeof *p_line);
+	p_line = xmalloc (hunkmax * sizeof *p_line);
     if (!p_len)
-	p_len = (size_t *) xmalloc (hunkmax * sizeof *p_len);
+	p_len = xmalloc (hunkmax * sizeof *p_len);
     if (!p_Char)
 	p_Char = xmalloc (hunkmax * sizeof *p_Char);
 }
@@ -184,8 +184,8 @@ grow_hunkmax (void)
 {
     hunkmax *= 2;
     assert (p_line && p_len && p_Char);
-    if ((p_line = (char **) realloc (p_line, hunkmax * sizeof (*p_line)))
-	&& (p_len = (size_t *) realloc (p_len, hunkmax * sizeof (*p_len)))
+    if ((p_line = realloc (p_line, hunkmax * sizeof (*p_line)))
+	&& (p_len = realloc (p_len, hunkmax * sizeof (*p_len)))
 	&& (p_Char = realloc (p_Char, hunkmax * sizeof (*p_Char))))
       return true;
     if (!using_plan_a)
