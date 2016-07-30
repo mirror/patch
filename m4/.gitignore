@@ -262,3 +262,4 @@ xvasprintf.m4
 /faccessat.m4
 /getgroups.m4
 /group-member.m4
+/hard-locale.m4
