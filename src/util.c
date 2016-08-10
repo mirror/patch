@@ -1570,7 +1570,11 @@ parse_name (char const *s, int strip_leading, char const **endp)
   while (ISSPACE ((unsigned char) *s))
     s++;
   if (*s == '"')
-    ret = parse_c_string (s, endp);
+    {
+      ret = parse_c_string (s, endp);
+      if (!ret)
+        return NULL;
+    }
   else
     {
       char const *t;
