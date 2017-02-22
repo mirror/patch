@@ -1410,7 +1410,7 @@ another_hunk (enum diff difftype, bool rev)
 	      change_line:
 		s = buf + 1;
 		chars_read--;
-		if (*s == '\n' && canonicalize) {
+		if (*s == '\n' && canonicalize_ws) {
 		    strcpy (s, " \n");
 		    chars_read = 2;
 		}
@@ -1478,7 +1478,7 @@ another_hunk (enum diff difftype, bool rev)
 	    case ' ':
 		s = buf + 1;
 		chars_read--;
-		if (*s == '\n' && canonicalize) {
+		if (*s == '\n' && canonicalize_ws) {
 		    strcpy (s, "\n");
 		    chars_read = 2;
 		}

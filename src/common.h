@@ -111,7 +111,7 @@ XTERN bool reverse;
 XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 XTERN bool skip_rest_of_patch;
 XTERN int strippath;
-XTERN bool canonicalize;
+XTERN bool canonicalize_ws;
 XTERN int patch_get;
 XTERN bool set_time;
 XTERN bool set_utc;

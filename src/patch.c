@@ -927,7 +927,7 @@ get_some_switches (void)
 		patchname = xstrdup (optarg);
 		break;
 	    case 'l':
-		canonicalize = true;
+		canonicalize_ws = true;
 		break;
 #ifdef ENABLE_MERGE
 	    case 'm':
@@ -1690,7 +1690,7 @@ patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 
     for (iline=base+offset+prefix_fuzz; pline <= pat_lines; pline++,iline++) {
 	p = ifetch (iline, offset >= 0, &size);
-	if (canonicalize) {
+	if (canonicalize_ws) {
 	    if (!similar(p, size,
 			 pfetch(pline),
 			 pch_line_len(pline) ))

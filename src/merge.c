@@ -541,7 +541,7 @@ context_matches_file (lin old, lin where)
 
   line = ifetch (where, false, &size);
   return size &&
-	 (canonicalize ?
+	 (canonicalize_ws ?
 	  similar (pfetch (old), pch_line_len (old), line, size) :
 	  (size == pch_line_len (old) &&
 	   memcmp (line, pfetch (old), size) == 0));
