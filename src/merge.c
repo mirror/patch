@@ -565,7 +565,7 @@ compute_changes (lin xmin, lin xmax, lin ymin, lin ymax,
 
   ctxt.heuristic = true;
 
-  compareseq (xmin, xmax, ymin, ymax, &ctxt);
+  compareseq (xmin, xmax, ymin, ymax, false, &ctxt);
 
   ctxt.fdiag -= ymax + 1;
   free (ctxt.fdiag);
