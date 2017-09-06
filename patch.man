@@ -444,8 +444,8 @@ Interpret the patch file as a normal diff.
 .TP
 \fB\-N\fP  or  \fB\*=forward\fP
 When a patch does not apply, patch usually checks if the patch looks like it
-has been reversed.  The \fB\*=forward\fP option prevents that.
-See also
+has been applied already by trying to reverse-apply the first hunk.  The
+\fB\*=forward\fP option prevents that.  See also
 .BR \-R .
 .TP
 \fB\-o\fP \fIoutfile\fP  or  \fB\*=output=\fP\fIoutfile\fP
