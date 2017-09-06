@@ -1135,7 +1135,7 @@ locate_hunk (lin fuzz)
     lin prefix_fuzz = fuzz + prefix_context - context;
     lin suffix_fuzz = fuzz + suffix_context - context;
     lin max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
-    lin min_where = last_frozen_line + 1 - (prefix_context - prefix_fuzz);
+    lin min_where = last_frozen_line + 1;
     lin max_pos_offset = max_where - first_guess;
     lin max_neg_offset = first_guess - min_where;
     lin max_offset = MAX(max_pos_offset, max_neg_offset);

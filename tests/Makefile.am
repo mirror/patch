@@ -31,7 +31,9 @@ TESTS = \
 	criss-cross \
 	crlf-handling \
 	dash-o-append \
+	deep-directories \
 	empty-files \
+	false-match \
 	fifo \
 	file-modes \
 	filename-choice \
@@ -57,8 +59,7 @@ TESTS = \
 	remember-reject-files \
 	remove-directories \
 	symlinks \
-	unmodified-files \
-	deep-directories
+	unmodified-files
 
 XFAIL_TESTS = \
 	dash-o-append \
