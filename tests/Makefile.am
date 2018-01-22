@@ -35,6 +35,7 @@ TESTS = \
 	empty-files \
 	false-match \
 	fifo \
+	file-create-modes \
 	file-modes \
 	filename-choice \
 	git-binary-diff \

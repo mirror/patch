@@ -590,8 +590,12 @@ main (int argc, char **argv)
 			}
 
 		      if (inerrno)
-			set_file_attributes (TMPOUTNAME, attr, NULL, NULL,
-					     mode, &new_time);
+		        {
+			  if (set_mode)
+			    attr |= FA_MODE;
+			  set_file_attributes (TMPOUTNAME, attr, NULL, NULL,
+					       mode, &new_time);
+			}
 		      else
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
