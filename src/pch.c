@@ -1847,7 +1847,7 @@ another_hunk (enum diff difftype, bool rev)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
 	    if (buf[0] != '<' || (buf[1] != ' ' && buf[1] != '\t'))
-	      fatal ("'<' expected at line %s of patch",
+	      fatal ("'<' followed by space or tab expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_ptrn_lines && incomplete_line ());
 	    p_len[i] = chars_read;
@@ -1892,7 +1892,7 @@ another_hunk (enum diff difftype, bool rev)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
 	    if (buf[0] != '>' || (buf[1] != ' ' && buf[1] != '\t'))
-	      fatal ("'>' expected at line %s of patch",
+	      fatal ("'>' followed by space or tab expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_end && incomplete_line ());
 	    p_len[i] = chars_read;
