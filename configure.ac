@@ -1,5 +1,5 @@
-# Copyright (C) 1993, 1997-1999, 2002-2003, 2006, 2009, 2011-2012 Free Software
-# Foundation, Inc.
+# Copyright (C) 1993, 1997-1999, 2002-2003, 2006, 2009, 2011-2013, 2015, 2018
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ AM_CONDITIONAL([ALPHA_VERSION],
 AM_INIT_AUTOMAKE([1.11.2 -Wall gnu dist-bzip2 dist-xz color-tests parallel-tests])
 AM_SILENT_RULES([yes])
 
-AC_CONFIG_HEADER([config.h:config.hin])
+AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_PROG_CC
 AC_PROG_CC_STDC
