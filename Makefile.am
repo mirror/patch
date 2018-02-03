@@ -25,7 +25,6 @@ EXTRA_DIST = \
 	cfg.mk \
 	m4/mkdir.m4 \
 	m4/setmode.m4 \
-	m4/utimbuf.m4 \
 	bootstrap \
 	pc
 
