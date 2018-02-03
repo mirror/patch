@@ -16,7 +16,7 @@ README-hacking file.  If this file came to you as part of a tar archive,
 then see the file INSTALL for compilation and installation instructions.
 
 See the file NEWS for a list of major changes in the current release.
-A more detailed descripiton of all changes can be found in the file ChangeLog
+A more detailed description of all changes can be found in the file ChangeLog
 in tar archives, and with "git log" which shows the version control history.
 
 Tutorial-style documentation for patch is included in the GNU
