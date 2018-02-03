@@ -31,8 +31,10 @@ EXTRA_DIST = \
 if ALPHA_VERSION
   EXTRA_DIST += README-alpha
   GNU_SERVER = alpha.gnu.org
+  RELEASE_TYPE = alpha
 else
   GNU_SERVER = ftp.gnu.org
+  RELEASE_TYPE = stable
 endif
 
 EXTRA_DIST += $(top_srcdir)/.version
@@ -51,14 +53,3 @@ gen-ChangeLog:
 	  rm -f $(distdir)/ChangeLog;					\
 	  mv $(distdir)/cl-t $(distdir)/ChangeLog;			\
 	fi
-
-tell-upload:
-	echo; \
-	(echo "Upload with: "; \
-	 for archive in $(DIST_ARCHIVES); do \
-	   echo "gnupload --to $(GNU_SERVER):patch $$archive"; \
-	 done) | \
-	 sed -e 1h -e 1s/./=/g -e 1p -e 1x -e '$$p' -e '$$x'; \
-	echo
-upload: dist tell-upload
-uploadcheck: distcheck tell-upload
