@@ -1,3 +1,10 @@
+Changes in version 2.7.6:
+
+* Files specififed on the command line are no longer verified to be inside the
+  current working directory, so commands like "patch -i foo.diff ../foo" will
+  work again.
+* Various fixes.
+
 Changes in version 2.7.5:
 
 * There are users which expect patch to follow symbolic links in the working
