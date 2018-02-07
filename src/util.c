@@ -256,8 +256,8 @@ set_file_attributes (char const *to, enum file_attributes attr,
     }
   if (attr & FA_IDS)
     {
-      static uid_t euid = -1;
-      static gid_t egid = -1;
+      static uid_t euid = (uid_t)-1;
+      static gid_t egid = (gid_t)-1;
       uid_t uid;
       uid_t gid;
 
