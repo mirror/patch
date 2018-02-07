@@ -30,29 +30,27 @@ x2() {
     while test $# -gt 0 && test "$1" != -- ; do
 	echo "$1"
 	shift
-    done > a.sed
-    echo "$body" | sed -f a.sed > b
+    done > b.sed
+    echo "$body" | sed -f b.sed > b
     shift
     while test $# -gt 0 ; do
 	echo "$1"
 	shift
-    done > b.sed
-    echo "$body" | sed -f b.sed > c
-    rm -f a.sed b.sed
+    done > c.sed
+    echo "$body" | sed -f c.sed > c
+    rm -f b.sed c.sed
     output=`diff -u a b | patch $ARGS -f c`
     status=$?
     echo "$output" | sed -e '/^$/d' -e '/^patching file c$/d'
     cat c
-    test $status == 0 || echo "Status: $status"
+    test $status = 0 || echo "Status: $status"
 }
 
 x() {
-    ARGS="$ARGS --merge" x2 "$@"
+    ARGS="--merge" x2 "$@"
     echo
-    ARGS="$ARGS --merge=diff3" x2 "$@"
+    ARGS="--merge=diff3" x2 "$@"
 }
-
-unset ARGS
 
 # ==============================================================
 

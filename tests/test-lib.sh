@@ -41,7 +41,7 @@ use_local_patch() {
 
     eval 'patch() {
 	if test -n "$GDB" ; then
-	  echo -e "\n" >&3
+	  printf "\n\n" >&3
 	  gdbserver localhost:53153 $PATCH "$@" 2>&3
 	else
           $PATCH "$@"
@@ -113,22 +113,15 @@ cleanup() {
     exit $status
 }
 
-if test -z "`echo -n`"; then
-    if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
-	eval '
-	    _start_test() {
-		echo -n "[${BASH_LINENO[2]}] $* -- "
-	    }'
-    else
-	eval '
-	    _start_test() {
-		echo -n "* $* -- "
-	    }'
-    fi
+if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
+    eval '
+	_start_test() {
+	    printf "[${BASH_LINENO[2]}] %s -- " "$*"
+	}'
 else
     eval '
 	_start_test() {
-	    echo "* $*"
+	    printf "* %s -- " "$*"
 	}'
 fi
 

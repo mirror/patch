@@ -36,8 +36,8 @@ BAD PATCH
 EOF
 
 echo 1 > f
-echo -n '' > g
-echo -n '' > h
+printf '' > g
+printf '' > h
 
 check 'patch -f -i 1.diff || echo status: $?' <<EOF
 patching file f
