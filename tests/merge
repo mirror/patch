@@ -32,7 +32,7 @@ x2() {
 	shift
     done > b.sed
     echo "$body" | sed -f b.sed > b
-    shift
+    test $# -eq 0 || shift
     while test $# -gt 0 ; do
 	echo "$1"
 	shift
