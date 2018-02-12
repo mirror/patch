@@ -974,7 +974,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     if ((pch_rename () || pch_copy ())
 	&& ! inname
 	&& ! ((i == OLD || i == NEW) &&
-	      p_name[! reverse] &&
+	      p_name[reverse] && p_name[! reverse] &&
+	      name_is_valid (p_name[reverse]) &&
 	      name_is_valid (p_name[! reverse])))
       {
 	say ("Cannot %s file without two valid file names\n", pch_rename () ? "rename" : "copy");
