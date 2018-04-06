@@ -32,6 +32,7 @@ TESTS = \
 	crlf-handling \
 	dash-o-append \
 	deep-directories \
+	ed-style \
 	empty-files \
 	false-match \
 	fifo \
