@@ -33,7 +33,8 @@
 # include <io.h>
 #endif
 #include <safe.h>
-#include <sys/wait.h>
+#include <alloca.h>
+#include "execute.h"
 
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 
@@ -2453,6 +2454,9 @@ do_ed_script (char const *inname, char const *outname,
 
     if (! dry_run && ! skip_rest_of_patch) {
 	int exclusive = *outname_needs_removal ? 0 : O_EXCL;
+	char const **ed_argv;
+	int stdin_dup, status;
+
 	*outname_needs_removal = true;
 	if (inerrno != ENOENT)
 	  {
@@ -2461,24 +2465,22 @@ do_ed_script (char const *inname, char const *outname,
 	  }
 	fflush (stdout);
 
-	pid = fork();
-	if (pid == -1)
-	  pfatal ("Can't fork");
-	else if (pid == 0)
-	  {
-	    dup2 (tmpfd, 0);
-	    assert (outname[0] != '!' && outname[0] != '-');
-	    execlp (editor_program, editor_program, "-", outname, (char  *) NULL);
-	    _exit (2);
-	  }
-	else
-	  {
-	    int wstatus;
-	    if (waitpid (pid, &wstatus, 0) == -1
-	        || ! WIFEXITED (wstatus)
-		|| WEXITSTATUS (wstatus) != 0)
-	      fatal ("%s FAILED", editor_program);
-	  }
+	if ((stdin_dup = dup (0)) == -1
+	    || dup2 (tmpfd, 0) == -1)
+	  pfatal ("Failed to duplicate standard input");
+	assert (outname[0] != '!' && outname[0] != '-');
+	ed_argv = alloca (4 * sizeof * ed_argv);
+	ed_argv[0] = editor_program;
+	ed_argv[1] = "-";
+	ed_argv[2] = outname;
+	ed_argv[3] = (char  *) NULL;
+	status = execute (editor_program, editor_program, (char **)ed_argv,
+			  false, false, false, false, true, false, NULL);
+	if (status)
+	  fatal ("%s FAILED", editor_program);
+	if (dup2 (stdin_dup, 0) == -1
+	    || close (stdin_dup) == -1)
+	  pfatal ("Failed to duplicate standard input");
     }
 
     fclose (tmpfp);

@@ -275,3 +275,16 @@ xvasprintf.m4
 /utime.m4
 /utime_h.m4
 /nstrftime.m4
+/execute.m4
+/fatal-signal.m4
+/posix_spawn.m4
+/rawmemchr.m4
+/sched_h.m4
+/sig_atomic_t.m4
+/sigaction.m4
+/signalblocking.m4
+/spawn_h.m4
+/strchrnul.m4
+/sys_wait_h.m4
+/wait-process.m4
+/waitpid.m4
