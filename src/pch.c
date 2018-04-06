@@ -2459,9 +2459,6 @@ do_ed_script (char const *inname, char const *outname,
 	    *outname_needs_removal = true;
 	    copy_file (inname, outname, 0, exclusive, instat.st_mode, true);
 	  }
-	sprintf (buf, "%s %s%s", editor_program,
-		 verbosity == VERBOSE ? "" : "- ",
-		 outname);
 	fflush (stdout);
 
 	pid = fork();
@@ -2470,7 +2467,8 @@ do_ed_script (char const *inname, char const *outname,
 	else if (pid == 0)
 	  {
 	    dup2 (tmpfd, 0);
-	    execl ("/bin/sh", "sh", "-c", buf, (char *) 0);
+	    assert (outname[0] != '!' && outname[0] != '-');
+	    execlp (editor_program, editor_program, "-", outname, (char  *) NULL);
 	    _exit (2);
 	  }
 	else
