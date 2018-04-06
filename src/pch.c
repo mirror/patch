@@ -2394,9 +2394,11 @@ do_ed_script (char const *inname, char const *outname,
 
     if (! dry_run && ! skip_rest_of_patch) {
 	int exclusive = *outname_needs_removal ? 0 : O_EXCL;
-	assert (! inerrno);
-	*outname_needs_removal = true;
-	copy_file (inname, outname, 0, exclusive, instat.st_mode, true);
+	if (inerrno != ENOENT)
+	  {
+	    *outname_needs_removal = true;
+	    copy_file (inname, outname, 0, exclusive, instat.st_mode, true);
+	  }
 	sprintf (buf, "%s %s%s", editor_program,
 		 verbosity == VERBOSE ? "" : "- ",
 		 outname);
