@@ -1735,7 +1735,7 @@ another_hunk (enum diff difftype, bool rev)
 		break;
 	    case '=':
 		ch = ' ';
-		/* FALL THROUGH */
+		FALLTHROUGH;
 	    case ' ':
 		if (fillsrc > p_ptrn_lines) {
 		    free(s);
@@ -1756,7 +1756,7 @@ another_hunk (enum diff difftype, bool rev)
 		    p_end = fillsrc-1;
 		    return -1;
 		}
-		/* FALL THROUGH */
+		FALLTHROUGH;
 	    case '+':
 		if (filldst > p_end) {
 		    free(s);
@@ -2394,8 +2394,7 @@ do_ed_script (char const *inname, char const *outname,
     size_t chars_read;
     FILE *tmpfp = 0;
     char const *tmpname;
-    int tmpfd;
-    pid_t pid;
+    int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
     int exclusive = *outname_needs_removal ? 0 : O_EXCL;
     char const **ed_argv;
     int stdin_dup, status;

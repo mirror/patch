@@ -218,3 +218,11 @@ bool merge_hunk (int hunk, struct outstate *, lin where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false
 #endif
+
+#ifndef FALLTHROUGH
+# if __GNUC__ < 7
+#  define FALLTHROUGH ((void) 0)
+# else
+#  define FALLTHROUGH __attribute__ ((__fallthrough__))
+# endif
+#endif

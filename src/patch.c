@@ -1381,7 +1381,7 @@ abort_hunk_context (bool header, bool reverse)
 	    break;
 	case ' ': case '-': case '+': case '!':
 	    fprintf (rejfp, "%c ", pch_char (i));
-	    /* fall into */
+	    FALLTHROUGH;
 	case '\n':
 	    pch_write_line (i, rejfp);
 	    break;
