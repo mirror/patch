@@ -31,8 +31,7 @@ r !echo bar
 ,p
 EOF
 
-check 'patch -e foo -i ed2.diff 2> /dev/null || echo "Status: $?"' <<EOF
-?
+check 'patch -e foo -i ed2.diff > /dev/null 2> /dev/null || echo "Status: $?"' <<EOF
 Status: 2
 EOF
 
