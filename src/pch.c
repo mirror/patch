@@ -2279,8 +2279,11 @@ pfetch (lin line)
 bool
 pch_write_line (lin line, FILE *file)
 {
-  bool after_newline = (p_len[line] > 0) && (p_line[line][p_len[line] - 1] == '\n');
-  if (! fwrite (p_line[line], sizeof (*p_line[line]), p_len[line], file))
+  bool after_newline =
+    (p_len[line] > 0) && (p_line[line][p_len[line] - 1] == '\n');
+
+  if (fwrite (p_line[line], sizeof (*p_line[line]), p_len[line], file)
+      < p_len[line])
     write_fatal ();
   return after_newline;
 }
@@ -2427,13 +2430,14 @@ do_ed_script (char const *inname, char const *outname,
 	ed_command_letter = get_ed_command_letter (buf);
 	if (ed_command_letter) {
 	    if (tmpfp)
-		if (! fwrite (buf, sizeof *buf, chars_read, tmpfp))
+		if (fwrite (buf, sizeof *buf, chars_read, tmpfp) < chars_read)
 		    write_fatal ();
 	    if (ed_command_letter != 'd' && ed_command_letter != 's') {
 	        p_pass_comments_through = true;
 		while ((chars_read = get_line ()) != 0) {
 		    if (tmpfp)
-			if (! fwrite (buf, sizeof *buf, chars_read, tmpfp))
+			if (fwrite (buf, sizeof *buf, chars_read, tmpfp)
+			    < chars_read)
 			    write_fatal ();
 		    if (chars_read == 2  &&  strEQ (buf, ".\n"))
 			break;
@@ -2448,7 +2452,7 @@ do_ed_script (char const *inname, char const *outname,
     }
     if (dry_run || skip_rest_of_patch)
       return;
-    if (fwrite ("w\nq\n", sizeof (char), (size_t) 4, tmpfp) == 0
+    if (fwrite ("w\nq\n", sizeof (char), (size_t) 4, tmpfp) < (size_t) 4
 	|| fflush (tmpfp) != 0)
       write_fatal ();
 

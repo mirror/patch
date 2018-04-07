@@ -2,7 +2,7 @@
 
 /* Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
 
-   Copyright (C) 1989-1993, 1997-1999, 2002-2003, 2006, 2009-2012 Free Software
+   Copyright (C) 1989-1993, 1997-1999, 2002-2003, 2006, 2009-2018 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -1641,7 +1641,7 @@ copy_till (struct outstate *outstate, lin lastline)
 	if (size)
 	  {
 	    if ((! outstate->after_newline  &&  putc ('\n', fp) == EOF)
-		|| ! fwrite (s, sizeof *s, size, fp))
+		|| fwrite (s, sizeof *s, size, fp) < size)
 	      write_fatal ();
 	    outstate->after_newline = s[size - 1] == '\n';
 	    outstate->zero_output = false;
