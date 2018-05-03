@@ -1999,6 +1999,7 @@ cleanup (void)
   remove_if_needed (TMPINNAME, &TMPINNAME_needs_removal);
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
   remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
+  remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
   remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
   output_files (NULL);
 }

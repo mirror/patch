@@ -94,10 +94,12 @@ XTERN char const *origsuff;
 XTERN char const * TMPINNAME;
 XTERN char const * TMPOUTNAME;
 XTERN char const * TMPPATNAME;
+XTERN char const * TMPEDNAME;
 
 XTERN bool TMPINNAME_needs_removal;
 XTERN bool TMPOUTNAME_needs_removal;
 XTERN bool TMPPATNAME_needs_removal;
+XTERN bool TMPEDNAME_needs_removal;
 
 #ifdef DEBUGGING
 XTERN int debug;

@@ -2396,7 +2396,6 @@ do_ed_script (char const *inname, char const *outname,
     file_offset beginning_of_this_line;
     size_t chars_read;
     FILE *tmpfp = 0;
-    char const *tmpname;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
     int exclusive = *outname_needs_removal ? 0 : O_EXCL;
     char const **ed_argv;
@@ -2411,12 +2410,13 @@ do_ed_script (char const *inname, char const *outname,
 	   invalid commands and treats the next line as a new command, which
 	   can lead to arbitrary command execution.  */
 
-	tmpfd = make_tempfile (&tmpname, 'e', NULL, O_RDWR | O_BINARY, 0);
+	tmpfd = make_tempfile (&TMPEDNAME, 'e', NULL, O_RDWR | O_BINARY, 0);
 	if (tmpfd == -1)
-	  pfatal ("Can't create temporary file %s", quotearg (tmpname));
+	  pfatal ("Can't create temporary file %s", quotearg (TMPEDNAME));
+	TMPEDNAME_needs_removal = true;
 	tmpfp = fdopen (tmpfd, "w+b");
 	if (! tmpfp)
-	  pfatal ("Can't open stream for file %s", quotearg (tmpname));
+	  pfatal ("Can't open stream for file %s", quotearg (TMPEDNAME));
       }
 
     for (;;) {
@@ -2457,7 +2457,7 @@ do_ed_script (char const *inname, char const *outname,
       write_fatal ();
 
     if (lseek (tmpfd, 0, SEEK_SET) == -1)
-      pfatal ("Can't rewind to the beginning of file %s", quotearg (tmpname));
+      pfatal ("Can't rewind to the beginning of file %s", quotearg (TMPEDNAME));
 
     if (inerrno != ENOENT)
       {
@@ -2484,7 +2484,6 @@ do_ed_script (char const *inname, char const *outname,
       pfatal ("Failed to duplicate standard input");
 
     fclose (tmpfp);
-    safe_unlink (tmpname);
 
     if (ofp)
       {
