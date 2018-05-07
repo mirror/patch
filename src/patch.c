@@ -236,6 +236,7 @@ main (int argc, char **argv)
 	    }
 	  remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
 	}
+      remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
 
       if (! skip_rest_of_patch && ! file_type)
 	{
