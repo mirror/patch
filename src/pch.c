@@ -2122,7 +2122,7 @@ pch_swap (void)
     }
     if (p_efake >= 0) {			/* fix non-freeable ptr range */
 	if (p_efake <= i)
-	    n = p_end - i + 1;
+	    n = p_end - p_ptrn_lines;
 	else
 	    n = -i;
 	p_efake += n;
