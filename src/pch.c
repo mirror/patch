@@ -1916,8 +1916,13 @@ another_hunk (enum diff difftype, bool rev)
 	lin i;
 
 	for (i = 0; i <= p_end + 1; i++) {
-	    fprintf (stderr, "%s %c",
-		     format_linenum (numbuf0, i),
+	    fputs (format_linenum (numbuf0, i), stderr);
+	    if (p_Char[i] == '\n')
+	      {
+	        fputc('\n', stderr);
+		continue;
+	      }
+	    fprintf (stderr, " %c",
 		     p_Char[i]);
 	    if (p_Char[i] == '*')
 	      fprintf (stderr, " %s,%s\n",
@@ -1930,7 +1935,8 @@ another_hunk (enum diff difftype, bool rev)
 	    else if (p_Char[i] != '^')
 	      {
 		fputs(" |", stderr);
-		pch_write_line (i, stderr);
+		if (! pch_write_line (i, stderr))
+		  fputc('\n', stderr);
 	      }
 	    else
 	      fputc('\n', stderr);
