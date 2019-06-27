@@ -67,7 +67,8 @@ struct cached_dirfd {
 };
 
 static Hash_table *cached_dirfds = NULL;
-static size_t max_cached_fds;
+static rlim_t min_cached_fds = 8;
+static rlim_t max_cached_fds;
 LIST_HEAD (lru_list);
 
 static size_t hash_cached_dirfd (const void *entry, size_t table_size)
@@ -98,11 +99,17 @@ static void init_dirfd_cache (void)
 {
   struct rlimit nofile;
 
-  max_cached_fds = 8;
   if (getrlimit (RLIMIT_NOFILE, &nofile) == 0)
-    max_cached_fds = MAX (nofile.rlim_cur / 4, max_cached_fds);
+    {
+      if (nofile.rlim_cur == RLIM_INFINITY)
+        max_cached_fds = RLIM_INFINITY;
+      else
+	max_cached_fds = MAX (nofile.rlim_cur / 4, min_cached_fds);
+    }
+  else
+    max_cached_fds = min_cached_fds;
 
-  cached_dirfds = hash_initialize (max_cached_fds,
+  cached_dirfds = hash_initialize (min_cached_fds,
 				   NULL,
 				   hash_cached_dirfd,
 				   compare_cached_dirfds,
@@ -148,20 +155,23 @@ static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
   if (cached_dirfds == NULL)
     init_dirfd_cache ();
 
-  /* Trim off the least recently used entries */
-  while (hash_get_n_entries (cached_dirfds) >= max_cached_fds)
+  if (max_cached_fds != RLIM_INFINITY)
     {
-      struct cached_dirfd *last =
-	list_entry (lru_list.prev, struct cached_dirfd, lru_link);
-      if (&last->lru_link == &lru_list)
-	break;
-      if (last->fd == keepfd)
+      /* Trim off the least recently used entries */
+      while (hash_get_n_entries (cached_dirfds) >= max_cached_fds)
 	{
-	  last = list_entry (last->lru_link.prev, struct cached_dirfd, lru_link);
+	  struct cached_dirfd *last =
+	    list_entry (lru_list.prev, struct cached_dirfd, lru_link);
 	  if (&last->lru_link == &lru_list)
 	    break;
+	  if (last->fd == keepfd)
+	    {
+	      last = list_entry (last->lru_link.prev, struct cached_dirfd, lru_link);
+	      if (&last->lru_link == &lru_list)
+		break;
+	    }
+	  remove_cached_dirfd (last);
 	}
-      remove_cached_dirfd (last);
     }
 
   /* Only insert if the parent still exists. */
