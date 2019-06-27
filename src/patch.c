@@ -36,6 +36,10 @@
 #include <minmax.h>
 #include <safe.h>
 
+#ifdef __SANITIZE_ADDRESS__
+# define FREE_BEFORE_EXIT
+#endif
+
 /* procedures */
 
 static FILE *create_output_file (char const *, int);
@@ -1777,10 +1781,20 @@ struct file_to_delete {
 
 static gl_list_t files_to_delete;
 
+#ifdef FREE_BEFORE_EXIT
+void dispose_file_to_delete (const void *elt)
+{
+	free ((void *) elt);
+}
+#else
+#define dispose_file_to_delete NULL
+#endif
+
 static void
 init_files_to_delete (void)
 {
-  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL, NULL, true);
+  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL,
+					  dispose_file_to_delete, true);
 }
 
 static void
