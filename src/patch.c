@@ -685,7 +685,6 @@ main (int argc, char **argv)
     }
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
-    output_files (NULL);
     cleanup ();
     delete_files ();
     if (somefailed)
@@ -1991,7 +1990,6 @@ void
 fatal_exit (int sig)
 {
   cleanup ();
-
   if (sig)
     exit_with_signal (sig);
 
@@ -2011,6 +2009,12 @@ remove_if_needed (char const *name, bool *needs_removal)
 static void
 cleanup (void)
 {
+  static bool already_cleaning_up;
+
+  if (already_cleaning_up)
+    return;
+  already_cleaning_up = true;
+
   remove_if_needed (TMPINNAME, &TMPINNAME_needs_removal);
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
   remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
