@@ -238,8 +238,13 @@ plan_a (char const *filename)
     {
       if (S_ISREG (instat.st_mode))
         {
-	  int ifd = safe_open (filename, O_RDONLY|binary_transput, 0);
+	  int flags = O_RDONLY | binary_transput;
 	  size_t buffered = 0, n;
+	  int ifd;
+
+	  if (! follow_symlinks)
+	    flags |= O_NOFOLLOW;
+	  ifd = safe_open (filename, flags, 0);
 	  if (ifd < 0)
 	    pfatal ("can't open file %s", quotearg (filename));
 
@@ -340,6 +345,7 @@ plan_a (char const *filename)
 static void
 plan_b (char const *filename)
 {
+  int flags = O_RDONLY | binary_transput;
   int ifd;
   FILE *ifp;
   int c;
@@ -353,7 +359,9 @@ plan_b (char const *filename)
 
   if (instat.st_size == 0)
     filename = NULL_DEVICE;
-  if ((ifd = safe_open (filename, O_RDONLY | binary_transput, 0)) < 0
+  if (! follow_symlinks)
+    flags |= O_NOFOLLOW;
+  if ((ifd = safe_open (filename, flags, 0)) < 0
       || ! (ifp = fdopen (ifd, binary_transput ? "rb" : "r")))
     pfatal ("Can't open file %s", quotearg (filename));
   if (TMPINNAME_needs_removal)

@@ -388,7 +388,7 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
 
 	  try_makedirs_errno = ENOENT;
 	  safe_unlink (bakname);
-	  while ((fd = safe_open (bakname, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0)
+	  while ((fd = safe_open (bakname, O_CREAT | O_EXCL | O_WRONLY | O_TRUNC, 0666)) < 0)
 	    {
 	      if (errno != try_makedirs_errno)
 		pfatal ("Can't create file %s", quotearg (bakname));
@@ -579,10 +579,13 @@ create_file (char const *file, int open_flags, mode_t mode,
 static void
 copy_to_fd (const char *from, int tofd)
 {
+  int from_flags = O_RDONLY | O_BINARY;
   int fromfd;
   ssize_t i;
 
-  if ((fromfd = safe_open (from, O_RDONLY | O_BINARY, 0)) < 0)
+  if (! follow_symlinks)
+    from_flags |= O_NOFOLLOW;
+  if ((fromfd = safe_open (from, from_flags, 0)) < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
   while ((i = read (fromfd, buf, bufsize)) != 0)
     {
@@ -625,6 +628,8 @@ copy_file (char const *from, char const *to, struct stat *tost,
   else
     {
       assert (S_ISREG (mode));
+      if (! follow_symlinks)
+	to_flags |= O_NOFOLLOW;
       tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
 			  to_dir_known_to_exist);
       copy_to_fd (from, tofd);
@@ -640,9 +645,12 @@ copy_file (char const *from, char const *to, struct stat *tost,
 void
 append_to_file (char const *from, char const *to)
 {
+  int to_flags = O_WRONLY | O_APPEND | O_BINARY;
   int tofd;
 
-  if ((tofd = safe_open (to, O_WRONLY | O_BINARY | O_APPEND, 0)) < 0)
+  if (! follow_symlinks)
+    to_flags |= O_NOFOLLOW;
+  if ((tofd = safe_open (to, to_flags, 0)) < 0)
     pfatal ("Can't reopen file %s", quotearg (to));
   copy_to_fd (from, tofd);
   if (close (tofd) != 0)
