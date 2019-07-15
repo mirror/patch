@@ -1328,6 +1328,7 @@ another_hunk (enum diff difftype, bool rev)
 		  ptrn_prefix_context = context;
 		ptrn_suffix_context = context;
 		if (repl_beginning
+		    || p_end <= 0
 		    || (p_end
 			!= p_ptrn_lines + 1 + (p_Char[p_end - 1] == '\n')))
 		  {
