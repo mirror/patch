@@ -369,6 +369,13 @@ main (int argc, char **argv)
 	    /* outstate.ofp now owns the file descriptor */
 	    outfd = -1;
 	  }
+	else
+	  {
+	    /* When writing to a single output file (-o FILE), always pretend
+	       that the output file ends in a newline.  Otherwise, when another
+	       file is written to the same output file, apply_hunk will fail.  */
+	    outstate.after_newline = true;
+	  }
 
 	/* find out where all the lines are */
 	if (!skip_rest_of_patch) {
