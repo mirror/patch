@@ -29,7 +29,7 @@
 #include <xalloc.h>
 #include <xmemdup0.h>
 
-#include <getdate.h>
+#include <parse-datetime.h>
 #include "ignore-value.h"
 #include "error.h"
 
@@ -374,7 +374,7 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
 	}
       else
 	{
-	  bakname = find_backup_file_name (to, backup_type);
+	  bakname = find_backup_file_name (AT_FDCWD, to, backup_type);
 	  if (!bakname)
 	    xalloc_die ();
 	}
@@ -1540,7 +1540,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 	    }
 
 	  if (set_time | set_utc)
-	    get_date (&stamp, t, &initial_time);
+	    parse_datetime (&stamp, t, &initial_time);
 	  else
 	    {
 	      /* The head says the file is nonexistent if the
@@ -1550,7 +1550,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 		 offset < +26:00.  Match any time in that range.  */
 	      const struct timespec lower = { -25L * 60 * 60 },
 				    upper = {  26L * 60 * 60 };
-	      if (get_date (&stamp, t, &initial_time)
+	      if (parse_datetime (&stamp, t, &initial_time)
 		  && timespec_cmp (stamp, lower) > 0
 		  && timespec_cmp (stamp, upper) < 0) {
 		      stamp.tv_sec = 0;

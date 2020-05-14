@@ -2,11 +2,9 @@
 /alloca.m4
 /argmatch.m4
 /backupfile.m4
-/bison.m4
 /clock_time.m4
 /closedir.m4
 /codeset.m4
-/configmake.m4
 /d-ino.m4
 /dirent-safer.m4
 /dirent_h.m4
@@ -28,7 +26,6 @@
 /getopt.m4
 /gettime.m4
 /gettimeofday.m4
-/glibc21.m4
 /gnulib-cache.m4
 /gnulib-common.m4
 /gnulib-comp.m4
@@ -42,7 +39,6 @@
 /locale-fr.m4
 /locale-ja.m4
 /locale-zh.m4
-/longlong.m4
 /lstat.m4
 /malloc.m4
 /malloca.m4
@@ -60,7 +56,6 @@
 /multiarch.m4
 /nocrash.m4
 /opendir.m4
-/parse-datetime.m4
 /pathmax.m4
 /printf.m4
 /quote.m4
@@ -115,10 +110,8 @@
 alloca.m4
 argmatch.m4
 backupfile.m4
-bison.m4
 clock_time.m4
 codeset.m4
-configmake.m4
 d-ino.m4
 dirent-safer.m4
 dirent_h.m4
@@ -145,7 +138,6 @@ getdtablesize.m4
 getopt.m4
 gettime.m4
 gettimeofday.m4
-glibc21.m4
 gnulib-cache.m4
 gnulib-common.m4
 gnulib-comp.m4
@@ -158,7 +150,6 @@ localcharset.m4
 locale-fr.m4
 locale-ja.m4
 locale-zh.m4
-longlong.m4
 lseek.m4
 lstat.m4
 malloc.m4
@@ -173,7 +164,6 @@ mktime.m4
 mmap-anon.m4
 multiarch.m4
 onceonly.m4
-parse-datetime.m4
 pathmax.m4
 printf.m4
 quote.m4
@@ -260,10 +250,8 @@ xvasprintf.m4
 /faccessat.m4
 /getgroups.m4
 /group-member.m4
-/hard-locale.m4
 /flexmember.m4
 /getprogname.m4
-/inttypes-pri.m4
 /inttypes.m4
 /limits-h.m4
 /localtime-buffer.m4
@@ -288,3 +276,19 @@ xvasprintf.m4
 /sys_wait_h.m4
 /wait-process.m4
 /waitpid.m4
+/__inline.m4
+/dup.m4
+/fcntl-safer.m4
+/fdopendir.m4
+/lchmod.m4
+/locale_h.m4
+/open-slash.m4
+/setlocale_null.m4
+/sh-filename.m4
+/std-gnu11.m4
+/threadlib.m4
+/visibility.m4
+/zzgnulib.m4
+/bison.m4
+/inttypes-pri.m4
+/parse-datetime.m4

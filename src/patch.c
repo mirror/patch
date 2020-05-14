@@ -645,7 +645,7 @@ main (int argc, char **argv)
 		    const char *s = simple_backup_suffix;
 		    size_t len;
 		    simple_backup_suffix = ".rej";
-		    rej = find_backup_file_name (outname, simple_backups);
+		    rej = find_backup_file_name (AT_FDCWD, outname, simple_backups);
 		    len = strlen (rej);
 		    if (rej[len - 1] == '~')
 		      rej[len - 1] = '#';
