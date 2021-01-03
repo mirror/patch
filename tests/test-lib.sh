@@ -113,7 +113,7 @@ cleanup() {
     exit $status
 }
 
-if eval 'test -n "${BASH_LINENO[0]}" 2>/dev/null'; then
+if ( eval 'test -n "${BASH_LINENO[0]}"' 2>/dev/null ); then
     eval '
 	_start_test() {
 	    printf "[${BASH_LINENO[2]}] %s -- " "$*"
