@@ -128,8 +128,10 @@ open_patch_file (char const *filename)
 #if HAVE_SETMODE_DOS
     if (binary_transput)
       {
+#ifndef __CYGWIN__
 	if (isatty (fileno (pfp)))
 	  fatal ("cannot read binary data from tty on this platform");
+#endif
 	setmode (fileno (pfp), O_BINARY);
       }
 #endif
