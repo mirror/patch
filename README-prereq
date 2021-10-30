@@ -1,0 +1,36 @@
+This gives some notes on obtaining the tools required for development.
+These tools can be used by the 'bootstrap' and 'configure' scripts,
+as well as by 'make'.  They include:
+
+- Autoconf   <https://www.gnu.org/software/autoconf/>
+- Automake   <https://www.gnu.org/software/automake/>
+- Git        <https://git-scm.com/>
+- Gzip       <https://www.gnu.org/software/gzip/>
+- M4         <https://www.gnu.org/software/m4/>
+- Make       <https://www.gnu.org/software/make/>
+- Tar        <https://www.gnu.org/software/tar/>
+- Texinfo    <https://www.gnu.org/software/texinfo/>
+- Wget       <http://www.gnu.org/software/wget/>
+- XZ Utils   <https://tukaani.org/xz/>
+
+It is generally better to use official packages for your system.
+If a package is not officially available you can build it from source
+and install it into a directory that you can then use to build this
+package.  If some packages are available but are too old, install the
+too-old versions first as they may be needed to build newer versions.
+
+Here is an example of how to build a program from source.  This
+example is for Autoconf; a similar approach should work for the other
+developer prerequisites.  This example assumes Autoconf 2.71; it
+should be OK to use a later version of Autoconf, if available.
+
+  prefix=$HOME/prefix   # (or wherever else you choose)
+  export PATH=$prefix/bin:$PATH
+  wget https://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.71.tar.gz
+  gzip -d <autoconf-2.71.tar.gz | tar xf -
+  cd autoconf-2.71
+  ./configure --prefix=$prefix
+  make install
+
+Once the prerequisites are installed, you can build this package as
+described in README-hacking.
