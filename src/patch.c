@@ -622,9 +622,16 @@ main (int argc, char **argv)
 			output_file (NULL, NULL, NULL, inname, &instat,
 				     mode, backup);
 		    }
-		  else
-		    output_file (outname, NULL, &tmpoutst, NULL, NULL,
-				 file_type | 0, backup);
+		  else if (backup)
+		    {
+		      struct stat outstat;
+
+		      if (stat_file (outname, &outstat) != 0)
+			say ("Cannot stat file %s, skipping backup\n", outname);
+		      else
+			output_file (outname, NULL, &outstat, NULL, NULL,
+				     file_type | 0, true);
+		    }
 		}
 	    }
       }
