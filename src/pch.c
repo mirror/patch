@@ -2482,8 +2482,8 @@ do_ed_script (char const *inname, char const *outname,
     ed_argv[1] = "-";
     ed_argv[2] = outname;
     ed_argv[3] = (char  *) NULL;
-    status = execute (editor_program, editor_program, (char **)ed_argv,
-		      false, false, false, false, true, false, NULL);
+    status = execute (editor_program, editor_program, (const char * const *) ed_argv,
+                      NULL, false, false, false, false, true, false, NULL);
     if (status)
       fatal ("%s FAILED", editor_program);
     if (dup2 (stdin_dup, 0) == -1
