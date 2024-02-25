@@ -142,10 +142,10 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
 	list_entry (entry->children.next, struct cached_dirfd, children_link);
       list_del_init (&child->children_link);
       /* assert (list_empty (&child->children_link)); */
-      hash_delete (cached_dirfds, child);  /* noop when not hashed */
+      hash_remove (cached_dirfds, child);  /* noop when not hashed */
     }
   list_del (&entry->lru_link);
-  hash_delete (cached_dirfds, entry);  /* noop when not hashed */
+  hash_remove (cached_dirfds, entry);  /* noop when not hashed */
   close (entry->fd);
   free_cached_dirfd (entry);
 }
