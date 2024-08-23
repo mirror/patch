@@ -89,7 +89,7 @@ if test "$gl_gcc_warnings" = yes; then
   nw="$nw -Wunsafe-loop-optimizations"
 #  nw="$nw -Wfloat-equal"            # sort.c, seq.c
 #  nw="$nw -Wmissing-format-attribute" # copy.c
-#  nw="$nw -Winline"                 # system.h's readdir_ignoring_dot_and_dotdot
+  nw="$nw -Winline"                  # It's OK for a compiler to not inline.
   # ?? -Wstrict-overflow
 
   gl_MANYWARN_ALL_GCC([ws])
