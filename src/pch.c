@@ -328,7 +328,7 @@ fetchmode (char const *str)
    const char *s;
    mode_t mode;
 
-   while (ISSPACE ((unsigned char) *str))
+   while (isspace ((unsigned char) *str))
      str++;
 
    for (s = str, mode = 0; s < str + 6; s++)
@@ -570,14 +570,14 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  }
 	else if (strnEQ(s, "Prereq:", 7))
 	  {
-	    for (t = s + 7;  ISSPACE ((unsigned char) *t);  t++)
+	    for (t = s + 7;  isspace ((unsigned char) *t);  t++)
 	      /* do nothing */ ;
 	    revision = t;
 	    for (t = revision;  *t;  t++)
-	      if (ISSPACE ((unsigned char) *t))
+	      if (isspace ((unsigned char) *t))
 		{
 		  char const *u;
-		  for (u = t + 1;  ISSPACE ((unsigned char) *u);  u++)
+		  for (u = t + 1;  isspace ((unsigned char) *u);  u++)
 		    /* do nothing */ ;
 		  if (*u)
 		    {
@@ -615,7 +615,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		p_name[i] = 0;
 	      }
 	    if (! ((p_name[OLD] = parse_name (s + 11, strippath, &u))
-		   && ISSPACE ((unsigned char) *u)
+		   && isspace ((unsigned char) *u)
 		   && (p_name[NEW] = parse_name (u, strippath, &u))
 		   && (u = skip_spaces (u), ! *u)))
 	      for (i = OLD; i <= NEW; i++)
@@ -632,7 +632,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    if ((u = skip_hex_digits (s + 6))
 		&& u[0] == '.' && u[1] == '.'
 		&& (v = skip_hex_digits (u + 2))
-		&& (! *v || ISSPACE ((unsigned char) *v)))
+		&& (! *v || isspace ((unsigned char) *v)))
 	      {
 		get_sha1(&p_sha1[OLD], s + 6, u);
 		get_sha1(&p_sha1[NEW], u + 2, v);

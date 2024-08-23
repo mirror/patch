@@ -84,7 +84,7 @@ void set_file_attributes (char const *, enum file_attributes, char const *,
 static inline char const * _GL_ATTRIBUTE_PURE
 skip_spaces (char const *str)
 {
-  while (ISSPACE ((unsigned char) *str))
+  while (isspace ((unsigned char) *str))
     str++;
   return str;
 }

@@ -42,16 +42,6 @@
 #include <intprops.h>
 
 #include <ctype.h>
-/* CTYPE_DOMAIN (C) is nonzero if the unsigned char C can safely be given
-   as an argument to <ctype.h> macros like 'isspace'.  */
-#if STDC_HEADERS
-#define CTYPE_DOMAIN(c) 1
-#else
-#define CTYPE_DOMAIN(c) ((unsigned) (c) <= 0177)
-#endif
-#ifndef ISSPACE
-#define ISSPACE(c) (CTYPE_DOMAIN (c) && isspace (c))
-#endif
 
 #ifndef ISDIGIT
 #define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
@@ -149,10 +139,6 @@ XTERN char *revision;			/* prerequisite revision, if any */
 void fatal_exit (int) __attribute__ ((noreturn));
 
 #include <errno.h>
-#if !STDC_HEADERS && !defined errno
-extern int errno;
-#endif
-
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

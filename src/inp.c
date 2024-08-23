@@ -323,8 +323,8 @@ plan_a (char const *filename)
 
 	  for (s = buffer;  (s = (char *) memchr (s, rev0, limrev - s));  s++)
 	    if (memcmp (s, rev, revlen) == 0
-		&& (s == buffer || ISSPACE ((unsigned char) s[-1]))
-		&& (s + 1 == limrev || ISSPACE ((unsigned char) s[revlen])))
+		&& (s == buffer || isspace ((unsigned char) s[-1]))
+		&& (s + 1 == limrev || isspace ((unsigned char) s[revlen])))
 	      {
 		found_revision = true;
 		break;
@@ -402,13 +402,13 @@ plan_b (char const *filename)
 	{
 	  if (i == revlen)
 	    {
-	      found_revision = ISSPACE ((unsigned char) c);
+	      found_revision = isspace ((unsigned char) c);
 	      i = (size_t) -1;
 	    }
 	  else if (i != (size_t) -1)
 	    i = rev[i]==c ? i + 1 : (size_t) -1;
 
-	  if (i == (size_t) -1  &&  ISSPACE ((unsigned char) c))
+	  if (i == (size_t) -1  &&  isspace ((unsigned char) c))
 	    i = 0;
 	}
     }
