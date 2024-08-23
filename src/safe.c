@@ -36,7 +36,6 @@
 #include <xalloc.h>
 #include <minmax.h>
 
-#define XTERN extern
 #include "common.h"
 
 #include "util.h"
@@ -55,7 +54,7 @@ bool unsafe;
 /* Path lookup results are cached in a hash table + LRU list. When the
    cache is full, the oldest entries are removed.  */
 
-unsigned int dirfd_cache_misses;
+static unsigned int dirfd_cache_misses;
 
 struct cached_dirfd {
   struct list_head lru_link;
@@ -69,7 +68,7 @@ struct cached_dirfd {
 static Hash_table *cached_dirfds = NULL;
 static rlim_t min_cached_fds = 8;
 static rlim_t max_cached_fds;
-LIST_HEAD (lru_list);
+static LIST_HEAD (lru_list);
 
 static size_t hash_cached_dirfd (const void *entry, size_t table_size)
 {
@@ -291,8 +290,8 @@ static void pop_symlink (struct symlink **stack)
   free (top);
 }
 
-int cwd_stat_errno = -1;
-struct stat cwd_stat;
+static int cwd_stat_errno = -1;
+static struct stat cwd_stat;
 
 static struct symlink *read_symlink(int dirfd, const char *name)
 {

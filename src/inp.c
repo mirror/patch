@@ -17,13 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define XTERN extern
 #include <common.h>
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
-#undef XTERN
-#define XTERN
 #include <inp.h>
 #include <safe.h>
 
@@ -42,6 +39,7 @@ static lin tiline[2] = {-1, -1};	/* 1st line in each buffer */
 static lin lines_per_buf;		/* how many lines per buffer */
 static size_t tireclen;			/* length of records in tmp file */
 static size_t last_line_size;		/* size of last input line */
+lin input_lines;			/* how long is input file in lines */
 
 static bool plan_a (char const *);	/* yield false if memory runs out */
 static void plan_b (char const *);

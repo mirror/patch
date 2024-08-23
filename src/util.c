@@ -18,13 +18,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define XTERN extern
 #include <common.h>
 #include <dirname.h>
 #include <hash.h>
 #include <quotearg.h>
-#undef XTERN
-#define XTERN
 #include <util.h>
 #include <xalloc.h>
 #include <xmemdup0.h>
@@ -49,10 +46,11 @@
 # include <attr/error_context.h>
 # include <attr/libattr.h>
 # include <stdarg.h>
-# include "verror.h"
 #endif
 
 #include <safe.h>
+
+enum backup_type backup_type;
 
 static void makedirs (char const *);
 

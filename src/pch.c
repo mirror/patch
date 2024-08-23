@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define XTERN extern
 #include <common.h>
 #include <dirname.h>
 #include <inp.h>
@@ -26,8 +25,6 @@
 #include <util.h>
 #include <xalloc.h>
 #include <xmemdup0.h>
-#undef XTERN
-#define XTERN
 #include <pch.h>
 #if HAVE_SETMODE_DOS
 # include <io.h>
@@ -48,8 +45,9 @@ static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 static int p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
 static char const *invalid_names[2];
-bool p_copy[2];				/* Does this patch create a copy? */
-bool p_rename[2];			/* Does this patch rename a file? */
+static bool p_copy[2];			/* Does this patch create a copy? */
+static bool p_rename[2];		/* Does this patch rename a file? */
+struct timespec p_timestamp[2];		/* timestamps in patch headers */
 static char *p_timestr[2];		/* timestamps as strings */
 static char *p_sha1[2];			/* SHA1 checksums */
 static mode_t p_mode[2];		/* file modes */

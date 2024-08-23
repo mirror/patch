@@ -1,6 +1,5 @@
 /* Print the version number.  */
 
-#define XTERN extern
 #include <common.h>
 #include <version.h>
 

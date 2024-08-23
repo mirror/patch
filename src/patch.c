@@ -18,10 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define XTERN
 #include <common.h>
-#undef XTERN
-#define XTERN extern
 #include <argmatch.h>
 #include <exitfail.h>
 #include <getopt.h>
@@ -39,6 +36,55 @@
 #ifdef __SANITIZE_ADDRESS__
 # define FREE_BEFORE_EXIT
 #endif
+
+/* See common.h for the declarations of these variables.  */
+
+bool TMPEDNAME_needs_removal;
+bool TMPINNAME_needs_removal;
+bool TMPOUTNAME_needs_removal;
+bool TMPPATNAME_needs_removal;
+bool batch;
+bool canonicalize_ws;
+bool dry_run;
+bool follow_symlinks;
+bool force;
+bool no_strip_trailing_cr;
+bool noreverse;
+bool posixly_correct;
+bool reverse;
+bool set_time;
+bool set_utc;
+bool skip_rest_of_patch;
+bool using_plan_a;
+char *buf;
+char *inname;
+char *outfile;
+char *revision;
+char const *TMPEDNAME;
+char const *TMPINNAME;
+char const *TMPOUTNAME;
+char const *TMPPATNAME;
+char const *origbase;
+char const *origprae;
+char const *origsuff;
+enum conflict_style conflict_style;
+enum diff diff_type;
+enum verbosity verbosity;
+#ifndef binary_transput
+int binary_transput;
+#endif
+#ifndef debug
+int debug;
+#endif
+int inerrno;
+int invc;
+int patch_get;
+int strippath;
+lin in_offset;
+lin last_frozen_line;
+lin out_offset;
+size_t bufsize;
+struct stat instat;
 
 /* procedures */
 

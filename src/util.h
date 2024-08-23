@@ -28,7 +28,7 @@
 
 enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
-XTERN enum backup_type backup_type;
+extern enum backup_type backup_type;
 
 bool ok_to_reverse (char const *, ...) __attribute__ ((format (printf, 1, 2)));
 void ask (char const *, ...) __attribute__ ((format (printf, 1, 2)));

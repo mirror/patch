@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-XTERN lin input_lines;		/* how long is input file in lines */
+extern lin input_lines;		/* how long is input file in lines */
 
 char const *ifetch (lin, bool, size_t *);
 bool get_input_file (char const *, char const *, mode_t);

@@ -48,7 +48,7 @@ void open_patch_file (char const *);
 void re_patch (void);
 void pch_normalize (enum diff);
 
-XTERN struct timespec p_timestamp[2];  /* timestamps in patch headers */
+extern struct timespec p_timestamp[2];  /* timestamps in patch headers */
 
 /* Return timestamp of patch header for file WHICH (false = old, true = new),
    or a timestamp with tv_sec == -1 if there was no timestamp or an error in

@@ -64,50 +64,50 @@ typedef off_t lin;			/* must be signed */
 
 /* globals */
 
-XTERN char *buf;			/* general purpose buffer */
-XTERN size_t bufsize;			/* allocated size of buf */
+extern char *buf;			/* general purpose buffer */
+extern size_t bufsize;			/* allocated size of buf */
 
-XTERN bool using_plan_a;		/* try to keep everything in memory */
+extern bool using_plan_a;		/* try to keep everything in memory */
 
-XTERN char *inname;
-XTERN char *outfile;
-XTERN int inerrno;
-XTERN int invc;
-XTERN struct stat instat;
-XTERN bool dry_run;
-XTERN bool posixly_correct;
+extern char *inname;
+extern char *outfile;
+extern int inerrno;
+extern int invc;
+extern struct stat instat;
+extern bool dry_run;
+extern bool posixly_correct;
 
-XTERN char const *origprae;
-XTERN char const *origbase;
-XTERN char const *origsuff;
+extern char const *origprae;
+extern char const *origbase;
+extern char const *origsuff;
 
-XTERN char const * TMPINNAME;
-XTERN char const * TMPOUTNAME;
-XTERN char const * TMPPATNAME;
-XTERN char const * TMPEDNAME;
+extern char const * TMPINNAME;
+extern char const * TMPOUTNAME;
+extern char const * TMPPATNAME;
+extern char const * TMPEDNAME;
 
-XTERN bool TMPINNAME_needs_removal;
-XTERN bool TMPOUTNAME_needs_removal;
-XTERN bool TMPPATNAME_needs_removal;
-XTERN bool TMPEDNAME_needs_removal;
+extern bool TMPINNAME_needs_removal;
+extern bool TMPOUTNAME_needs_removal;
+extern bool TMPPATNAME_needs_removal;
+extern bool TMPEDNAME_needs_removal;
 
-#ifdef DEBUGGING
-XTERN int debug;
+#if DEBUGGING
+extern int debug;
 #else
 # define debug 0
 #endif
-XTERN bool force;
-XTERN bool batch;
-XTERN bool noreverse;
-XTERN bool reverse;
-XTERN enum { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
-XTERN bool skip_rest_of_patch;
-XTERN int strippath;
-XTERN bool canonicalize_ws;
-XTERN int patch_get;
-XTERN bool set_time;
-XTERN bool set_utc;
-XTERN bool follow_symlinks;
+extern bool force;
+extern bool batch;
+extern bool noreverse;
+extern bool reverse;
+extern enum verbosity { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
+extern bool skip_rest_of_patch;
+extern int strippath;
+extern bool canonicalize_ws;
+extern int patch_get;
+extern bool set_time;
+extern bool set_utc;
+extern bool follow_symlinks;
 
 enum diff
   {
@@ -120,9 +120,9 @@ enum diff
     GIT_BINARY_DIFF
   };
 
-XTERN enum diff diff_type;
+extern enum diff diff_type;
 
-XTERN char *revision;			/* prerequisite revision, if any */
+extern char *revision;			/* prerequisite revision, if any */
 
 #ifndef __attribute__
 /* The __attribute__ feature is available in gcc versions 2.5 and later.
@@ -164,13 +164,13 @@ void fatal_exit (int) __attribute__ ((noreturn));
 #include <fcntl.h>
 
 #ifdef HAVE_SETMODE_DOS
-  XTERN int binary_transput;	/* O_BINARY if binary i/o is desired */
+  extern int binary_transput;	/* O_BINARY if binary i/o is desired */
 #else
 # define binary_transput 0
 #endif
 
 /* Disable the CR stripping heuristic?  */
-XTERN bool no_strip_trailing_cr;
+extern bool no_strip_trailing_cr;
 
 #ifndef NULL_DEVICE
 #define NULL_DEVICE "/dev/null"
@@ -189,18 +189,18 @@ struct outstate
 };
 
 /* offset in the input and output at which the previous hunk matched */
-XTERN lin in_offset;
-XTERN lin out_offset;
+extern lin in_offset;
+extern lin out_offset;
 
 /* how many input lines have been irretractably output */
-XTERN lin last_frozen_line;
+extern lin last_frozen_line;
 
 bool copy_till (struct outstate *, lin);
 bool similar (char const *, size_t, char const *, size_t) _GL_ATTRIBUTE_PURE;
 
 #ifdef ENABLE_MERGE
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
-XTERN enum conflict_style conflict_style;
+extern enum conflict_style conflict_style;
 
 bool merge_hunk (int hunk, struct outstate *, lin where, bool *);
 #else
