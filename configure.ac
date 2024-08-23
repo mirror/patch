@@ -40,7 +40,6 @@ AC_CONFIG_HEADERS([config.h:config.hin])
 
 AC_PROG_CC
 gl_EARLY
-gl_USE_SYSTEM_EXTENSIONS
 gl_INIT
 AM_PROG_AR
 
