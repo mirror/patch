@@ -18,7 +18,7 @@
 # USA.
 
 AC_DEFUN([AC_FUNC_SETMODE_DOS],
-  [AC_CHECK_HEADERS([fcntl.h unistd.h])
+  [AC_CHECK_HEADERS_ONCE([fcntl.h unistd.h])
    AC_CACHE_CHECK([for DOS-style setmode],
      [ac_cv_func_setmode_dos],
      [AC_LINK_IFELSE([AC_LANG_PROGRAM(

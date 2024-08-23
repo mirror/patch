@@ -1,5 +1,5 @@
 # xattr.m4 - check for Extended Attributes (Linux)
-# serial 3
+# serial 4
 
 # Copyright (C) 2003, 2008-2012 Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
