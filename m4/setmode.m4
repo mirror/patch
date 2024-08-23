@@ -21,15 +21,15 @@ AC_DEFUN([AC_FUNC_SETMODE_DOS],
   [AC_CHECK_HEADERS([fcntl.h unistd.h])
    AC_CACHE_CHECK([for DOS-style setmode],
      [ac_cv_func_setmode_dos],
-     [AC_TRY_LINK(
-	[#include <io.h>
+     [AC_LINK_IFELSE([AC_LANG_PROGRAM(
+	[[#include <io.h>
 	 #if HAVE_FCNTL_H
 	 # include <fcntl.h>
 	 #endif
 	 #if HAVE_UNISTD_H
 	 # include <unistd.h>
-	 #endif],
-	[int ret = setmode && setmode (1, O_BINARY);],
+	 #endif]],
+	[int ret = setmode && setmode (1, O_BINARY);])],
 	[ac_cv_func_setmode_dos=yes],
 	[ac_cv_func_setmode_dos=no])])
    if test $ac_cv_func_setmode_dos = yes; then

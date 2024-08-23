@@ -12,7 +12,7 @@
 AC_DEFUN([gl_FUNC_XATTR],
 [
   AC_ARG_ENABLE([xattr],
-        AC_HELP_STRING([--disable-xattr],
+        AS_HELP_STRING([--disable-xattr],
                        [do not support extended attributes]),
         [use_xattr=$enableval], [use_xattr=yes])
 
