@@ -390,6 +390,14 @@ skip_hex_digits (char const *str)
   return s == str ? NULL : s;
 }
 
+static char const * _GL_ATTRIBUTE_PURE
+skip_spaces (char const *str)
+{
+  while (isspace ((unsigned char) *str))
+    str++;
+  return str;
+}
+
 static bool
 name_is_valid (char const *name)
 {

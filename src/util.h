@@ -81,12 +81,4 @@ enum file_attributes {
 void set_file_attributes (char const *, enum file_attributes, char const *,
 			  const struct stat *, mode_t, struct timespec *);
 
-static inline char const * _GL_ATTRIBUTE_PURE
-skip_spaces (char const *str)
-{
-  while (isspace ((unsigned char) *str))
-    str++;
-  return str;
-}
-
 int make_tempfile(char const **, char, char const *, int, mode_t);
