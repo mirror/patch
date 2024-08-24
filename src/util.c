@@ -1713,7 +1713,7 @@ bool
 cwd_is_root (char const *name)
 {
   unsigned int prefix_len = FILE_SYSTEM_PREFIX_LEN (name);
-  char root[prefix_len + 2];
+  char root[4];
   struct stat st;
   dev_t root_dev;
   ino_t root_ino;
