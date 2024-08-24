@@ -1039,7 +1039,7 @@
 	* tests/asymmetric-hunks: New test case.
 	* Makefile.in (TESTS): Add test case.
 
-	* util.c (move_file): Create backup files of nonexisting files with
+	* util.c (move_file): Create backup files of nonexistent files with
 	the default mode instead of mode 0: files with mode 0 cause too many
 	problems with applications which do not expect unreadable files.
 	* tests/create-delete: Test for this.

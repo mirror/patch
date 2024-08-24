@@ -52,7 +52,7 @@ EOF
 # Some non-GNU versions of date can't show a file's timestamp
 timestamp2_touch=`echo "$timestamp2" | sed -e "$sed_expr"`
 TZ=UTC touch -t $timestamp2_touch f.compare
-ncheck 'test ! \( f -ot f.compare -o f -nt f.compare \) || echo "timstamp differs"'
+ncheck 'test ! \( f -ot f.compare -o f -nt f.compare \) || echo "timestamp differs"'
 
 # POSIX allows a byte like '+' or '.' in position 11 to indicate the
 # presence of extended permissions like ACLs.
@@ -118,4 +118,4 @@ check 'patch -p1 --backup --set-utc < f.diff' <<EOF
 patching file f
 EOF
 
-ncheck 'test ! \( f -ot f.compare -o f -nt f.compare \) || echo "timstamp differs"'
+ncheck 'test ! \( f -ot f.compare -o f -nt f.compare \) || echo "timestamp differs"'

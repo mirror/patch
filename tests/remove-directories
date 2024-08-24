@@ -11,7 +11,7 @@ use_local_patch
 use_tmpdir
 
 # ==============================================================
-# Remove empty parent diectories when removing a file
+# Remove empty parent directories when removing a file.
 
 mkdir dir
 echo foobar > dir/file

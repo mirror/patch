@@ -367,7 +367,7 @@ sha1_says_nonexistent(char const *sha1)
   char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
   char const *s;
 
-  /* Nonexisting files have an all-zero checksum.  */
+  /* Nonexistent files have an all-zero checksum.  */
   for (s = sha1; *s; s++)
     if (*s != '0')
       break;
@@ -2278,7 +2278,7 @@ pch_line_len (lin line)
 
 /* Return the control character (+, -, *, !, etc) for a patch line.  A '\n'
    indicates an empty line in a hunk.  (The empty line is not part of the
-   old or new context.  For some reson, the context format allows that.)  */
+   old or new context.  For some reason, the context format allows that.)  */
 
 char
 pch_char (lin line)

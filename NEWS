@@ -1,6 +1,6 @@
 Changes in version 2.7.6:
 
-* Files specififed on the command line are no longer verified to be inside the
+* Files specified on the command line are no longer verified to be inside the
   current working directory, so commands like "patch -i foo.diff ../foo" will
   work again.
 * Various fixes.
@@ -109,7 +109,7 @@ Changes in version 2.6:
   line endings in patches.  This allows to preserve CRs even in mangled
   patches, or in patches generated on non-POSIX systems and without the
   --binary option.
-* Backup files for nonexisting files are now created with default
+* Backup files for nonexistent files are now created with default
   permissions rather than with mode 0: backup files with mode 0 were
   causing problems with applications which do not expect unreadable
   files.
