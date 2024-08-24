@@ -585,11 +585,11 @@ copy_to_fd (const char *from, int tofd)
     from_flags |= O_NOFOLLOW;
   if ((fromfd = safe_open (from, from_flags, 0)) < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
-  while ((i = read (fromfd, buf, bufsize)) != 0)
+  while ((i = read (fromfd, patchbuf, patchbufsize)) != 0)
     {
       if (i == (ssize_t) -1)
 	read_fatal ();
-      if (full_write (tofd, buf, i) != i)
+      if (full_write (tofd, patchbuf, i) != i)
 	write_fatal ();
     }
   if (close (fromfd) != 0)
@@ -830,7 +830,7 @@ version_get (char const *filename, char const *cs, bool exists, bool readonly,
     {
       ask ("Get file %s from %s%s? [y] ",
 	   quotearg (filename), cs, readonly ? "" : " with lock");
-      if (*buf == 'n')
+      if (*patchbuf == 'n')
 	return 0;
     }
 
@@ -1015,19 +1015,20 @@ ask (char const *format, ...)
     {
       /* No terminal at all -- default it.  */
       printf ("\n");
-      buf[0] = '\n';
-      buf[1] = '\0';
+      patchbuf[0] = '\n';
+      patchbuf[1] = '\0';
     }
   else
     {
       size_t s = 0;
-      while ((r = read (ttyfd, buf + s, bufsize - 1 - s)) == bufsize - 1 - s
-	     && buf[bufsize - 2] != '\n')
+      while (((r = read (ttyfd, patchbuf + s, patchbufsize - 1 - s))
+	      == patchbufsize - 1 - s)
+	     && patchbuf[patchbufsize - 2] != '\n')
 	{
-	  s = bufsize - 1;
-	  bufsize *= 2;
-	  buf = realloc (buf, bufsize);
-	  if (!buf)
+	  s = patchbufsize - 1;
+	  patchbufsize *= 2;
+	  patchbuf = realloc (patchbuf, patchbufsize);
+	  if (!patchbuf)
 	    xalloc_die ();
 	}
       if (r == 0)
@@ -1039,7 +1040,7 @@ ask (char const *format, ...)
 	  ttyfd = -1;
 	  r = 0;
 	}
-      buf[s + r] = '\0';
+      patchbuf[s + r] = '\0';
     }
 }
 
@@ -1050,7 +1051,7 @@ ok_to_reverse (char const *format, ...)
 {
   bool r = false;
 
-  if (noreverse || ! (force && verbosity == SILENT))
+  if (noreverse_flag || ! (force && verbosity == SILENT))
     {
       va_list args;
       va_start (args, format);
@@ -1058,7 +1059,7 @@ ok_to_reverse (char const *format, ...)
       va_end (args);
     }
 
-  if (noreverse)
+  if (noreverse_flag)
     {
       say ("  Skipping patch.\n");
       skip_rest_of_patch = true;
@@ -1070,17 +1071,17 @@ ok_to_reverse (char const *format, ...)
     }
   else if (batch)
     {
-      say (reverse ? "  Ignoring -R.\n" : "  Assuming -R.\n");
+      say (reverse_flag ? "  Ignoring -R.\n" : "  Assuming -R.\n");
       r = true;
     }
   else
     {
-      ask (reverse ? "  Ignore -R? [n] " : "  Assume -R? [n] ");
-      r = *buf == 'y';
+      ask (reverse_flag ? "  Ignore -R? [n] " : "  Assume -R? [n] ");
+      r = *patchbuf == 'y';
       if (! r)
 	{
 	  ask ("Apply anyway? [n] ");
-	  if (*buf != 'y')
+	  if (*patchbuf != 'y')
 	    {
 	      if (verbosity != SILENT)
 		say ("Skipping patch.\n");

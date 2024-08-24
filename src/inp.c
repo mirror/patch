@@ -116,7 +116,7 @@ report_revision (bool found_revision)
     {
       ask ("This file doesn't appear to be the %s version -- patch anyway? [n] ",
 	   rev);
-      if (*buf != 'y')
+      if (*patchbuf != 'y')
 	fatal ("aborted");
     }
 }

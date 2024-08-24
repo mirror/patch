@@ -63,8 +63,8 @@ typedef off_t lin;			/* must be signed */
 
 /* globals */
 
-extern char *buf;			/* general purpose buffer */
-extern size_t bufsize;			/* allocated size of buf */
+extern char *patchbuf;			/* general purpose buffer */
+extern size_t patchbufsize;		/* allocated size of buf */
 
 extern bool using_plan_a;		/* try to keep everything in memory */
 
@@ -97,8 +97,8 @@ extern int debug;
 #endif
 extern bool force;
 extern bool batch;
-extern bool noreverse;
-extern bool reverse;
+extern bool noreverse_flag;
+extern bool reverse_flag;
 extern enum verbosity { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 extern bool skip_rest_of_patch;
 extern int strippath;

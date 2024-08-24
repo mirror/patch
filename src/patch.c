@@ -49,16 +49,16 @@ bool dry_run;
 bool follow_symlinks;
 bool force;
 bool no_strip_trailing_cr;
-bool noreverse;
+bool noreverse_flag;
 bool posixly_correct;
-bool reverse;
+bool reverse_flag;
 bool set_time;
 bool set_utc;
 bool skip_rest_of_patch;
 bool using_plan_a;
-char *buf;
 char *inname;
 char *outfile;
+char *patchbuf;
 char *revision;
 char const *TMPEDNAME;
 char const *TMPINNAME;
@@ -83,7 +83,7 @@ int strippath;
 lin in_offset;
 lin last_frozen_line;
 lin out_offset;
-size_t bufsize;
+size_t patchbufsize;
 struct stat instat;
 
 /* procedures */
@@ -177,8 +177,8 @@ main (int argc, char **argv)
 
     setbuf(stderr, serrbuf);
 
-    bufsize = 8 * 1024;
-    buf = xmalloc (bufsize);
+    patchbufsize = 8 * 1024;
+    patchbuf = xmalloc (patchbufsize);
 
     strippath = -1;
 
@@ -292,8 +292,8 @@ main (int argc, char **argv)
 	{
 	  say ("File %s: can't change file type from 0%o to 0%o.\n",
 	       quotearg (inname),
-	       (unsigned int) (pch_mode (reverse) & S_IFMT),
-	       (unsigned int) (pch_mode (! reverse) & S_IFMT));
+	       (unsigned int) (pch_mode (reverse_flag) & S_IFMT),
+	       (unsigned int) (pch_mode (! reverse_flag) & S_IFMT));
 	  skip_rest_of_patch = true;
 	  somefailed = true;
 	}
@@ -303,7 +303,7 @@ main (int argc, char **argv)
 	  if (outfile)
 	    outname = outfile;
 	  else if (pch_copy () || pch_rename ())
-	    outname = pch_name (! reverse);
+	    outname = pch_name (! reverse_flag);
 	  else
 	    outname = inname;
 	}
@@ -451,7 +451,7 @@ main (int argc, char **argv)
 	/* might misfire and we can't catch it easily */
 
 	/* apply each hunk of patch */
-	while (0 < (got_hunk = another_hunk (diff_type, reverse)))
+	while (0 < (got_hunk = another_hunk (diff_type, reverse_flag)))
 	  {
 	    lin where = 0; /* Pacify 'gcc -Wall'.  */
 	    lin newwhere;
@@ -479,7 +479,7 @@ main (int argc, char **argv)
 		    if (! where || fuzz || in_offset)
 		      mismatch = true;
 		    if (hunk == 1 && ! where && ! (force | apply_anyway)
-			&& reverse == reverse_flag_specified) {
+			&& reverse_flag == reverse_flag_specified) {
 						/* dwim for reversed patch? */
 			if (!pch_swap()) {
 			    say (
@@ -491,10 +491,10 @@ main (int argc, char **argv)
 			if (where
 			    && (ok_to_reverse
 				("%s patch detected!",
-				 (reverse
+				 (reverse_flag
 				  ? "Unreversed"
 				  : "Reversed (or previously applied)"))))
-			  reverse = ! reverse;
+			  reverse_flag = ! reverse_flag;
 			else
 			  {
 			    /* Put it back to normal.  */
@@ -526,13 +526,13 @@ main (int argc, char **argv)
 		|| (merge && ! merge_hunk (hunk, &outstate, where,
 					   &somefailed))
 		|| (! merge
-		    && ((where == 1 && pch_says_nonexistent (reverse) == 2
+		    && ((where == 1 && pch_says_nonexistent (reverse_flag) == 2
 			 && instat.st_size)
 			|| ! where
 			|| ! apply_hunk (&outstate, where))))
 	      {
 		if (! skip_reject_file)
-		  abort_hunk (outname, ! failed, reverse);
+		  abort_hunk (outname, ! failed, reverse_flag);
 		failed++;
 		if (verbosity == VERBOSE ||
 		    (! skip_rest_of_patch && verbosity != SILENT))
@@ -589,7 +589,7 @@ main (int argc, char **argv)
 			|| (backup_if_mismatch && (mismatch | failed));
 	  if (outstate.zero_output
 	      && (remove_empty_files
-		  || (pch_says_nonexistent (! reverse) == 2
+		  || (pch_says_nonexistent (! reverse_flag) == 2
 		      && ! posixly_correct)
 		  || S_ISLNK (file_type)))
 	    {
@@ -601,7 +601,7 @@ main (int argc, char **argv)
 	  else
 	    {
 	      if (! outstate.zero_output
-		  && pch_says_nonexistent (! reverse) == 2
+		  && pch_says_nonexistent (! reverse_flag) == 2
 		  && (remove_empty_files || ! posixly_correct)
 		  && ! (merge && somefailed))
 		{
@@ -614,8 +614,8 @@ main (int argc, char **argv)
 
 	      if (! dry_run)
 		{
-		  mode_t old_mode = pch_mode (reverse);
-		  mode_t new_mode = pch_mode (! reverse);
+		  mode_t old_mode = pch_mode (reverse_flag);
+		  mode_t new_mode = pch_mode (! reverse_flag);
 		  bool set_mode = new_mode && old_mode != new_mode;
 
 		  /* Avoid replacing files when nothing has changed.  */
@@ -623,16 +623,16 @@ main (int argc, char **argv)
 		      || pch_copy () || pch_rename ())
 		    {
 		      enum file_attributes attr = 0;
-		      struct timespec new_time = p_timestamp[! reverse];
+		      struct timespec new_time = p_timestamp[! reverse_flag];
 		      mode_t mode = file_type |
 			  ((set_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
-			  struct timespec old_time = p_timestamp[reverse];
+			  struct timespec old_time = p_timestamp[reverse_flag];
 
 			  if (! force && ! inerrno
-			      && pch_says_nonexistent (reverse) != 2
+			      && pch_says_nonexistent (reverse_flag) != 2
 			      && old_time.tv_sec != -1
 			      && timespec_cmp (old_time,
 					       get_stat_mtime (&instat)))
@@ -778,7 +778,7 @@ reinitialize_almost_everything (void)
 	revision = 0;
     }
 
-    reverse = reverse_flag_specified;
+    reverse_flag = reverse_flag_specified;
     skip_rest_of_patch = false;
 }
 
@@ -1017,7 +1017,7 @@ get_some_switches (void)
 		diff_type = NORMAL_DIFF;
 		break;
 	    case 'N':
-		noreverse = true;
+		noreverse_flag = true;
 		break;
 	    case 'o':
 		outfile = xstrdup (optarg);
@@ -1029,7 +1029,7 @@ get_some_switches (void)
 		rejname = xstrdup (optarg);
 		break;
 	    case 'R':
-		reverse = true;
+		reverse_flag = true;
 		reverse_flag_specified = true;
 		break;
 	    case 's':
@@ -1968,7 +1968,7 @@ output_file (char const *from, bool *from_needs_removal,
 
       delete_file_later (to, to_st, backup);
     }
-  else if (pch_git_diff () && pch_says_nonexistent (reverse) != 2)
+  else if (pch_git_diff () && pch_says_nonexistent (reverse_flag) != 2)
     {
       /* In git-style diffs, the "before" state of each patch refers to the initial
 	 state before modifying any files, input files can be referenced more than
