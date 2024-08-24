@@ -467,7 +467,7 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 			where, where + lines - 1);
 	  out_offset += lines - (in - firstin);
 
-	  fputs (outstate->after_newline + "\n<<<<<<<\n", fp);
+	  fputs (&"\n<<<<<<<\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  if (firstin < in)
 	    {
@@ -478,7 +478,7 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 
 	  if (conflict_style == MERGE_DIFF3)
 	    {
-	      fputs (outstate->after_newline + "\n|||||||\n", fp);
+	      fputs (&"\n|||||||\n"[outstate->after_newline], fp);
 	      outstate->after_newline = true;
 	      while (firstold < old)
 		{
@@ -487,14 +487,14 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 		}
 	    }
 
-	  fputs (outstate->after_newline + "\n=======\n", fp);
+	  fputs (&"\n=======\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  while (firstnew < new)
 	    {
 	      outstate->after_newline = pch_write_line (firstnew, fp);
 	      firstnew++;
 	    }
-	  fputs (outstate->after_newline + "\n>>>>>>>\n", fp);
+	  fputs (&"\n>>>>>>>\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  outstate->zero_output = false;
 	  if (ferror (fp))

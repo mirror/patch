@@ -553,7 +553,7 @@ main (int argc, char **argv)
 		if (in_offset)
 		  say (" (offset %s line%s)",
 		       format_linenum (numbuf, in_offset),
-		       "s" + (in_offset == 1));
+		       &"s"[in_offset == 1]);
 		say (".\n");
 	      }
 	  }
@@ -689,7 +689,7 @@ main (int argc, char **argv)
 	      write_fatal ();
 	    rejfp = NULL;
 	    somefailed = true;
-	    say ("%d out of %d hunk%s %s", failed, hunk, "s" + (hunk == 1),
+	    say ("%d out of %d hunk%s %s", failed, hunk, &"s"[hunk == 1],
 		 skip_rest_of_patch ? "ignored" : "FAILED");
 	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
 		char *rej = rejname;
