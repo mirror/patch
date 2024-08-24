@@ -711,7 +711,7 @@ main (int argc, char **argv)
 		      {
 			if (! written_to_rejname)
 			  {
-			    copy_file (TMPREJNAME, rejname, 0, 0,
+			    copy_file (TMPREJNAME, NULL, rejname, NULL, 0,
 				       S_IFREG | 0666, true);
 			    written_to_rejname = true;
 			  }

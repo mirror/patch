@@ -2482,7 +2482,7 @@ do_ed_script (char const *input_name, char const *output_name,
     if (inerrno != ENOENT)
       {
 	*outname_needs_removal = true;
-	copy_file (input_name, output_name, 0, exclusive,
+	copy_file (input_name, &instat, output_name, NULL, exclusive,
 		   instat.st_mode, true);
       }
     fflush (stdout);

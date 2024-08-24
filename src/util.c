@@ -39,13 +39,14 @@
 #endif
 
 #include <stdarg.h>
+#include <stdckdint.h>
+
 #include <full-write.h>
 #include <tempname.h>
 
 #if USE_XATTR
 # include <attr/error_context.h>
 # include <attr/libattr.h>
-# include <stdarg.h>
 #endif
 
 #include <safe.h>
@@ -317,7 +318,7 @@ static void
 create_backup_copy (char const *from, char const *to, const struct stat *st,
 		    bool to_dir_known_to_exist)
 {
-  copy_file (from, to, NULL, 0, st->st_mode, to_dir_known_to_exist);
+  copy_file (from, st, to, NULL, 0, st->st_mode, to_dir_known_to_exist);
   set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
 }
 
@@ -471,15 +472,23 @@ move_file (char const *from, bool *from_needs_removal,
 
 	  /* FROM contains the contents of the symlink we have patched; need
 	     to convert that back into a symlink. */
-	  char *buffer = xmalloc (PATH_MAX);
-	  int fd, size = 0, i;
+	  idx_t alloc;
+	  if (ckd_add (&alloc, fromst->st_size, 1))
+	    xalloc_die ();
+	  char *buffer = ximalloc (alloc);
 
-	  if ((fd = safe_open (from, O_RDONLY | O_BINARY, 0)) < 0)
+	  int fd = safe_open (from, O_RDONLY | O_BINARY, 0);
+	  if (fd < 0)
 	    pfatal ("Can't reopen file %s", quotearg (from));
-	  while ((i = read (fd, buffer + size, PATH_MAX - size)) > 0)
+
+	  ssize_t i;
+	  idx_t size = 0;
+	  while (0 < (i = read (fd, buffer + size, alloc - size)))
 	    size += i;
 	  if (i != 0 || close (fd) != 0)
 	    read_fatal ();
+	  if (size == alloc)
+	    fatal ("file %s grew", quotearg (from));
 	  buffer[size] = 0;
 
 	  if (! backup)
@@ -528,7 +537,8 @@ move_file (char const *from, bool *from_needs_removal,
 		      else if (errno != ENOENT)
 			pfatal ("Can't remove file %s", quotearg (to));
 		    }
-		  copy_file (from, to, &tost, 0, mode, to_dir_known_to_exist);
+		  copy_file (from, fromst, to, &tost, 0, mode,
+			     to_dir_known_to_exist);
 		  insert_file_id (&tost, CREATED);
 		  return;
 		}
@@ -612,7 +622,8 @@ copy_to_fd (const char *from, int tofd)
 /* Copy a file. */
 
 void
-copy_file (char const *from, char const *to, struct stat *tost,
+copy_file (char const *from, struct stat const *fromst,
+	   char const *to, struct stat *tost,
 	   int to_flags, mode_t mode, bool to_dir_known_to_exist)
 {
   int tofd;
@@ -624,11 +635,16 @@ copy_file (char const *from, char const *to, struct stat *tost,
 
   if (S_ISLNK (mode))
     {
-      char *buffer = xmalloc (PATH_MAX + 1);
-      ssize_t r;
+      idx_t alloc;
+      if (ckd_add (&alloc, fromst->st_size, 1))
+	xalloc_die ();
+      char *buffer = ximalloc (alloc);
+      ssize_t r = safe_readlink (from, buffer, alloc);
 
-      if ((r = safe_readlink (from, buffer, PATH_MAX)) < 0)
-	pfatal ("Can't read %s %s", "symbolic link", from);
+      if (r < 0)
+	pfatal ("Can't read symbolic link %s", from);
+      if (r == alloc)
+	fatal ("symbolic link %s grew", quotearg (from));
       buffer[r] = '\0';
       if (safe_symlink (buffer, to) != 0)
 	pfatal ("Can't create %s %s", "symbolic link", to);

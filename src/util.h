@@ -49,7 +49,8 @@ int create_file (char const *, int, mode_t, bool);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
 void Fseek (FILE *, file_offset, int);
-void copy_file (char const *, char const *, struct stat *, int, mode_t, bool);
+void copy_file (char const *, struct stat const *,
+		char const *, struct stat *, int, mode_t, bool);
 void append_to_file (char const *, char const *);
 void exit_with_signal (int) __attribute__ ((noreturn));
 void ignore_signals (void);
