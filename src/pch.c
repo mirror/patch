@@ -2329,12 +2329,6 @@ pch_timestr (bool which)
   return p_timestr[which];
 }
 
-char const *
-pch_sha1 (bool which)
-{
-  return p_sha1[which];
-}
-
 mode_t
 pch_mode (bool which)
 {
