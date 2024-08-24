@@ -330,7 +330,7 @@ fetchmode (char const *str)
    while (isspace ((unsigned char) *str))
      str++;
 
-   for (s = str, mode = 0; s < str + 6; s++)
+   for (s = str, mode = 0; s - str < 6; s++)
      {
        if (*s >= '0' && *s <= '7')
 	mode = (mode << 3) + (*s - '0');
