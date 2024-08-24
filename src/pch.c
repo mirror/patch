@@ -2461,7 +2461,7 @@ do_ed_script (char const *inname, char const *outname,
 	    break;
 	}
     }
-    if (dry_run || skip_rest_of_patch)
+    if (!tmpfp)
       return;
     if (fwrite ("w\nq\n", sizeof (char), (size_t) 4, tmpfp) < (size_t) 4
 	|| fflush (tmpfp) != 0)
