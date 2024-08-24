@@ -623,13 +623,13 @@ main (int argc, char **argv)
 		      || pch_copy () || pch_rename ())
 		    {
 		      enum file_attributes attr = 0;
-		      struct timespec new_time = pch_timestamp (! reverse);
+		      struct timespec new_time = p_timestamp[! reverse];
 		      mode_t mode = file_type |
 			  ((set_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
 		      if ((set_time | set_utc) && new_time.tv_sec != -1)
 			{
-			  struct timespec old_time = pch_timestamp (reverse);
+			  struct timespec old_time = p_timestamp[reverse];
 
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse) != 2

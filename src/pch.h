@@ -49,12 +49,3 @@ void re_patch (void);
 void pch_normalize (enum diff);
 
 extern struct timespec p_timestamp[2];  /* timestamps in patch headers */
-
-/* Return timestamp of patch header for file WHICH (false = old, true = new),
-   or a timestamp with tv_sec == -1 if there was no timestamp or an error in
-   the timestamp.  */
-
-static inline struct timespec pch_timestamp (bool which)
-{
-  return p_timestamp[which];
-}
