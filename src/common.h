@@ -25,7 +25,6 @@
 #include <config.h>
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <time.h>

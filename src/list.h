@@ -1,8 +1,6 @@
 #ifndef __LIST_H
 #define __LIST_H
 
-#include <stdbool.h>
-
 struct list_head {
   struct list_head *next, *prev;
 };
