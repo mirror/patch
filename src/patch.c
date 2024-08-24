@@ -1647,6 +1647,12 @@ init_output (struct outstate *outstate)
   outstate->zero_output = true;
 }
 
+/* GCC misunderstands dup2; see
+   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109839>.  */
+#if 13 <= __GNUC__
+# pragma GCC diagnostic ignored "-Wanalyzer-fd-leak"
+#endif
+
 static FILE *
 open_outfile (char const *name)
 {

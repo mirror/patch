@@ -2390,6 +2390,12 @@ get_ed_command_letter (char const *line)
   return 0;
 }
 
+/* GCC misunderstands dup2; see
+   <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109839>.  */
+#if 13 <= __GNUC__
+# pragma GCC diagnostic ignored "-Wanalyzer-fd-leak"
+#endif
+
 /* Apply an ed script by feeding ed itself. */
 
 void
