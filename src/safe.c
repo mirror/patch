@@ -39,6 +39,8 @@
 #include "common.h"
 
 #include "util.h"
+
+#define LIST_INLINE _GL_EXTERN_INLINE
 #include "list.h"
 
 #ifndef EFTYPE

@@ -12,13 +12,19 @@ struct list_head {
 #define LIST_HEAD(name) \
   struct list_head name = LIST_HEAD_INIT(name)
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
+_GL_INLINE_HEADER_BEGIN
+#ifndef LIST_INLINE
+# define LIST_INLINE _GL_INLINE
+#endif
+
+LIST_INLINE void
+INIT_LIST_HEAD (struct list_head *list)
 {
   list->next = list;
   list->prev = list;
 }
 
-static inline void
+LIST_INLINE void
 list_add (struct list_head *entry, struct list_head *head)
 {
   struct list_head *next = head->next;
@@ -27,7 +33,7 @@ list_add (struct list_head *entry, struct list_head *head)
   next->prev = head->next = entry;
 }
 
-static inline void
+LIST_INLINE void
 list_del (struct list_head *entry)
 {
   struct list_head *next = entry->next;
@@ -36,14 +42,14 @@ list_del (struct list_head *entry)
   prev->next = next;
 }
 
-static inline void
+LIST_INLINE void
 list_del_init (struct list_head *entry)
 {
-  list_del(entry);
-  INIT_LIST_HEAD(entry);
+  list_del (entry);
+  INIT_LIST_HEAD (entry);
 }
 
-static inline bool
+LIST_INLINE bool
 list_empty (const struct list_head *head)
 {
   return head->next == head;
@@ -51,11 +57,13 @@ list_empty (const struct list_head *head)
 
 /* Return PTR - OFFSET, ignoring the type of PTR and treating OFFSET
    as a byte offset.  */
-static inline void *
+LIST_INLINE void *
 list_entry (void *ptr, size_t offset)
 {
   char *p = ptr;
   return p - offset;
 }
+
+_GL_INLINE_HEADER_END
 
 #endif  /* __LIST_H */
