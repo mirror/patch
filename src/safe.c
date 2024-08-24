@@ -138,7 +138,8 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
   while (! list_empty (&entry->children))
     {
       struct cached_dirfd *child =
-	list_entry (entry->children.next, struct cached_dirfd, children_link);
+	list_entry (entry->children.next,
+		    offsetof (struct cached_dirfd, children_link));;
       list_del_init (&child->children_link);
       /* assert (list_empty (&child->children_link)); */
       hash_remove (cached_dirfds, child);  /* noop when not hashed */
@@ -160,12 +161,14 @@ static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
       while (hash_get_n_entries (cached_dirfds) >= max_cached_fds)
 	{
 	  struct cached_dirfd *last =
-	    list_entry (lru_list.prev, struct cached_dirfd, lru_link);
+	    list_entry (lru_list.prev,
+			offsetof (struct cached_dirfd, lru_link));
 	  if (&last->lru_link == &lru_list)
 	    break;
 	  if (last->fd == keepfd)
 	    {
-	      last = list_entry (last->lru_link.prev, struct cached_dirfd, lru_link);
+	      last = list_entry (last->lru_link.prev,
+				 offsetof (struct cached_dirfd, lru_link));
 	      if (&last->lru_link == &lru_list)
 		break;
 	    }

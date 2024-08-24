@@ -49,7 +49,13 @@ list_empty (const struct list_head *head)
   return head->next == head;
 }
 
-#define list_entry(ptr, type, member) \
-  (type *)( (char *)(ptr) - offsetof(type, member) )
+/* Return PTR - OFFSET, ignoring the type of PTR and treating OFFSET
+   as a byte offset.  */
+static inline void *
+list_entry (void *ptr, size_t offset)
+{
+  char *p = ptr;
+  return p - offset;
+}
 
 #endif  /* __LIST_H */
