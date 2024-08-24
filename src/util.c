@@ -174,7 +174,7 @@ contains_slash (const char *s)
 
 #if USE_XATTR
 
-static void
+static void _GL_ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
 copy_attr_error (struct error_context *ctx, char const *fmt, ...)
 {
   int err = errno;
@@ -207,15 +207,28 @@ copy_attr_check (const char *name, struct error_context *ctx)
 	return action == 0 || action == ATTR_ACTION_PERMISSIONS;
 }
 
+
 static int
 copy_attr (char const *src_path, char const *dst_path)
 {
+  /* Pacify GCC through at least GCC 14, which otherwise complains about
+     the ".error = copy_attr_error".  */
+  #if 4 < __GNUC__ + (8 <= __GNUC_MINOR__)
+  # pragma GCC diagnostic push
+  # pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
+  #endif
+
   struct error_context ctx =
   {
     .error = copy_attr_error,
     .quote = copy_attr_quote,
     .quote_free = copy_attr_free
   };
+
+  #if 4 < __GNUC__ + (8 <= __GNUC_MINOR__)
+  # pragma GCC diagnostic pop
+  #endif
+
   /* FIXME: We are copying between files we know we can safely access by
    * pathname. A safe_ version of attr_copy_file() might still be slightly
    * more efficient for deep paths. */
@@ -969,6 +982,7 @@ pfatal (char const *format, ...)
 /* Tell the user something.  */
 
 static void
+_GL_ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 1, 0))
 vsay (char const *format, va_list args)
 {
   vfprintf (stdout, format, args);
@@ -1547,10 +1561,11 @@ fetchname (char const *at, int strip_leading, char **pname,
 		 local time, not UTC, and POSIX.1 allows local
 		 time offset anywhere in the range -25:00 <
 		 offset < +26:00.  Match any time in that range.  */
-	      const struct timespec lower = { -25L * 60 * 60 },
-				    upper = {  26L * 60 * 60 };
+	      static struct timespec const lower = { .tv_sec = -25 * 60 * 60 },
+					   upper = { .tv_sec =  26 * 60 * 60 };
 	      if (parse_datetime (&stamp, t, &initial_time)
-		  && timespec_cmp (stamp, lower) > 0
+		  && ! (TYPE_SIGNED (time_t)
+			&& timespec_cmp (stamp, lower) <= 0)
 		  && timespec_cmp (stamp, upper) < 0) {
 		      stamp.tv_sec = 0;
 		      stamp.tv_nsec = 0;
