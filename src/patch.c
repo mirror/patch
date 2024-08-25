@@ -746,6 +746,7 @@ main (int argc, char **argv)
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
     cleanup ();
+    output_files (NULL);
     delete_files ();
     if (somefailed)
       exit (1);
@@ -2050,7 +2051,7 @@ output_files (struct stat const *st)
   gl_list_clear (files_to_output);
 }
 
-/* Fatal exit with cleanup. */
+/* Fatal exit with cleanup.  If SIG, this is in response to the signal SIG.  */
 
 void
 fatal_exit (int sig)
@@ -2059,6 +2060,7 @@ fatal_exit (int sig)
   if (sig)
     exit_with_signal (sig);
 
+  output_files (NULL);
   exit (2);
 }
 
@@ -2075,16 +2077,9 @@ remove_if_needed (char const *name, bool *needs_removal)
 static void
 cleanup (void)
 {
-  static bool already_cleaning_up;
-
-  if (already_cleaning_up)
-    return;
-  already_cleaning_up = true;
-
   remove_if_needed (TMPINNAME, &TMPINNAME_needs_removal);
   remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
   remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
   remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
   remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
-  output_files (NULL);
 }
