@@ -34,7 +34,9 @@
 #include <safe.h>
 
 #ifdef __SANITIZE_ADDRESS__
-# define FREE_BEFORE_EXIT
+# define FREE_BEFORE_EXIT true
+#else
+# define FREE_BEFORE_EXIT false
 #endif
 
 /* See common.h for the declarations of these variables.  */
@@ -114,7 +116,7 @@ static void output_file (char const *, bool *, const struct stat *, char const *
 static void init_files_to_delete (void);
 static void init_files_to_output (void);
 static void delete_files (void);
-static void output_files (struct stat const *);
+static void output_files (struct stat const *, bool);
 
 #ifdef ENABLE_MERGE
 static bool merge;
@@ -262,7 +264,7 @@ main (int argc, char **argv)
 	{
 	  if (have_git_diff)
 	    {
-	      output_files (NULL);
+	      output_files (NULL, false);
 	      inerrno = -1;
 	    }
 	  have_git_diff = ! have_git_diff;
@@ -331,7 +333,7 @@ main (int argc, char **argv)
 	    {
 	      if (has_queued_output (&outstat))
 		{
-		  output_files (&outstat);
+		  output_files (&outstat, false);
 		  outerrno = stat_file (outname, &outstat);
 		  inerrno = -1;
 		}
@@ -746,7 +748,7 @@ main (int argc, char **argv)
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
     cleanup ();
-    output_files (NULL);
+    output_files (NULL, true);
     delete_files ();
     if (somefailed)
       exit (1);
@@ -1847,13 +1849,14 @@ struct file_to_delete {
 
 static gl_list_t files_to_delete;
 
-#ifdef FREE_BEFORE_EXIT
-void dispose_file_to_delete (const void *elt)
+#if FREE_BEFORE_EXIT
+static void
+dispose_file_to_delete (void const *elt)
 {
-	free ((void *) elt);
+  free ((void *) elt);
 }
 #else
-#define dispose_file_to_delete NULL
+# define dispose_file_to_delete NULL
 #endif
 
 static void
@@ -2015,7 +2018,7 @@ gl_list_clear (gl_list_t list)
 }
 
 static void
-output_files (struct stat const *st)
+output_files (struct stat const *st, bool exiting)
 {
   gl_list_iterator_t iter;
   const void *elt;
@@ -2047,8 +2050,11 @@ output_files (struct stat const *st)
 	  return;
 	}
     }
-  gl_list_iterator_free (&iter);
-  gl_list_clear (files_to_output);
+  if (FREE_BEFORE_EXIT || !exiting)
+    {
+      gl_list_iterator_free (&iter);
+      gl_list_clear (files_to_output);
+    }
 }
 
 /* Fatal exit with cleanup.  If SIG, this is in response to the signal SIG.  */
@@ -2060,7 +2066,7 @@ fatal_exit (int sig)
   if (sig)
     exit_with_signal (sig);
 
-  output_files (NULL);
+  output_files (NULL, true);
   exit (2);
 }
 
