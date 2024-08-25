@@ -53,7 +53,9 @@ void copy_file (char const *, struct stat const *,
 		char const *, struct stat *, int, mode_t, bool);
 void append_to_file (char const *, char const *);
 void exit_with_signal (int) __attribute__ ((noreturn));
-void ignore_signals (void);
+void init_signals (void);
+void block_signals (void);
+void unblock_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 void xalloc_die (void) __attribute__ ((noreturn));
@@ -62,7 +64,6 @@ void move_file (char const *, bool *, struct stat const *, char const *, mode_t,
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char const *);
-void set_signals (bool);
 void write_fatal (void) __attribute__ ((noreturn));
 void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);

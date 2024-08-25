@@ -226,7 +226,7 @@ main (int argc, char **argv)
       outstate.ofp = open_outfile (outfile);
 
     /* Make sure we clean up in case of disaster.  */
-    set_signals (false);
+    init_signals ();
 
     /* When the file to patch is specified on the command line, allow that file
        to lie outside the current working tree.  Still doesn't allow to follow
@@ -584,8 +584,10 @@ main (int argc, char **argv)
 	  }
       }
 
+      if (!dry_run)
+	block_signals ();
+
       /* and put the output where desired */
-      ignore_signals ();
       if (! skip_rest_of_patch && ! outfile) {
 	  bool backup = make_backups
 			|| (backup_if_mismatch && (mismatch | failed));
@@ -743,7 +745,8 @@ main (int argc, char **argv)
 	      say ("\n");
 	}
       }
-      set_signals (true);
+      if (!dry_run)
+	unblock_signals ();
     }
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();

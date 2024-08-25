@@ -138,7 +138,7 @@ AC_TYPE_OFF_T
 gl_SIZE_MAX
 gl_FUNC_XATTR
 
-AC_CHECK_FUNCS(geteuid getuid raise sigaction sigprocmask sigsetmask)
+AC_CHECK_FUNCS_ONCE([geteuid getuid])
 AC_FUNC_SETMODE_DOS
 
 AC_PATH_PROG([ED], [ed], [ed])

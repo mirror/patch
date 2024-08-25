@@ -31,13 +31,6 @@
 #include "error.h"
 
 #include <signal.h>
-#if !defined SIGCHLD && defined SIGCLD
-#define SIGCHLD SIGCLD
-#endif
-#if ! HAVE_RAISE && ! defined raise
-# define raise(sig) kill (getpid (), sig)
-#endif
-
 #include <stdarg.h>
 #include <stdckdint.h>
 
@@ -1125,14 +1118,9 @@ ok_to_reverse (char const *format, ...)
 
 /* How to handle certain events when not in a critical region. */
 
-#define NUM_SIGS ((int) (sizeof (sigs) / sizeof (*sigs)))
 static int const sigs[] = {
-#ifdef SIGHUP
        SIGHUP,
-#endif
-#ifdef SIGPIPE
        SIGPIPE,
-#endif
 #ifdef SIGTERM
        SIGTERM,
 #endif
@@ -1144,104 +1132,48 @@ static int const sigs[] = {
 #endif
        SIGINT
 };
+enum { NUM_SIGS = sizeof sigs / sizeof *sigs };
 
-#if !HAVE_SIGPROCMASK
-#define sigset_t int
-#define sigemptyset(s) (*(s) = 0)
-#ifndef sigmask
-#define sigmask(sig) (1 << ((sig) - 1))
-#endif
-#define sigaddset(s, sig) (*(s) |= sigmask (sig))
-#define sigismember(s, sig) ((*(s) & sigmask (sig)) != 0)
-#define sigprocmask(how, n, o) \
-  ((how) == SIG_BLOCK \
-   ? ((o) ? *(o) = sigblock (*(n)) : sigblock (*(n))) \
-   : (how) == SIG_UNBLOCK \
-   ? sigsetmask (((o) ? *(o) = sigblock (0) : sigblock (0)) & ~*(n)) \
-   : (o ? *(o) = sigsetmask (*(n)) : sigsetmask (*(n))))
-#if !HAVE_SIGSETMASK
-#define sigblock(mask) 0
-#define sigsetmask(mask) 0
-#endif
-#endif
-
+/* The initial signal mask for the process.  */
 static sigset_t initial_signal_mask;
-static sigset_t signals_to_block;
 
-#if ! HAVE_SIGACTION
-static void fatal_exit_handler (int) __attribute__ ((noreturn));
-static void
-fatal_exit_handler (int sig)
-{
-  signal (sig, SIG_IGN);
-  fatal_exit (sig);
-}
-#endif
+/* How to handle signals.  fatal_act.sa_mask lists signals to be
+   blocked when handling signals or in a critical section.  */
+static struct sigaction fatal_act;
 
 void
-set_signals (bool reset)
+init_signals (void)
 {
-  int i;
-#if HAVE_SIGACTION
-  struct sigaction initial_act, fatal_act;
+  /* System V fork+wait does not work if SIGCHLD is ignored.  */
+  signal (SIGCHLD, SIG_DFL);
+
   fatal_act.sa_handler = fatal_exit;
   sigemptyset (&fatal_act.sa_mask);
-  fatal_act.sa_flags = 0;
-#define setup_handler(sig) sigaction (sig, &fatal_act, (struct sigaction *) 0)
-#else
-#define setup_handler(sig) signal (sig, fatal_exit_handler)
-#endif
+  for (int i = 0; i < NUM_SIGS; i++)
+    {
+      struct sigaction initial_act;
+      if (sigaction (sigs[i], NULL, &initial_act) == 0
+	  && initial_act.sa_handler != SIG_IGN)
+	sigaddset (&fatal_act.sa_mask, sigs[i]);
+    }
 
-  if (!reset)
-    {
-#ifdef SIGCHLD
-      /* System V fork+wait does not work if SIGCHLD is ignored.  */
-      signal (SIGCHLD, SIG_DFL);
-#endif
-      sigemptyset (&signals_to_block);
-      for (i = 0;  i < NUM_SIGS;  i++)
-	{
-	  bool ignoring_signal;
-#if HAVE_SIGACTION
-	  if (sigaction (sigs[i], (struct sigaction *) 0, &initial_act) != 0)
-	    continue;
-	  ignoring_signal = initial_act.sa_handler == SIG_IGN;
-#else
-	  ignoring_signal = signal (sigs[i], SIG_IGN) == SIG_IGN;
-#endif
-	  if (! ignoring_signal)
-	    {
-	      sigaddset (&signals_to_block, sigs[i]);
-	      setup_handler (sigs[i]);
-	    }
-	}
-    }
-  else
-    {
-      /* Undo the effect of ignore_signals.  */
-#if HAVE_SIGPROCMASK || HAVE_SIGSETMASK
-      sigprocmask (SIG_SETMASK, &initial_signal_mask, (sigset_t *) 0);
-#else
-      for (i = 0;  i < NUM_SIGS;  i++)
-	if (sigismember (&signals_to_block, sigs[i]))
-	  setup_handler (sigs[i]);
-#endif
-    }
+  for (int i = 0; i < NUM_SIGS; i++)
+    if (sigismember (&fatal_act.sa_mask, sigs[i]))
+      sigaction (sigs[i], &fatal_act, NULL);
 }
 
 /* How to handle certain events when in a critical region. */
 
 void
-ignore_signals (void)
+block_signals (void)
 {
-#if HAVE_SIGPROCMASK || HAVE_SIGSETMASK
-  sigprocmask (SIG_BLOCK, &signals_to_block, &initial_signal_mask);
-#else
-  int i;
-  for (i = 0;  i < NUM_SIGS;  i++)
-    if (sigismember (&signals_to_block, sigs[i]))
-      signal (sigs[i], SIG_IGN);
-#endif
+  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, &initial_signal_mask);
+}
+
+void
+unblock_signals (void)
+{
+  sigprocmask (SIG_BLOCK, &initial_signal_mask, NULL);
 }
 
 void
@@ -1251,7 +1183,7 @@ exit_with_signal (int sig)
   signal (sig, SIG_DFL);
   sigemptyset (&s);
   sigaddset (&s, sig);
-  sigprocmask (SIG_UNBLOCK, &s, (sigset_t *) 0);
+  sigprocmask (SIG_UNBLOCK, &s, NULL);
   raise (sig);
   exit (2);
 }

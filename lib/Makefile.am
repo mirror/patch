@@ -71,15 +71,19 @@
 #  parse-datetime \
 #  progname \
 #  quotearg \
+#  raise \
 #  readlinkat \
 #  realloc-gnu \
 #  renameat \
 #  setenv \
-#  signal \
+#  sigaction \
+#  signal-h \
+#  sigprocmask \
 #  size_max \
 #  ssize_t \
 #  stat-time \
 #  stdbool \
+#  stdckdint \
 #  stdlib \
 #  symlinkat \
 #  sys_stat \
@@ -92,7 +96,8 @@
 #  verror \
 #  xalloc \
 #  xlist \
-#  xmemdup0
+#  xmemdup0 \
+#  year2038-recommended
 
 AUTOMAKE_OPTIONS = 1.14 gnits subdir-objects
 
