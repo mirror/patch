@@ -265,24 +265,18 @@ main (int argc, char **argv)
 	  have_git_diff = ! have_git_diff;
 	}
 
-      if (tmprej.exists)
+      if (rejfp)
 	{
-	  if (rejfp)
-	    {
-	      fclose (rejfp);
-	      rejfp = NULL;
-	    }
-	  remove_if_needed (&tmprej);
+	  fclose (rejfp);
+	  rejfp = NULL;
 	}
-      if (tmpout.exists)
-        {
-	  if (outfd != -1)
-	    {
-	      close (outfd);
-	      outfd = -1;
-	    }
-	  remove_if_needed (&tmpout);
+      if (0 <= outfd)
+	{
+	  close (outfd);
+	  outfd = -1;
 	}
+      remove_if_needed (&tmprej);
+      remove_if_needed (&tmpout);
       remove_if_needed (&tmped);
 
       if (! skip_rest_of_patch && ! file_type)
@@ -403,7 +397,7 @@ main (int argc, char **argv)
 	if (! skip_rest_of_patch && ! outfile)
 	  {
 	    init_output (&outstate);
-	    outstate.ofp = fdopen(outfd, binary_transput ? "wb" : "w");
+	    outstate.ofp = fdopen (outfd, binary_transput ? "wb" : "w");
 	    if (! outstate.ofp)
 	      pfatal ("%s", tmpout.name);
 	    /* outstate.ofp now owns the file descriptor */
@@ -509,8 +503,7 @@ main (int argc, char **argv)
 		  if (outstate.ofp && ! outfile)
 		    {
 		      fclose (outstate.ofp);
-		      outstate.ofp = 0;
-		      outfd = -1;
+		      outstate.ofp = NULL;
 		    }
 		}
 	    }
@@ -562,7 +555,7 @@ main (int argc, char **argv)
 		if (outstate.ofp)
 		  {
 		    fclose (outstate.ofp);
-		    outstate.ofp = 0;
+		    outstate.ofp = NULL;
 		  }
 		continue;
 	      }
@@ -1659,11 +1652,10 @@ open_outfile (char const *name)
     return create_output_file (name, 0);
   else
     {
-      FILE *ofp;
       int stdout_dup = dup (fileno (stdout));
       if (stdout_dup == -1)
 	pfatal ("Failed to duplicate standard output");
-      ofp = fdopen (stdout_dup, "a");
+      FILE *ofp = fdopen (stdout_dup, "a");
       if (! ofp)
 	pfatal ("Failed to duplicate standard output");
       if (dup2 (fileno (stderr), fileno (stdout)) == -1)
