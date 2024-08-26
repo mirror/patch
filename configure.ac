@@ -135,7 +135,6 @@ AC_DEFINE([GNULIB_NO_VLA], [1], [Define to 1 to disable use of VLAs])
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 
-gl_SIZE_MAX
 gl_FUNC_XATTR
 
 AC_CHECK_FUNCS_ONCE([geteuid getuid])
