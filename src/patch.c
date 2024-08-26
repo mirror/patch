@@ -41,10 +41,6 @@
 
 /* See common.h for the declarations of these variables.  */
 
-bool TMPEDNAME_needs_removal;
-bool TMPINNAME_needs_removal;
-bool TMPOUTNAME_needs_removal;
-bool TMPPATNAME_needs_removal;
 bool batch;
 bool canonicalize_ws;
 bool dry_run;
@@ -62,10 +58,6 @@ char *inname;
 char *outfile;
 char *patchbuf;
 char *revision;
-char const *TMPEDNAME;
-char const *TMPINNAME;
-char const *TMPOUTNAME;
-char const *TMPPATNAME;
 char const *origbase;
 char const *origprae;
 char const *origsuff;
@@ -87,6 +79,9 @@ lin last_frozen_line;
 lin out_offset;
 size_t patchbufsize;
 struct stat instat;
+struct outfile tmped;
+struct outfile tmpin;
+struct outfile tmppat;
 
 /* procedures */
 
@@ -149,8 +144,8 @@ static FILE *rejfp;  /* reject file pointer */
 
 static char const *patchname;
 static char *rejname;
-static char const * TMPREJNAME;
-static bool TMPREJNAME_needs_removal;
+static struct outfile tmpout;
+static struct outfile tmprej;
 
 static lin maxfuzz = 2;
 
@@ -270,25 +265,25 @@ main (int argc, char **argv)
 	  have_git_diff = ! have_git_diff;
 	}
 
-      if (TMPREJNAME_needs_removal)
+      if (tmprej.exists)
 	{
 	  if (rejfp)
 	    {
 	      fclose (rejfp);
 	      rejfp = NULL;
 	    }
-	  remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
+	  remove_if_needed (tmprej.name, &tmprej.exists);
 	}
-      if (TMPOUTNAME_needs_removal)
+      if (tmpout.exists)
         {
 	  if (outfd != -1)
 	    {
 	      close (outfd);
 	      outfd = -1;
 	    }
-	  remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
+	  remove_if_needed (tmpout.name, &tmpout.exists);
 	}
-      remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
+      remove_if_needed (tmped.name, &tmped.exists);
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -367,7 +362,7 @@ main (int argc, char **argv)
 	}
 
       tmpoutst.st_size = -1;
-      outfd = make_tempfile (&TMPOUTNAME, 'o', outname,
+      outfd = make_tempfile (&tmpout.name, 'o', outname,
 			     O_WRONLY | binary_transput,
 			     instat.st_mode & S_IRWXUGO);
       if (outfd == -1)
@@ -380,19 +375,19 @@ main (int argc, char **argv)
 	      somefailed = true;
 	    }
 	  else
-	    pfatal ("Can't create temporary file %s", TMPOUTNAME);
+	    pfatal ("Can't create temporary file %s", tmpout.name);
 	}
       else
-        TMPOUTNAME_needs_removal = true;
+        tmpout.exists = true;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
-	do_ed_script (inname, TMPOUTNAME, &TMPOUTNAME_needs_removal,
+	do_ed_script (inname, tmpout.name, &tmpout.exists,
 		      outstate.ofp);
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
 	    if (fstat (outfd, &tmpoutst) != 0)
-	      pfatal ("%s", TMPOUTNAME);
+	      pfatal ("%s", tmpout.name);
 	    outstate.zero_output = tmpoutst.st_size == 0;
 	  }
 	close (outfd);
@@ -413,7 +408,7 @@ main (int argc, char **argv)
 	    init_output (&outstate);
 	    outstate.ofp = fdopen(outfd, binary_transput ? "wb" : "w");
 	    if (! outstate.ofp)
-	      pfatal ("%s", TMPOUTNAME);
+	      pfatal ("%s", tmpout.name);
 	    /* outstate.ofp now owns the file descriptor */
 	    outfd = -1;
 	  }
@@ -655,17 +650,17 @@ main (int argc, char **argv)
 		        {
 			  if (set_mode)
 			    attr |= FA_MODE;
-			  set_file_attributes (TMPOUTNAME, attr, NULL, NULL,
+			  set_file_attributes (tmpout.name, attr, NULL, NULL,
 					       mode, &new_time);
 			}
 		      else
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
-			  set_file_attributes (TMPOUTNAME, attr, inname, &instat,
+			  set_file_attributes (tmpout.name, attr, inname, &instat,
 					       mode, &new_time);
 			}
 
-		      output_file (TMPOUTNAME, &TMPOUTNAME_needs_removal,
+		      output_file (tmpout.name, &tmpout.exists,
 				   &tmpoutst, outname, NULL, mode, backup);
 
 		      if (pch_rename ())
@@ -715,12 +710,12 @@ main (int argc, char **argv)
 		      {
 			if (! written_to_rejname)
 			  {
-			    copy_file (TMPREJNAME, NULL, rejname, NULL, 0,
+			    copy_file (tmprej.name, NULL, rejname, NULL, 0,
 				       S_IFREG | 0666, true);
 			    written_to_rejname = true;
 			  }
 			else
-			  append_to_file (TMPREJNAME, rejname);
+			  append_to_file (tmprej.name, rejname);
 		      }
 		    else
 		      {
@@ -731,9 +726,9 @@ main (int argc, char **argv)
 			if (olderrno && olderrno != ENOENT)
 			  write_fatal ();
 		        if (! olderrno && lookup_file_id (&oldst) == CREATED)
-			  append_to_file (TMPREJNAME, rej);
+			  append_to_file (tmprej.name, rej);
 			else
-			  move_file (TMPREJNAME, &TMPREJNAME_needs_removal,
+			  move_file (tmprej.name, &tmprej.exists,
 				     &rejst, rej, S_IFREG | 0666, false);
 		      }
 		  }
@@ -1468,7 +1463,7 @@ abort_hunk_context (bool header, bool reverse)
 static void
 abort_hunk (char const *outname, bool header, bool reverse)
 {
-  if (! TMPREJNAME_needs_removal)
+  if (!tmprej.exists)
     init_reject (outname);
   if (reject_format == UNI_DIFF
       || (reject_format == NO_DIFF && diff_type == UNI_DIFF))
@@ -1686,14 +1681,14 @@ static void
 init_reject (char const *outname)
 {
   int fd;
-  fd = make_tempfile (&TMPREJNAME, 'r', outname, O_WRONLY | binary_transput,
+  fd = make_tempfile (&tmprej.name, 'r', outname, O_WRONLY | binary_transput,
 		      0666);
   if (fd == -1)
-    pfatal ("Can't create temporary file %s", TMPREJNAME);
-  TMPREJNAME_needs_removal = true;
+    pfatal ("Can't create temporary file %s", tmprej.name);
+  tmprej.exists = true;
   rejfp = fdopen (fd, binary_transput ? "wb" : "w");
   if (! rejfp)
-    pfatal ("Can't open stream for file %s", quotearg (TMPREJNAME));
+    pfatal ("Can't open stream for file %s", quotearg (tmprej.name));
 }
 
 /* Copy input file to output, up to wherever hunk is to be applied. */
@@ -2086,9 +2081,9 @@ remove_if_needed (char const *name, bool *needs_removal)
 static void
 cleanup (void)
 {
-  remove_if_needed (TMPINNAME, &TMPINNAME_needs_removal);
-  remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
-  remove_if_needed (TMPPATNAME, &TMPPATNAME_needs_removal);
-  remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
-  remove_if_needed (TMPREJNAME, &TMPREJNAME_needs_removal);
+  remove_if_needed (tmpin.name, &tmpin.exists);
+  remove_if_needed (tmpout.name, &tmpout.exists);
+  remove_if_needed (tmppat.name, &tmppat.exists);
+  remove_if_needed (tmped.name, &tmped.exists);
+  remove_if_needed (tmprej.name, &tmprej.exists);
 }

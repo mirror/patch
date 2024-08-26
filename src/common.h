@@ -61,6 +61,16 @@ typedef off_t lin;			/* must be signed */
 #define LINENUM_MIN TYPE_MINIMUM (lin)
 #define LINENUM_MAX TYPE_MAXIMUM (lin)
 
+/* A description of an output file.  It may be temporary.  */
+struct outfile
+{
+  /* Name of the file.  */
+  char *name;
+
+  /* Whether the file exists.  */
+  bool exists;
+};
+
 /* globals */
 
 extern char *patchbuf;			/* general purpose buffer */
@@ -80,15 +90,9 @@ extern char const *origprae;
 extern char const *origbase;
 extern char const *origsuff;
 
-extern char const * TMPINNAME;
-extern char const * TMPOUTNAME;
-extern char const * TMPPATNAME;
-extern char const * TMPEDNAME;
-
-extern bool TMPINNAME_needs_removal;
-extern bool TMPOUTNAME_needs_removal;
-extern bool TMPPATNAME_needs_removal;
-extern bool TMPEDNAME_needs_removal;
+extern struct outfile tmped;
+extern struct outfile tmpin;
+extern struct outfile tmppat;
 
 #if DEBUGGING
 extern int debug;

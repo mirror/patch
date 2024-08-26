@@ -362,18 +362,18 @@ plan_b (char const *filename)
   if ((ifd = safe_open (filename, flags, 0)) < 0
       || ! (ifp = fdopen (ifd, binary_transput ? "rb" : "r")))
     pfatal ("Can't open file %s", quotearg (filename));
-  if (TMPINNAME_needs_removal)
+  if (tmpin.exists)
     {
       /* Reopen the existing temporary file. */
-      tifd = create_file (TMPINNAME, O_RDWR | O_BINARY, 0, true);
+      tifd = create_file (tmpin.name, O_RDWR | O_BINARY, 0, true);
     }
   else
     {
-      tifd = make_tempfile (&TMPINNAME, 'i', NULL, O_RDWR | O_BINARY,
+      tifd = make_tempfile (&tmpin.name, 'i', NULL, O_RDWR | O_BINARY,
 			    S_IRUSR | S_IWUSR);
       if (tifd == -1)
-	pfatal ("Can't create temporary file %s", TMPINNAME);
-      TMPINNAME_needs_removal = true;
+	pfatal ("Can't create temporary file %s", tmpin.name);
+      tmpin.exists = true;
     }
   i = 0;
   len = 0;

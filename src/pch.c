@@ -140,13 +140,13 @@ open_patch_file (char const *filename)
 	size_t charsread;
 	int fd;
 	FILE *read_pfp = pfp;
-	fd = make_tempfile (&TMPPATNAME, 'p', NULL, O_RDWR | O_BINARY, 0);
+	fd = make_tempfile (&tmppat.name, 'p', NULL, O_RDWR | O_BINARY, 0);
 	if (fd == -1)
-	  pfatal ("Can't create temporary file %s", TMPPATNAME);
-	TMPPATNAME_needs_removal = true;
+	  pfatal ("Can't create temporary file %s", tmppat.name);
+	tmppat.exists = true;
 	pfp = fdopen (fd, "w+b");
 	if (! pfp)
-	  pfatal ("Can't open stream for file %s", quotearg (TMPPATNAME));
+	  pfatal ("Can't open stream for file %s", quotearg (tmppat.name));
 	for (st.st_size = 0;
 	     (charsread = fread (patchbuf, 1, patchbufsize, read_pfp)) != 0;
 	     st.st_size += charsread)
@@ -2430,13 +2430,13 @@ do_ed_script (char const *input_name, char const *output_name,
 	   invalid commands and treats the next line as a new command, which
 	   can lead to arbitrary command execution.  */
 
-	tmpfd = make_tempfile (&TMPEDNAME, 'e', NULL, O_RDWR | O_BINARY, 0);
+	tmpfd = make_tempfile (&tmped.name, 'e', NULL, O_RDWR | O_BINARY, 0);
 	if (tmpfd == -1)
-	  pfatal ("Can't create temporary file %s", quotearg (TMPEDNAME));
-	TMPEDNAME_needs_removal = true;
+	  pfatal ("Can't create temporary file %s", quotearg (tmped.name));
+	tmped.exists = true;
 	tmpfp = fdopen (tmpfd, "w+b");
 	if (! tmpfp)
-	  pfatal ("Can't open stream for file %s", quotearg (TMPEDNAME));
+	  pfatal ("Can't open stream for file %s", quotearg (tmped.name));
       }
 
     for (;;) {
@@ -2477,7 +2477,8 @@ do_ed_script (char const *input_name, char const *output_name,
       write_fatal ();
 
     if (lseek (tmpfd, 0, SEEK_SET) == -1)
-      pfatal ("Can't rewind to the beginning of file %s", quotearg (TMPEDNAME));
+      pfatal ("Can't rewind to the beginning of file %s",
+	      quotearg (tmped.name));
 
     if (inerrno != ENOENT)
       {

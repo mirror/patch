@@ -1598,7 +1598,7 @@ repeat:
 }
 
 int
-make_tempfile (char const **name, char letter, char const *real_name,
+make_tempfile (char **name, char letter, char const *real_name,
 	       int flags, mode_t mode)
 {
   char *template;

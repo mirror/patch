@@ -83,4 +83,4 @@ enum file_attributes {
 void set_file_attributes (char const *, enum file_attributes, char const *,
 			  const struct stat *, mode_t, struct timespec *);
 
-int make_tempfile(char const **, char, char const *, int, mode_t);
+int make_tempfile(char **, char, char const *, int, mode_t);
