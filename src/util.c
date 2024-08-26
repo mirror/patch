@@ -569,8 +569,6 @@ create_file (char const *file, int open_flags, mode_t mode,
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
   do
     {
-      if (! (O_CREAT && O_TRUNC))
-	close (safe_open (file, O_CREAT | O_WRONLY | O_TRUNC, mode));
       fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
       if (fd < 0)
 	{
