@@ -1130,9 +1130,6 @@ static int const sigs[] = {
 };
 enum { NUM_SIGS = sizeof sigs / sizeof *sigs };
 
-/* The initial signal mask for the process.  */
-static sigset_t initial_signal_mask;
-
 /* How to handle signals.  fatal_act.sa_mask lists signals to be
    blocked when handling signals or in a critical section.  */
 static struct sigaction fatal_act;
@@ -1143,12 +1140,17 @@ init_signals (void)
   /* System V fork+wait does not work if SIGCHLD is ignored.  */
   signal (SIGCHLD, SIG_DFL);
 
+  sigset_t initial_signal_mask;
+  if (sigprocmask (SIG_BLOCK, NULL, &initial_signal_mask) < 0)
+    return;
+
   fatal_act.sa_handler = fatal_exit;
   sigemptyset (&fatal_act.sa_mask);
   for (int i = 0; i < NUM_SIGS; i++)
     {
       struct sigaction initial_act;
-      if (sigaction (sigs[i], NULL, &initial_act) == 0
+      if (!sigismember (&initial_signal_mask, sigs[i])
+	  && sigaction (sigs[i], NULL, &initial_act) == 0
 	  && initial_act.sa_handler != SIG_IGN)
 	sigaddset (&fatal_act.sa_mask, sigs[i]);
     }
@@ -1160,16 +1162,21 @@ init_signals (void)
 
 /* How to handle certain events when in a critical region. */
 
+static intmax_t signal_blocking_level;
+
 void
 block_signals (void)
 {
-  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, &initial_signal_mask);
+  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, NULL);
+  signal_blocking_level++;
 }
 
 void
 unblock_signals (void)
 {
-  sigprocmask (SIG_BLOCK, &initial_signal_mask, NULL);
+  signal_blocking_level--;
+  if (!signal_blocking_level)
+    sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, NULL);
 }
 
 void
