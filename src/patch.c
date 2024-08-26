@@ -98,14 +98,14 @@ static void init_output (struct outstate *);
 static FILE *open_outfile (char const *);
 static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
-static void remove_if_needed (char const *, bool *);
+static void remove_if_needed (struct outfile *);
 static void usage (FILE *, int) __attribute__((noreturn));
 
 static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
-static void output_file (char const *, bool *, const struct stat *, char const *,
+static void output_file (struct outfile *, const struct stat *, char const *,
 			 const struct stat *, mode_t, bool);
 
 static void init_files_to_delete (void);
@@ -250,7 +250,7 @@ main (int argc, char **argv)
       int hunk = 0;
       int failed = 0;
       bool mismatch = false;
-      char const *outname = NULL;
+      char *outname = NULL;
 
       if (skip_rest_of_patch)
 	somefailed = true;
@@ -272,7 +272,7 @@ main (int argc, char **argv)
 	      fclose (rejfp);
 	      rejfp = NULL;
 	    }
-	  remove_if_needed (tmprej.name, &tmprej.exists);
+	  remove_if_needed (&tmprej);
 	}
       if (tmpout.exists)
         {
@@ -281,9 +281,9 @@ main (int argc, char **argv)
 	      close (outfd);
 	      outfd = -1;
 	    }
-	  remove_if_needed (tmpout.name, &tmpout.exists);
+	  remove_if_needed (&tmpout);
 	}
-      remove_if_needed (tmped.name, &tmped.exists);
+      remove_if_needed (&tmped);
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -362,7 +362,7 @@ main (int argc, char **argv)
 	}
 
       tmpoutst.st_size = -1;
-      outfd = make_tempfile (&tmpout.name, 'o', outname,
+      outfd = make_tempfile (&tmpout, 'o', outname,
 			     O_WRONLY | binary_transput,
 			     instat.st_mode & S_IRWXUGO);
       if (outfd == -1)
@@ -377,13 +377,10 @@ main (int argc, char **argv)
 	  else
 	    pfatal ("Can't create temporary file %s", tmpout.name);
 	}
-      else
-        tmpout.exists = true;
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
-	do_ed_script (inname, tmpout.name, &tmpout.exists,
-		      outstate.ofp);
+	do_ed_script (inname, &tmpout, outstate.ofp);
 	if (! dry_run && ! outfile && ! skip_rest_of_patch)
 	  {
 	    if (fstat (outfd, &tmpoutst) != 0)
@@ -593,7 +590,7 @@ main (int argc, char **argv)
 		  || S_ISLNK (file_type)))
 	    {
 	      if (! dry_run)
-		output_file (NULL, NULL, NULL, outname,
+		output_file (NULL, NULL, outname,
 			     (inname == outname) ? &instat : NULL,
 			     file_type | 0, backup);
 	    }
@@ -660,11 +657,11 @@ main (int argc, char **argv)
 					       mode, &new_time);
 			}
 
-		      output_file (tmpout.name, &tmpout.exists,
+		      output_file (&tmpout,
 				   &tmpoutst, outname, NULL, mode, backup);
 
 		      if (pch_rename ())
-			output_file (NULL, NULL, NULL, inname, &instat,
+			output_file (NULL, NULL, inname, &instat,
 				     mode, backup);
 		    }
 		  else if (backup)
@@ -674,7 +671,8 @@ main (int argc, char **argv)
 		      if (stat_file (outname, &outstat) != 0)
 			say ("Cannot stat file %s, skipping backup\n", outname);
 		      else
-			output_file (outname, NULL, &outstat, NULL, NULL,
+			output_file (&(struct outfile) { .name = outname },
+				     &outstat, NULL, NULL,
 				     file_type | 0, true);
 		    }
 		}
@@ -728,7 +726,7 @@ main (int argc, char **argv)
 		        if (! olderrno && lookup_file_id (&oldst) == CREATED)
 			  append_to_file (tmprej.name, rej);
 			else
-			  move_file (tmprej.name, &tmprej.exists,
+			  move_file (&tmprej,
 				     &rejst, rej, S_IFREG | 0666, false);
 		      }
 		  }
@@ -1681,11 +1679,9 @@ static void
 init_reject (char const *outname)
 {
   int fd;
-  fd = make_tempfile (&tmprej.name, 'r', outname, O_WRONLY | binary_transput,
-		      0666);
+  fd = make_tempfile (&tmprej, 'r', outname, O_WRONLY | binary_transput, 0666);
   if (fd == -1)
     pfatal ("Can't create temporary file %s", tmprej.name);
-  tmprej.exists = true;
   rejfp = fdopen (fd, binary_transput ? "wb" : "w");
   if (! rejfp)
     pfatal ("Can't open stream for file %s", quotearg (tmprej.name));
@@ -1903,7 +1899,7 @@ delete_files (void)
 	    say ("Removing %s %s\n",
 		 S_ISLNK (mode) ? "symbolic link" : "file",
 		 quotearg (file_to_delete->name));
-	  move_file (0, 0, 0, file_to_delete->name, mode,
+	  move_file (NULL, NULL, file_to_delete->name, mode,
 		     file_to_delete->backup);
 	  removedirs (file_to_delete->name);
 	}
@@ -1924,41 +1920,40 @@ struct file_to_output {
 static gl_list_t files_to_output;
 
 static void
-output_file_later (char const *from, bool *from_needs_removal, const struct stat *from_st,
+output_file_later (struct outfile *from, const struct stat *from_st,
 		   char const *to, mode_t mode, bool backup)
 {
   struct file_to_output *file_to_output;
 
   file_to_output = xmalloc (sizeof *file_to_output);
-  file_to_output->from = xstrdup (from);
+  file_to_output->from = xstrdup (from->name);
   file_to_output->from_st = *from_st;
   file_to_output->to = to ? xstrdup (to) : NULL;
   file_to_output->mode = mode;
   file_to_output->backup = backup;
   gl_list_add_last (files_to_output, file_to_output);
-  if (from_needs_removal)
-    *from_needs_removal = false;
+  from->exists = false;
 }
 
 static void
-output_file_now (char const *from, bool *from_needs_removal,
+output_file_now (struct outfile *from,
 		 const struct stat *from_st, char const *to,
 		 mode_t mode, bool backup)
 {
   if (to == NULL)
     {
       if (backup)
-	create_backup (from, from_st, true);
+	create_backup (from->name, from_st, true);
     }
   else
     {
       assert (from_st->st_size != -1);
-      move_file (from, from_needs_removal, from_st, to, mode, backup);
+      move_file (from, from_st, to, mode, backup);
     }
 }
 
 static void
-output_file (char const *from, bool *from_needs_removal,
+output_file (struct outfile *from,
 	     const struct stat *from_st, char const *to,
 	     const struct stat *to_st, mode_t mode, bool backup)
 {
@@ -1986,10 +1981,10 @@ output_file (char const *from, bool *from_needs_removal,
 	 concatenated git-style diffs.
       */
 
-      output_file_later (from, from_needs_removal, from_st, to, mode, backup);
+      output_file_later (from, from_st, to, mode, backup);
     }
   else
-    output_file_now (from, from_needs_removal, from_st, to, mode, backup);
+    output_file_now (from, from_st, to, mode, backup);
 }
 
 static void
@@ -2025,14 +2020,13 @@ output_files (struct stat const *st, bool exiting)
   while (gl_list_iterator_next (&iter, &elt, NULL))
     {
       const struct file_to_output *file_to_output = elt;
-      bool from_needs_removal = true;
       struct stat const *from_st = &file_to_output->from_st;
+      struct outfile from = { .name = file_to_output->from, .exists = true };
 
-      output_file_now (file_to_output->from, &from_needs_removal,
-		       from_st, file_to_output->to,
+      output_file_now (&from, from_st, file_to_output->to,
 		       file_to_output->mode, file_to_output->backup);
-      if (file_to_output->to && from_needs_removal)
-	safe_unlink (file_to_output->from);
+      if (file_to_output->to && from.exists)
+	safe_unlink (from.name);
 
       if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)
 	{
@@ -2069,21 +2063,21 @@ fatal_exit (int sig)
 }
 
 static void
-remove_if_needed (char const *name, bool *needs_removal)
+remove_if_needed (struct outfile *tmp)
 {
-  if (*needs_removal)
+  if (tmp->exists)
     {
-      safe_unlink (name);
-      *needs_removal = false;
+      safe_unlink (tmp->name);
+      tmp->exists = false;
     }
 }
 
 static void
 cleanup (void)
 {
-  remove_if_needed (tmpin.name, &tmpin.exists);
-  remove_if_needed (tmpout.name, &tmpout.exists);
-  remove_if_needed (tmppat.name, &tmppat.exists);
-  remove_if_needed (tmped.name, &tmped.exists);
-  remove_if_needed (tmprej.name, &tmprej.exists);
+  remove_if_needed (&tmped);
+  remove_if_needed (&tmpin);
+  remove_if_needed (&tmpout);
+  remove_if_needed (&tmppat);
+  remove_if_needed (&tmprej);
 }

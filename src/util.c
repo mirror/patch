@@ -433,19 +433,15 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
     }
 }
 
-/* Move a file FROM (where *FROM_NEEDS_REMOVAL is nonzero if FROM
-   needs removal when cleaning up at the end of execution, and where
-   *FROMST is FROM's status if known),
+/* Move a file OUTFROM (where *FROMST is OUTFROM's status if known),
    to TO, renaming it if possible and copying it if necessary.
    If we must create TO, use MODE to create it.
-   If FROM is null, remove TO.
-   FROM_NEEDS_REMOVAL must be nonnull if FROM is nonnull.
+   If OUTFROM is null, remove TO.
    and FROMST must be nonnull if both FROM and BACKUP are nonnull.
    Back up TO if BACKUP is true.  */
 
 void
-move_file (char const *from, bool *from_needs_removal,
-	   struct stat const *fromst,
+move_file (struct outfile *outfrom, struct stat const *fromst,
 	   char const *to, mode_t mode, bool backup)
 {
   struct stat to_st;
@@ -457,8 +453,9 @@ move_file (char const *from, bool *from_needs_removal,
   if (! to_errno)
     insert_file_id (&to_st, OVERWRITTEN);
 
-  if (from)
+  if (outfrom)
     {
+      char const *from = outfrom->name;
       if (S_ISLNK (mode))
 	{
 	  bool to_dir_known_to_exist = false;
@@ -542,13 +539,12 @@ move_file (char const *from, bool *from_needs_removal,
 
 	rename_succeeded:
 	  insert_file_id (fromst, CREATED);
-	  /* Do not clear *FROM_NEEDS_REMOVAL if it's possible that the
+	  /* Do not clear outfrom->exists if it's possible that the
 	     rename returned zero because FROM and TO are hard links to
 	     the same file.  */
-	  if ((0 < to_errno
-	       || (to_errno == 0 && to_st.st_nlink <= 1))
-	      && from_needs_removal)
-	    *from_needs_removal = false;
+	  if (outfrom && (0 < to_errno
+			  || (to_errno == 0 && to_st.st_nlink <= 1)))
+	    outfrom->exists = false;
 	}
     }
   else if (! backup)
@@ -1598,7 +1594,7 @@ repeat:
 }
 
 int
-make_tempfile (char **name, char letter, char const *real_name,
+make_tempfile (struct outfile *tmp, char letter, char const *real_name,
 	       int flags, mode_t mode)
 {
   char *template;
@@ -1636,7 +1632,8 @@ make_tempfile (char **name, char letter, char const *real_name,
       sprintf (template, "%s/p%cXXXXXX", tmpdir, letter);
     }
   fd = try_tempname(template, 0, &args, try_safe_open);
-  *name = template;
+  tmp->name = template;
+  tmp->exists = 0 <= fd;
   return fd;
 }
 

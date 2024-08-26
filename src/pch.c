@@ -140,10 +140,9 @@ open_patch_file (char const *filename)
 	size_t charsread;
 	int fd;
 	FILE *read_pfp = pfp;
-	fd = make_tempfile (&tmppat.name, 'p', NULL, O_RDWR | O_BINARY, 0);
+	fd = make_tempfile (&tmppat, 'p', NULL, O_RDWR | O_BINARY, 0);
 	if (fd == -1)
 	  pfatal ("Can't create temporary file %s", tmppat.name);
-	tmppat.exists = true;
 	pfp = fdopen (fd, "w+b");
 	if (! pfp)
 	  pfatal ("Can't open stream for file %s", quotearg (tmppat.name));
@@ -2196,7 +2195,7 @@ pch_says_nonexistent (bool which)
   return p_says_nonexistent[which];
 }
 
-const char *
+char *
 pch_name (enum nametype type)
 {
   return type == NONE ? NULL : p_name[type];
@@ -2408,16 +2407,16 @@ get_ed_command_letter (char const *line)
 /* Apply an ed script by feeding ed itself. */
 
 void
-do_ed_script (char const *input_name, char const *output_name,
-	      bool *outname_needs_removal, FILE *ofp)
+do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
 {
     static char const editor_program[] = EDITOR_PROGRAM;
 
+    char const *output_name = output->name;
     file_offset beginning_of_this_line;
     size_t chars_read;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
-    int exclusive = *outname_needs_removal ? 0 : O_EXCL;
+    int exclusive = output->exists ? 0 : O_EXCL;
     char const **ed_argv;
     int stdin_dup, status;
 
@@ -2430,10 +2429,9 @@ do_ed_script (char const *input_name, char const *output_name,
 	   invalid commands and treats the next line as a new command, which
 	   can lead to arbitrary command execution.  */
 
-	tmpfd = make_tempfile (&tmped.name, 'e', NULL, O_RDWR | O_BINARY, 0);
+	tmpfd = make_tempfile (&tmped, 'e', NULL, O_RDWR | O_BINARY, 0);
 	if (tmpfd == -1)
 	  pfatal ("Can't create temporary file %s", quotearg (tmped.name));
-	tmped.exists = true;
 	tmpfp = fdopen (tmpfd, "w+b");
 	if (! tmpfp)
 	  pfatal ("Can't open stream for file %s", quotearg (tmped.name));
@@ -2482,7 +2480,7 @@ do_ed_script (char const *input_name, char const *output_name,
 
     if (inerrno != ENOENT)
       {
-	*outname_needs_removal = true;
+	output->exists = true;
 	copy_file (input_name, &instat, output_name, NULL, exclusive,
 		   instat.st_mode, true);
       }
