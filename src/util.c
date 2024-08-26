@@ -1581,21 +1581,17 @@ struct try_safe_open_args
     mode_t mode;
   };
 
-static int try_safe_open (char *template, void *__args)
+static int
+try_safe_open (char *template, void *__args)
 {
   struct try_safe_open_args *args = __args;
-  int try_makedirs_errno = ENOENT;
-  int fd;
-
-repeat:
-  fd = safe_open (template, O_CREAT | O_EXCL | args->flags, args->mode);
-  if (fd < 0 && errno == try_makedirs_errno)
-    {
-      makedirs (template);
-      try_makedirs_errno = 0;
-      goto repeat;
-    }
-  return fd;
+  int flags = O_CREAT | O_EXCL | args->flags;
+  mode_t mode = args->mode;
+  int fd = safe_open (template, flags, mode);
+  if (0 <= fd || errno != ENOENT)
+    return fd;
+  makedirs (template);
+  return safe_open (template, flags, mode);
 }
 
 int
