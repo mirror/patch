@@ -45,12 +45,12 @@ char *savebuf (char const *, size_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
 bool version_get (char const *, char const *, bool, bool, char const *, struct stat *);
-int create_file (char const *, int, mode_t, bool);
+int create_file (struct outfile *, int, mode_t, bool);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
 void Fseek (FILE *, file_offset, int);
 void copy_file (char const *, struct stat const *,
-		char const *, struct stat *, int, mode_t, bool);
+		struct outfile *, struct stat *, int, mode_t, bool);
 void append_to_file (char const *, char const *);
 void exit_with_signal (int) __attribute__ ((noreturn));
 void init_signals (void);
@@ -61,7 +61,7 @@ void init_time (void);
 void xalloc_die (void) __attribute__ ((noreturn));
 void create_backup (char const *, const struct stat *, bool);
 void move_file (struct outfile *, struct stat const *,
-		char const *, mode_t, bool);
+		char *, mode_t, bool);
 void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char const *);

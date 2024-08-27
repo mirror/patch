@@ -365,7 +365,7 @@ plan_b (char const *filename)
   if (tmpin.exists)
     {
       /* Reopen the existing temporary file. */
-      tifd = create_file (tmpin.name, O_RDWR | O_BINARY, 0, true);
+      tifd = create_file (&tmpin, O_RDWR | O_BINARY, 0, true);
     }
   else
     {

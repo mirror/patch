@@ -308,10 +308,11 @@ set_file_attributes (char const *to, enum file_attributes attr,
 }
 
 static void
-create_backup_copy (char const *from, char const *to, const struct stat *st,
+create_backup_copy (char const *from, char *to, const struct stat *st,
 		    bool to_dir_known_to_exist)
 {
-  copy_file (from, st, to, NULL, 0, st->st_mode, to_dir_known_to_exist);
+  copy_file (from, st, &(struct outfile) { .name = to },
+	     NULL, 0, st->st_mode, to_dir_known_to_exist);
   set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
 }
 
@@ -442,7 +443,7 @@ create_backup (char const *to, const struct stat *to_st, bool leave_original)
 
 void
 move_file (struct outfile *outfrom, struct stat const *fromst,
-	   char const *to, mode_t mode, bool backup)
+	   char *to, mode_t mode, bool backup)
 {
   struct stat to_st;
   int to_errno;
@@ -527,8 +528,8 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 		      else if (errno != ENOENT)
 			pfatal ("Can't remove file %s", quotearg (to));
 		    }
-		  copy_file (from, fromst, to, &tost, 0, mode,
-			     to_dir_known_to_exist);
+		  copy_file (from, fromst, &(struct outfile) { .name = to },
+			     &tost, 0, mode, to_dir_known_to_exist);
 		  insert_file_id (&tost, CREATED);
 		  return;
 		}
@@ -556,31 +557,36 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
     }
 }
 
-/* Create FILE with OPEN_FLAGS, and with MODE adjusted so that
+/* Create OUT with OPEN_FLAGS, and with MODE adjusted so that
    we can read and write the file and that the file is not executable.
    Return the file descriptor.  */
 int
-create_file (char const *file, int open_flags, mode_t mode,
+create_file (struct outfile *out, int open_flags, mode_t mode,
 	     bool to_dir_known_to_exist)
 {
-  int try_makedirs_errno = to_dir_known_to_exist ? 0 : ENOENT;
-  int fd;
+  char const *file = out->name;
   mode |= S_IRUSR | S_IWUSR;
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
-  do
+  if (out->temporary)
+    block_signals ();
+  int fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
+  out->exists = 0 <= fd;
+  if (out->temporary)
+    unblock_signals ();
+  if (fd < 0 && !to_dir_known_to_exist && errno == ENOENT)
     {
+      char *f = xstrdup (file);
+      makedirs (f);
+      free (f);
+      if (out->temporary)
+	block_signals ();
       fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
-      if (fd < 0)
-	{
-	  char *f;
-	  if (errno != try_makedirs_errno)
-	    pfatal ("Can't create file %s", quotearg (file));
-	  f = xstrdup (file);
-	  makedirs (f);
-	  free (f);
-	  try_makedirs_errno = 0;
-	}
-    } while (fd < 0);
+      out->exists = 0 <= fd;
+      if (out->temporary)
+	unblock_signals ();
+    }
+  if (fd < 0)
+    pfatal ("Can't create file %s", quotearg (file));
   return fd;
 }
 
@@ -610,10 +616,11 @@ copy_to_fd (const char *from, int tofd)
 
 void
 copy_file (char const *from, struct stat const *fromst,
-	   char const *to, struct stat *tost,
+	   struct outfile *outto, struct stat *tost,
 	   int to_flags, mode_t mode, bool to_dir_known_to_exist)
 {
   int tofd;
+  char const *to = outto->name;
 
   if (debug & 4)
     say ("Copying %s %s to %s\n",
@@ -633,7 +640,12 @@ copy_file (char const *from, struct stat const *fromst,
       if (r == alloc)
 	fatal ("symbolic link %s grew", quotearg (from));
       buffer[r] = '\0';
-      if (safe_symlink (buffer, to) != 0)
+      if (outto->temporary)
+	block_signals ();
+      outto->exists = safe_symlink (buffer, to) == 0;
+      if (outto->temporary)
+	unblock_signals ();
+      if (!outto->exists)
 	pfatal ("Can't create %s %s", "symbolic link", to);
       if (tost && safe_lstat (to, tost) != 0)
 	pfatal ("Can't get file attributes of %s %s", "symbolic link", to);
@@ -644,7 +656,7 @@ copy_file (char const *from, struct stat const *fromst,
       assert (S_ISREG (mode));
       if (! follow_symlinks)
 	to_flags |= O_NOFOLLOW;
-      tofd = create_file (to, O_WRONLY | O_BINARY | to_flags, mode,
+      tofd = create_file (outto, O_WRONLY | O_BINARY | to_flags, mode,
 			  to_dir_known_to_exist);
       copy_to_fd (from, tofd);
       if (tost && fstat (tofd, tost) != 0)
@@ -1174,7 +1186,11 @@ unblock_signals (void)
 {
   signal_blocking_level--;
   if (!signal_blocking_level)
-    sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, NULL);
+    {
+      int e = errno;
+      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, NULL);
+      errno = e;
+    }
 }
 
 void
@@ -1577,29 +1593,41 @@ Fseek (FILE *stream, file_offset offset, int ptrname)
 
 struct try_safe_open_args
   {
+    struct outfile *out;
     int flags;
     mode_t mode;
   };
 
 static int
-try_safe_open (char *template, void *__args)
+try_safe_open (char *template, void *vargs)
 {
-  struct try_safe_open_args *args = __args;
+  struct try_safe_open_args *args = vargs;
+  struct outfile *out = args->out;
   int flags = O_CREAT | O_EXCL | args->flags;
   mode_t mode = args->mode;
+  block_signals ();
   int fd = safe_open (template, flags, mode);
+  out->exists = 0 <= fd;
+  unblock_signals ();
   if (0 <= fd || errno != ENOENT)
     return fd;
   makedirs (template);
-  return safe_open (template, flags, mode);
+  block_signals ();
+  fd = safe_open (template, flags, mode);
+  out->exists = 0 <= fd;
+  int err = errno;
+  unblock_signals ();
+  errno = err;
+  return fd;
 }
 
 int
-make_tempfile (struct outfile *tmp, char letter, char const *real_name,
+make_tempfile (struct outfile *out, char letter, char const *real_name,
 	       int flags, mode_t mode)
 {
   char *template;
   struct try_safe_open_args args = {
+    .out = out,
     .flags = flags,
     .mode = mode,
   };
@@ -1632,9 +1660,8 @@ make_tempfile (struct outfile *tmp, char letter, char const *real_name,
       template = xmalloc (strlen (tmpdir) + 10);
       sprintf (template, "%s/p%cXXXXXX", tmpdir, letter);
     }
-  fd = try_tempname(template, 0, &args, try_safe_open);
-  tmp->name = template;
-  tmp->exists = 0 <= fd;
+  fd = try_tempname (template, 0, &args, try_safe_open);
+  out->name = template;
   return fd;
 }
 

@@ -79,13 +79,13 @@ lin last_frozen_line;
 lin out_offset;
 size_t patchbufsize;
 struct stat instat;
-struct outfile tmped;
-struct outfile tmpin;
-struct outfile tmppat;
+struct outfile tmped = { .temporary = true };
+struct outfile tmpin = { .temporary = true };
+struct outfile tmppat = { .temporary = true };
 
 /* procedures */
 
-static FILE *create_output_file (char const *, int);
+static FILE *create_output_file (struct outfile *, int);
 static lin locate_hunk (lin);
 static bool check_line_endings (lin);
 static bool apply_hunk (struct outstate *, lin);
@@ -95,7 +95,7 @@ static int numeric_string (char const *, bool, char const *);
 static void cleanup (void);
 static void get_some_switches (void);
 static void init_output (struct outstate *);
-static FILE *open_outfile (char const *);
+static FILE *open_outfile (char *);
 static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
 static void remove_if_needed (struct outfile *);
@@ -105,7 +105,7 @@ static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
 static void abort_hunk_unified (bool, bool);
 
-static void output_file (struct outfile *, const struct stat *, char const *,
+static void output_file (struct outfile *, const struct stat *, char *,
 			 const struct stat *, mode_t, bool);
 
 static void init_files_to_delete (void);
@@ -143,9 +143,9 @@ static char **Argv;
 static FILE *rejfp;  /* reject file pointer */
 
 static char const *patchname;
-static char *rejname;
-static struct outfile tmpout;
-static struct outfile tmprej;
+static struct outfile outrej;
+static struct outfile tmpout = { .temporary = true };
+static struct outfile tmprej = { .temporary = true };
 
 static lin maxfuzz = 2;
 
@@ -161,7 +161,6 @@ main (int argc, char **argv)
     struct outstate outstate;
     struct stat tmpoutst;
     char numbuf[LINENUM_LENGTH_BOUND + 1];
-    bool written_to_rejname = false;
     bool skip_reject_file = false;
     bool apply_empty_patch = false;
     mode_t file_type;
@@ -681,6 +680,7 @@ main (int argc, char **argv)
 	    somefailed = true;
 	    say ("%d out of %d hunk%s %s", failed, hunk, &"s"[hunk == 1],
 		 skip_rest_of_patch ? "ignored" : "FAILED");
+	    char *rejname = outrej.name;
 	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
 		char *rej = rejname;
 		if (!rejname) {
@@ -699,12 +699,9 @@ main (int argc, char **argv)
 		    say (" -- saving rejects to file %s\n", quotearg (rej));
 		    if (rejname)
 		      {
-			if (! written_to_rejname)
-			  {
-			    copy_file (tmprej.name, NULL, rejname, NULL, 0,
-				       S_IFREG | 0666, true);
-			    written_to_rejname = true;
-			  }
+			if (!outrej.exists)
+			  copy_file (tmprej.name, NULL, &outrej, NULL, 0,
+				     S_IFREG | 0666, true);
 			else
 			  append_to_file (tmprej.name, rejname);
 		      }
@@ -928,8 +925,9 @@ get_some_switches (void)
 {
     int optc;
 
-    free (rejname);
-    rejname = 0;
+    free (outrej.name);
+    outrej.name = NULL;
+    outrej.exists = false;
     if (optind == Argc)
 	return;
     while ((optc = getopt_long (Argc, Argv, shortopts, longopts, (int *) 0))
@@ -1018,7 +1016,7 @@ get_some_switches (void)
 		strippath = numeric_string (optarg, false, "strip count");
 		break;
 	    case 'r':
-		rejname = xstrdup (optarg);
+		outrej.name = xstrdup (optarg);
 		break;
 	    case 'R':
 		reverse_flag = true;
@@ -1619,13 +1617,13 @@ apply_hunk (struct outstate *outstate, lin where)
 /* Create an output file.  */
 
 static FILE *
-create_output_file (char const *name, int open_flags)
+create_output_file (struct outfile *out, int open_flags)
 {
-  int fd = create_file (name, O_WRONLY | binary_transput | open_flags,
+  int fd = create_file (out, O_WRONLY | binary_transput | open_flags,
 			instat.st_mode, true);
   FILE *f = fdopen (fd, binary_transput ? "wb" : "w");
   if (! f)
-    pfatal ("Can't create file %s", quotearg (name));
+    pfatal ("Can't create file %s", quotearg (out->name));
   return f;
 }
 
@@ -1646,10 +1644,10 @@ init_output (struct outstate *outstate)
 #endif
 
 static FILE *
-open_outfile (char const *name)
+open_outfile (char *name)
 {
   if (strcmp (name, "-") != 0)
-    return create_output_file (name, 0);
+    return create_output_file (&(struct outfile) { .name = name }, 0);
   else
     {
       int stdout_dup = dup (fileno (stdout));
@@ -1929,7 +1927,7 @@ output_file_later (struct outfile *from, const struct stat *from_st,
 
 static void
 output_file_now (struct outfile *from,
-		 const struct stat *from_st, char const *to,
+		 const struct stat *from_st, char *to,
 		 mode_t mode, bool backup)
 {
   if (to == NULL)
@@ -1946,7 +1944,7 @@ output_file_now (struct outfile *from,
 
 static void
 output_file (struct outfile *from,
-	     const struct stat *from_st, char const *to,
+	     const struct stat *from_st, char *to,
 	     const struct stat *to_st, mode_t mode, bool backup)
 {
   if (from == NULL)

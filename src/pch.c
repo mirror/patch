@@ -2416,7 +2416,6 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
     size_t chars_read;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
-    int exclusive = output->exists ? 0 : O_EXCL;
     char const **ed_argv;
     int stdin_dup, status;
 
@@ -2479,11 +2478,8 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
 	      quotearg (tmped.name));
 
     if (inerrno != ENOENT)
-      {
-	output->exists = true;
-	copy_file (input_name, &instat, output_name, NULL, exclusive,
-		   instat.st_mode, true);
-      }
+      copy_file (input_name, &instat, output, NULL,
+		 output->exists ? 0 : O_EXCL, instat.st_mode, true);
     fflush (stdout);
 
     if ((stdin_dup = dup (0)) == -1

@@ -63,6 +63,10 @@ struct outfile
   /* Name of the file.  */
   char *name;
 
+  /* Whether the file is intended to be temporary, and therefore
+     should be cleaned up before exit, if it exists.  */
+  bool temporary;
+
   /* Whether the file exists.  */
   bool exists;
 };
