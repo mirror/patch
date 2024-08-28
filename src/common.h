@@ -67,8 +67,9 @@ struct outfile
      should be cleaned up before exit, if it exists.  */
   bool temporary;
 
-  /* Whether the file exists.  */
-  bool exists;
+  /* Whether the file exists.  This is volatile so that a signal
+     handler can use this struct reasonably reliably.  */
+  bool volatile exists;
 };
 
 /* globals */
