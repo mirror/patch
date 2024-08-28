@@ -688,7 +688,7 @@ static char const CHECKOUT[] = "co %s";
 static char const CHECKOUT_LOCKED[] = "co -l %s";
 static char const RCSDIFF1[] = "rcsdiff %s";
 
-static char const SCCSPREFIX[] = "s.";
+#define SCCSPREFIX "s."
 static char const GET[] = "get ";
 static char const GET_LOCKED[] = "get -e ";
 static char const SCCSDIFF1[] = "get -p ";
@@ -707,6 +707,22 @@ quote_system_arg (char *quoted, char const *arg)
   if (quoted)
     memcpy (quoted, q, len + 1);
   return len;
+}
+
+/* Get the status of the file named by TRYBUF into ST.
+   Return true if successful, false (setting errno) otherwise.
+   Before getting the status, copy to DIREND the concatenation of A,
+   B, and (if nonnull) C; this can modify TRYBUF.  */
+static bool
+trystat (char const *trybuf, struct stat *st, char *dirend,
+	 char const *a, char const *b, char const *c)
+{
+  char *p = stpcpy (dirend, a);
+  if (b)
+    p = stpcpy (p, b);
+  if (c)
+    strcpy (p, c);
+  return safe_stat (trybuf, st) == 0;
 }
 
 /* Return "RCS" if FILENAME is controlled by RCS,
@@ -728,9 +744,10 @@ version_controller (char const *filename, bool readonly,
   char *dir = dir_name (filename);
   char *filebase = base_name (filename);
   char const *dotslash = *filename == '-' ? "./" : "";
-  size_t dirlen = strlen (dir) + 1;
+  size_t dirlen = strlen (dir);
+  size_t filebaselen = strlen (filebase);
   size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
-  size_t maxtrysize = dirlen + strlen (filebase) + maxfixlen + 1;
+  size_t maxtrysize = dirlen + 1 + filebaselen + maxfixlen + 1;
   size_t quotelen = quote_system_arg (0, dir) + quote_system_arg (0, filebase);
   size_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
   size_t maxdiffsize =
@@ -739,17 +756,15 @@ version_controller (char const *filename, bool readonly,
   char *trybuf = xmalloc (maxtrysize);
   char const *r = 0;
 
-  sprintf (trybuf, "%s/", dir);
-
-#define try1(f,a1)    (sprintf (trybuf + dirlen, f, a1),    safe_stat (trybuf, &cstat) == 0)
-#define try2(f,a1,a2) (sprintf (trybuf + dirlen, f, a1,a2), safe_stat (trybuf, &cstat) == 0)
+  char *dirend = mempcpy (trybuf, dir, dirlen);
+  *dirend++ = '/';
 
   /* Check that RCS file is not working file.
      Some hosts don't report file name length errors.  */
 
-  if ((try2 ("RCS/%s%s", filebase, RCSSUFFIX)
-       || try1 ("RCS/%s", filebase)
-       || try2 ("%s%s", filebase, RCSSUFFIX))
+  if ((trystat (trybuf, &cstat, dirend, "RCS/", filebase, RCSSUFFIX)
+       || trystat (trybuf, &cstat, dirend, "RCS/", filebase, 0)
+       || trystat (trybuf, &cstat, dirend, filebase, RCSSUFFIX, NULL))
       && ! (filestat
 	    && filestat->st_dev == cstat.st_dev
 	    && filestat->st_ino == cstat.st_ino))
@@ -775,8 +790,8 @@ version_controller (char const *filename, bool readonly,
 
       r = "RCS";
     }
-  else if (try2 ("SCCS/%s%s", SCCSPREFIX, filebase)
-	   || try2 ("%s%s", SCCSPREFIX, filebase))
+  else if (trystat (trybuf, &cstat, dirend, "SCCS/" SCCSPREFIX, filebase, NULL)
+	   || trystat (trybuf, &cstat, dirend, SCCSPREFIX, filebase, NULL))
     {
       if (getbuf)
 	{
@@ -803,7 +818,8 @@ version_controller (char const *filename, bool readonly,
       r = "SCCS";
     }
   else if (!readonly && filestat
-	   && try1 ("%s@@", filebase) && S_ISDIR (cstat.st_mode))
+	   && trystat (trybuf, &cstat, dirend, filebase, "@@", NULL)
+	   && S_ISDIR (cstat.st_mode))
     {
       if (getbuf)
 	{
@@ -1639,13 +1655,15 @@ make_tempfile (struct outfile *out, char letter, char const *real_name,
 
   if (real_name && ! dry_run)
     {
-      char *dirname, *basename;
+      char *dirname = dir_name (real_name);
+      char *basename = base_name (real_name);
+      idx_t dirnamelen = strlen (dirname);
+      idx_t basenamelen = strlen (basename);
 
-      dirname = dir_name (real_name);
-      basename = base_name (real_name);
-
-      template = xmalloc (strlen (dirname) + 1 + strlen (basename) + 9);
-      sprintf (template, "%s/%s.%cXXXXXX", dirname, basename, letter);
+      template = ximalloc (dirnamelen + 1 + basenamelen + 9);
+      char *p = mempcpy (template, dirname, dirnamelen);
+      *p++ = '/';
+      sprintf (mempcpy (p, basename, basenamelen), ".%cXXXXXX", letter);
       free (dirname);
       free (basename);
     }
