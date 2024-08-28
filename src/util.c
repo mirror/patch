@@ -963,8 +963,9 @@ format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
 void
 fatal (char const *format, ...)
 {
+  fputs (program_name, stderr);
+  fputs (": **** ", stderr);
   va_list args;
-  fprintf (stderr, "%s: **** ", program_name);
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
@@ -997,8 +998,9 @@ void
 pfatal (char const *format, ...)
 {
   int errnum = errno;
+  fputs (program_name, stderr);
+  fputs (": **** ", stderr);
   va_list args;
-  fprintf (stderr, "%s: **** ", program_name);
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
