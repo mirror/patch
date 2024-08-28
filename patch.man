@@ -4,6 +4,11 @@
 .if t .sp .3
 .if n .sp
 ..
+.ds ue ue
+.if \n(.g .if c \(:u .ds ue \(:u
+.ds Cw CW
+.if \n(.g .if f CR .ds Cw CR
+.ds fC \f(\*(Cw
 .TH PATCH 1 "" GNU
 .SH NAME
 patch \- apply a diff file to an original
@@ -56,7 +61,7 @@ editor via a pipe.
 .B patch
 tries to skip any leading garbage, apply the diff,
 and then skip any trailing garbage.
-Thus you could feed an article or message containing a
+Thus you could feed an email message containing a
 diff listing to
 .BR patch ,
 and it should work.
@@ -145,8 +150,8 @@ to edit is, using the following rules.
 First,
 .B patch
 takes an ordered list of candidate file names as follows:
-.TP 3
-.B " \(bu"
+.RS "\w'  'u"
+.IP \(bu "\w'\(bu  'u"
 If the header is that of a context diff,
 .B patch
 takes the old and new file names in the header.
@@ -158,8 +163,7 @@ option.
 The name
 .B /dev/null
 is also ignored.
-.TP
-.B " \(bu"
+.IP \(bu
 If there is an
 .B Index:\&
 line in the leading garbage
@@ -170,23 +174,22 @@ is conforming to \s-1POSIX\s0,
 takes the name in the
 .B Index:\&
 line.
-.TP
-.B " \(bu"
+.IP \(bu
 For the purpose of the following rules,
 the candidate file names are considered to be in the order (old, new, index),
 regardless of the order that they appear in the header.
+.RE
 .LP
 Then
 .B patch
 selects a file name from the candidate list as follows:
-.TP 3
-.B " \(bu"
+.RS "\w'  'u"
+.IP \(bu "\w'\(bu  'u"
 If some of the named files exist,
 .B patch
 selects the first name if conforming to \s-1POSIX\s0,
 and the best name otherwise.
-.TP
-.B " \(bu"
+.IP \(bu
 If
 .B patch
 is not ignoring \s-1RCS\s0, ClearCase, Perforce, and \s-1SCCS\s0 (see the
@@ -198,8 +201,7 @@ but an \s-1RCS\s0, ClearCase, Perforce, or \s-1SCCS\s0 master is found,
 .B patch
 selects the first named file
 with an \s-1RCS\s0, ClearCase, Perforce, or \s-1SCCS\s0 master.
-.TP
-.B " \(bu"
+.IP \(bu
 If no named files exist,
 no \s-1RCS\s0, ClearCase, Perforce, or \s-1SCCS\s0 master was found,
 some names are given,
@@ -208,12 +210,12 @@ is not conforming to \s-1POSIX\s0,
 and the patch appears to create a file,
 .B patch
 selects the best name requiring the creation of the fewest directories.
-.TP
-.B " \(bu"
+.IP \(bu
 If no file name results from the above heuristics, you are asked
 for the name of the file to patch, and
 .B patch
 selects that name.
+.RE
 .LP
 To determine the
 .I best
@@ -234,17 +236,16 @@ If not,
 .B patch
 asks for confirmation before proceeding.
 .PP
-The upshot of all this is that you should be able to say, while in a news
-interface, something like the following:
+The upshot of all this is that you should be able to run
+something like the following shell command:
 .Sp
 .RS
-\fB| patch \-d /usr/src/local/blurfl\fP
+\fBpatch \-d /usr/src/local/blurfl\fP
 .RE
 .Sp
 and patch a file in the
 .B blurfl
-directory directly from the article containing
-the patch.
+directory directly from a patch that is read from standard input.
 .PP
 If the patch file contains more than one patch,
 .B patch
@@ -418,21 +419,22 @@ A typical conflict will look like this:
 .LP
 .RS
 .nf
-.B <<<<<<<
-.I lines from the original file
-.B |||||||
-.I original lines from the patch
-.B =======
-.I new lines from the patch
-.B >>>>>>>
+.ne 7
+\*(fC<<<<<<<\fP
+\fIlines from the original file\fP
+\*(fC|||||||\fP
+\fIoriginal lines from the patch\fP
+\*(fC=======\fP
+\fInew lines from the patch\fP
+\*(fC>>>>>>>\fP
 .RE
 .fi
 .IP "" 3
 The optional argument of \fB\*=merge\fP determines the output format for
-conflicts: the diff3 format shows the \fB|||||||\fP section with the original
+conflicts: the diff3 format shows the \*(fC|||||||\fP section with the original
 lines from the patch; in the merge format, this section is missing.  The merge
 format is the default.
-
+.Sp
 This option implies \fB\*=forward\fP and does not take the
 \fB--fuzz\fR=\fInum\fP option into account.
 .TP
@@ -497,23 +499,18 @@ option.
 .TP
 .B \*=posix
 Conform more strictly to the \s-1POSIX\s0 standard, as follows.
-.RS
-.TP 3
-.B " \(bu"
+.RS "\w'  'u"
+.IP \(bu "\w'\(bu  'u"
 Take the first existing file from the list (old, new, index)
 when intuiting file names from diff headers.
-.TP
-.B " \(bu"
+.IP \(bu
 Do not remove files that are empty after patching.
-.TP
-.B " \(bu"
+.IP \(bu
 Do not ask whether to get files from \s-1RCS\s0, ClearCase, Perforce,
 or \s-1SCCS\s0.
-.TP
-.B " \(bu"
+.IP \(bu
 Require that all options precede the files in the command line.
-.TP
-.B " \(bu"
+.IP \(bu
 Do not backup files when there is a mismatch.
 .RE
 .TP
@@ -658,7 +655,7 @@ it affects only the names of any backup files that are made.
 The value of
 .I method
 is like the \s-1GNU\s0
-Emacs `version-control' variable;
+Emacs version-control variable;
 .B patch
 also recognizes synonyms that
 are more descriptive.  The valid values for
@@ -848,13 +845,16 @@ controlling terminal; used to get answers to questions asked of the user
 .Sp
 Marshall T. Rose and Einar A. Stefferud,
 Proposed Standard for Message Encapsulation,
-Internet RFC 934 <URL:ftp://ftp.isi.edu/in-notes/rfc934.txt> (1985-01).
+Internet RFC 934 <https://datatracker.ietf.org/doc/html/rfc934> (1985-01).
 .SH "NOTES FOR PATCH SENDERS"
 There are several things you should bear in mind if you are going to
 be sending out patches.
 .PP
 Create your patch systematically.
-A good method is the command
+When using a version control system this should be easy;
+for example, with Git you can use
+.BR "git diff" .
+Otherwise, a good method is the command
 .BI "diff\ \-Naur\ " "old\ new"
 where
 .I old
@@ -866,19 +866,20 @@ The names
 and
 .I new
 should not contain any slashes.
-The
+.PP
+If the patch should communicate file time stamps as well as file contents, its
 .B diff
-command's headers should have dates
+commands' headers should have dates
 and times in Universal Time using traditional Unix format,
 so that patch recipients can use the
 .B \-Z
 or
 .B \*=set\-utc
 option.
-Here is an example command, using Bourne shell syntax:
+Here is an example command to generate such headers, using Bourne shell syntax:
 .Sp
 .RS
-\fBLC_ALL=C TZ=UTC0 diff \-Naur gcc\-2.7 gcc\-2.8\fP
+\fBLC_ALL=C TZ=UTC0 diff \-Naur myprog\-2.7 myprog\-2.8\fP
 .RE
 .PP
 Tell your recipients how to apply the patch
@@ -929,13 +930,13 @@ If the recipient is supposed to use the
 option, do not send output that looks like this:
 .Sp
 .RS
-.ft CW
+.ft \*(Cw
 .ne 3
 diff \-Naur v2.0.29/prog/README prog/README
 .br
-\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 2024
 .br
-+\^+\^+ prog/README   Mon Mar 17 14:58:22 1997
++\^+\^+ prog/README   Mon Mar 17 14:58:22 2024
 .ft
 .RE
 .Sp
@@ -946,13 +947,13 @@ interpret the file names differently.
 To avoid confusion, send output that looks like this instead:
 .Sp
 .RS
-.ft CW
+.ft \*(Cw
 .ne 3
 diff \-Naur v2.0.29/prog/README v2.0.30/prog/README
 .br
-\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 1997
+\-\^\-\^\- v2.0.29/prog/README   Mon Mar 10 15:13:12 2024
 .br
-+\^+\^+ v2.0.30/prog/README   Mon Mar 17 14:58:22 1997
++\^+\^+ v2.0.30/prog/README   Mon Mar 17 14:58:22 2024
 .ft
 .RE
 .Sp
@@ -975,7 +976,7 @@ Try not to have your patch modify derived files
 (e.g. the file
 .B configure
 where there is a line
-.B "configure: configure.in"
+.B "configure: configure.ac"
 in your makefile), since the recipient should be
 able to regenerate the derived files anyway.
 If you must send diffs of derived files,
@@ -1040,57 +1041,15 @@ applied to exactly the same version of the file that the patch was
 generated from.
 .SH "COMPATIBILITY ISSUES"
 The \s-1POSIX\s0 standard specifies behavior that differs from
-.BR patch 's
-traditional behavior.
-You should be aware of these differences if you must interoperate with
+GNU
+.BR patch .
+.RS "\w'  'u"
+.IP \(bu "\w'\(bu  'u"
+In \s-1POSIX\s0
 .B patch
-versions 2.1 and earlier, which do not conform to \s-1POSIX\s0.
-.TP 3
-.B " \(bu"
-In traditional
-.BR patch ,
-the
-.B \-p
-option's operand was optional, and a bare
-.B \-p
-was equivalent to
-.BR \-p0.
-The
-.B \-p
-option now requires an operand, and
-.B "\-p\ 0"
-is now equivalent to
-.BR \-p0 .
-For maximum compatibility, use options like
-.B \-p0
-and
-.BR \-p1 .
-.Sp
-Also,
-traditional
-.B patch
-simply counted slashes when stripping path prefixes;
-.B patch
-now counts pathname components.
-That is, a sequence of one or more adjacent slashes
-now counts as a single slash.
-For maximum portability, avoid sending patches containing
-.B //
-in file names.
-.TP
-.B " \(bu"
-In traditional
-.BR patch ,
-backups were enabled by default.
-This behavior is now enabled with the
+when
 .B \-b
-or
-.B \*=backup
-option.
-.Sp
-Conversely, in \s-1POSIX\s0
-.BR patch ,
-backups are never made, even when there is a mismatch.
+is not used, backups are not made even when there is a mismatch.
 In \s-1GNU\s0
 .BR patch ,
 this behavior is enabled with the
@@ -1100,88 +1059,46 @@ option, or by conforming to \s-1POSIX\s0 with the
 option or by setting the
 .B POSIXLY_CORRECT
 environment variable.
-.Sp
-The
-.BI \-b "\ suffix"
-option
-of traditional
+.IP \(bu
+When intuiting the name of the file to be patched from the patch header,
 .B patch
-is equivalent to the
-.BI "\-b\ \-z" "\ suffix"
-options of \s-1GNU\s0
-.BR patch .
-.TP
-.B " \(bu"
-Traditional
-.B patch
-used a complicated (and incompletely documented) method
-to intuit the name of the file to be patched from the patch header.
-This method did not conform to \s-1POSIX\s0, and had a few gotchas.
-Now
-.B patch
-uses a different, equally complicated (but better documented) method
-that is optionally \s-1POSIX\s0-conforming; we hope it has
-fewer gotchas.  The two methods are compatible if the
+uses a complicated method
+that is optionally \s-1POSIX\s0-conforming.
+The method is equivalant to \s-1POSIX\s0 if the
 file names in the context diff header and the
 .B Index:\&
 line are all identical after prefix-stripping.
 Your patch is normally compatible if each header's file names
 all contain the same number of slashes.
-.TP
-.B " \(bu"
-When traditional
-.B patch
-asked the user a question, it sent the question to standard error
-and looked for an answer from
-the first file in the following list that was a terminal:
-standard error, standard output,
-.BR /dev/tty ,
-and standard input.
-Now
-.B patch
-sends questions to standard output and gets answers from
-.BR /dev/tty .
-Defaults for some answers have been changed so that
-.B patch
-never goes into an infinite loop when using default answers.
-.TP
-.B " \(bu"
-Traditional
-.B patch
-exited with a status value that counted the number of bad hunks,
-or with status 1 if there was real trouble.
-Now
-.B patch
-exits with status 1 if some hunks failed,
-or with 2 if there was real trouble.
-.TP
-.B " \(bu"
+.IP \(bu
 Limit yourself to the following options when sending instructions
 meant to be executed by anyone running \s-1GNU\s0
-.BR patch ,
-traditional
-.BR patch ,
+.B patch
 or a
 .B patch
 that conforms to \s-1POSIX\s0.
-Spaces are significant in the following list, and operands are required.
+Spaces are optional in the following list.
 .Sp
 .nf
 .in +3
 .ne 11
+.B \-b
 .B \-c
 .BI \-d " dir"
 .BI \-D " define"
 .B \-e
+.BI \-i " patchfile"
 .B \-l
 .B \-n
 .B \-N
 .BI \-o " outfile"
-.BI \-p num
+.BI \-p " num"
 .B \-R
 .BI \-r " rejectfile"
+.BI \-u
 .in
 .fi
+.RE
 .SH BUGS
 Please report bugs via email to
 .BR <bug-patch@gnu.org> .
@@ -1229,4 +1146,4 @@ setting file times, and deleting files;
 and made it conform better to \s-1POSIX\s0.
 Other contributors include Wayne Davison, who added unidiff support,
 and David MacKenzie, who added configuration and backup support.
-Andreas Gr\[:u]nbacher added support for merging.
+Andreas Gr\*(uenbacher added support for merging.
