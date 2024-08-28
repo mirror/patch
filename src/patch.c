@@ -247,7 +247,7 @@ main (int argc, char **argv)
       int hunk = 0;
       int failed = 0;
       bool mismatch = false;
-      char *outname = NULL;
+      char *outname = nullptr;
 
       if (skip_rest_of_patch)
 	somefailed = true;
@@ -256,7 +256,7 @@ main (int argc, char **argv)
 	{
 	  if (have_git_diff)
 	    {
-	      output_files (NULL, false);
+	      output_files (nullptr, false);
 	      inerrno = -1;
 	    }
 	  have_git_diff = ! have_git_diff;
@@ -265,7 +265,7 @@ main (int argc, char **argv)
       if (rejfp)
 	{
 	  fclose (rejfp);
-	  rejfp = NULL;
+	  rejfp = nullptr;
 	}
       if (0 <= outfd)
 	{
@@ -504,7 +504,7 @@ main (int argc, char **argv)
 		  if (outstate.ofp && ! outfile)
 		    {
 		      fclose (outstate.ofp);
-		      outstate.ofp = NULL;
+		      outstate.ofp = nullptr;
 		    }
 		}
 	    }
@@ -556,7 +556,7 @@ main (int argc, char **argv)
 		if (outstate.ofp)
 		  {
 		    fclose (outstate.ofp);
-		    outstate.ofp = NULL;
+		    outstate.ofp = nullptr;
 		  }
 		continue;
 	      }
@@ -584,8 +584,8 @@ main (int argc, char **argv)
 		  || S_ISLNK (file_type)))
 	    {
 	      if (! dry_run)
-		output_file (NULL, NULL, outname,
-			     (inname == outname) ? &instat : NULL,
+		output_file (nullptr, nullptr, outname,
+			     (inname == outname) ? &instat : nullptr,
 			     file_type | 0, backup);
 	    }
 	  else
@@ -641,7 +641,8 @@ main (int argc, char **argv)
 		        {
 			  if (set_mode)
 			    attr |= FA_MODE;
-			  set_file_attributes (tmpout.name, attr, NULL, NULL,
+			  set_file_attributes (tmpout.name, attr,
+					       nullptr, nullptr,
 					       mode, &new_time);
 			}
 		      else
@@ -652,10 +653,10 @@ main (int argc, char **argv)
 			}
 
 		      output_file (&tmpout,
-				   &tmpoutst, outname, NULL, mode, backup);
+				   &tmpoutst, outname, nullptr, mode, backup);
 
 		      if (pch_rename ())
-			output_file (NULL, NULL, inname, &instat,
+			output_file (nullptr, nullptr, inname, &instat,
 				     mode, backup);
 		    }
 		  else if (backup)
@@ -666,7 +667,7 @@ main (int argc, char **argv)
 			say ("Cannot stat file %s, skipping backup\n", outname);
 		      else
 			output_file (&(struct outfile) { .name = outname },
-				     &outstat, NULL, NULL,
+				     &outstat, nullptr, nullptr,
 				     file_type | 0, true);
 		    }
 		}
@@ -678,7 +679,7 @@ main (int argc, char **argv)
 	if (failed && ! skip_reject_file) {
 	    if (fstat (fileno (rejfp), &rejst) != 0 || fclose (rejfp) != 0)
 	      write_fatal ();
-	    rejfp = NULL;
+	    rejfp = nullptr;
 	    somefailed = true;
 	    say ("%d out of %d hunk%s %s", failed, hunk, &"s"[hunk == 1],
 		 skip_rest_of_patch ? "ignored" : "FAILED");
@@ -702,7 +703,7 @@ main (int argc, char **argv)
 		    if (rejname)
 		      {
 			if (!outrej.exists)
-			  copy_file (tmprej.name, NULL, &outrej, NULL, 0,
+			  copy_file (tmprej.name, nullptr, &outrej, nullptr, 0,
 				     S_IFREG | 0666, true);
 			else
 			  append_to_file (tmprej.name, rejname);
@@ -736,7 +737,7 @@ main (int argc, char **argv)
     if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
       write_fatal ();
     cleanup ();
-    output_files (NULL, true);
+    output_files (nullptr, true);
     delete_files ();
     if (somefailed)
       exit (1);
@@ -781,50 +782,50 @@ static char const shortopts[] = "bB:cd:D:eEfF:g:i:l"
 
 static struct option const longopts[] =
 {
-  {"backup", no_argument, NULL, 'b'},
-  {"prefix", required_argument, NULL, 'B'},
-  {"context", no_argument, NULL, 'c'},
-  {"directory", required_argument, NULL, 'd'},
-  {"ifdef", required_argument, NULL, 'D'},
-  {"ed", no_argument, NULL, 'e'},
-  {"remove-empty-files", no_argument, NULL, 'E'},
-  {"force", no_argument, NULL, 'f'},
-  {"fuzz", required_argument, NULL, 'F'},
-  {"get", required_argument, NULL, 'g'},
-  {"input", required_argument, NULL, 'i'},
-  {"ignore-whitespace", no_argument, NULL, 'l'},
+  {"backup", no_argument, nullptr, 'b'},
+  {"prefix", required_argument, nullptr, 'B'},
+  {"context", no_argument, nullptr, 'c'},
+  {"directory", required_argument, nullptr, 'd'},
+  {"ifdef", required_argument, nullptr, 'D'},
+  {"ed", no_argument, nullptr, 'e'},
+  {"remove-empty-files", no_argument, nullptr, 'E'},
+  {"force", no_argument, nullptr, 'f'},
+  {"fuzz", required_argument, nullptr, 'F'},
+  {"get", required_argument, nullptr, 'g'},
+  {"input", required_argument, nullptr, 'i'},
+  {"ignore-whitespace", no_argument, nullptr, 'l'},
 #ifdef ENABLE_MERGE
-  {"merge", optional_argument, NULL, 'm'},
+  {"merge", optional_argument, nullptr, 'm'},
 #endif
-  {"normal", no_argument, NULL, 'n'},
-  {"forward", no_argument, NULL, 'N'},
-  {"output", required_argument, NULL, 'o'},
-  {"strip", required_argument, NULL, 'p'},
-  {"reject-file", required_argument, NULL, 'r'},
-  {"reverse", no_argument, NULL, 'R'},
-  {"quiet", no_argument, NULL, 's'},
-  {"silent", no_argument, NULL, 's'},
-  {"batch", no_argument, NULL, 't'},
-  {"set-time", no_argument, NULL, 'T'},
-  {"unified", no_argument, NULL, 'u'},
-  {"version", no_argument, NULL, 'v'},
-  {"version-control", required_argument, NULL, 'V'},
-  {"debug", required_argument, NULL, 'x'},
-  {"basename-prefix", required_argument, NULL, 'Y'},
-  {"suffix", required_argument, NULL, 'z'},
-  {"set-utc", no_argument, NULL, 'Z'},
-  {"dry-run", no_argument, NULL, CHAR_MAX + 1},
-  {"verbose", no_argument, NULL, CHAR_MAX + 2},
-  {"binary", no_argument, NULL, CHAR_MAX + 3},
-  {"help", no_argument, NULL, CHAR_MAX + 4},
-  {"backup-if-mismatch", no_argument, NULL, CHAR_MAX + 5},
-  {"no-backup-if-mismatch", no_argument, NULL, CHAR_MAX + 6},
-  {"posix", no_argument, NULL, CHAR_MAX + 7},
-  {"quoting-style", required_argument, NULL, CHAR_MAX + 8},
-  {"reject-format", required_argument, NULL, CHAR_MAX + 9},
-  {"read-only", required_argument, NULL, CHAR_MAX + 10},
-  {"follow-symlinks", no_argument, NULL, CHAR_MAX + 11},
-  {NULL, no_argument, NULL, 0}
+  {"normal", no_argument, nullptr, 'n'},
+  {"forward", no_argument, nullptr, 'N'},
+  {"output", required_argument, nullptr, 'o'},
+  {"strip", required_argument, nullptr, 'p'},
+  {"reject-file", required_argument, nullptr, 'r'},
+  {"reverse", no_argument, nullptr, 'R'},
+  {"quiet", no_argument, nullptr, 's'},
+  {"silent", no_argument, nullptr, 's'},
+  {"batch", no_argument, nullptr, 't'},
+  {"set-time", no_argument, nullptr, 'T'},
+  {"unified", no_argument, nullptr, 'u'},
+  {"version", no_argument, nullptr, 'v'},
+  {"version-control", required_argument, nullptr, 'V'},
+  {"debug", required_argument, nullptr, 'x'},
+  {"basename-prefix", required_argument, nullptr, 'Y'},
+  {"suffix", required_argument, nullptr, 'z'},
+  {"set-utc", no_argument, nullptr, 'Z'},
+  {"dry-run", no_argument, nullptr, CHAR_MAX + 1},
+  {"verbose", no_argument, nullptr, CHAR_MAX + 2},
+  {"binary", no_argument, nullptr, CHAR_MAX + 3},
+  {"help", no_argument, nullptr, CHAR_MAX + 4},
+  {"backup-if-mismatch", no_argument, nullptr, CHAR_MAX + 5},
+  {"no-backup-if-mismatch", no_argument, nullptr, CHAR_MAX + 6},
+  {"posix", no_argument, nullptr, CHAR_MAX + 7},
+  {"quoting-style", required_argument, nullptr, CHAR_MAX + 8},
+  {"reject-format", required_argument, nullptr, CHAR_MAX + 9},
+  {"read-only", required_argument, nullptr, CHAR_MAX + 10},
+  {"follow-symlinks", no_argument, nullptr, CHAR_MAX + 11},
+  {nullptr, no_argument, nullptr, 0}
 };
 
 static char const *const option_help[] =
@@ -939,7 +940,7 @@ get_some_switches (void)
     int optc;
 
     free (outrej.name);
-    outrej.name = NULL;
+    outrej.name = nullptr;
     outrej.exists = false;
     if (optind == Argc)
 	return;
@@ -1653,7 +1654,7 @@ create_output_file (struct outfile *out, int open_flags)
 static void
 init_output (struct outstate *outstate)
 {
-  outstate->ofp = NULL;
+  outstate->ofp = nullptr;
   outstate->after_newline = true;
   outstate->zero_output = true;
 }
@@ -1861,13 +1862,13 @@ dispose_file_to_delete (void const *elt)
   free ((void *) elt);
 }
 #else
-# define dispose_file_to_delete NULL
+# define dispose_file_to_delete nullptr
 #endif
 
 static void
 init_files_to_delete (void)
 {
-  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL,
+  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, nullptr, nullptr,
 					  dispose_file_to_delete, true);
 }
 
@@ -1898,7 +1899,7 @@ delete_files (void)
   const void *elt;
 
   iter = gl_list_iterator (files_to_delete);
-  while (gl_list_iterator_next (&iter, &elt, NULL))
+  while (gl_list_iterator_next (&iter, &elt, nullptr))
     {
       const struct file_to_delete *file_to_delete = elt;
 
@@ -1910,7 +1911,7 @@ delete_files (void)
 	    say ("Removing %s %s\n",
 		 S_ISLNK (mode) ? "symbolic link" : "file",
 		 quotearg (file_to_delete->name));
-	  move_file (NULL, NULL, file_to_delete->name, mode,
+	  move_file (nullptr, nullptr, file_to_delete->name, mode,
 		     file_to_delete->backup);
 	  removedirs (file_to_delete->name);
 	}
@@ -1939,7 +1940,7 @@ output_file_later (struct outfile *from, const struct stat *from_st,
   file_to_output = xmalloc (sizeof *file_to_output);
   file_to_output->from = xstrdup (from->name);
   file_to_output->from_st = *from_st;
-  file_to_output->to = to ? xstrdup (to) : NULL;
+  file_to_output->to = to ? xstrdup (to) : nullptr;
   file_to_output->mode = mode;
   file_to_output->backup = backup;
   gl_list_add_last (files_to_output, file_to_output);
@@ -1951,7 +1952,7 @@ output_file_now (struct outfile *from,
 		 const struct stat *from_st, char *to,
 		 mode_t mode, bool backup)
 {
-  if (to == NULL)
+  if (!to)
     {
       if (backup)
 	create_backup (from->name, from_st, true);
@@ -1968,7 +1969,7 @@ output_file (struct outfile *from,
 	     const struct stat *from_st, char *to,
 	     const struct stat *to_st, mode_t mode, bool backup)
 {
-  if (from == NULL)
+  if (!from)
     {
       /* Remember which files should be deleted and only delete them when the
 	 entire input to patch has been processed.  This allows to correctly
@@ -2010,7 +2011,7 @@ dispose_file_to_output (const void *elt)
 static void
 init_files_to_output (void)
 {
-  files_to_output = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL,
+  files_to_output = gl_list_create_empty (GL_LINKED_LIST, nullptr, nullptr,
 					  dispose_file_to_output, true);
 }
 
@@ -2028,7 +2029,7 @@ output_files (struct stat const *st, bool exiting)
   const void *elt;
 
   iter = gl_list_iterator (files_to_output);
-  while (gl_list_iterator_next (&iter, &elt, NULL))
+  while (gl_list_iterator_next (&iter, &elt, nullptr))
     {
       const struct file_to_output *file_to_output = elt;
       struct stat const *from_st = &file_to_output->from_st;
@@ -2069,7 +2070,7 @@ fatal_exit (int sig)
   if (sig)
     exit_with_signal (sig);
 
-  output_files (NULL, true);
+  output_files (nullptr, true);
   exit (2);
 }
 

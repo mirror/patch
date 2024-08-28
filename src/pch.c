@@ -138,7 +138,7 @@ open_patch_file (char const *filename)
 	size_t charsread;
 	int fd;
 	FILE *read_pfp = pfp;
-	fd = make_tempfile (&tmppat, 'p', NULL, O_RDWR | O_BINARY, 0);
+	fd = make_tempfile (&tmppat, 'p', nullptr, O_RDWR | O_BINARY, 0);
 	if (fd == -1)
 	  pfatal ("Can't create temporary file %s", tmppat.name);
 	pfp = fdopen (fd, "w+b");
@@ -385,7 +385,7 @@ skip_hex_digits (char const *str)
 
   for (s = str; (*s >= '0' && *s <= '9') || (*s >= 'a' && *s <= 'f'); s++)
     /* do nothing */ ;
-  return s == str ? NULL : s;
+  return s == str ? nullptr : s;
 }
 
 static char const * _GL_ATTRIBUTE_PURE
@@ -451,7 +451,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  p_name[i] = 0;
         }
     for (i = 0; i < ARRAY_SIZE (invalid_names); i++)
-	invalid_names[i] = NULL;
+      invalid_names[i] = nullptr;
     for (i = OLD; i <= NEW; i++)
       if (p_timestr[i])
 	{
@@ -569,7 +569,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  }
 	else if (strnEQ(s, "Index:", 6))
 	  {
-	    fetchname (s+6, strippath, &p_name[INDEX], (char **) 0, NULL);
+	    fetchname (s + 6, strippath, &p_name[INDEX], nullptr, nullptr);
 	    need_header = false;
 	    p_strip_trailing_cr = strip_trailing_cr;
 	  }
@@ -1203,7 +1203,7 @@ another_hunk (enum diff difftype, bool rev)
     if (p_c_function)
       {
 	free (p_c_function);
-	p_c_function = NULL;
+	p_c_function = nullptr;
       }
 
     p_max = hunkmax;			/* gets reduced when --- found */
@@ -2200,7 +2200,7 @@ pch_says_nonexistent (bool which)
 char *
 pch_name (enum nametype type)
 {
-  return type == NONE ? NULL : p_name[type];
+  return type == NONE ? nullptr : p_name[type];
 }
 
 bool pch_copy (void)
@@ -2430,7 +2430,7 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
 	   invalid commands and treats the next line as a new command, which
 	   can lead to arbitrary command execution.  */
 
-	tmpfd = make_tempfile (&tmped, 'e', NULL, O_RDWR | O_BINARY, 0);
+	tmpfd = make_tempfile (&tmped, 'e', nullptr, O_RDWR | O_BINARY, 0);
 	if (tmpfd == -1)
 	  pfatal ("Can't create temporary file %s", quotearg (tmped.name));
 	tmpfp = fdopen (tmpfd, "w+b");
@@ -2480,7 +2480,7 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
 	      quotearg (tmped.name));
 
     if (inerrno != ENOENT)
-      copy_file (input_name, &instat, output, NULL,
+      copy_file (input_name, &instat, output, nullptr,
 		 output->exists ? 0 : O_EXCL, instat.st_mode, true);
     fflush (stdout);
 
@@ -2492,9 +2492,10 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
     ed_argv[0] = editor_program;
     ed_argv[1] = "-";
     ed_argv[2] = output_name;
-    ed_argv[3] = (char  *) NULL;
+    ed_argv[3] = nullptr;
     status = execute (editor_program, editor_program, (const char * const *) ed_argv,
-                      NULL, false, false, false, false, true, false, NULL);
+                      nullptr, false, false, false, false, true, false,
+		      nullptr);
     if (status)
       fatal ("%s FAILED", editor_program);
     if (dup2 (stdin_dup, 0) == -1

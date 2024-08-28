@@ -80,7 +80,7 @@ static Hash_table *file_id_table;
 void
 init_backup_hash_table (void)
 {
-  file_id_table = hash_initialize (0, NULL, file_id_hasher,
+  file_id_table = hash_initialize (0, nullptr, file_id_hasher,
 				   file_id_comparator, free);
   if (!file_id_table)
     xalloc_die ();
@@ -101,7 +101,7 @@ __insert_file_id (struct stat const *st, enum file_id_type type)
    if (!p)
      xalloc_die ();
    if (p == next_slot)
-     next_slot = NULL;
+     next_slot = nullptr;
    p->type = type;
    return p;
 }
@@ -309,8 +309,9 @@ create_backup_copy (char const *from, char *to, const struct stat *st,
 		    bool to_dir_known_to_exist)
 {
   copy_file (from, st, &(struct outfile) { .name = to },
-	     NULL, 0, st->st_mode, to_dir_known_to_exist);
-  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from, st, st->st_mode, NULL);
+	     nullptr, 0, st->st_mode, to_dir_known_to_exist);
+  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from,
+		       st, st->st_mode, nullptr);
 }
 
 void
@@ -447,7 +448,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 
   to_errno = stat_file (to, &to_st);
   if (backup)
-    create_backup (to, to_errno ? NULL : &to_st, false);
+    create_backup (to, to_errno ? nullptr : &to_st, false);
   if (! to_errno)
     insert_file_id (&to_st, OVERWRITTEN);
 
@@ -763,7 +764,7 @@ version_controller (char const *filename, bool readonly,
 
   if ((trystat (trybuf, &cstat, dirend, "RCS/", filebase, RCSSUFFIX)
        || trystat (trybuf, &cstat, dirend, "RCS/", filebase, 0)
-       || trystat (trybuf, &cstat, dirend, filebase, RCSSUFFIX, NULL))
+       || trystat (trybuf, &cstat, dirend, filebase, RCSSUFFIX, nullptr))
       && ! (filestat
 	    && filestat->st_dev == cstat.st_dev
 	    && filestat->st_ino == cstat.st_ino))
@@ -789,8 +790,9 @@ version_controller (char const *filename, bool readonly,
 
       r = "RCS";
     }
-  else if (trystat (trybuf, &cstat, dirend, "SCCS/" SCCSPREFIX, filebase, NULL)
-	   || trystat (trybuf, &cstat, dirend, SCCSPREFIX, filebase, NULL))
+  else if (trystat (trybuf, &cstat, dirend, "SCCS/" SCCSPREFIX, filebase,
+		    nullptr)
+	   || trystat (trybuf, &cstat, dirend, SCCSPREFIX, filebase, nullptr))
     {
       if (getbuf)
 	{
@@ -817,7 +819,7 @@ version_controller (char const *filename, bool readonly,
       r = "SCCS";
     }
   else if (!readonly && filestat
-	   && trystat (trybuf, &cstat, dirend, filebase, "@@", NULL)
+	   && trystat (trybuf, &cstat, dirend, filebase, "@@", nullptr)
 	   && S_ISDIR (cstat.st_mode))
     {
       if (getbuf)
@@ -903,7 +905,7 @@ savebuf (char const *s, size_t size)
   char *rv;
 
   if (! size)
-    return NULL;
+    return nullptr;
 
   rv = malloc (size);
 
@@ -1164,7 +1166,7 @@ init_signals (void)
   signal (SIGCHLD, SIG_DFL);
 
   sigset_t initial_signal_mask;
-  if (sigprocmask (SIG_BLOCK, NULL, &initial_signal_mask) < 0)
+  if (sigprocmask (SIG_BLOCK, nullptr, &initial_signal_mask) < 0)
     return;
 
   fatal_act.sa_handler = fatal_exit;
@@ -1173,14 +1175,14 @@ init_signals (void)
     {
       struct sigaction initial_act;
       if (!sigismember (&initial_signal_mask, sigs[i])
-	  && sigaction (sigs[i], NULL, &initial_act) == 0
+	  && sigaction (sigs[i], nullptr, &initial_act) == 0
 	  && initial_act.sa_handler != SIG_IGN)
 	sigaddset (&fatal_act.sa_mask, sigs[i]);
     }
 
   for (int i = 0; i < NUM_SIGS; i++)
     if (sigismember (&fatal_act.sa_mask, sigs[i]))
-      sigaction (sigs[i], &fatal_act, NULL);
+      sigaction (sigs[i], &fatal_act, nullptr);
 }
 
 /* How to handle certain events when in a critical region. */
@@ -1190,7 +1192,7 @@ static intmax_t signal_blocking_level;
 void
 block_signals (void)
 {
-  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, NULL);
+  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
   signal_blocking_level++;
 }
 
@@ -1201,7 +1203,7 @@ unblock_signals (void)
   if (!signal_blocking_level)
     {
       int e = errno;
-      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, NULL);
+      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, nullptr);
       errno = e;
     }
 }
@@ -1213,7 +1215,7 @@ exit_with_signal (int sig)
   signal (sig, SIG_DFL);
   sigemptyset (&s);
   sigaddset (&s, sig);
-  sigprocmask (SIG_UNBLOCK, &s, NULL);
+  sigprocmask (SIG_UNBLOCK, &s, nullptr);
   raise (sig);
   exit (2);
 }
@@ -1413,12 +1415,12 @@ fail:
   free (u);
   if (endp)
     *endp = s;
-  return NULL;
+  return nullptr;
 }
 
 /* Strip up to STRIP_LEADING leading slashes.
    If STRIP_LEADING is negative, strip all leading slashes.
-   Returns a pointer into NAME on success, and NULL otherwise.
+   Returns a pointer into NAME on success, and a null pointer otherwise.
   */
 static bool
 strip_leading_slashes (char *name, int strip_leading)
@@ -1454,7 +1456,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 {
     char *name;
     const char *t;
-    char *timestr = NULL;
+    char *timestr = nullptr;
     struct timespec stamp;
 
     stamp.tv_sec = -1;
@@ -1578,7 +1580,7 @@ parse_name (char const *s, int strip_leading, char const **endp)
     {
       ret = parse_c_string (s, endp);
       if (!ret)
-        return NULL;
+        return nullptr;
     }
   else
     {
@@ -1593,7 +1595,7 @@ parse_name (char const *s, int strip_leading, char const **endp)
   if (! strip_leading_slashes (ret, strip_leading))
     {
       free (ret);
-      ret = NULL;
+      ret = nullptr;
     }
   return ret;
 }

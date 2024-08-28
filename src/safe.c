@@ -67,7 +67,7 @@ struct cached_dirfd {
   int fd;
 };
 
-static Hash_table *cached_dirfds = NULL;
+static Hash_table *cached_dirfds;
 static rlim_t min_cached_fds = 8;
 static rlim_t max_cached_fds;
 static LIST_HEAD (lru_list);
@@ -110,11 +110,9 @@ static void init_dirfd_cache (void)
   else
     max_cached_fds = min_cached_fds;
 
-  cached_dirfds = hash_initialize (min_cached_fds,
-				   NULL,
+  cached_dirfds = hash_initialize (min_cached_fds, nullptr,
 				   hash_cached_dirfd,
-				   compare_cached_dirfds,
-				   NULL);
+				   compare_cached_dirfds, nullptr);
 
   if (!cached_dirfds)
     xalloc_die ();
@@ -122,7 +120,7 @@ static void init_dirfd_cache (void)
 
 static struct cached_dirfd *lookup_cached_dirfd (struct cached_dirfd *dir, const char *name)
 {
-  struct cached_dirfd *entry = NULL;
+  struct cached_dirfd *entry = nullptr;
 
   if (cached_dirfds)
     {
@@ -154,7 +152,7 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
 
 static void insert_cached_dirfd (struct cached_dirfd *entry, int keepfd)
 {
-  if (cached_dirfds == NULL)
+  if (!cached_dirfds)
     init_dirfd_cache ();
 
   if (max_cached_fds != RLIM_INFINITY)
@@ -247,7 +245,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
 
   /* Don't cache errors. */
   if (fd < 0)
-    return NULL;
+    return nullptr;
 
   /* Store new cache entry */
   entry = new_cached_dirfd (dir, name, fd);
@@ -310,7 +308,7 @@ static struct symlink *read_symlink(int dirfd, const char *name)
       || ! S_ISLNK (st.st_mode))
     {
       errno = saved_errno;
-      return NULL;
+      return nullptr;
     }
   symlink = xmalloc (sizeof (*symlink) + st.st_size + 1);
   buffer = (char *)(symlink + 1);
@@ -364,7 +362,7 @@ fail_exdev:
   errno = EXDEV;
 fail:
   free (symlink);
-  return NULL;
+  return nullptr;
 }
 
 /* Resolve the next path component in PATH inside DIR.  If it is a symlink,
@@ -442,9 +440,9 @@ static int traverse_another_path (const char **pathname, int keepfd)
   unsigned int misses = dirfd_cache_misses;
   const char *path = *pathname, *last;
   struct cached_dirfd *dir = &cwd;
-  struct symlink *stack = NULL;
+  struct symlink *stack = nullptr;
   unsigned int steps = count_path_components (path);
-  struct cached_dirfd *traversed_symlink = NULL;
+  struct cached_dirfd *traversed_symlink = nullptr;
 
   INIT_LIST_HEAD (&cwd.children);
 
@@ -480,7 +478,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
   while (stack || path != last)
     {
       struct cached_dirfd *entry;
-      struct symlink *symlink = NULL;
+      struct symlink *symlink = nullptr;
       const char *prev = path;
 
       entry = traverse_next (dir, stack ? &stack->path : &path, keepfd, &symlink);
@@ -532,7 +530,7 @@ static int traverse_another_path (const char **pathname, int keepfd)
 	    }
 	  else
 	    free_cached_dirfd (traversed_symlink);
-	  traversed_symlink = NULL;
+	  traversed_symlink = nullptr;
 	}
     }
   *pathname = last;

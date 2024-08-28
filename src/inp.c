@@ -368,7 +368,7 @@ plan_b (char const *filename)
     }
   else
     {
-      tifd = make_tempfile (&tmpin, 'i', NULL, O_RDWR | O_BINARY,
+      tifd = make_tempfile (&tmpin, 'i', nullptr, O_RDWR | O_BINARY,
 			    S_IRUSR | S_IWUSR);
       if (tifd == -1)
 	pfatal ("Can't create temporary file %s", tmpin.name);
