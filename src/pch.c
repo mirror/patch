@@ -1162,9 +1162,13 @@ scan_linenum (char *s0, lin *linenum)
 	   format_linenum (numbuf, p_input_line), patchbuf);
 
   if (overflow)
-    fatal ("line number %.*s is too large at line %s: %s",
-	   (int) (s - s0), s0, format_linenum (numbuf, p_input_line),
-	   patchbuf);
+    {
+      int full_s0len = s - s0;
+      int s0len = ckd_add (&s0len, full_s0len, 0) ? -1 : s0len;
+      fatal ("line number %.*s is too large at line %s: %s",
+	     s0len, s0, format_linenum (numbuf, p_input_line),
+	     patchbuf);
+    }
 
   *linenum = n;
   return s;

@@ -471,7 +471,11 @@ static int traverse_another_path (const char **pathname, int keepfd)
     return AT_FDCWD;
 
   if (debug & 32)
-    printf ("Resolving path \"%.*s\"", (int) (last - path), path);
+    {
+      idx_t full_pathlen = last - path;
+      int pathlen = ckd_sub (&pathlen, full_pathlen, 0) ? -1 : pathlen;
+      printf ("Resolving path \"%.*s\"", pathlen, path);
+    }
 
   while (stack || path != last)
     {

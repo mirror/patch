@@ -141,6 +141,7 @@ extern char *revision;			/* prerequisite revision, if any */
 void fatal_exit (int) __attribute__ ((noreturn));
 
 #include <errno.h>
+#include <stdckdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

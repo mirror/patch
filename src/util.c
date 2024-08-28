@@ -30,7 +30,6 @@
 
 #include <signal.h>
 #include <stdarg.h>
-#include <stdckdint.h>
 
 #include <full-write.h>
 #include <tempname.h>
