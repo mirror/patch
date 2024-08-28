@@ -130,8 +130,8 @@ static enum { RO_IGNORE, RO_WARN, RO_FAIL } read_only_behavior = RO_WARN;
 static bool reverse_flag_specified;
 
 static char const *do_defines; /* symbol to patch using ifdef, ifndef, etc. */
-static char const if_defined[] = "\n#ifdef %s\n";
-static char const not_defined[] = "\n#ifndef %s\n";
+static char const if_defined[] = "\n#ifdef ";
+static char const not_defined[] = "\n#ifndef ";
 static char const else_defined[] = "\n#else\n";
 static char const end_defined[] = "\n#endif\n";
 
@@ -1320,14 +1320,25 @@ print_unidiff_range (FILE *fp, lin start, lin count)
     }
 }
 
+/* Output to FP a line containing the concatenation of the remaining
+   string arguments.  A null pointer terminates the string args.  */
+static void
+putline (FILE *fp, ...)
+{
+  va_list ap;
+  va_start (ap, fp);
+  for (char *arg; (arg = va_arg (ap, char *)); )
+    fputs (arg, fp);
+  va_end (ap);
+  putc ('\n', fp);
+}
+
 static void
 print_header_line (FILE *fp, const char *tag, bool reverse)
 {
   const char *name = pch_name (reverse);
   const char *timestr = pch_timestr (reverse);
-
-  fprintf (fp, "%s %s%s\n", tag, name ? name : "/dev/null",
-	   timestr ? timestr : "");
+  putline (fp, tag, name ? name : "/dev/null", timestr, nullptr);
 }
 
 /* Produce unified reject files */
@@ -1343,17 +1354,17 @@ abort_hunk_unified (bool header, bool reverse)
   if (header)
     {
       if (pch_name (INDEX))
-	fprintf(rejfp, "Index: %s\n", pch_name (INDEX));
-      print_header_line (rejfp, "---", reverse);
-      print_header_line (rejfp, "+++", ! reverse);
+	putline (rejfp, "Index: ", pch_name (INDEX), nullptr);
+      print_header_line (rejfp, "--- ", reverse);
+      print_header_line (rejfp, "+++ ", ! reverse);
     }
 
   /* Add out_offset to guess the same as the previous successful hunk.  */
-  fprintf (rejfp, "@@ -");
+  fputs ("@@ -", rejfp);
   print_unidiff_range (rejfp, pch_first () + out_offset, lastline);
-  fprintf (rejfp, " +");
+  fputs (" +", rejfp);
   print_unidiff_range (rejfp, pch_newfirst () + out_offset, pch_repl_lines ());
-  fprintf (rejfp, " @@%s\n", c_function ? c_function : "");
+  putline (rejfp, " @@", c_function, nullptr);
 
   while (pch_char (new) == '=' || pch_char (new) == '\n')
     new++;
@@ -1411,11 +1422,12 @@ abort_hunk_context (bool header, bool reverse)
     if (header)
       {
 	if (pch_name (INDEX))
-	  fprintf(rejfp, "Index: %s\n", pch_name (INDEX));
-	print_header_line (rejfp, "***", reverse);
-	print_header_line (rejfp, "---", ! reverse);
+	  putline (rejfp, "Index: ", pch_name (INDEX), nullptr);
+	print_header_line (rejfp, "*** ", reverse);
+	print_header_line (rejfp, "--- ", ! reverse);
       }
-    fprintf(rejfp, "***************%s\n", c_function ? c_function : "");
+    putline (rejfp, "***************", c_function, nullptr);
+
     for (i=0; i<=pat_end; i++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
 	char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -1494,8 +1506,8 @@ apply_hunk (struct outstate *outstate, lin where)
 		return false;
 	    if (R_do_defines) {
 		if (def_state == OUTSIDE) {
-		    fprintf (fp, outstate->after_newline + not_defined,
-			     R_do_defines);
+		    putline (fp, outstate->after_newline + not_defined,
+			     R_do_defines, nullptr);
 		    def_state = IN_IFNDEF;
 		}
 		else if (def_state == IN_IFDEF) {
@@ -1522,8 +1534,8 @@ apply_hunk (struct outstate *outstate, lin where)
 		    def_state = IN_ELSE;
 		}
 		else if (def_state == OUTSIDE) {
-		    fprintf (fp, outstate->after_newline + if_defined,
-			     R_do_defines);
+		    putline (fp, outstate->after_newline + if_defined,
+			     R_do_defines, nullptr);
 		    def_state = IN_IFDEF;
 		}
 		if (ferror (fp))
@@ -1541,7 +1553,7 @@ apply_hunk (struct outstate *outstate, lin where)
 		return false;
 	    assert (outstate->after_newline);
 	    if (R_do_defines) {
-	       fprintf (fp, 1 + not_defined, R_do_defines);
+	       putline (fp, 1 + not_defined, R_do_defines, nullptr);
 	       if (ferror (fp))
 		write_fatal ();
 	       def_state = IN_IFNDEF;
@@ -1590,8 +1602,8 @@ apply_hunk (struct outstate *outstate, lin where)
 	    return false;
 	if (R_do_defines) {
 	    if (def_state == OUTSIDE) {
-		fprintf (fp, outstate->after_newline + if_defined,
-			 R_do_defines);
+		putline (fp, outstate->after_newline + if_defined,
+			 R_do_defines, nullptr);
 		def_state = IN_IFDEF;
 	    }
 	    else if (def_state == IN_IFNDEF) {
