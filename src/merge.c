@@ -255,8 +255,10 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 		    format_linenum (numbuf0, pch_first()),
 		    format_linenum (numbuf1, pch_ptrn_lines()));
 	  else if (n <= firstold)
-	    fprintf (stderr, " |%.*s",
-		     (int) pch_line_len (n), pfetch (n));
+	    {
+	      fputs (" |", stderr);
+	      fwrite (pfetch (n), 1, pch_line_len (n), stderr);
+	    }
 	  else if (n == in - 1)
 	    fprintf(stderr, " %s,%s\n",
 		    format_linenum (numbuf0, where),
@@ -267,8 +269,8 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 	      const char *line;
 
 	      line = ifetch (where + n - in, false, &size);
-	      fprintf (stderr, " |%.*s",
-		       (int) size, line);
+	      fputs (" |", stderr);
+	      fwrite (line, 1, size, stderr);
 	    }
 	  else
 	    fputc('\n', stderr);
