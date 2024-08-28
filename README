@@ -41,12 +41,15 @@ too busy working on other things, like Perl.  He has graciously agreed
 to let GNU `patch' be distributed under the terms of the GNU General
 Public License.
 
+For any copyright year range specified as YYYY-ZZZZ in this package
+note that the range specifies every single year in that closed interval.
+
+Please see the file COPYING for copying conditions.
+
 ------
 
-Copyright (C) 1984, 1985, 1986, 1987, 1988 Larry Wall
-
-Copyright (C) 1989-1993, 1997, 1999, 2002, 2009, 2011-2012 Free Software
-Foundation, Inc.
+Copyright 1989-2024 Free Software Foundation, Inc.
+Copyright 1984-1988 Larry Wall
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

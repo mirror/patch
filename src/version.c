@@ -4,8 +4,8 @@
 #include <version.h>
 
 static char const copyright_string[] = "\
-Copyright (C) 2003, 2009-2012 Free Software Foundation, Inc.\n\
-Copyright (C) 1988 Larry Wall";
+Copyright 1989-2024 Free Software Foundation, Inc.\n\
+Copyright 1984-1988 Larry Wall";
 
 static char const free_software_msgid[] = "\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\

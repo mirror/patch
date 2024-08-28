@@ -1201,16 +1201,9 @@ Computing how to merge a hunk is significantly harder than using the standard
 fuzzy algorithm.  Bigger hunks, more context, a bigger offset from the
 original location, and a worse match all slow the algorithm down.
 .SH COPYING
-Copyright
-.ie t \(co
-.el (C)
-1984, 1985, 1986, 1988 Larry Wall.
+Copyright \(co 1989\(en2024 Free Software Foundation, Inc.
 .br
-Copyright
-.ie t \(co
-.el (C)
-1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2009 Free Software Foundation, Inc.
+Copyright \(co 1984\(en1986, 1988 Larry Wall.
 .PP
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice

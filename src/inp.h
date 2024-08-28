@@ -1,8 +1,7 @@
 /* inputting files to be patched */
 
-/* Copyright (C) 1986, 1988 Larry Wall
-   Copyright (C) 1991-1993, 1997-1999, 2002-2003, 2009-2012 Free Software
-   Foundation, Inc.
+/* Copyright 1991-2024 Free Software Foundation, Inc.
+   Copyright 1986, 1988 Larry Wall
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

@@ -1,5 +1,5 @@
 # Library for simple test scripts
-# Copyright (C) 2009, 2011-2012 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # in any medium, are permitted without royalty provided the copyright
