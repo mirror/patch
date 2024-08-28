@@ -293,7 +293,11 @@ main (int argc, char **argv)
 	  else if (pch_copy () || pch_rename ())
 	    outname = pch_name (! reverse_flag);
 	  else
-	    outname = inname;
+	    {
+	      if (strchr (inname, '\n'))
+		fatal ("input/output file name contains newline");
+	      outname = inname;
+	    }
 	}
 
       if (pch_git_diff () && ! skip_rest_of_patch)
@@ -916,6 +920,17 @@ usage (FILE *stream, int status)
   exit (status);
 }
 
+/* Process a backup file name option argument of type OPTION_TYPE.  */
+static char const *
+backup_file_name_option (char const *option_type)
+{
+  if (!*optarg)
+    fatal ("backup %s is empty", option_type);
+  if (strchr (optarg, '\n'))
+    fatal ("backup %s contains newline", option_type);
+  return xstrdup (optarg);
+}
+
 /* Process switches and filenames.  */
 
 static void
@@ -950,9 +965,7 @@ get_some_switches (void)
 		  }
 		break;
 	    case 'B':
-		if (!*optarg)
-		  fatal ("backup prefix is empty");
-		origprae = xstrdup (optarg);
+		origprae = backup_file_name_option ("prefix");
 		break;
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
@@ -1008,6 +1021,8 @@ get_some_switches (void)
 		noreverse_flag = true;
 		break;
 	    case 'o':
+		if (strchr (optarg, '\n'))
+		  fatal ("output file name contains newline");
 		outfile = xstrdup (optarg);
 		break;
 	    case 'p':
@@ -1046,15 +1061,11 @@ get_some_switches (void)
 		break;
 #endif
 	    case 'Y':
-		if (!*optarg)
-		  fatal ("backup basename prefix is empty");
-		origbase = xstrdup (optarg);
+		origbase = backup_file_name_option ("basename prefix");
 		break;
 	    case 'z':
 	    case_z:
-		if (!*optarg)
-		  fatal ("backup suffix is empty");
-		origsuff = xstrdup (optarg);
+		origsuff = backup_file_name_option ("suffix");
 		break;
 	    case 'Z':
 		set_utc = true;

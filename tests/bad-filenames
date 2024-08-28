@@ -126,6 +126,26 @@ check 'patch -f -p1 --dry-run < d.diff || echo status: $?' <<EOF
 checking file g
 EOF
 
+nl='
+'
+nlname="a${nl}b"
+quoted_nlname='"a\nb"'
+
+check 'emit_patch "$quoted_nlname" | patch; echo status: $?' <<EOF
+$PATCH: **** quoted string "a\\n..." contains newline
+status: 2
+EOF
+
+check 'emit_patch foo | patch "$nlname"; echo status: $?' <<EOF
+$PATCH: **** input/output file name contains newline
+status: 2
+EOF
+
+check 'emit_patch foo | patch -o "$nlname"; echo status: $?' <<EOF
+$PATCH: **** output file name contains newline
+status: 2
+EOF
+
 mkdir d
 cd d
 cat > d.diff <<EOF

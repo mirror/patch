@@ -1323,10 +1323,10 @@ init_time (void)
 }
 
 static char *
-parse_c_string (char const *s, char const **endp)
+parse_c_string (char const *str, char const **endp)
 {
   char *u, *v;
-
+  char const *s = str;
   assert (*s == '"');
   s++;
   u = v = xmalloc (strlen (s));
@@ -1385,6 +1385,11 @@ parse_c_string (char const *s, char const **endp)
 	    }
 	  default:
 	    goto fail;
+	}
+      if (c == '\n')
+	{
+	  int qlen = ckd_add (&qlen, s - str, 0) ? -1 : qlen;
+	  fatal ("quoted string %.*s...\" contains newline", qlen, str);
 	}
       *v++ = c;
     }
@@ -1585,6 +1590,7 @@ Fseek (FILE *stream, file_offset offset, int ptrname)
     pfatal ("fseek");
 }
 
+/* Name of default temporary directory; must not contain \n.  */
 #ifndef TMPDIR
 #define TMPDIR "/tmp"
 #endif
@@ -1645,18 +1651,30 @@ make_tempfile (struct outfile *out, char letter, char const *real_name,
     }
   else
     {
-      char const *tmpdir;
+      static char const *tmpdir;
+      static idx_t tmpdirlen;
 
-      tmpdir = getenv ("TMPDIR");  /* Unix tradition */
-      if (! tmpdir)
-	tmpdir = getenv ("TMP");  /* DOS tradition */
-      if (! tmpdir)
-	tmpdir = getenv ("TEMP");  /* another DOS tradition */
-      if (! tmpdir)
-	tmpdir = TMPDIR;
+      if (!tmpdir)
+	{
+	  tmpdir = TMPDIR;
 
-      template = xmalloc (strlen (tmpdir) + 10);
-      sprintf (template, "%s/p%cXXXXXX", tmpdir, letter);
+	  /* TMPDIR is the Unix tradition; TMP and TEMP are DOS traditions.  */
+	  static char const envnames[][sizeof "TMPDIR"]
+	    = { "TMPDIR", "TMP", "TEMP" };
+	  for (int i = 0; i < ARRAY_SIZE (envnames); i++)
+	    {
+	      char const *val = getenv (envnames[i]);
+	      if (val && ! strchr (val, '\n'))
+		{
+		  tmpdir = val;
+		  break;
+		}
+	    }
+	  tmpdirlen = strlen (tmpdir);
+	}
+
+      template = ximalloc (tmpdirlen + 10);
+      sprintf (mempcpy (template, tmpdir, tmpdirlen), "/p%cXXXXXX", letter);
     }
   fd = try_tempname (template, 0, &args, try_safe_open);
   out->name = template;
