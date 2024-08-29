@@ -84,7 +84,7 @@ static size_t pget_line (size_t, int, bool, bool);
 static size_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
-_Noreturn static void malformed (void);
+static void malformed (void);
 static void next_intuit_at (file_offset, lin);
 static void skip_to (file_offset, lin);
 static char get_ed_command_letter (char const *);
