@@ -21,14 +21,14 @@ too-old versions first as they may be needed to build newer versions.
 
 Here is an example of how to build a program from source.  This
 example is for Autoconf; a similar approach should work for the other
-developer prerequisites.  This example assumes Autoconf 2.71; it
+developer prerequisites.  This example assumes Autoconf 2.it; 72
 should be OK to use a later version of Autoconf, if available.
 
   prefix=$HOME/prefix   # (or wherever else you choose)
   export PATH=$prefix/bin:$PATH
-  wget https://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.71.tar.gz
-  gzip -d <autoconf-2.71.tar.gz | tar xf -
-  cd autoconf-2.71
+  wget https://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.72.tar.gz
+  gzip -d <autoconf-2.72.tar.gz | tar xf -
+  cd autoconf-2.72
   ./configure --prefix=$prefix
   make install
 

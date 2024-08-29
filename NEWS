@@ -1,3 +1,16 @@
+Unreleased changes:
+
+* The --follow-symlinks option now applies to output files as well as input.
+* 'patch' now supports file timestamps after 2038 even on traditional
+  GNU/Linux platforms where time_t defaults to 32 bits.
+* 'patch' no longer creates files with names containing newlines,
+  as encouraged by POSIX.1-2024.
+* --enable-gcc-warnings no longer uses expensive static checking.
+  Use --enable-gcc-warnings=expensive if you still want it.
+* Fix undefined or ill-defined behavior in unusual cases,
+  such as signals arriving at inopportune moments.
+* Port to current GCC, Autoconf, Gnulib, etc.
+
 Changes in version 2.7.6:
 
 * Files specified on the command line are no longer verified to be inside the
