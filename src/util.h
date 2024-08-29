@@ -64,6 +64,7 @@ void read_fatal (void) __attribute__ ((noreturn));
 void remove_prefix (char *, size_t);
 void removedirs (char const *);
 void write_fatal (void) __attribute__ ((noreturn));
+void putline (FILE *, ...);
 void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);
 void set_queued_output (struct stat const *, bool);

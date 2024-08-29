@@ -1321,19 +1321,6 @@ print_unidiff_range (FILE *fp, lin start, lin count)
     }
 }
 
-/* Output to FP a line containing the concatenation of the remaining
-   string arguments.  A null pointer terminates the string args.  */
-static void
-putline (FILE *fp, ...)
-{
-  va_list ap;
-  va_start (ap, fp);
-  for (char *arg; (arg = va_arg (ap, char *)); )
-    fputs (arg, fp);
-  va_end (ap);
-  putc ('\n', fp);
-}
-
 static void
 print_header_line (FILE *fp, const char *tag, bool reverse)
 {

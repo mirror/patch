@@ -992,6 +992,19 @@ write_fatal (void)
   pfatal ("write error");
 }
 
+/* Output to FP a line containing the concatenation of the remaining
+   string arguments.  A null pointer terminates the string args.  */
+void
+putline (FILE *fp, ...)
+{
+  va_list ap;
+  va_start (ap, fp);
+  for (char *arg; (arg = va_arg (ap, char *)); )
+    fputs (arg, fp);
+  va_end (ap);
+  putc ('\n', fp);
+}
+
 /* Say something from patch, something from the system, then silence . . . */
 
 void
@@ -1004,9 +1017,7 @@ pfatal (char const *format, ...)
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
-  fflush (stderr); /* perror bypasses stdio on some hosts.  */
-  errno = errnum;
-  perror (" ");
+  putline (stderr, " : ", strerror (errnum), nullptr);
   fflush (stderr);
   fatal_exit (0);
 }

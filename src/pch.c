@@ -297,10 +297,11 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	    inerrno = stat_file (inname, &instat);
 	    if (inerrno)
 	      {
-		perror (inname);
+		fputs (inname, stderr);
+		putline (stderr, ": ", strerror (inerrno), nullptr);
 		fflush (stderr);
 		free (inname);
-		inname = 0;
+		inname = nullptr;
 	      }
 	    else
 	      invc = -1;
