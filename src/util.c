@@ -154,7 +154,7 @@ has_queued_output (struct stat const *st)
   return p && p->queued_output;
 }
 
-static bool _GL_ATTRIBUTE_PURE
+static bool ATTRIBUTE_PURE
 contains_slash (const char *s)
 {
   for (; *s; s++)
@@ -165,7 +165,7 @@ contains_slash (const char *s)
 
 #if USE_XATTR
 
-static void _GL_ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
+static void ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
 copy_attr_error (MAYBE_UNUSED struct error_context *ctx, char const *fmt, ...)
 {
   int err = errno;
@@ -1026,7 +1026,7 @@ pfatal (char const *format, ...)
 /* Tell the user something.  */
 
 static void
-_GL_ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 1, 0))
+ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 1, 0))
 vsay (char const *format, va_list args)
 {
   vfprintf (stdout, format, args);

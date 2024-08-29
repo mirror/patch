@@ -70,7 +70,7 @@ enum file_id_type lookup_file_id (struct stat const *);
 void set_queued_output (struct stat const *, bool);
 bool has_queued_output (struct stat const *);
 int stat_file (char const *, struct stat *);
-bool filename_is_safe (char const *) _GL_ATTRIBUTE_PURE;
+bool filename_is_safe (char const *) ATTRIBUTE_PURE;
 bool cwd_is_root (char const *);
 
 enum file_attributes {

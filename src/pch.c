@@ -319,7 +319,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
     return true;
 }
 
-static mode_t _GL_ATTRIBUTE_PURE
+static mode_t ATTRIBUTE_PURE
 fetchmode (char const *str)
 {
    const char *s;
@@ -359,7 +359,7 @@ get_sha1(char **sha1, char const *start, char const *end)
   (*sha1)[len] = 0;
 }
 
-static int _GL_ATTRIBUTE_PURE
+static int ATTRIBUTE_PURE
 sha1_says_nonexistent(char const *sha1)
 {
   char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
@@ -379,7 +379,7 @@ sha1_says_nonexistent(char const *sha1)
   return ! *s;
 }
 
-static char const * _GL_ATTRIBUTE_PURE
+static char const * ATTRIBUTE_PURE
 skip_hex_digits (char const *str)
 {
   char const *s;
@@ -389,7 +389,7 @@ skip_hex_digits (char const *str)
   return s == str ? nullptr : s;
 }
 
-static char const * _GL_ATTRIBUTE_PURE
+static char const * ATTRIBUTE_PURE
 skip_spaces (char const *str)
 {
   while (isspace ((unsigned char) *str))
@@ -2349,7 +2349,7 @@ pch_mode (bool which)
    This accepts just a subset of the valid commands, but it's
    good enough in practice.  */
 
-static char _GL_ATTRIBUTE_PURE
+static char ATTRIBUTE_PURE
 get_ed_command_letter (char const *line)
 {
   char const *p = line;

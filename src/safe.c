@@ -255,7 +255,7 @@ out:
   return entry;
 }
 
-_GL_ATTRIBUTE_PURE
+ATTRIBUTE_PURE
 static unsigned int count_path_components (const char *path)
 {
   unsigned int components;
