@@ -28,14 +28,12 @@ enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
 extern enum backup_type backup_type;
 
-bool ok_to_reverse (char const *, ...) __attribute__ ((format (printf, 1, 2)));
-void ask (char const *, ...) __attribute__ ((format (printf, 1, 2)));
-void say (char const *, ...) __attribute__ ((format (printf, 1, 2)));
+bool ok_to_reverse (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
+void ask (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
+void say (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
-void fatal (char const *, ...)
-	__attribute__ ((noreturn, format (printf, 1, 2)));
-void pfatal (char const *, ...)
-	__attribute__ ((noreturn, format (printf, 1, 2)));
+_Noreturn void fatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
+_Noreturn void pfatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
 void fetchname (char const *, int, char **, char **, struct timespec *);
 char *parse_name (char const *, int, char const **);
@@ -50,20 +48,20 @@ void Fseek (FILE *, file_offset, int);
 void copy_file (char const *, struct stat const *,
 		struct outfile *, struct stat *, int, mode_t, bool);
 void append_to_file (char const *, char const *);
-void exit_with_signal (int) __attribute__ ((noreturn));
+_Noreturn void exit_with_signal (int);
 void init_signals (void);
 void block_signals (void);
 void unblock_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
-void xalloc_die (void) __attribute__ ((noreturn));
+_Noreturn void xalloc_die (void);
 void create_backup (char const *, const struct stat *, bool);
 void move_file (struct outfile *, struct stat const *,
 		char *, mode_t, bool);
-void read_fatal (void) __attribute__ ((noreturn));
+_Noreturn void read_fatal (void);
 void remove_prefix (char *, size_t);
 void removedirs (char const *);
-void write_fatal (void) __attribute__ ((noreturn));
+_Noreturn void write_fatal (void);
 void putline (FILE *, ...);
 void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);

@@ -97,7 +97,7 @@ static FILE *open_outfile (char *);
 static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
 static void remove_if_needed (struct outfile *);
-static void usage (FILE *, int) __attribute__((noreturn));
+_Noreturn static void usage (FILE *, int);
 
 static void abort_hunk (char const *, bool, bool);
 static void abort_hunk_context (bool, bool);
@@ -1281,7 +1281,7 @@ locate_hunk (lin fuzz)
     return 0;
 }
 
-static void __attribute__ ((noreturn))
+_Noreturn static void
 mangled_patch (lin old, lin new)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];

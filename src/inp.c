@@ -43,8 +43,8 @@ lin input_lines;			/* how long is input file in lines */
 static bool plan_a (char const *);	/* yield false if memory runs out */
 static void plan_b (char const *);
 static void report_revision (bool);
-static void too_many_lines (char const *) __attribute__((noreturn));
-static void lines_too_long (char const *) __attribute__((noreturn));
+_Noreturn static void too_many_lines (char const *);
+_Noreturn static void lines_too_long (char const *);
 
 /* New patch--prepare to edit another file. */
 
