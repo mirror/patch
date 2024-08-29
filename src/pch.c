@@ -325,7 +325,7 @@ fetchmode (char const *str)
    const char *s;
    mode_t mode;
 
-   while (isspace ((unsigned char) *str))
+   while (c_isspace (*str))
      str++;
 
    for (s = str, mode = 0; s - str < 6; s++)
@@ -392,7 +392,7 @@ skip_hex_digits (char const *str)
 static char const * ATTRIBUTE_PURE
 skip_spaces (char const *str)
 {
-  while (isspace ((unsigned char) *str))
+  while (c_isspace (*str))
     str++;
   return str;
 }
@@ -523,21 +523,21 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	}
 	strip_trailing_cr
 	  = 2 <= chars_read && patchbuf[chars_read - 2] == '\r';
-	for (s = patchbuf; *s == ' ' || *s == '\t' || *s == 'X'; s++) {
+	for (s = patchbuf; c_isblank (*s) || *s == 'X'; s++) {
 	    if (*s == '\t')
 		indent = (indent + 8) & ~7;
 	    else
 		indent++;
 	}
-	if (ISDIGIT (*s))
+	if (c_isdigit (*s))
 	  {
-	    for (t = s + 1; ISDIGIT (*t) || *t == ',';  t++)
+	    for (t = s + 1; c_isdigit (*t) || *t == ',';  t++)
 	      /* do nothing */ ;
 	    if (*t == 'd' || *t == 'c' || *t == 'a')
 	      {
-		for (t++;  ISDIGIT (*t) || *t == ',';  t++)
+		for (t++; c_isdigit (*t) || *t == ','; t++)
 		  /* do nothing */ ;
-		for (; *t == ' ' || *t == '\t'; t++)
+		for (; c_isblank (*t); t++)
 		  /* do nothing */ ;
 		if (*t == '\r')
 		  t++;
@@ -576,14 +576,14 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  }
 	else if (strnEQ(s, "Prereq:", 7))
 	  {
-	    for (t = s + 7;  isspace ((unsigned char) *t);  t++)
+	    for (t = s + 7; c_isspace (*t); t++)
 	      /* do nothing */ ;
 	    revision = t;
 	    for (t = revision;  *t;  t++)
-	      if (isspace ((unsigned char) *t))
+	      if (c_isspace (*t))
 		{
 		  char const *u;
-		  for (u = t + 1;  isspace ((unsigned char) *u);  u++)
+		  for (u = t + 1; c_isspace (*u); u++)
 		    /* do nothing */ ;
 		  if (*u)
 		    {
@@ -621,7 +621,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		p_name[i] = 0;
 	      }
 	    if (! ((p_name[OLD] = parse_name (s + 11, strippath, &u))
-		   && isspace ((unsigned char) *u)
+		   && c_isspace (*u)
 		   && (p_name[NEW] = parse_name (u, strippath, &u))
 		   && (u = skip_spaces (u), ! *u)))
 	      for (i = OLD; i <= NEW; i++)
@@ -638,7 +638,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    if ((u = skip_hex_digits (s + 6))
 		&& u[0] == '.' && u[1] == '.'
 		&& (v = skip_hex_digits (u + 2))
-		&& (! *v || isspace ((unsigned char) *v)))
+		&& (! *v || c_isspace (*v)))
 	      {
 		get_sha1(&p_sha1[OLD], s + 6, u);
 		get_sha1(&p_sha1[NEW], u + 2, v);
@@ -751,13 +751,13 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    p_timestr[NEW] = t;
 
 	    s += 4;
-	    if (s[0] == '0' && !ISDIGIT (s[1]))
+	    if (s[0] == '0' && !c_isdigit (s[1]))
 	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;
 	    while (*s != ' ' && *s != '\n')
 	      s++;
 	    while (*s == ' ')
 	      s++;
-	    if (s[0] == '+' && s[1] == '0' && !ISDIGIT (s[2]))
+	    if (s[0] == '+' && s[1] == '0' && !c_isdigit (s[2]))
 	      p_says_nonexistent[NEW] = 1 + ! p_timestamp[NEW].tv_sec;
 	    p_indent = indent;
 	    p_start = this_line;
@@ -780,7 +780,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    && stars_last_line && indent_last_line == indent
 	    && strnEQ (s, "*** ", 4)) {
 	    s += 4;
-	    if (s[0] == '0' && !ISDIGIT (s[1]))
+	    if (s[0] == '0' && !c_isdigit (s[1]))
 	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;
 	    /* if this is a new context diff the character just before */
 	    /* the newline is a '*'. */
@@ -1151,7 +1151,7 @@ scan_linenum (char *s0, lin *linenum)
   bool overflow = false;
   char numbuf[LINENUM_LENGTH_BOUND + 1];
 
-  for (s = s0;  ISDIGIT (*s);  s++)
+  for (s = s0; c_isdigit (*s); s++)
     {
       lin new_n = 10 * n + (*s - '0');
       overflow |= new_n / 10 != n;
@@ -1305,13 +1305,13 @@ another_hunk (enum diff difftype, bool rev)
 		    p_end--;
 		    return -1;
 		}
-		for (s = patchbuf;  *s && !ISDIGIT (*s);  s++)
+		for (s = patchbuf; *s && !c_isdigit (*s); s++)
 		  /* do nothing */ ;
 		if (strnEQ(s,"0,0",3))
 		    remove_prefix (s, 2);
 		s = scan_linenum (s, &p_first);
 		if (*s == ',') {
-		    while (*s && !ISDIGIT (*s))
+		    while (*s && !c_isdigit (*s))
 		      s++;
 		    scan_linenum (s, &p_ptrn_lines);
 		    p_ptrn_lines += 1 - p_first;
@@ -1384,7 +1384,7 @@ another_hunk (enum diff difftype, bool rev)
 		    return -1;
 		  }
 		p_Char[p_end] = '=';
-		for (s = patchbuf;  *s && ! ISDIGIT (*s);  s++)
+		for (s = patchbuf; *s && !c_isdigit (*s); s++)
 		  /* do nothing */ ;
 		s = scan_linenum (s, &p_newfirst);
 		if (*s == ',')
@@ -1394,7 +1394,8 @@ another_hunk (enum diff difftype, bool rev)
 			if (!*++s)
 			  malformed ();
 		      }
-		    while (! ISDIGIT (*s));
+		    while (!c_isdigit (*s));
+
 		    scan_linenum (s, &p_repl_lines);
 		    p_repl_lines += 1 - p_newfirst;
 		    if (p_repl_lines < 0)
@@ -1430,7 +1431,7 @@ another_hunk (enum diff difftype, bool rev)
 		    strcpy (s, " \n");
 		    chars_read = 2;
 		}
-		if (*s == ' ' || *s == '\t') {
+		if (c_isblank (*s)) {
 		    s++;
 		    chars_read--;
 		} else if (repl_beginning && repl_could_be_missing) {
@@ -1498,7 +1499,7 @@ another_hunk (enum diff difftype, bool rev)
 		    strcpy (s, "\n");
 		    chars_read = 2;
 		}
-		if (*s == ' ' || *s == '\t') {
+		if (c_isblank (*s)) {
 		    s++;
 		    chars_read--;
 		} else if (repl_beginning && repl_could_be_missing) {
@@ -1806,10 +1807,11 @@ another_hunk (enum diff difftype, bool rev)
 
 	p_prefix_context = p_suffix_context = 0;
 	chars_read = get_line ();
-	if (chars_read == (size_t) -1 || !chars_read || !ISDIGIT (*patchbuf)) {
+	if (chars_read == (size_t) -1 || !chars_read || !c_isdigit (*patchbuf))
+	  {
 	    next_intuit_at(line_beginning,p_input_line);
 	    return chars_read == (size_t) -1 ? -1 : 0;
-	}
+	  }
 	s = scan_linenum (patchbuf, &p_first);
 	if (*s == ',') {
 	    s = scan_linenum (s + 1, &p_ptrn_lines);
@@ -1863,8 +1865,7 @@ another_hunk (enum diff difftype, bool rev)
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
-	    if (patchbuf[0] != '<'
-		|| (patchbuf[1] != ' ' && patchbuf[1] != '\t'))
+	    if (! (patchbuf[0] == '<' && c_isblank (patchbuf[1])))
 	      fatal ("'<' followed by space or tab expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_ptrn_lines && incomplete_line ());
@@ -1909,8 +1910,7 @@ another_hunk (enum diff difftype, bool rev)
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %s",
 		     format_linenum (numbuf0, p_input_line));
-	    if (patchbuf[0] != '>'
-		|| (patchbuf[1] != ' ' && patchbuf[1] != '\t'))
+	    if (! (patchbuf[0] == '>' && c_isblank (patchbuf[1])))
 	      fatal ("'>' followed by space or tab expected at line %s of patch",
 		     format_linenum (numbuf0, p_input_line));
 	    chars_read -= 2 + (i == p_end && incomplete_line ());
@@ -2356,15 +2356,15 @@ get_ed_command_letter (char const *line)
   char letter;
   bool pair = false;
 
-  if (ISDIGIT (*p))
+  if (c_isdigit (*p))
     {
-      while (ISDIGIT (*++p))
+      while (c_isdigit (*++p))
 	/* do nothing */ ;
       if (*p == ',')
 	{
-	  if (! ISDIGIT (*++p))
+	  if (! c_isdigit (*++p))
 	    return 0;
-	  while (ISDIGIT (*++p))
+	  while (c_isdigit (*++p))
 	    /* do nothing */ ;
 	  pair = true;
 	}
@@ -2394,7 +2394,7 @@ get_ed_command_letter (char const *line)
       return 0;
     }
 
-  while (*p == ' ' || *p == '\t')
+  while (c_isblank (*p))
     p++;
   if (*p == '\n')
     return letter;

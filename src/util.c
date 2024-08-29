@@ -1476,7 +1476,7 @@ fetchname (char const *at, int strip_leading, char **pname,
     stamp.tv_sec = -1;
     stamp.tv_nsec = 0;
 
-    while (isspace ((unsigned char) *at))
+    while (c_isspace (*at))
 	at++;
     if (debug & 128)
 	say ("fetchname %s %d\n", at, strip_leading);
@@ -1495,12 +1495,12 @@ fetchname (char const *at, int strip_leading, char **pname,
       {
 	for (t = at;  *t;  t++)
 	  {
-	    if (isspace ((unsigned char) *t))
+	    if (c_isspace (*t))
 	      {
 		/* Allow file names with internal spaces,
 		   but only if a tab separates the file name from the date.  */
 		char const *u = t;
-		while (*u != '\t' && isspace ((unsigned char) u[1]))
+		while (*u != '\t' && c_isspace (u[1]))
 		  u++;
 		if (*u != '\t' && (strchr (u + 1, pstamp ? '\t' : '\n')))
 		  continue;
@@ -1588,7 +1588,7 @@ parse_name (char const *s, int strip_leading, char const **endp)
 {
   char *ret;
 
-  while (isspace ((unsigned char) *s))
+  while (c_isspace (*s))
     s++;
   if (*s == '"')
     {
@@ -1600,7 +1600,7 @@ parse_name (char const *s, int strip_leading, char const **endp)
     {
       char const *t;
 
-      for (t = s; *t && ! isspace ((unsigned char) *t); t++)
+      for (t = s; *t && !c_isspace (*t); t++)
 	/* do nothing*/ ;
       ret = xmemdup0 (s, t - s);
       if (endp)

@@ -1811,16 +1811,16 @@ similar (char const *a, size_t alen, char const *b, size_t blen)
 
   for (;;)
     {
-      if (!blen || (*b == ' ' || *b == '\t'))
+      if (!blen || c_isblank (*b))
 	{
-	  while (blen && (*b == ' ' || *b == '\t'))
+	  while (blen && c_isblank (*b))
 	    b++, blen--;
 	  if (alen)
 	    {
-	      if (!(*a == ' ' || *a == '\t'))
+	      if (!c_isblank (*a))
 		return false;
 	      do a++, alen--;
-	      while (alen && (*a == ' ' || *a == '\t'));
+	      while (alen && c_isblank (*a));
 	    }
 	  if (!alen || !blen)
 	    return alen == blen;

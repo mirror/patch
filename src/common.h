@@ -22,26 +22,24 @@
 
 #include <config.h>
 
+#include <attribute.h>
+#include <c-ctype.h>
+#include <intprops.h>
+#include <progname.h>
+
 #include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <stdckdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
-
-#include <sys/stat.h>
-
-#include <limits.h>
-
-#include <inttypes.h>
-#include <intprops.h>
-
-#include <ctype.h>
-
-#ifndef ISDIGIT
-#define ISDIGIT(c) ((unsigned) (c) - '0' <= 9)
-#endif
-
-#include <attribute.h>
-#include <progname.h>
+#include <unistd.h>
 
 /* handy definitions */
 
@@ -141,12 +139,6 @@ extern char *revision;			/* prerequisite revision, if any */
 
 void fatal_exit (int) __attribute__ ((noreturn));
 
-#include <errno.h>
-#include <stdckdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-
 #if HAVE_FSEEKO
   typedef off_t file_offset;
 # define file_seek fseeko
@@ -164,8 +156,6 @@ void fatal_exit (int) __attribute__ ((noreturn));
 #  define geteuid() getuid ()
 # endif
 #endif
-
-#include <fcntl.h>
 
 #ifdef HAVE_SETMODE_DOS
   extern int binary_transput;	/* O_BINARY if binary i/o is desired */
