@@ -99,7 +99,6 @@ if test $gl_gcc_warnings != no; then
     gl_WARN_ADD([$w])
   done
   gl_WARN_ADD([-Wno-sign-compare])     # Too many warnings for now
-  gl_WARN_ADD([-Wno-unused-parameter]) # Too many warnings for now
   gl_WARN_ADD([-Wno-format-nonliteral])
 
   gl_WARN_ADD([-fdiagnostics-show-option])

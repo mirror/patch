@@ -166,7 +166,7 @@ contains_slash (const char *s)
 #if USE_XATTR
 
 static void _GL_ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
-copy_attr_error (struct error_context *ctx, char const *fmt, ...)
+copy_attr_error (MAYBE_UNUSED struct error_context *ctx, char const *fmt, ...)
 {
   int err = errno;
   va_list ap;
@@ -181,13 +181,14 @@ copy_attr_error (struct error_context *ctx, char const *fmt, ...)
 }
 
 static char const *
-copy_attr_quote (struct error_context *ctx, char const *str)
+copy_attr_quote (MAYBE_UNUSED struct error_context *ctx, char const *str)
 {
   return quotearg (str);
 }
 
 static void
-copy_attr_free (struct error_context *ctx, char const *str)
+copy_attr_free (MAYBE_UNUSED struct error_context *ctx,
+		MAYBE_UNUSED char const *str)
 {
 }
 
