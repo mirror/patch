@@ -230,7 +230,7 @@ copy_attr (char const *src_path, char const *dst_path)
 #else  /* USE_XATTR */
 
 static int
-copy_attr (char const *src_path, char const *dst_path)
+copy_attr (MAYBE_UNUSED char const *src_path, MAYBE_UNUSED char const *dst_path)
 {
   return 0;
 }
