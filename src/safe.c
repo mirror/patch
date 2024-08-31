@@ -47,6 +47,12 @@
 # define EFTYPE 0
 #endif
 
+#ifdef O_PATH
+enum { O_PATHSEARCH = O_PATH };
+#else
+enum { O_PATHSEARCH = O_SEARCH };
+#endif
+
 static const unsigned int MAX_PATH_COMPONENTS = 1024;
 
 /* Flag to turn the safe_* functions into their unsafe variants; files may then
@@ -241,7 +247,7 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
 
   /* Actually get the new directory file descriptor. Don't follow
      symbolic links. */
-  fd = openat (dir->fd, name, O_DIRECTORY | O_NOFOLLOW);
+  fd = openat (dir->fd, name, O_PATHSEARCH | O_DIRECTORY | O_NOFOLLOW);
 
   /* Don't cache errors. */
   if (fd < 0)
