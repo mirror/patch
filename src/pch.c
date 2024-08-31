@@ -28,7 +28,6 @@
 # include <io.h>
 #endif
 #include <safe.h>
-#include <alloca.h>
 #include "execute.h"
 
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
@@ -2419,7 +2418,6 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
     size_t chars_read;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
-    char const **ed_argv;
     int stdin_dup, status;
 
 
@@ -2489,12 +2487,9 @@ do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
 	|| dup2 (tmpfd, 0) == -1)
       pfatal ("Failed to duplicate standard input");
     assert (output_name[0] != '!' && output_name[0] != '-');
-    ed_argv = alloca (4 * sizeof * ed_argv);
-    ed_argv[0] = editor_program;
-    ed_argv[1] = "-";
-    ed_argv[2] = output_name;
-    ed_argv[3] = nullptr;
-    status = execute (editor_program, editor_program, (const char * const *) ed_argv,
+    status = execute (editor_program, editor_program,
+		      ((char const *[])
+		       { editor_program, "-", output_name, nullptr }),
                       nullptr, false, false, false, false, true, false,
 		      nullptr);
     if (status)

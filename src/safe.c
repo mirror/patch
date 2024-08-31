@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <alloca.h>
 #include <safe.h>
 #include "dirname.h"
 
@@ -219,7 +218,8 @@ static int put_path (struct cached_dirfd *entry)
   return fd;
 }
 
-static struct cached_dirfd *new_cached_dirfd (struct cached_dirfd *dir, const char *name, int fd)
+static struct cached_dirfd *
+new_cached_dirfd (struct cached_dirfd *dir, char *name, int fd)
 {
   struct cached_dirfd *entry = xmalloc (sizeof (struct cached_dirfd));
 
@@ -227,12 +227,19 @@ static struct cached_dirfd *new_cached_dirfd (struct cached_dirfd *dir, const ch
   list_add (&entry->children_link, &dir->children);
   INIT_LIST_HEAD (&entry->children);
   entry->parent = dir;
-  entry->name = xstrdup (name);
+  entry->name = name;
   entry->fd = fd;
   return entry;
 }
 
-static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char *name, int keepfd)
+/* In DIR, look up NAME as a subdirectory.
+   Return the corresponding cache entry if found, a null pointer otherwise.
+   NAME is heap-allocated; when succeeding either free it now
+   or arrange for it to be freed later, but when failing leave it alone.
+   If KEEPFD is nonnegative, make sure that any cache entry for it is not
+   removed from the cache (and KEEPFD remains open).  */
+static struct cached_dirfd *
+openat_cached (struct cached_dirfd *dir, char *name, int keepfd)
 {
   int fd;
   struct cached_dirfd *entry = lookup_cached_dirfd (dir, name);
@@ -241,7 +248,8 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
     {
       list_del_init (&entry->lru_link);
       /* assert (list_empty (&entry->lru_link)); */
-      goto out;
+      free (name);
+      return entry;
     }
   dirfd_cache_misses++;
 
@@ -256,8 +264,6 @@ static struct cached_dirfd *openat_cached (struct cached_dirfd *dir, const char 
   /* Store new cache entry */
   entry = new_cached_dirfd (dir, name, fd);
   insert_cached_dirfd (entry, keepfd);
-
-out:
   return entry;
 }
 
@@ -379,57 +385,55 @@ traverse_next (struct cached_dirfd *dir, const char **path, int keepfd,
 {
   const char *p = *path;
   struct cached_dirfd *entry = dir;
-  char *name;
 
   while (*p && ! ISSLASH (*p))
     p++;
   if (**path == '.' && *path + 1 == p)
-    goto skip;
-  if (**path == '.' && *(*path + 1) == '.' && *path + 2 == p)
+    ;
+  else if (**path == '.' && *(*path + 1) == '.' && *path + 2 == p)
     {
       entry = dir->parent;
       if (! entry)
 	{
 	  /* Must not leave the working tree. */
 	  errno = EXDEV;
-	  goto out;
 	}
-      assert (list_empty (&dir->lru_link));
-      list_add (&dir->lru_link, &lru_list);
-      goto skip;
-    }
-  name = alloca (p - *path + 1);
-  memcpy(name, *path, p - *path);
-  name[p - *path] = 0;
-
-  entry = openat_cached (dir, name, keepfd);
-  if (! entry)
-    {
-      if (errno == ELOOP
-	  || errno == EMLINK  /* FreeBSD 10.1: Too many links */
-	  || errno == EFTYPE  /* NetBSD 6.1: Inappropriate file type or format */
-	  || errno == ENOTDIR)
+      else
 	{
-	  if ((*symlink = read_symlink (dir->fd, name)))
-	    {
-	      entry = dir;
-	      goto skip;
-	    }
-	  errno = ELOOP;
+	  assert (list_empty (&dir->lru_link));
+	  list_add (&dir->lru_link, &lru_list);
 	}
-      goto out;
     }
-skip:
-  while (ISSLASH (*p))
-    p++;
-out:
+  else
+    {
+      char *name = ximemdup0 (*path, p - *path);
+      entry = openat_cached (dir, name, keepfd);
+      if (! entry)
+	{
+	  if (errno == ELOOP
+	      || errno == EMLINK  /* FreeBSD 10.1: Too many links */
+	      || (errno == EFTYPE
+		  /* NetBSD 6.1: Inappropriate file type or format.  */)
+	      || errno == ENOTDIR)
+	    {
+	      *symlink = read_symlink (dir->fd, name);
+	      if (*symlink)
+		entry = dir;
+	      errno = ELOOP;
+	    }
+	  free (name);
+	}
+    }
+  if (entry)
+    while (ISSLASH (*p))
+      p++;
   *path = p;
   return entry;
 }
 
 /* Traverse PATHNAME.  Updates PATHNAME to point to the last path component and
    returns a file descriptor to its parent directory (which can be AT_FDCWD).
-   When KEEPFD is given, make sure that the cache entry for DIRFD is not
+   If KEEPFD is nonnegative, make sure that any cache entry for it is not
    removed from the cache (and KEEPFD remains open).
 
    When this function is not running, all cache entries are on the lru list,
@@ -501,14 +505,9 @@ static int traverse_another_path (const char **pathname, int keepfd)
       if (! stack && symlink)
 	{
 	  const char *p = prev;
-	  char *name;
-
 	  while (*p && ! ISSLASH (*p))
 	    p++;
-	  name = alloca (p - prev + 1);
-	  memcpy (name, prev, p - prev);
-	  name[p - prev] = 0;
-
+	  char *name = ximemdup0 (prev, p - prev);
 	  traversed_symlink = new_cached_dirfd (dir, name, -1);
 	}
       if (stack && ! *stack->path)
