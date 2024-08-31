@@ -286,7 +286,7 @@ plan_a (char const *filename)
   /* Scan the buffer and build array of pointers to lines.  */
   lim = buffer + size;
   iline = 3; /* 1 unused, 1 for SOF, 1 for EOF if last line is incomplete */
-  for (s = buffer;  (s = (char *) memchr (s, '\n', lim - s));  s++)
+  for (s = buffer;  (s = memchr (s, '\n', lim - s));  s++)
     if (++iline < 0)
       too_many_lines (filename);
   if (! (iline == (size_t) iline
@@ -300,7 +300,7 @@ plan_a (char const *filename)
   for (s = buffer;  ;  s++)
     {
       ptr[++iline] = s;
-      if (! (s = (char *) memchr (s, '\n', lim - s)))
+      if (! (s = memchr (s, '\n', lim - s)))
 	break;
     }
   if (size && lim[-1] != '\n')
@@ -318,7 +318,7 @@ plan_a (char const *filename)
 	{
 	  char const *limrev = lim - revlen;
 
-	  for (s = buffer;  (s = (char *) memchr (s, rev0, limrev - s));  s++)
+	  for (s = buffer;  (s = memchr (s, rev0, limrev - s));  s++)
 	    if (memcmp (s, rev, revlen) == 0
 		&& (s == buffer || c_isspace (s[-1]))
 		&& (s + 1 == limrev || c_isspace (s[revlen])))
