@@ -946,7 +946,7 @@ get_some_switches (void)
 
     free (outrej.name);
     outrej.name = nullptr;
-    outrej.exists = false;
+    outrej.exists = nullptr;
     if (optind == Argc)
 	return;
     while ((optc = getopt_long (Argc, Argv, shortopts, longopts, (int *) 0))
@@ -1936,7 +1936,7 @@ output_file_later (struct outfile *from, const struct stat *from_st,
   file_to_output->mode = mode;
   file_to_output->backup = backup;
   gl_list_add_last (files_to_output, file_to_output);
-  from->exists = false;
+  from->exists = nullptr;
 }
 
 static void
@@ -2025,12 +2025,17 @@ output_files (struct stat const *st, bool exiting)
     {
       const struct file_to_output *file_to_output = elt;
       struct stat const *from_st = &file_to_output->from_st;
-      struct outfile from = { .name = file_to_output->from, .exists = true };
+      char *name = file_to_output->from;
+      struct outfile from = { .name = name, .exists = volatilize (name) };
 
       output_file_now (&from, from_st, file_to_output->to,
 		       file_to_output->mode, file_to_output->backup);
-      if (file_to_output->to && from.exists)
-	safe_unlink (from.name);
+      if (file_to_output->to)
+	{
+	  char const volatile *exists = from.exists;
+	  if (exists)
+	    safe_unlink (devolatilize (exists));
+	}
 
       if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)
 	{
@@ -2069,10 +2074,11 @@ fatal_exit (int sig)
 static void
 remove_if_needed (struct outfile *tmp)
 {
-  if (tmp->exists)
+  char const volatile *exists = tmp->exists;
+  if (exists)
     {
-      safe_unlink (tmp->name);
-      tmp->exists = false;
+      safe_unlink (devolatilize (exists));
+      tmp->exists = nullptr;
     }
 }
 

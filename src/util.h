@@ -28,6 +28,21 @@ enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
 extern enum backup_type backup_type;
 
+_GL_INLINE_HEADER_BEGIN
+#ifndef UTIL_INLINE
+# define UTIL_INLINE _GL_INLINE
+#endif
+
+char const volatile *volatilize (char const *);
+
+/* Convert S to a pointer to non-volatile.  This is the inverse of volatilize.
+   S’s contents must not be updated by a signal handler.  */
+UTIL_INLINE char const *
+devolatilize (char const volatile *s)
+{
+  return (char const *) s;
+}
+
 bool ok_to_reverse (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 void ask (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 void say (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
@@ -82,3 +97,5 @@ void set_file_attributes (char const *, enum file_attributes, char const *,
 			  const struct stat *, mode_t, struct timespec *);
 
 int make_tempfile (struct outfile *, char, char const *, int, mode_t);
+
+_GL_INLINE_HEADER_END

@@ -16,6 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#define UTIL_INLINE _GL_EXTERN_INLINE
+
 #include <common.h>
 #include <dirname.h>
 #include <hash.h>
@@ -52,6 +54,20 @@ typedef struct
   enum file_id_type type;
   bool queued_output;
 } file_id;
+
+/* Convert STR to a pointer to volatile, after making the contents
+   safe to use in a signal handler.  */
+char const volatile *
+volatilize (char const *str)
+{
+  /* Access the string contents as volatile, to force contents into
+     memory.  This loop is redundant on typical platforms, although
+     the C standard requires it.  */
+  for (char const volatile *p = str; *p; p++)
+    continue;
+
+  return str;
+}
 
 /* Return an index for ENTRY into a hash table of size TABLE_SIZE.  */
 
@@ -544,7 +560,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	     the same file.  */
 	  if (outfrom && (0 < to_errno
 			  || (to_errno == 0 && to_st.st_nlink <= 1)))
-	    outfrom->exists = false;
+	    outfrom->exists = nullptr;
 	}
     }
   else if (! backup)
@@ -569,7 +585,7 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
   if (out->temporary)
     block_signals ();
   int fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
-  out->exists = 0 <= fd;
+  out->exists = fd < 0 ? nullptr : volatilize (file);
   if (out->temporary)
     unblock_signals ();
   if (fd < 0 && !to_dir_known_to_exist && errno == ENOENT)
@@ -580,7 +596,7 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
       if (out->temporary)
 	block_signals ();
       fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
-      out->exists = 0 <= fd;
+      out->exists = fd < 0 ? nullptr : file;
       if (out->temporary)
 	unblock_signals ();
     }
@@ -641,7 +657,7 @@ copy_file (char const *from, struct stat const *fromst,
       buffer[r] = '\0';
       if (outto->temporary)
 	block_signals ();
-      outto->exists = safe_symlink (buffer, to) == 0;
+      outto->exists = safe_symlink (buffer, to) < 0 ? nullptr : volatilize (to);
       if (outto->temporary)
 	unblock_signals ();
       if (!outto->exists)
@@ -1644,14 +1660,14 @@ try_safe_open (char *template, void *vargs)
   mode_t mode = args->mode;
   block_signals ();
   int fd = safe_open (template, flags, mode);
-  out->exists = 0 <= fd;
+  out->exists = fd < 0 ? nullptr : volatilize (template);
   unblock_signals ();
   if (0 <= fd || errno != ENOENT)
     return fd;
   makedirs (template);
   block_signals ();
   fd = safe_open (template, flags, mode);
-  out->exists = 0 <= fd;
+  out->exists = fd < 0 ? nullptr : volatilize (template);
   int err = errno;
   unblock_signals ();
   errno = err;
