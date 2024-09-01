@@ -17,9 +17,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <common.h>
+
+#include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
+
 #include <inp.h>
 #include <safe.h>
 
@@ -216,17 +219,13 @@ get_input_file (char *filename, char const *outname, mode_t file_type)
 static bool
 plan_a (char *filename)
 {
-  char const *s;
-  char const *lim;
-  char const **ptr;
-  char *buffer;
-  lin iline;
-  size_t size = instat.st_size;
-
   /* Fail if the file size doesn't fit in a size_t,
      or if storage isn't available.  */
-  if (! (size == instat.st_size
-	 && (buffer = malloc (size ? size : (size_t) 1))))
+  idx_t size;
+  if (ckd_add (&size, instat.st_size, 0))
+    return false;
+  char *buffer = imalloc (size);
+  if (!buffer)
     return false;
 
   /* Read the input file, but don't bother reading it if it's empty.
@@ -236,7 +235,7 @@ plan_a (char *filename)
       if (S_ISREG (instat.st_mode))
         {
 	  int flags = O_RDONLY | binary_transput;
-	  size_t buffered = 0, n;
+	  idx_t buffered = 0;
 	  int ifd;
 
 	  if (! follow_symlinks)
@@ -247,7 +246,7 @@ plan_a (char *filename)
 
 	  while (size - buffered != 0)
 	    {
-	      n = read (ifd, buffer + buffered, size - buffered);
+	      ssize_t n = read (ifd, buffer + buffered, size - buffered);
 	      if (n == 0)
 		{
 		  /* Some non-POSIX hosts exaggerate st_size in text mode;
@@ -255,7 +254,7 @@ plan_a (char *filename)
 		  size = buffered;
 		  break;
 		}
-	      if (n == (size_t) -1)
+	      if (n < 0)
 		{
 		  /* Perhaps size is too large for this host.  */
 		  close (ifd);
@@ -270,8 +269,7 @@ plan_a (char *filename)
 	}
       else if (S_ISLNK (instat.st_mode))
 	{
-	  ssize_t n;
-	  n = safe_readlink (filename, buffer, size);
+	  ssize_t n = safe_readlink (filename, buffer, size);
 	  if (n < 0)
 	    pfatal ("can't read %s %s", "symbolic link", quotearg (filename));
 	  size = n;
@@ -284,20 +282,19 @@ plan_a (char *filename)
   }
 
   /* Scan the buffer and build array of pointers to lines.  */
-  lim = buffer + size;
-  iline = 3; /* 1 unused, 1 for SOF, 1 for EOF if last line is incomplete */
-  for (s = buffer;  (s = memchr (s, '\n', lim - s));  s++)
-    if (++iline < 0)
-      too_many_lines (filename);
-  if (! (iline == (size_t) iline
-	 && (size_t) iline * sizeof *ptr / sizeof *ptr == (size_t) iline
-	 && (ptr = (char const **) malloc ((size_t) iline * sizeof *ptr))))
+  char const *lim = buffer + size;
+  idx_t iline = 3; /* 1 unused, 1 for SOF,
+		      1 for EOF if last line is incomplete.  */
+  for (char const *s = buffer;  (s = memchr (s, '\n', lim - s));  s++)
+    iline++;
+  char const **ptr = ireallocarray (nullptr, iline, sizeof *ptr);
+  if (!ptr)
     {
       free (buffer);
       return false;
     }
   iline = 0;
-  for (s = buffer;  ;  s++)
+  for (char const *s = buffer; ; s++)
     {
       ptr[++iline] = s;
       if (! (s = memchr (s, '\n', lim - s)))
@@ -305,7 +302,8 @@ plan_a (char *filename)
     }
   if (size && lim[-1] != '\n')
     ptr[++iline] = lim;
-  input_lines = iline - 1;
+  if (ckd_sub (&input_lines, iline, 1))
+    too_many_lines (filename);
 
   if (revision)
     {
@@ -318,7 +316,7 @@ plan_a (char *filename)
 	{
 	  char const *limrev = lim - revlen;
 
-	  for (s = buffer;  (s = memchr (s, rev0, limrev - s));  s++)
+	  for (char const *s = buffer; (s = memchr (s, rev0, limrev - s)); s++)
 	    if (memcmp (s, rev, revlen) == 0
 		&& (s == buffer || c_isspace (s[-1]))
 		&& (s + 1 == limrev || c_isspace (s[revlen])))
@@ -346,12 +344,8 @@ plan_b (char *filename)
   int ifd;
   FILE *ifp;
   int c;
-  size_t len;
-  size_t maxlen;
   bool found_revision;
-  size_t i;
   char const *rev;
-  size_t revlen;
   lin line = 1;
 
   if (instat.st_size == 0)
@@ -373,21 +367,24 @@ plan_b (char *filename)
       if (tifd == -1)
 	pfatal ("Can't create temporary file %s", tmpin.name);
     }
-  i = 0;
-  len = 0;
-  maxlen = 1;
+  ptrdiff_t i = 0;
+  idx_t len = 0;
+  idx_t maxlen = 1;
   rev = revision;
   found_revision = !rev;
-  revlen = rev ? strlen (rev) : 0;
+  idx_t revlen = rev ? strlen (rev) : 0;
 
   while ((c = getc (ifp)) != EOF)
     {
-      if (++len > ((size_t) -1) / 2)
+      /* Check against SIZE_MAX / 4 so that the size calculation below
+	 has defined behavior.  */
+      len++;
+      if (MIN (SIZE_MAX / 4, IDX_MAX - 1) < len)
 	lines_too_long (filename);
 
       if (c == '\n')
 	{
-	  if (++line < 0)
+	  if (ckd_add (&line, line, 1))
 	    too_many_lines (filename);
 	  if (maxlen < len)
 	      maxlen = len;
@@ -399,12 +396,12 @@ plan_b (char *filename)
 	  if (i == revlen)
 	    {
 	      found_revision = c_isspace (c);
-	      i = (size_t) -1;
+	      i = -1;
 	    }
-	  else if (i != (size_t) -1)
-	    i = rev[i]==c ? i + 1 : (size_t) -1;
+	  else if (0 <= i)
+	    i = rev[i] == c ? i + 1 : -1;
 
-	  if (i == (size_t) -1 && c_isspace (c))
+	  if (i < 0 && c_isspace (c))
 	    i = 0;
 	}
     }
