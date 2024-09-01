@@ -33,14 +33,14 @@ _GL_INLINE_HEADER_BEGIN
 # define UTIL_INLINE _GL_INLINE
 #endif
 
-char const volatile *volatilize (char const *);
+char volatile *volatilize (char *);
 
 /* Convert S to a pointer to non-volatile.  This is the inverse of volatilize.
    S’s contents must not be updated by a signal handler.  */
-UTIL_INLINE char const *
-devolatilize (char const volatile *s)
+UTIL_INLINE char *
+devolatilize (char volatile *s)
 {
-  return (char const *) s;
+  return (char *) s;
 }
 
 bool ok_to_reverse (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
@@ -55,14 +55,14 @@ char *parse_name (char const *, int, char const **);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
-bool version_get (char const *, char const *, bool, bool, char const *, struct stat *);
+bool version_get (char *, char const *, bool, bool, char const *, struct stat *);
 int create_file (struct outfile *, int, mode_t, bool);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
 void Fseek (FILE *, file_offset, int);
-void copy_file (char const *, struct stat const *,
+void copy_file (char *, struct stat const *,
 		struct outfile *, struct stat *, int, mode_t, bool);
-void append_to_file (char const *, char const *);
+void append_to_file (char *, char *);
 _Noreturn void exit_with_signal (int);
 void init_signals (void);
 void block_signals (void);
@@ -70,7 +70,7 @@ void unblock_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 _Noreturn void xalloc_die (void);
-void create_backup (char const *, const struct stat *, bool);
+void create_backup (char *, const struct stat *, bool);
 void move_file (struct outfile *, struct stat const *,
 		char *, mode_t, bool);
 _Noreturn void read_fatal (void);
@@ -82,7 +82,7 @@ void insert_file_id (struct stat const *, enum file_id_type);
 enum file_id_type lookup_file_id (struct stat const *);
 void set_queued_output (struct stat const *, bool);
 bool has_queued_output (struct stat const *);
-int stat_file (char const *, struct stat *);
+int stat_file (char *, struct stat *);
 bool filename_is_safe (char const *) ATTRIBUTE_PURE;
 bool cwd_is_root (char const *);
 
@@ -93,7 +93,7 @@ enum file_attributes {
   FA_XATTRS = 8
 };
 
-void set_file_attributes (char const *, enum file_attributes, char const *,
+void set_file_attributes (char *, enum file_attributes, char const *,
 			  const struct stat *, mode_t, struct timespec *);
 
 int make_tempfile (struct outfile *, char, char const *, int, mode_t);

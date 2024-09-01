@@ -57,13 +57,13 @@ typedef struct
 
 /* Convert STR to a pointer to volatile, after making the contents
    safe to use in a signal handler.  */
-char const volatile *
-volatilize (char const *str)
+char volatile *
+volatilize (char *str)
 {
   /* Access the string contents as volatile, to force contents into
      memory.  This loop is redundant on typical platforms, although
      the C standard requires it.  */
-  for (char const volatile *p = str; *p; p++)
+  for (char volatile *p = str; *p; p++)
     continue;
 
   return str;
@@ -254,7 +254,7 @@ copy_attr (MAYBE_UNUSED char const *src_path, MAYBE_UNUSED char const *dst_path)
 #endif
 
 void
-set_file_attributes (char const *to, enum file_attributes attr,
+set_file_attributes (char *to, enum file_attributes attr,
 		     char const *from, const struct stat *st, mode_t mode,
 		     struct timespec *new_time)
 {
@@ -322,7 +322,7 @@ set_file_attributes (char const *to, enum file_attributes attr,
 }
 
 static void
-create_backup_copy (char const *from, char *to, const struct stat *st,
+create_backup_copy (char *from, char *to, const struct stat *st,
 		    bool to_dir_known_to_exist)
 {
   copy_file (from, st, &(struct outfile) { .name = to },
@@ -332,7 +332,7 @@ create_backup_copy (char const *from, char *to, const struct stat *st,
 }
 
 void
-create_backup (char const *to, const struct stat *to_st, bool leave_original)
+create_backup (char *to, const struct stat *to_st, bool leave_original)
 {
   /* When the input to patch modifies the same file more than once, patch only
      backs up the initial version of each file.
@@ -471,7 +471,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 
   if (outfrom)
     {
-      char const *from = outfrom->name;
+      char *from = outfrom->name;
       if (S_ISLNK (mode))
 	{
 	  bool to_dir_known_to_exist = false;
@@ -579,7 +579,7 @@ int
 create_file (struct outfile *out, int open_flags, mode_t mode,
 	     bool to_dir_known_to_exist)
 {
-  char const *file = out->name;
+  char *file = out->name;
   mode |= S_IRUSR | S_IWUSR;
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
   if (out->temporary)
@@ -606,7 +606,7 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
 }
 
 static void
-copy_to_fd (const char *from, int tofd)
+copy_to_fd (char *from, int tofd)
 {
   int from_flags = O_RDONLY | O_BINARY;
   int fromfd;
@@ -630,12 +630,12 @@ copy_to_fd (const char *from, int tofd)
 /* Copy a file. */
 
 void
-copy_file (char const *from, struct stat const *fromst,
+copy_file (char *from, struct stat const *fromst,
 	   struct outfile *outto, struct stat *tost,
 	   int to_flags, mode_t mode, bool to_dir_known_to_exist)
 {
   int tofd;
-  char const *to = outto->name;
+  char *to = outto->name;
 
   if (debug & 4)
     say ("Copying %s %s to %s\n",
@@ -684,7 +684,7 @@ copy_file (char const *from, struct stat const *fromst,
 /* Append to file. */
 
 void
-append_to_file (char const *from, char const *to)
+append_to_file (char *from, char *to)
 {
   int to_flags = O_WRONLY | O_APPEND | O_BINARY;
   int tofd;
@@ -731,7 +731,7 @@ quote_system_arg (char *quoted, char const *arg)
    Before getting the status, copy to DIREND the concatenation of A,
    B, and (if nonnull) C; this can modify TRYBUF.  */
 static bool
-trystat (char const *trybuf, struct stat *st, char *dirend,
+trystat (char *trybuf, struct stat *st, char *dirend,
 	 char const *a, char const *b, char const *c)
 {
   char *p = stpcpy (dirend, a);
@@ -883,7 +883,7 @@ version_controller (char const *filename, bool readonly,
    Store the resulting file status into *FILESTAT.
    Return true if successful.  */
 bool
-version_get (char const *filename, char const *cs, bool exists, bool readonly,
+version_get (char *filename, char const *cs, bool exists, bool readonly,
 	     char const *getbuf, struct stat *filestat)
 {
   if (patch_get < 0)
@@ -1732,9 +1732,10 @@ make_tempfile (struct outfile *out, char letter, char const *real_name,
   return fd;
 }
 
-int stat_file (char const *filename, struct stat *st)
+int
+stat_file (char *filename, struct stat *st)
 {
-  int (*xstat)(char const *, struct stat *) =
+  int (*xstat) (char *, struct stat *) =
     follow_symlinks ? safe_stat : safe_lstat;
 
   return xstat (filename, st) == 0 ? 0 : errno;

@@ -19,6 +19,6 @@
 extern lin input_lines;		/* how long is input file in lines */
 
 char const *ifetch (lin, bool, size_t *);
-bool get_input_file (char const *, char const *, mode_t);
+bool get_input_file (char *, char const *, mode_t);
 void re_input (void);
 void scan_input (char *, mode_t);

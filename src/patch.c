@@ -1865,7 +1865,7 @@ init_files_to_delete (void)
 }
 
 static void
-delete_file_later (const char *name, const struct stat *st, bool backup)
+delete_file_later (char *name, const struct stat *st, bool backup)
 {
   struct file_to_delete *file_to_delete;
   struct stat st_tmp;
@@ -2032,7 +2032,7 @@ output_files (struct stat const *st, bool exiting)
 		       file_to_output->mode, file_to_output->backup);
       if (file_to_output->to)
 	{
-	  char const volatile *exists = from.exists;
+	  char volatile *exists = from.exists;
 	  if (exists)
 	    safe_unlink (devolatilize (exists));
 	}
@@ -2074,7 +2074,7 @@ fatal_exit (int sig)
 static void
 remove_if_needed (struct outfile *tmp)
 {
-  char const volatile *exists = tmp->exists;
+  char volatile *exists = tmp->exists;
   if (exists)
     {
       safe_unlink (devolatilize (exists));

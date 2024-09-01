@@ -2409,7 +2409,7 @@ get_ed_command_letter (char const *line)
 /* Apply an ed script by feeding ed itself. */
 
 void
-do_ed_script (char const *input_name, struct outfile *output, FILE *ofp)
+do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 {
     static char const editor_program[] = EDITOR_PROGRAM;
 

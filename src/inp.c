@@ -40,8 +40,8 @@ static size_t tireclen;			/* length of records in tmp file */
 static size_t last_line_size;		/* size of last input line */
 lin input_lines;			/* how long is input file in lines */
 
-static bool plan_a (char const *);	/* yield false if memory runs out */
-static void plan_b (char const *);
+static bool plan_a (char *);	/* yield false if memory runs out */
+static void plan_b (char *);
 static void report_revision (bool);
 static void too_many_lines (char const *);
 static void lines_too_long (char const *);
@@ -134,7 +134,7 @@ lines_too_long (char const *filename)
 }
 
 bool
-get_input_file (char const *filename, char const *outname, mode_t file_type)
+get_input_file (char *filename, char const *outname, mode_t file_type)
 {
     bool elsewhere = strcmp (filename, outname) != 0;
     char const *cs;
@@ -214,7 +214,7 @@ get_input_file (char const *filename, char const *outname, mode_t file_type)
 /* Try keeping everything in memory. */
 
 static bool
-plan_a (char const *filename)
+plan_a (char *filename)
 {
   char const *s;
   char const *lim;
@@ -340,7 +340,7 @@ plan_a (char const *filename)
 /* Keep (virtually) nothing in memory. */
 
 static void
-plan_b (char const *filename)
+plan_b (char *filename)
 {
   int flags = O_RDONLY | binary_transput;
   int ifd;
@@ -355,7 +355,7 @@ plan_b (char const *filename)
   lin line = 1;
 
   if (instat.st_size == 0)
-    filename = NULL_DEVICE;
+    filename = (char []) { NULL_DEVICE };
   if (! follow_symlinks)
     flags |= O_NOFOLLOW;
   if ((ifd = safe_open (filename, flags, 0)) < 0
