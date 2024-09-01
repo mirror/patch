@@ -1171,18 +1171,12 @@ numeric_string (char const *string,
 
   do
     {
-      int v10 = value * 10;
+      if (!c_isdigit (*p))
+	fatal ("%s %s is not a number", argtype_msgid, quotearg (string));
       int digit = *p - '0';
       int signed_digit = sign * digit;
-      int next_value = v10 + signed_digit;
-
-      if (9 < (unsigned) digit)
-	fatal ("%s %s is not a number", argtype_msgid, quotearg (string));
-
-      if (v10 / 10 != value || (next_value < v10) != (signed_digit < 0))
+      if (ckd_mul (&value, value, 10) || ckd_add (&value, value, signed_digit))
 	fatal ("%s %s is too large", argtype_msgid, quotearg (string));
-
-      value = next_value;
     }
   while (*++p);
 
