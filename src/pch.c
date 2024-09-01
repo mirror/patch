@@ -1152,9 +1152,8 @@ scan_linenum (char *s0, lin *linenum)
 
   for (s = s0; c_isdigit (*s); s++)
     {
-      lin new_n = 10 * n + (*s - '0');
-      overflow |= new_n / 10 != n;
-      n = new_n;
+      overflow |= ckd_mul (&n, n, 10);
+      overflow |= ckd_add (&n, n, *s - '0');
     }
 
   if (s == s0)
@@ -1163,8 +1162,7 @@ scan_linenum (char *s0, lin *linenum)
 
   if (overflow)
     {
-      int full_s0len = s - s0;
-      int s0len = ckd_add (&s0len, full_s0len, 0) ? -1 : s0len;
+      int s0len = ckd_add (&s0len, s - s0, 0) ? -1 : s0len;
       fatal ("line number %.*s is too large at line %s: %s",
 	     s0len, s0, format_linenum (numbuf, p_input_line),
 	     patchbuf);
