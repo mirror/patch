@@ -178,8 +178,7 @@ main (int argc, char **argv)
     val = getenv ("QUOTING_STYLE");
     {
       int i = val ? argmatch (val, quoting_style_args, 0, 0) : -1;
-      set_quoting_style ((struct quoting_options *) 0,
-			 i < 0 ? shell_quoting_style : (enum quoting_style) i);
+      set_quoting_style (nullptr, i < 0 ? shell_quoting_style : i);
     }
 
     posixly_correct = getenv ("POSIXLY_CORRECT") != 0;
@@ -277,10 +276,10 @@ main (int argc, char **argv)
 
       if (! skip_rest_of_patch && ! file_type)
 	{
-	  say ("File %s: can't change file type from 0%o to 0%o.\n",
-	       quotearg (inname),
-	       (unsigned int) (pch_mode (reverse_flag) & S_IFMT),
-	       (unsigned int) (pch_mode (! reverse_flag) & S_IFMT));
+	  unsigned int old_mode = pch_mode (  reverse_flag) & S_IFMT;
+	  unsigned int new_mode = pch_mode (! reverse_flag) & S_IFMT;
+	  say ("File %s: can't change file type from %#o to %#o.\n",
+	       quotearg (inname), old_mode, new_mode);
 	  skip_rest_of_patch = true;
 	  somefailed = true;
 	}
@@ -947,7 +946,7 @@ get_some_switches (void)
     outrej.exists = nullptr;
     if (optind == Argc)
 	return;
-    while ((optc = getopt_long (Argc, Argv, shortopts, longopts, (int *) 0))
+    while ((optc = getopt_long (Argc, Argv, shortopts, longopts, nullptr))
 	   != -1) {
 	switch (optc) {
 	    case 'b':
@@ -1105,8 +1104,7 @@ get_some_switches (void)
 		      invalid_arg ("quoting style", optarg, i);
 		      usage (stderr, 2);
 		    }
-		  set_quoting_style ((struct quoting_options *) 0,
-				     (enum quoting_style) i);
+		  set_quoting_style (nullptr, i);
 		}
 		break;
 	    case CHAR_MAX + 9:
@@ -1397,10 +1395,8 @@ abort_hunk_context (bool header, bool reverse)
     lin newfirst = pch_newfirst() + out_offset;
     lin oldlast = oldfirst + pch_ptrn_lines() - 1;
     lin newlast = newfirst + pch_repl_lines() - 1;
-    char const *stars =
-      (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ****" : "";
-    char const *minuses =
-      (int) NEW_CONTEXT_DIFF <= (int) diff_type ? " ----" : " -----";
+    char const *stars   = diff_type < NEW_CONTEXT_DIFF ? ""       : " ****";
+    char const *minuses = diff_type < NEW_CONTEXT_DIFF ? " -----" : " ----";
     char const *c_function = pch_c_function();
 
     if (diff_type == UNI_DIFF)
