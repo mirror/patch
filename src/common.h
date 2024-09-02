@@ -24,6 +24,7 @@
 
 #include <attribute.h>
 #include <c-ctype.h>
+#include <idx.h>
 #include <intprops.h>
 #include <progname.h>
 #include <minmax.h>

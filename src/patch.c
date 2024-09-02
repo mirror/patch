@@ -1694,7 +1694,6 @@ copy_till (struct outstate *outstate, lin lastline)
     lin R_last_frozen_line = last_frozen_line;
     FILE *fp = outstate->ofp;
     char const *s;
-    size_t size;
 
     if (R_last_frozen_line > lastline)
       {
@@ -1703,6 +1702,7 @@ copy_till (struct outstate *outstate, lin lastline)
       }
     while (R_last_frozen_line < lastline)
       {
+	idx_t size;
 	s = ifetch (++R_last_frozen_line, false, &size);
 	if (size)
 	  {
@@ -1752,14 +1752,11 @@ spew_output (struct outstate *outstate, struct stat *st)
 static bool
 patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 {
-    lin pline = 1 + prefix_fuzz;
-    lin iline;
     lin pat_lines = pch_ptrn_lines () - suffix_fuzz;
-    size_t size;
-    char const *p;
 
-    for (iline=base+offset+prefix_fuzz; pline <= pat_lines; pline++,iline++) {
-	p = ifetch (iline, offset >= 0, &size);
+    for (lin pline = 1 + prefix_fuzz; pline <= pat_lines; pline++) {
+	idx_t size;
+	char const *p = ifetch (pline - 1 + base + offset, 0 <= offset, &size);
 	if (canonicalize_ws) {
 	    if (!similar(p, size,
 			 pfetch(pline),
@@ -1778,15 +1775,11 @@ patch_match (lin base, lin offset, lin prefix_fuzz, lin suffix_fuzz)
 static bool
 check_line_endings (lin where)
 {
-  char const *p;
-  size_t size;
-  bool input_crlf, patch_crlf;
-
-  p = pfetch (1);
-  size = pch_line_len (1);
+  char const *p = pfetch (1);
+  idx_t size = pch_line_len (1);
   if (! size)
     return false;
-  patch_crlf = size >= 2 && p[size - 2] == '\r' && p[size - 1] == '\n';
+  bool patch_crlf = 2 <= size && p[size - 2] == '\r' && p[size - 1] == '\n';
 
   if (! input_lines)
     return false;
@@ -1795,7 +1788,7 @@ check_line_endings (lin where)
   p = ifetch (where, false, &size);
   if (! size)
     return false;
-  input_crlf = size >= 2 && p[size - 2] == '\r' && p[size - 1] == '\n';
+  bool input_crlf = 2 <= size && p[size - 2] == '\r' && p[size - 1] == '\n';
 
   return patch_crlf != input_crlf;
 }

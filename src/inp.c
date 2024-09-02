@@ -18,6 +18,8 @@
 
 #include <common.h>
 
+#include <stdbit.h>
+
 #include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
@@ -31,16 +33,16 @@
 static char *i_buffer;			/* plan A buffer */
 static char const **i_ptr;		/* pointers to lines in plan A buffer */
 
-static size_t tibufsize;		/* size of plan b buffers */
+static idx_t tibufsize;			/* size of plan b buffers */
 #ifndef TIBUFSIZE_MINIMUM
 #define TIBUFSIZE_MINIMUM (8 * 1024)	/* minimum value for tibufsize */
 #endif
 static int tifd = -1;			/* plan b virtual string array */
 static char *tibuf[2];			/* plan b buffers */
 static lin tiline[2] = {-1, -1};	/* 1st line in each buffer */
-static lin lines_per_buf;		/* how many lines per buffer */
-static size_t tireclen;			/* length of records in tmp file */
-static size_t last_line_size;		/* size of last input line */
+static idx_t lines_per_buf;		/* how many lines per buffer */
+static idx_t tireclen;			/* length of records in tmp file */
+static idx_t last_line_size;		/* size of last input line */
 lin input_lines;			/* how long is input file in lines */
 
 static bool plan_a (char *);	/* yield false if memory runs out */
@@ -219,7 +221,7 @@ get_input_file (char *filename, char const *outname, mode_t file_type)
 static bool
 plan_a (char *filename)
 {
-  /* Fail if the file size doesn't fit in a size_t,
+  /* Fail if the file size doesn't fit,
      or if storage isn't available.  */
   idx_t size;
   if (ckd_add (&size, instat.st_size, 0))
@@ -310,7 +312,7 @@ plan_a (char *filename)
       char const *rev = revision;
       int rev0 = rev[0];
       bool found_revision = false;
-      size_t revlen = strlen (rev);
+      idx_t revlen = strlen (rev);
 
       if (revlen <= size)
 	{
@@ -376,10 +378,11 @@ plan_b (char *filename)
 
   while ((c = getc (ifp)) != EOF)
     {
-      /* Check against SIZE_MAX / 4 so that the size calculation below
-	 has defined behavior.  */
+      /* Check against SIZE_MAX / 2 + 1 so that the stdc_bit_ceil
+	 below has defined behavior.  Check against IDX_MAX / 4 so
+	 that the resulting buffer size fits in idx_t.  */
       len++;
-      if (MIN (SIZE_MAX / 4, IDX_MAX - 1) < len)
+      if (MIN (SIZE_MAX / 2, IDX_MAX / 4) + 1 < len)
 	lines_too_long (filename);
 
       if (c == '\n')
@@ -409,11 +412,13 @@ plan_b (char *filename)
   if (revision)
     report_revision (found_revision);
   Fseek (ifp, 0, SEEK_SET);		/* rewind file */
-  for (tibufsize = TIBUFSIZE_MINIMUM;  tibufsize < maxlen;  tibufsize <<= 1)
-    /* do nothing */ ;
+
+  size_t umaxlen = maxlen;
+  tibufsize = stdc_bit_ceil (umaxlen);
+  tibufsize = MAX (TIBUFSIZE_MINIMUM, tibufsize);
   lines_per_buf = tibufsize / maxlen;
   tireclen = maxlen;
-  tibuf[0] = xmalloc (2 * tibufsize);
+  tibuf[0] = ximalloc (2 * tibufsize);
   tibuf[1] = tibuf[0] + tibufsize;
 
   for (line = 1; ; line++)
@@ -457,7 +462,7 @@ plan_b (char *filename)
    WHICHBUF is ignored when the file is in memory.  */
 
 char const *
-ifetch (lin line, bool whichbuf, size_t *psize)
+ifetch (lin line, bool whichbuf, idx_t *psize)
 {
     char const *q;
     char const *p;

@@ -264,7 +264,7 @@ merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
 		    format_linenum (numbuf1, matched));
 	  else if (n >= in && n < in + matched)
 	    {
-	      size_t size;
+	      idx_t size;
 	      const char *line;
 
 	      line = ifetch (where + n - in, false, &size);
@@ -536,7 +536,7 @@ count_context_lines (void)
 static bool
 context_matches_file (lin old, lin where)
 {
-  size_t size;
+  idx_t size;
   const char *line;
 
   line = ifetch (where, false, &size);
