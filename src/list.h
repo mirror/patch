@@ -56,7 +56,7 @@ list_empty (const struct list_head *head)
 /* Return PTR - OFFSET, ignoring the type of PTR and treating OFFSET
    as a byte offset.  */
 LIST_INLINE void *
-list_entry (void *ptr, size_t offset)
+list_entry (void *ptr, idx_t offset)
 {
   char *p = ptr;
   return p - offset;
