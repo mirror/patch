@@ -51,7 +51,7 @@ enum { O_PATHSEARCH = O_PATH };
 enum { O_PATHSEARCH = O_SEARCH };
 #endif
 
-static const unsigned int MAX_PATH_COMPONENTS = 1024;
+enum { MAX_PATH_COMPONENTS = 1024 };
 
 /* Flag to turn the safe_* functions into their unsafe variants; files may then
    lie outside the current working directory. */
@@ -60,7 +60,7 @@ bool unsafe;
 /* Path lookup results are cached in a hash table + LRU list. When the
    cache is full, the oldest entries are removed.  */
 
-static unsigned int dirfd_cache_misses;
+static intmax_t dirfd_cache_misses;
 
 struct cached_dirfd {
   struct list_head lru_link;
@@ -263,23 +263,22 @@ openat_cached (struct cached_dirfd *dir, char const *name, int keepfd)
   return entry;
 }
 
-ATTRIBUTE_PURE
-static unsigned int count_path_components (const char *path)
+static idx_t ATTRIBUTE_PURE
+count_path_components (const char *path)
 {
-  unsigned int components;
-
   while (ISSLASH (*path))
     path++;
   if (! *path)
     return 1;
-  for (components = 0; *path; components++)
+  for (idx_t components = 0; ; components++)
     {
+      if (!*path)
+	return components;
       while (*path && ! ISSLASH (*path))
 	path++;
       while (ISSLASH (*path))
 	path++;
     }
-  return components;
 }
 
 /* A symlink to resolve. */
@@ -445,11 +444,11 @@ traverse_another_path (char **pathname, int keepfd)
     .fd = AT_FDCWD,
   };
 
-  unsigned int misses = dirfd_cache_misses;
+  intmax_t misses = dirfd_cache_misses;
   char *path = *pathname, *last;
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = nullptr;
-  unsigned int steps = count_path_components (path);
+  idx_t steps = count_path_components (path);
   struct cached_dirfd *traversed_symlink = nullptr;
 
   INIT_LIST_HEAD (&cwd.children);
@@ -539,11 +538,11 @@ traverse_another_path (char **pathname, int keepfd)
   *pathname = last;
   if (debug & 32)
     {
-      misses = (signed int) dirfd_cache_misses - (signed int) misses;
+      misses = dirfd_cache_misses - misses;
       if (! misses)
 	printf(" (cached)\n");
       else
-	printf (" (%u miss%s)\n", misses, misses == 1 ? "" : "es");
+	printf (" (%jd miss%s)\n", misses, misses == 1 ? "" : "es");
       fflush (stdout);
     }
   return put_path (dir);
