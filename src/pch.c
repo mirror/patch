@@ -350,13 +350,10 @@ fetchmode (char const *str)
    return mode;
 }
 
-static void
-get_sha1(char **sha1, char const *start, char const *end)
+static char *
+get_sha1 (char const *start, char const *end)
 {
-  unsigned int len = end - start;
-  *sha1 = xmalloc (len + 1);
-  memcpy (*sha1, start, len);
-  (*sha1)[len] = 0;
+  return xmemdup0 (start, end - start);
 }
 
 static int ATTRIBUTE_PURE
@@ -639,8 +636,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		&& (v = skip_hex_digits (u + 2))
 		&& (! *v || c_isspace (*v)))
 	      {
-		get_sha1(&p_sha1[OLD], s + 6, u);
-		get_sha1(&p_sha1[NEW], u + 2, v);
+		p_sha1[OLD] = get_sha1 (s + 6, u);
+		p_sha1[NEW] = get_sha1 (u + 2, v);
 		p_says_nonexistent[OLD] = sha1_says_nonexistent (p_sha1[OLD]);
 		p_says_nonexistent[NEW] = sha1_says_nonexistent (p_sha1[NEW]);
 		if (*(v = skip_spaces (v)))
