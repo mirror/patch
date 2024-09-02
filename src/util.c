@@ -1757,20 +1757,44 @@ filename_is_safe (char const *name)
 bool
 cwd_is_root (char const *name)
 {
-  unsigned int prefix_len = FILE_SYSTEM_PREFIX_LEN (name);
-  char root[4];
+  int prefix_len = FILE_SYSTEM_PREFIX_LEN (name);
   struct stat st;
   dev_t root_dev;
   ino_t root_ino;
 
-  memcpy (root, name, prefix_len);
-  root[prefix_len] = '/';
-  root[prefix_len + 1] = 0;
-  if (stat (root, &st))
-    return false;
-  root_dev = st.st_dev;
-  root_ino = st.st_ino;
-  if (stat (".", &st))
-    return false;
-  return root_dev == st.st_dev && root_ino == st.st_ino;
+  if (prefix_len == 0)
+    {
+      static dev_t main_root_dev;
+      static ino_t main_root_ino;
+      if (!main_root_ino)
+	{
+	  if (stat ("/", &st) < 0)
+	    return false;
+	  main_root_dev = st.st_dev;
+	  main_root_ino = st.st_ino;
+	}
+      root_dev = main_root_dev;
+      root_ino = main_root_ino;
+    }
+  else
+    {
+      char root[4];
+      memcpy (root, name, prefix_len);
+      root[prefix_len] = '/';
+      root[prefix_len + 1] = 0;
+      if (stat (root, &st) < 0)
+	return false;
+      root_dev = st.st_dev;
+      root_ino = st.st_ino;
+    }
+  static dev_t cwd_dev;
+  static ino_t cwd_ino;
+  if (!cwd_ino)
+    {
+      if (stat (".", &st) < 0)
+	return false;
+      cwd_dev = st.st_dev;
+      cwd_ino = st.st_ino;
+    }
+  return (root_dev == cwd_dev) & (root_ino == cwd_ino);
 }
