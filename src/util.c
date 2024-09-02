@@ -1455,9 +1455,9 @@ fail:
    Returns a pointer into NAME on success, and a null pointer otherwise.
   */
 static bool
-strip_leading_slashes (char *name, int strip_leading)
+strip_leading_slashes (char *name, intmax_t strip_leading)
 {
-  int s = strip_leading;
+  intmax_t s = strip_leading;
   char *p, *n;
 
   for (p = n = name;  *p;  p++)
@@ -1483,7 +1483,7 @@ strip_leading_slashes (char *name, int strip_leading)
 /* Make filenames more reasonable. */
 
 void
-fetchname (char const *at, int strip_leading, char **pname,
+fetchname (char const *at, intmax_t strip_leading, char **pname,
 	   char **ptimestr, struct timespec *pstamp)
 {
     char *name;
@@ -1497,7 +1497,7 @@ fetchname (char const *at, int strip_leading, char **pname,
     while (c_isspace (*at))
 	at++;
     if (debug & 128)
-	say ("fetchname %s %d\n", at, strip_leading);
+	say ("fetchname %s %jd\n", at, strip_leading);
 
     if (*at == '"')
       {
@@ -1602,7 +1602,7 @@ fetchname (char const *at, int strip_leading, char **pname,
 }
 
 char *
-parse_name (char const *s, int strip_leading, char const **endp)
+parse_name (char const *s, intmax_t strip_leading, char const **endp)
 {
   char *ret;
 

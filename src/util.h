@@ -50,8 +50,8 @@ void say (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 _Noreturn void fatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 _Noreturn void pfatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
-void fetchname (char const *, int, char **, char **, struct timespec *);
-char *parse_name (char const *, int, char const **);
+void fetchname (char const *, intmax_t, char **, char **, struct timespec *);
+char *parse_name (char const *, intmax_t, char const **);
 char *savebuf (char const *, size_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);

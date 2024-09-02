@@ -65,12 +65,12 @@ enum verbosity verbosity;
 int binary_transput;
 #endif
 #ifndef debug
-int debug;
+unsigned short int debug;
 #endif
 int inerrno;
 int invc;
-int patch_get;
-int strippath;
+intmax_t patch_get;
+intmax_t strippath;
 lin in_offset;
 lin last_frozen_line;
 lin out_offset;
@@ -88,7 +88,7 @@ static bool check_line_endings (lin);
 static bool apply_hunk (struct outstate *, lin);
 static bool patch_match (lin, lin, lin, lin);
 static bool spew_output (struct outstate *, struct stat *);
-static int numeric_string (char const *, bool, char const *);
+static intmax_t numeric_string (char const *, bool, char const *);
 static void cleanup (void);
 static void get_some_switches (void);
 static void init_output (struct outstate *);
@@ -144,7 +144,7 @@ static struct outfile outrej;
 static struct outfile tmpout = { .temporary = true };
 static struct outfile tmprej = { .temporary = true };
 
-static lin maxfuzz = 2;
+static intmax_t maxfuzz = 2;
 
 static char serrbuf[BUFSIZ];
 
@@ -1157,15 +1157,17 @@ get_some_switches (void)
 
 /* Handle STRING (possibly negative if NEGATIVE_ALLOWED is nonzero)
    of type ARGTYPE_MSGID by converting it to an integer,
-   returning the result.  */
-static int
+   returning the result.  If the integer does not fit,
+   return an extreme value.  */
+static intmax_t
 numeric_string (char const *string,
 		bool negative_allowed,
 		char const *argtype_msgid)
 {
-  int value = 0;
+  intmax_t value = 0;
   char const *p = string;
   int sign = *p == '-' ? -1 : 1;
+  bool overflow = false;
 
   p += *p == '-' || *p == '+';
 
@@ -1175,15 +1177,15 @@ numeric_string (char const *string,
 	fatal ("%s %s is not a number", argtype_msgid, quotearg (string));
       int digit = *p - '0';
       int signed_digit = sign * digit;
-      if (ckd_mul (&value, value, 10) || ckd_add (&value, value, signed_digit))
-	fatal ("%s %s is too large", argtype_msgid, quotearg (string));
+      overflow |= ckd_mul (&value, value, 10);
+      overflow |= ckd_add (&value, value, signed_digit);
     }
   while (*++p);
 
   if (value < 0 && ! negative_allowed)
     fatal ("%s %s is negative", argtype_msgid, quotearg (string));
 
-  return value;
+  return !overflow ? value : sign < 0 ? INTMAX_MIN : INTMAX_MAX;
 }
 
 /* Attempt to find the right place to apply this hunk of patch. */

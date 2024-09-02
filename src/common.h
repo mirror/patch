@@ -95,7 +95,7 @@ extern struct outfile tmpin;
 extern struct outfile tmppat;
 
 #if DEBUGGING
-extern int debug;
+extern unsigned short int debug;
 #else
 # define debug 0
 #endif
@@ -105,9 +105,9 @@ extern bool noreverse_flag;
 extern bool reverse_flag;
 extern enum verbosity { DEFAULT_VERBOSITY, SILENT, VERBOSE } verbosity;
 extern bool skip_rest_of_patch;
-extern int strippath;
+extern intmax_t strippath;
 extern bool canonicalize_ws;
-extern int patch_get;
+extern intmax_t patch_get;
 extern bool set_time;
 extern bool set_utc;
 extern bool follow_symlinks;
