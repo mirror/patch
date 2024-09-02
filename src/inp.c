@@ -310,7 +310,7 @@ plan_a (char *filename)
   if (revision)
     {
       char const *rev = revision;
-      int rev0 = rev[0];
+      char rev0 = rev[0];
       bool found_revision = false;
       idx_t revlen = strlen (rev);
 
