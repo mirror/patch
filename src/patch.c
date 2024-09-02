@@ -61,11 +61,9 @@ char const *origsuff;
 enum conflict_style conflict_style;
 enum diff diff_type;
 enum verbosity verbosity;
+idx_t patchbufsize;
 #ifndef binary_transput
 int binary_transput;
-#endif
-#ifndef debug
-unsigned short int debug;
 #endif
 int inerrno;
 int invc;
@@ -74,11 +72,13 @@ intmax_t strippath;
 lin in_offset;
 lin last_frozen_line;
 lin out_offset;
-size_t patchbufsize;
 struct stat instat;
 struct outfile tmped = { .temporary = true };
 struct outfile tmpin = { .temporary = true };
 struct outfile tmppat = { .temporary = true };
+#ifndef debug
+unsigned short int debug;
+#endif
 
 /* procedures */
 
@@ -171,7 +171,7 @@ main (int argc, char **argv)
     setbuf(stderr, serrbuf);
 
     patchbufsize = 8 * 1024;
-    patchbuf = xmalloc (patchbufsize);
+    patchbuf = ximalloc (patchbufsize);
 
     strippath = -1;
 
@@ -693,10 +693,9 @@ main (int argc, char **argv)
 		if (!rejname) {
 		    /* FIXME: This should really be done differently!  */
 		    const char *s = simple_backup_suffix;
-		    size_t len;
 		    simple_backup_suffix = ".rej";
 		    rej = find_backup_file_name (AT_FDCWD, outname, simple_backups);
-		    len = strlen (rej);
+		    idx_t len = strlen (rej);
 		    if (rej[len - 1] == '~')
 		      rej[len - 1] = '#';
 		    simple_backup_suffix = s;
@@ -1796,7 +1795,7 @@ check_line_endings (lin where)
 /* Do two lines match with canonicalized white space? */
 
 bool
-similar (char const *a, size_t alen, char const *b, size_t blen)
+similar (char const *a, idx_t alen, char const *b, idx_t blen)
 {
   /* Ignore presence or absence of trailing newlines.  */
   alen  -=  alen && a[alen - 1] == '\n';

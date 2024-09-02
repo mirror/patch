@@ -21,6 +21,7 @@
 #include <common.h>
 #include <dirname.h>
 #include <hash.h>
+#include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
@@ -1094,14 +1095,15 @@ ask (char const *format, ...)
     }
   else
     {
-      size_t s = 0;
+      idx_t s = 0;
       while (((r = read (ttyfd, patchbuf + s, patchbufsize - 1 - s))
 	      == patchbufsize - 1 - s)
 	     && patchbuf[patchbufsize - 2] != '\n')
 	{
 	  s = patchbufsize - 1;
-	  patchbufsize *= 2;
-	  patchbuf = realloc (patchbuf, patchbufsize);
+	  if (ckd_add (&patchbufsize, patchbufsize, patchbufsize >> 1))
+	    xalloc_die ();
+	  patchbuf = irealloc (patchbuf, patchbufsize);
 	  if (!patchbuf)
 	    xalloc_die ();
 	}

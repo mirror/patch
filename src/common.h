@@ -75,7 +75,7 @@ struct outfile
 /* globals */
 
 extern char *patchbuf;			/* general purpose buffer */
-extern size_t patchbufsize;		/* allocated size of buf */
+extern idx_t patchbufsize;		/* allocated size of buf */
 
 extern bool using_plan_a;		/* try to keep everything in memory */
 
@@ -181,7 +181,7 @@ extern lin out_offset;
 extern lin last_frozen_line;
 
 bool copy_till (struct outstate *, lin);
-bool similar (char const *, size_t, char const *, size_t) ATTRIBUTE_PURE;
+bool similar (char const *, idx_t, char const *, idx_t) ATTRIBUTE_PURE;
 
 #ifdef ENABLE_MERGE
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };

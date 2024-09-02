@@ -19,6 +19,7 @@
 #include <common.h>
 #include <dirname.h>
 #include <inp.h>
+#include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
@@ -1983,9 +1984,8 @@ pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 {
   FILE *fp = pfp;
   int c;
-  size_t i;
+  idx_t i;
   char *b;
-  size_t s;
 
   do
     {
@@ -2028,15 +2028,14 @@ pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	    goto patch_ends_in_middle_of_line;
 	}
 
-      s = patchbufsize;
+      idx_t s = patchbufsize;
 
       for (;;)
 	{
 	  if (i == s - 1)
 	    {
-	      s *= 2;
-	      b = realloc (b, s);
-	      if (!b)
+	      if (ckd_add (&s, s, s >> 1)
+		  || ! (b = irealloc (b, s)))
 		{
 		  if (!using_plan_a)
 		    xalloc_die ();
