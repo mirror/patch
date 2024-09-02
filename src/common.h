@@ -26,6 +26,7 @@
 #include <c-ctype.h>
 #include <intprops.h>
 #include <progname.h>
+#include <minmax.h>
 
 #include <assert.h>
 #include <errno.h>

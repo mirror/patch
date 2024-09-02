@@ -33,7 +33,6 @@
 
 #include <hash.h>
 #include <xalloc.h>
-#include <minmax.h>
 
 #include "common.h"
 

@@ -28,7 +28,6 @@
 #include <xalloc.h>
 #include <gl_linked_list.h>
 #include <gl_xlist.h>
-#include <minmax.h>
 #include <safe.h>
 
 #ifdef __SANITIZE_ADDRESS__
