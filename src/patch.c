@@ -242,8 +242,8 @@ main (int argc, char **argv)
 	  skip_reject_file = false,
 	  apply_empty_patch = false
     ) {					/* for each patch in patch file */
-      int hunk = 0;
-      int failed = 0;
+      intmax_t hunk = 0;
+      intmax_t failed = 0;
       bool mismatch = false;
       char *outname = nullptr;
 
@@ -522,7 +522,7 @@ main (int argc, char **argv)
 		failed++;
 		if (verbosity == VERBOSE ||
 		    (! skip_rest_of_patch && verbosity != SILENT))
-		  say ("Hunk #%d %s at %s%s.\n", hunk,
+		  say ("Hunk #%jd %s at %s%s.\n", hunk,
 		       skip_rest_of_patch ? "ignored" : "FAILED",
 		       format_linenum (numbuf, newwhere),
 		       ! skip_rest_of_patch && check_line_endings (newwhere)
@@ -532,7 +532,7 @@ main (int argc, char **argv)
 		     (verbosity == VERBOSE
 		      || (verbosity != SILENT && (fuzz || in_offset))))
 	      {
-		say ("Hunk #%d succeeded at %s", hunk,
+		say ("Hunk #%jd succeeded at %s", hunk,
 		     format_linenum (numbuf, newwhere));
 		if (fuzz)
 		  say (" with fuzz %s", format_linenum (numbuf, fuzz));
@@ -684,7 +684,7 @@ main (int argc, char **argv)
 	      write_fatal ();
 	    rejfp = nullptr;
 	    somefailed = true;
-	    say ("%d out of %d hunk%s %s", failed, hunk, &"s"[hunk == 1],
+	    say ("%jd out of %jd hunk%s %s", failed, hunk, &"s"[hunk == 1],
 		 skip_rest_of_patch ? "ignored" : "FAILED");
 	    char *rejname = outrej.name;
 	    if (outname && (! rejname || strcmp (rejname, "-") != 0)) {
