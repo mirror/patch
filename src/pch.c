@@ -60,10 +60,10 @@ static lin p_prefix_context;		/* # of prefix context lines */
 static lin p_suffix_context;		/* # of suffix context lines */
 static lin p_input_line;		/* current line # from patch file */
 static char **p_line;			/* the text of the hunk */
-static size_t *p_len;			/* line length including \n if any */
+static idx_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
 static lin hunkmax = INITHUNKMAX;	/* size of above arrays */
-static size_t p_indent;			/* indent to patch */
+static idx_t p_indent;			/* indent to patch */
 static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
 static bool p_pass_comments_through;	/* true if not ignoring # lines */
 static file_offset p_base;		/* where to intuit this time */
@@ -79,9 +79,9 @@ static bool p_git_diff;			/* true if this is a git style diff */
 static char *scan_linenum (char *, lin *);
 static enum diff intuit_diff_type (bool, mode_t *);
 static enum nametype best_name (char * const *, int const *);
-static int prefix_components (char *, bool);
-static size_t pget_line (size_t, int, bool, bool);
-static size_t get_line (void);
+static idx_t prefix_components (char *, bool);
+static ptrdiff_t pget_line (idx_t, int, bool, bool);
+static ptrdiff_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
 static void malformed (void);
@@ -135,7 +135,7 @@ open_patch_file (char const *filename)
       file_pos = pos;
     else
       {
-	size_t charsread;
+	idx_t charsread;
 	int fd;
 	FILE *read_pfp = pfp;
 	fd = make_tempfile (&tmppat, 'p', nullptr, O_RDWR | O_BINARY, 0);
@@ -265,8 +265,8 @@ there_is_another_patch (bool need_header, mode_t *file_type)
     if (verbosity != SILENT)
       {
 	if (p_indent)
-	  say ("(Patch is indented %lu space%s.)\n",
-	       (unsigned long int) p_indent, p_indent==1?"":"s");
+	  say ("(Patch is indented %td space%s.)\n",
+	       p_indent, &"s"[p_indent == 1]);
 	if (p_strip_trailing_cr)
 	  say ("(Stripping trailing CRs from patch; use --binary to disable.)\n");
 	if (! inname)
@@ -444,7 +444,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     int version_controlled[3];
     enum diff retval;
     mode_t file_type;
-    size_t indent = 0;
+    idx_t indent = 0;
 
     for (i = OLD;  i <= INDEX;  i++)
       if (p_name[i]) {
@@ -491,15 +491,14 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	file_offset previous_line = this_line;
 	bool last_line_was_command = this_is_a_command;
 	bool stars_last_line = stars_this_line;
-	size_t indent_last_line = indent;
+	idx_t indent_last_line = indent;
 	char ed_command_letter;
 	bool strip_trailing_cr;
-	size_t chars_read;
 
 	indent = 0;
 	this_line = file_tell (pfp);
-	chars_read = pget_line (0, 0, false, false);
-	if (chars_read == (size_t) -1)
+	ptrdiff_t chars_read = pget_line (0, 0, false, false);
+	if (chars_read < 0)
 	  xalloc_die ();
 	if (! chars_read) {
 	    if (first_ed_command_letter) {
@@ -956,9 +955,9 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 
 	    if (i == NONE && p_says_nonexistent[reverse_flag])
 	      {
-		int newdirs[3];
-		int newdirs_min = INT_MAX;
-		int distance_from_minimum[3];
+		ptrdiff_t newdirs[3];
+		ptrdiff_t newdirs_min = PTRDIFF_MAX;
+		int above_minimum[3];
 
 		for (i = OLD;  i <= INDEX;  i++)
 		  if (p_name[i])
@@ -971,10 +970,11 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 
 		for (i = OLD;  i <= INDEX;  i++)
 		  if (p_name[i])
-		    distance_from_minimum[i] = newdirs[i] - newdirs_min;
+		    above_minimum[i] = newdirs_min < newdirs[i];
 
-		/* The best of the filenames which create the fewest directories. */
-		i = best_name (p_name, distance_from_minimum);
+		/* The best of the filenames that create the fewest
+		   directories. */
+		i = best_name (p_name, above_minimum);
 	      }
 	  }
       }
@@ -1014,10 +1014,10 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 
 /* Count the path name components in FILENAME's prefix.
    If CHECKDIRS is true, count only existing directories.  */
-static int
+static idx_t
 prefix_components (char *filename, bool checkdirs)
 {
-  int count = 0;
+  idx_t count = 0;
   struct stat stat_buf;
   int stat_result;
   char *f = filename + FILE_SYSTEM_PREFIX_LEN (filename);
@@ -1048,12 +1048,12 @@ static enum nametype
 best_name (char *const *name, int const *ignore)
 {
   enum nametype i;
-  int components[3];
-  int components_min = INT_MAX;
-  size_t basename_len[3];
-  size_t basename_len_min = SIZE_MAX;
-  size_t len[3];
-  size_t len_min = SIZE_MAX;
+  idx_t components[3];
+  idx_t components_min = IDX_MAX;
+  idx_t basename_len[3];
+  idx_t basename_len_min = IDX_MAX;
+  idx_t len[3];
+  idx_t len_min = IDX_MAX;
 
   for (i = OLD;  i <= INDEX;  i++)
     if (name[i] && !ignore[i])
@@ -1181,7 +1181,7 @@ another_hunk (enum diff difftype, bool rev)
 {
     char *s;
     lin context = 0;
-    size_t chars_read;
+    ptrdiff_t chars_read;
     char numbuf0[LINENUM_LENGTH_BOUND + 1];
     char numbuf1[LINENUM_LENGTH_BOUND + 1];
     char numbuf2[LINENUM_LENGTH_BOUND + 1];
@@ -1232,11 +1232,10 @@ another_hunk (enum diff difftype, bool rev)
 	fillsrc = filldst = repl_patch_line = repl_context = 0;
 
 	chars_read = get_line ();
-	if (chars_read == (size_t) -1
-	    || chars_read <= 8
+	if (chars_read <= 8
 	    || strncmp (patchbuf, "********", 8) != 0) {
 	    next_intuit_at(line_beginning,p_input_line);
-	    return chars_read == (size_t) -1 ? -1 : 0;
+	    return chars_read < 0 ? -1 : 0;
 	}
 	s = patchbuf;
 	while (*s == '*')
@@ -1254,8 +1253,8 @@ another_hunk (enum diff difftype, bool rev)
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
 	    chars_read = get_line ();
-	    if (chars_read == (size_t) -1)
-	      return -1;
+	    if (chars_read < 0)
+	      return chars_read;
 	    if (!chars_read) {
 		if (repl_beginning && repl_could_be_missing) {
 		    repl_missing = true;
@@ -1637,11 +1636,10 @@ another_hunk (enum diff difftype, bool rev)
 	char ch = '\0';
 
 	chars_read = get_line ();
-	if (chars_read == (size_t) -1
-	    || chars_read <= 4
+	if (chars_read <= 4
 	    || strncmp (patchbuf, "@@ -", 4) != 0) {
 	    next_intuit_at(line_beginning,p_input_line);
-	    return chars_read == (size_t) -1 ? -1 : 0;
+	    return chars_read < 0 ? -1 : 0;
 	}
 	s = scan_linenum (patchbuf + 4, &p_first);
 	if (*s == ',')
@@ -1717,7 +1715,7 @@ another_hunk (enum diff difftype, bool rev)
 		    fatal ("unexpected end of file in patch");
 		}
 	    }
-	    if (chars_read == (size_t) -1)
+	    if (chars_read < 0)
 		s = 0;
 	    else if (*patchbuf == '\t' || *patchbuf == '\n') {
 		ch = ' ';		/* assume the space got eaten */
@@ -1805,10 +1803,10 @@ another_hunk (enum diff difftype, bool rev)
 
 	p_prefix_context = p_suffix_context = 0;
 	chars_read = get_line ();
-	if (chars_read == (size_t) -1 || !chars_read || !c_isdigit (*patchbuf))
+	if (chars_read < 0 || !chars_read || !c_isdigit (*patchbuf))
 	  {
 	    next_intuit_at(line_beginning,p_input_line);
-	    return chars_read == (size_t) -1 ? -1 : 0;
+	    return chars_read < 0 ? -1 : 0;
 	  }
 	s = scan_linenum (patchbuf, &p_first);
 	if (*s == ',') {
@@ -1855,10 +1853,10 @@ another_hunk (enum diff difftype, bool rev)
 	p_Char[0] = '*';
 	for (i=1; i<=p_ptrn_lines; i++) {
 	    chars_read = get_line ();
-	    if (chars_read == (size_t) -1)
+	    if (chars_read < 0)
 	      {
 		p_end = i - 1;
-		return -1;
+		return chars_read;
 	      }
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %s",
@@ -1877,10 +1875,10 @@ another_hunk (enum diff difftype, bool rev)
 	}
 	if (hunk_type == 'c') {
 	    chars_read = get_line ();
-	    if (chars_read == (size_t) -1)
+	    if (chars_read < 0)
 	      {
 		p_end = i - 1;
-		return -1;
+		return chars_read;
 	      }
 	    if (! chars_read)
 	      fatal ("unexpected end of file in patch at line %s",
@@ -1900,10 +1898,10 @@ another_hunk (enum diff difftype, bool rev)
 	p_Char[i] = '=';
 	for (i++; i<=p_end; i++) {
 	    chars_read = get_line ();
-	    if (chars_read == (size_t) -1)
+	    if (chars_read < 0)
 	      {
 		p_end = i - 1;
-		return -1;
+		return chars_read;
 	      }
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %s",
@@ -1960,7 +1958,7 @@ another_hunk (enum diff difftype, bool rev)
     return 1;
 }
 
-static size_t
+static ptrdiff_t
 get_line (void)
 {
    return pget_line (p_indent, p_rfc934_nesting, p_strip_trailing_cr,
@@ -1978,8 +1976,8 @@ get_line (void)
    Return the number of characters read, including '\n' but not '\0'.
    Return -1 if we ran out of memory.  */
 
-static size_t
-pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
+static ptrdiff_t
+pget_line (idx_t indent, int rfc934_nesting, bool strip_trailing_cr,
 	   bool pass_comments_through)
 {
   FILE *fp = pfp;
@@ -2039,7 +2037,7 @@ pget_line (size_t indent, int rfc934_nesting, bool strip_trailing_cr,
 		{
 		  if (!using_plan_a)
 		    xalloc_die ();
-		  return (size_t) -1;
+		  return -1;
 		}
 	      patchbuf = b;
 	      patchbufsize = s;
@@ -2095,7 +2093,7 @@ bool
 pch_swap (void)
 {
     char **tp_line;		/* the text of the hunk */
-    size_t *tp_len;		/* length of each line */
+    idx_t *tp_len;		/* length of each line */
     char *tp_char;		/* +, -, and ! */
     lin i;
     lin n;
@@ -2268,7 +2266,7 @@ pch_suffix_context (void)
 
 /* Return the length of a particular patch line. */
 
-size_t
+idx_t
 pch_line_len (lin line)
 {
     return p_len[line];
@@ -2412,7 +2410,6 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 
     char const *output_name = output->name;
     file_offset beginning_of_this_line;
-    size_t chars_read;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
     int stdin_dup, status;
@@ -2437,7 +2434,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     for (;;) {
 	char ed_command_letter;
 	beginning_of_this_line = file_tell (pfp);
-	chars_read = get_line ();
+	ptrdiff_t chars_read = get_line ();
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);
 	    break;
@@ -2467,7 +2464,8 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     }
     if (!tmpfp)
       return;
-    if (fwrite ("w\nq\n", sizeof (char), (size_t) 4, tmpfp) < (size_t) 4
+    char const w_q[4] = "w\nq\n";
+    if (fwrite (w_q, 1, sizeof w_q, tmpfp) < sizeof w_q
 	|| fflush (tmpfp) != 0)
       write_fatal ();
 

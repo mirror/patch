@@ -37,7 +37,7 @@ char *pfetch (lin) ATTRIBUTE_PURE;
 char pch_char (lin) ATTRIBUTE_PURE;
 int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool) ATTRIBUTE_PURE;
-size_t pch_line_len (lin) ATTRIBUTE_PURE;
+idx_t pch_line_len (lin) ATTRIBUTE_PURE;
 char *pch_name (enum nametype) ATTRIBUTE_PURE;
 bool pch_copy (void) ATTRIBUTE_PURE;
 bool pch_rename (void) ATTRIBUTE_PURE;
