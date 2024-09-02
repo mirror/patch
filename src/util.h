@@ -52,7 +52,7 @@ _Noreturn void pfatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
 void fetchname (char const *, intmax_t, char **, char **, struct timespec *);
 char *parse_name (char const *, intmax_t, char const **);
-char *savebuf (char const *, size_t);
+char *savebuf (char const *, idx_t);
 char *savestr (char const *);
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
 bool version_get (char *, char const *, bool, bool, char const *, struct stat *);
@@ -74,7 +74,7 @@ void create_backup (char *, const struct stat *, bool);
 void move_file (struct outfile *, struct stat const *,
 		char *, mode_t, bool);
 _Noreturn void read_fatal (void);
-void remove_prefix (char *, size_t);
+void remove_prefix (char *, idx_t);
 void removedirs (char const *);
 _Noreturn void write_fatal (void);
 void putline (FILE *, ...);

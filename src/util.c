@@ -76,8 +76,8 @@ static size_t
 file_id_hasher (void const *entry, size_t table_size)
 {
   file_id const *e = entry;
-  size_t i = e->ino + e->dev;
-  return i % table_size;
+  uintmax_t ino = e->ino, dev = e->dev;
+  return (ino ^ dev) % table_size;
 }
 
 /* Do ENTRY1 and ENTRY2 refer to the same files?  */
@@ -368,12 +368,12 @@ create_backup (char *to, const struct stat *to_st, bool leave_original)
 	  char const *b = origbase ? origbase : "";
 	  char const *s = origsuff ? origsuff : "";
 	  char const *t = to;
-	  size_t plen = strlen (p);
-	  size_t blen = strlen (b);
-	  size_t slen = strlen (s);
-	  size_t tlen = strlen (t);
+	  idx_t plen = strlen (p);
+	  idx_t blen = strlen (b);
+	  idx_t slen = strlen (s);
+	  idx_t tlen = strlen (t);
 	  char const *o;
-	  size_t olen;
+	  idx_t olen;
 
 	  for (o = t + tlen, olen = 0;
 	       o > t && ! ISSLASH (*(o - 1));
@@ -609,17 +609,13 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
 static void
 copy_to_fd (char *from, int tofd)
 {
-  int from_flags = O_RDONLY | O_BINARY;
-  int fromfd;
-  ssize_t i;
-
-  if (! follow_symlinks)
-    from_flags |= O_NOFOLLOW;
-  if ((fromfd = safe_open (from, from_flags, 0)) < 0)
+  int from_flags = O_RDONLY | O_BINARY | (follow_symlinks ? 0 : O_NOFOLLOW);
+  int fromfd = safe_open (from, from_flags, 0);
+  if (fromfd < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
-  while ((i = read (fromfd, patchbuf, patchbufsize)) != 0)
+  for (ssize_t i; (i = read (fromfd, patchbuf, patchbufsize)) != 0; )
     {
-      if (i == (ssize_t) -1)
+      if (i < 0)
 	read_fatal ();
       if (full_write (tofd, patchbuf, i) != i)
 	write_fatal ();
@@ -716,11 +712,11 @@ static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
 
 static char const PERFORCE_CO[] = "p4 edit ";
 
-static size_t
+static idx_t
 quote_system_arg (char *quoted, char const *arg)
 {
   char *q = quotearg_style (shell_quoting_style, arg);
-  size_t len = strlen (q);
+  idx_t len = strlen (q);
 
   if (quoted)
     memcpy (quoted, q, len + 1);
@@ -762,16 +758,16 @@ version_controller (char const *filename, bool readonly,
   char *dir = dir_name (filename);
   char *filebase = base_name (filename);
   char const *dotslash = *filename == '-' ? "./" : "";
-  size_t dirlen = strlen (dir);
-  size_t filebaselen = strlen (filebase);
-  size_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
-  size_t maxtrysize = dirlen + 1 + filebaselen + maxfixlen + 1;
-  size_t quotelen = quote_system_arg (0, dir) + quote_system_arg (0, filebase);
-  size_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
-  size_t maxdiffsize =
+  idx_t dirlen = strlen (dir);
+  idx_t filebaselen = strlen (filebase);
+  idx_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
+  idx_t maxtrysize = dirlen + 1 + filebaselen + maxfixlen + 1;
+  idx_t quotelen = quote_system_arg (0, dir) + quote_system_arg (0, filebase);
+  idx_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
+  idx_t maxdiffsize =
     (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof DEV_NULL - 1
      + 2 * quotelen + maxfixlen);
-  char *trybuf = xmalloc (maxtrysize);
+  char *trybuf = ximalloc (maxtrysize);
   char const *r = 0;
 
   char *dirend = mempcpy (trybuf, dir, dirlen);
@@ -918,23 +914,15 @@ version_get (char *filename, char const *cs, bool exists, bool readonly,
 /* Allocate a unique area for a string. */
 
 char *
-savebuf (char const *s, size_t size)
+savebuf (char const *s, idx_t size)
 {
-  char *rv;
-
   if (! size)
     return nullptr;
-
-  rv = malloc (size);
-
-  if (! rv)
-    {
-      if (! using_plan_a)
-	xalloc_die ();
-    }
-  else
-    memcpy (rv, s, size);
-
+  char *rv = imalloc (size);
+  if (rv)
+    return memcpy (rv, s, size);
+  if (! using_plan_a)
+    xalloc_die ();
   return rv;
 }
 
@@ -945,7 +933,7 @@ savestr (char const *s)
 }
 
 void
-remove_prefix (char *p, size_t prefixlen)
+remove_prefix (char *p, idx_t prefixlen)
 {
   char const *s = p + prefixlen;
   while ((*p++ = *s++))
@@ -1345,9 +1333,8 @@ void
 removedirs (char const *name)
 {
   char *filename = xstrdup (name);
-  size_t i;
 
-  for (i = strlen (filename);  i != 0;  i--)
+  for (idx_t i = strlen (filename);  i != 0;  i--)
     if (ISSLASH (filename[i])
 	&& ! (ISSLASH (filename[i - 1])
 	      || (filename[i - 1] == '.'
