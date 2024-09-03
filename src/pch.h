@@ -30,7 +30,7 @@ lin pch_prefix_context (void) ATTRIBUTE_PURE;
 lin pch_ptrn_lines (void) ATTRIBUTE_PURE;
 lin pch_repl_lines (void) ATTRIBUTE_PURE;
 lin pch_suffix_context (void) ATTRIBUTE_PURE;
-bool pch_swap (void);
+void pch_swap (void);
 bool pch_write_line (lin, FILE *);
 bool there_is_another_patch (bool, mode_t *);
 char *pfetch (lin) ATTRIBUTE_PURE;

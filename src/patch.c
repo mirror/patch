@@ -468,11 +468,7 @@ main (int argc, char **argv)
 		    if (hunk == 1 && ! where && ! (force | apply_anyway)
 			&& reverse_flag == reverse_flag_specified) {
 						/* dwim for reversed patch? */
-			if (!pch_swap()) {
-			    say (
-"Not enough memory to try swapped hunk!  Assuming unswapped.\n");
-			    continue;
-			}
+			pch_swap ();
 			/* Try again.  */
 			where = locate_hunk (fuzz);
 			if (where
@@ -485,8 +481,7 @@ main (int argc, char **argv)
 			else
 			  {
 			    /* Put it back to normal.  */
-			    if (! pch_swap ())
-			      fatal ("lost hunk on alloc error!");
+			    pch_swap ();
 			    if (where)
 			      {
 				apply_anyway = true;

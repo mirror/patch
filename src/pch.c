@@ -1917,8 +1917,7 @@ another_hunk (enum diff difftype, bool rev)
 	}
     }
     if (rev)				/* backwards patch? */
-	if (!pch_swap())
-	    say ("Not enough memory to swap next hunk!\n");
+      pch_swap ();
     assert (p_end + 1 < hunkmax);
     p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     if (debug & 2) {
@@ -2086,7 +2085,7 @@ incomplete_line (void)
 
 /* Reverse the old and new portions of the current hunk. */
 
-bool
+void
 pch_swap (void)
 {
     char **tp_line;		/* the text of the hunk */
@@ -2110,15 +2109,6 @@ pch_swap (void)
     p_len = 0;
     p_Char = 0;
     set_hunkmax();
-    if (!p_line || !p_len || !p_Char) {
-	free (p_line);
-	p_line = tp_line;
-	free (p_len);
-	p_len = tp_len;
-	free (p_Char);
-	p_Char = tp_char;
-	return false;		/* not enough memory to swap hunk! */
-    }
 
     /* now turn the new into the old */
 
@@ -2177,7 +2167,6 @@ pch_swap (void)
     free (tp_line);
     free (tp_len);
     free (tp_char);
-    return true;
 }
 
 /* Return whether file WHICH (false = old, true = new) appears to nonexistent.
