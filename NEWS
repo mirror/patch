@@ -5,6 +5,8 @@ Unreleased changes:
   GNU/Linux platforms where time_t defaults to 32 bits.
 * 'patch' no longer creates files with names containing newlines,
   as encouraged by POSIX.1-2024.
+* Patches can now contain sequences of spaces and tabs around line numbers
+  and in other places where POSIX requires support for these sequences.
 * --enable-gcc-warnings no longer uses expensive static checking.
   Use --enable-gcc-warnings=expensive if you still want it.
 * Fix undefined or ill-defined behavior in unusual cases,

@@ -74,7 +74,6 @@ void create_backup (char *, const struct stat *, bool);
 void move_file (struct outfile *, struct stat const *,
 		char *, mode_t, bool);
 _Noreturn void read_fatal (void);
-void remove_prefix (char *, idx_t);
 void removedirs (char const *);
 _Noreturn void write_fatal (void);
 void putline (FILE *, ...);

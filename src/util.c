@@ -932,14 +932,6 @@ savestr (char const *s)
   return savebuf (s, strlen (s) + 1);
 }
 
-void
-remove_prefix (char *p, idx_t prefixlen)
-{
-  char const *s = p + prefixlen;
-  while ((*p++ = *s++))
-    /* do nothing */ ;
-}
-
 char *
 format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
 {

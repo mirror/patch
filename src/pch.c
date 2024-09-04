@@ -550,13 +550,13 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    p_indent = indent;		/* assume this for now */
 	    p_strip_trailing_cr = strip_trailing_cr;
 	}
-	if (!stars_last_line && strnEQ(s, "*** ", 4))
+	if (!stars_last_line && strnEQ (s, "***", 3) && c_isblank (s[3]))
 	  {
 	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
 		       &p_timestamp[OLD]);
 	    need_header = false;
 	  }
-	else if (strnEQ(s, "+++ ", 4))
+	else if (strnEQ (s, "+++", 3) && c_isblank (s[3]))
 	  {
 	    /* Swap with NEW below.  */
 	    fetchname (s+4, strippath, &p_name[OLD], &p_timestr[OLD],
@@ -706,7 +706,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	  {
 	    for (t = s;  t[0] == '-' && t[1] == ' ';  t += 2)
 	      /* do nothing */ ;
-	    if (strnEQ(t, "--- ", 4))
+	    if (strnEQ (t, "---", 3) && c_isblank (t[3]))
 	      {
 		struct timespec timestamp;
 		timestamp.tv_sec = -1;
@@ -774,8 +774,10 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	     || diff_type == CONTEXT_DIFF
 	     || diff_type == NEW_CONTEXT_DIFF)
 	    && stars_last_line && indent_last_line == indent
-	    && strnEQ (s, "*** ", 4)) {
+	    && strnEQ (s, "***", 3) && c_isblank (s[3])) {
 	    s += 4;
+	    while (c_isblank (*s))
+	      s++;
 	    if (s[0] == '0' && !c_isdigit (s[1]))
 	      p_says_nonexistent[OLD] = 1 + ! p_timestamp[OLD].tv_sec;
 	    /* if this is a new context diff the character just before */
@@ -1139,14 +1141,18 @@ malformed (void)
 }
 
 /* Parse a line number from a string.
-   Return the address of the first char after the number.  */
+   The number is optionally preceded and followed by blank characters.
+   Return the address of the first char after the scan.  */
 static char *
-scan_linenum (char *s0, lin *linenum)
+scan_linenum (char *string, lin *linenum)
 {
-  char *s;
+  char *s0, *s;
   lin n = 0;
   bool overflow = false;
   char numbuf[LINENUM_LENGTH_BOUND + 1];
+
+  for (s0 = string; c_isblank (*s0); s0++)
+    continue;
 
   for (s = s0; c_isdigit (*s); s++)
     {
@@ -1167,6 +1173,10 @@ scan_linenum (char *s0, lin *linenum)
     }
 
   *linenum = n;
+
+  while (c_isblank (*s))
+    s++;
+
   return s;
 }
 
@@ -1237,7 +1247,7 @@ another_hunk (enum diff difftype, bool rev)
 	s = patchbuf;
 	while (*s == '*')
 	    s++;
-	if (*s == ' ')
+	if (c_isblank (*s))
 	  {
 	    p_c_function = s;
 	    while (*s != '\n')
@@ -1301,13 +1311,11 @@ another_hunk (enum diff difftype, bool rev)
 		}
 		for (s = patchbuf; *s && !c_isdigit (*s); s++)
 		  /* do nothing */ ;
-		if (strnEQ(s,"0,0",3))
-		    remove_prefix (s, 2);
 		s = scan_linenum (s, &p_first);
 		if (*s == ',') {
-		    while (*s && !c_isdigit (*s))
-		      s++;
-		    scan_linenum (s, &p_ptrn_lines);
+		    scan_linenum (s + 1, &p_ptrn_lines);
+		    if (p_first == 0 && p_ptrn_lines == 0)
+		      p_first = 1;
 		    p_ptrn_lines += 1 - p_first;
 		    if (p_ptrn_lines < 0)
 		      malformed ();
@@ -1383,14 +1391,7 @@ another_hunk (enum diff difftype, bool rev)
 		s = scan_linenum (s, &p_newfirst);
 		if (*s == ',')
 		  {
-		    do
-		      {
-			if (!*++s)
-			  malformed ();
-		      }
-		    while (!c_isdigit (*s));
-
-		    scan_linenum (s, &p_repl_lines);
+		    scan_linenum (s + 1, &p_repl_lines);
 		    p_repl_lines += 1 - p_newfirst;
 		    if (p_repl_lines < 0)
 		      malformed ();
@@ -1800,12 +1801,16 @@ another_hunk (enum diff difftype, bool rev)
 
 	p_prefix_context = p_suffix_context = 0;
 	chars_read = get_line ();
-	if (chars_read < 0 || !chars_read || !c_isdigit (*patchbuf))
+	bool invalid_line = chars_read <= 0;
+	if (!invalid_line)
+	  for (s = patchbuf; c_isblank (*s); s++)
+	    continue;
+	if (invalid_line || !c_isdigit (*s))
 	  {
 	    next_intuit_at(line_beginning,p_input_line);
 	    return chars_read < 0 ? -1 : 0;
 	  }
-	s = scan_linenum (patchbuf, &p_first);
+	s = scan_linenum (s, &p_first);
 	if (*s == ',') {
 	    s = scan_linenum (s + 1, &p_ptrn_lines);
 	    p_ptrn_lines += 1 - p_first;

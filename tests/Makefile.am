@@ -60,7 +60,8 @@ TESTS = \
 	remember-reject-files \
 	remove-directories \
 	symlinks \
-	unmodified-files
+	unmodified-files \
+	unusual-blanks
 
 XFAIL_TESTS = \
 	dash-o-append \
