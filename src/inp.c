@@ -476,7 +476,7 @@ ifetch (lin line, bool whichbuf, idx_t *psize)
 	*psize = i_ptr[line + 1] - p;
 	return p;
     } else {
-	lin offline = line % lines_per_buf;
+	idx_t offline = line % lines_per_buf;
 	lin baseline = line - offline;
 
 	if (tiline[0] == baseline)

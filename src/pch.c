@@ -52,17 +52,17 @@ static mode_t p_mode[2];		/* file modes */
 static off_t p_filesize;		/* size of the patch file */
 static lin p_first;			/* 1st line number */
 static lin p_newfirst;			/* 1st line number of replacement */
-static lin p_ptrn_lines;		/* # lines in pattern */
-static lin p_repl_lines;		/* # lines in replacement text */
-static lin p_end = -1;			/* last line in hunk */
-static lin p_max;			/* max allowed value of p_end */
-static lin p_prefix_context;		/* # of prefix context lines */
-static lin p_suffix_context;		/* # of suffix context lines */
+static idx_t p_ptrn_lines;		/* # lines in pattern */
+static idx_t p_repl_lines;		/* # lines in replacement text */
+static ptrdiff_t p_end = -1;		/* last line in hunk */
+static idx_t p_max;			/* max allowed value of p_end */
+static idx_t p_prefix_context;		/* # of prefix context lines */
+static idx_t p_suffix_context;		/* # of suffix context lines */
 static lin p_input_line;		/* current line # from patch file */
 static char **p_line;			/* the text of the hunk */
 static idx_t *p_len;			/* line length including \n if any */
 static char *p_Char;			/* +, -, and ! */
-static lin hunkmax = INITHUNKMAX;	/* size of above arrays */
+static idx_t hunkmax = INITHUNKMAX;	/* size of above arrays */
 static idx_t p_indent;			/* indent to patch */
 static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
 static bool p_pass_comments_through;	/* true if not ignoring # lines */
@@ -71,12 +71,11 @@ static lin p_bline;			/* line # of p_base */
 static file_offset p_start;		/* where intuit found a patch */
 static lin p_sline;			/* and the line number for it */
 static lin p_hunk_beg;			/* line number of current hunk */
-static lin p_efake = -1;		/* end of faked up lines--don't free */
-static lin p_bfake = -1;		/* beg of faked up lines */
+static ptrdiff_t p_efake = -1;		/* end of faked up lines--don't free */
+static ptrdiff_t p_bfake = -1;		/* beg of faked up lines */
 static char *p_c_function;		/* the C function a hunk is in */
 static bool p_git_diff;			/* true if this is a git style diff */
 
-static char *scan_linenum (char *, lin *);
 static enum diff intuit_diff_type (bool, mode_t *);
 static enum nametype best_name (char * const *, int const *);
 static idx_t prefix_components (char *, bool);
@@ -1187,7 +1186,7 @@ int
 another_hunk (enum diff difftype, bool rev)
 {
     char *s;
-    lin context = 0;
+    idx_t context = 0;
     ptrdiff_t chars_read;
     char numbuf0[LINENUM_LENGTH_BOUND + 1];
     char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -1216,10 +1215,10 @@ another_hunk (enum diff difftype, bool rev)
     if (difftype == CONTEXT_DIFF || difftype == NEW_CONTEXT_DIFF) {
 	file_offset line_beginning = file_tell (pfp);
 					/* file pos of the current line */
-	lin repl_beginning = 0;		/* index of --- line */
-	lin fillcnt = 0;	/* #lines of missing ptrn or repl */
-	lin fillsrc;		/* index of first line to copy */
-	lin filldst;		/* index of first missing line */
+	idx_t repl_beginning = 0;	/* index of --- line */
+	idx_t fillcnt = 0;	/* #lines of missing ptrn or repl */
+	idx_t fillsrc;		/* index of first line to copy */
+	idx_t filldst;		/* index of first missing line */
 	bool ptrn_spaces_eaten = false;	/* ptrn was slightly misformed */
 	bool some_context = false;	/* (perhaps internal) context seen */
 	bool repl_could_be_missing = true;
@@ -1228,12 +1227,13 @@ another_hunk (enum diff difftype, bool rev)
 	file_offset repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	lin repl_patch_line;		/* input line number for same */
-	lin repl_context;		/* context for same */
-	lin ptrn_prefix_context = -1;	/* lines in pattern prefix context */
-	lin ptrn_suffix_context = -1;	/* lines in pattern suffix context */
-	lin repl_prefix_context = -1;	/* lines in replac. prefix context */
-	lin ptrn_copiable = 0;		/* # of copiable lines in ptrn */
-	lin repl_copiable = 0;		/* Likewise for replacement.  */
+	idx_t repl_context;		/* context for same */
+	ptrdiff_t
+	  ptrn_prefix_context = -1,	/* lines in pattern prefix context */
+	  ptrn_suffix_context = -1,	/* lines in pattern suffix context */
+	  repl_prefix_context = -1;	/* lines in replac. prefix context */
+	idx_t ptrn_copiable = 0;	/* # of copiable lines in ptrn */
+	idx_t repl_copiable = 0;	/* Likewise for replacement.  */
 
 	/* Pacify 'gcc -Wall'.  */
 	fillsrc = filldst = repl_patch_line = repl_context = 0;
@@ -1313,10 +1313,11 @@ another_hunk (enum diff difftype, bool rev)
 		  /* do nothing */ ;
 		s = scan_linenum (s, &p_first);
 		if (*s == ',') {
-		    scan_linenum (s + 1, &p_ptrn_lines);
-		    if (p_first == 0 && p_ptrn_lines == 0)
+		    lin last;
+		    scan_linenum (s + 1, &last);
+		    if (p_first == 0 && last == 0)
 		      p_first = 1;
-		    p_ptrn_lines += 1 - p_first;
+		    p_ptrn_lines = last - p_first + 1;
 		    if (p_ptrn_lines < 0)
 		      malformed ();
 		}
@@ -1391,8 +1392,9 @@ another_hunk (enum diff difftype, bool rev)
 		s = scan_linenum (s, &p_newfirst);
 		if (*s == ',')
 		  {
-		    scan_linenum (s + 1, &p_repl_lines);
-		    p_repl_lines += 1 - p_newfirst;
+		    lin last;
+		    scan_linenum (s + 1, &last);
+		    p_repl_lines = last - p_newfirst + 1;
 		    if (p_repl_lines < 0)
 		      malformed ();
 		  }
@@ -1629,8 +1631,8 @@ another_hunk (enum diff difftype, bool rev)
     }
     else if (difftype == UNI_DIFF) {
 	file_offset line_beginning = file_tell (pfp);  /* file pos of the current line */
-	lin fillsrc;  /* index of old lines */
-	lin filldst;  /* index of new lines */
+	idx_t fillsrc;	/* index of old lines */
+	idx_t filldst;	/* index of new lines */
 	char ch = '\0';
 
 	chars_read = get_line ();
@@ -1641,21 +1643,29 @@ another_hunk (enum diff difftype, bool rev)
 	}
 	s = scan_linenum (patchbuf + 4, &p_first);
 	if (*s == ',')
-	    s = scan_linenum (s + 1, &p_ptrn_lines);
+	  {
+	    lin nlines;
+	    s = scan_linenum (s + 1, &nlines);
+	    if (p_first >= MIN (IDX_MAX, LINENUM_MAX) - nlines)
+	      malformed ();
+	    p_ptrn_lines = nlines;
+	  }
 	else
 	    p_ptrn_lines = 1;
-	if (p_first >= LINENUM_MAX - p_ptrn_lines)
-	  malformed ();
 	if (*s == ' ') s++;
 	if (*s != '+')
 	    malformed ();
 	s = scan_linenum (s + 1, &p_newfirst);
 	if (*s == ',')
-	    s = scan_linenum (s + 1, &p_repl_lines);
+	  {
+	    lin nlines;
+	    s = scan_linenum (s + 1, &nlines);
+	    if (p_newfirst >= MIN (IDX_MAX, LINENUM_MAX) - nlines)
+	      malformed ();
+	    p_repl_lines = nlines;
+	  }
 	else
 	    p_repl_lines = 1;
-	if (p_newfirst >= LINENUM_MAX - p_repl_lines)
-	  malformed ();
 	if (*s == ' ') s++;
 	if (*s++ != '@')
 	    malformed ();
@@ -1795,7 +1805,6 @@ another_hunk (enum diff difftype, bool rev)
     }
     else {				/* normal diff--fake it up */
 	char hunk_type;
-	int i;
 	lin min, max;
 	file_offset line_beginning = file_tell (pfp);
 
@@ -1812,13 +1821,14 @@ another_hunk (enum diff difftype, bool rev)
 	  }
 	s = scan_linenum (s, &p_first);
 	if (*s == ',') {
-	    s = scan_linenum (s + 1, &p_ptrn_lines);
+	    lin last;
+	    s = scan_linenum (s + 1, &last);
+	    if (p_first >= MIN (IDX_MAX, LINENUM_MAX) - p_ptrn_lines)
+	      malformed ();
 	    p_ptrn_lines += 1 - p_first;
 	}
 	else
 	    p_ptrn_lines = (*s != 'a');
-	if (p_first >= LINENUM_MAX - p_ptrn_lines)
-	  malformed ();
 	hunk_type = *s;
 	if (hunk_type == 'a')
 	    p_first++;			/* do append rather than insert */
@@ -1853,6 +1863,8 @@ another_hunk (enum diff difftype, bool rev)
 	    return -1;
 	}
 	p_Char[0] = '*';
+
+	idx_t i;
 	for (i=1; i<=p_ptrn_lines; i++) {
 	    chars_read = get_line ();
 	    if (chars_read < 0)
@@ -1926,9 +1938,7 @@ another_hunk (enum diff difftype, bool rev)
     assert (p_end + 1 < hunkmax);
     p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     if (debug & 2) {
-	lin i;
-
-	for (i = 0; i <= p_end + 1; i++) {
+	for (idx_t i = 0; i <= p_end + 1; i++) {
 	    fputs (format_linenum (numbuf0, i), stderr);
 	    if (p_Char[i] == '\n')
 	      {
@@ -2096,14 +2106,12 @@ pch_swap (void)
     char **tp_line;		/* the text of the hunk */
     idx_t *tp_len;		/* length of each line */
     char *tp_char;		/* +, -, and ! */
-    lin i;
-    lin n;
     bool blankline = false;
     char *s;
 
-    i = p_first;
+    lin oldfirst = p_first;
     p_first = p_newfirst;
-    p_newfirst = i;
+    p_newfirst = oldfirst;
 
     /* make a scratch copy */
 
@@ -2117,19 +2125,17 @@ pch_swap (void)
 
     /* now turn the new into the old */
 
-    i = p_ptrn_lines + 1;
+    idx_t i = p_ptrn_lines + 1;
     if (tp_char[i] == '\n') {		/* account for possible blank line */
 	blankline = true;
 	i++;
     }
     if (p_efake >= 0) {			/* fix non-freeable ptr range */
-	if (p_efake <= i)
-	    n = p_end - p_ptrn_lines;
-	else
-	    n = -i;
+	ptrdiff_t n = p_efake <= i ? p_end - p_ptrn_lines : -i;
 	p_efake += n;
 	p_bfake += n;
     }
+    idx_t n;
     for (n=0; i <= p_end; i++,n++) {
 	p_line[n] = tp_line[i];
 	p_Char[n] = tp_char[i];
@@ -2209,7 +2215,7 @@ pch_first (void)
 
 /* Return the number of lines of old context. */
 
-lin
+idx_t
 pch_ptrn_lines (void)
 {
     return p_ptrn_lines;
@@ -2225,7 +2231,7 @@ pch_newfirst (void)
 
 /* Return the number of lines in the replacement text including context. */
 
-lin
+idx_t
 pch_repl_lines (void)
 {
     return p_repl_lines;
@@ -2233,7 +2239,7 @@ pch_repl_lines (void)
 
 /* Return the number of lines in the whole hunk. */
 
-lin
+idx_t
 pch_end (void)
 {
     return p_end;
@@ -2241,7 +2247,7 @@ pch_end (void)
 
 /* Return the number of context lines before the first changed line. */
 
-lin
+idx_t
 pch_prefix_context (void)
 {
     return p_prefix_context;
@@ -2249,7 +2255,7 @@ pch_prefix_context (void)
 
 /* Return the number of context lines after the last changed line. */
 
-lin
+idx_t
 pch_suffix_context (void)
 {
     return p_suffix_context;
@@ -2258,7 +2264,7 @@ pch_suffix_context (void)
 /* Return the length of a particular patch line. */
 
 idx_t
-pch_line_len (lin line)
+pch_line_len (idx_t line)
 {
     return p_len[line];
 }
@@ -2268,7 +2274,7 @@ pch_line_len (lin line)
    old or new context.  For some reason, the context format allows that.)  */
 
 char
-pch_char (lin line)
+pch_char (idx_t line)
 {
     return p_Char[line];
 }
@@ -2276,7 +2282,7 @@ pch_char (lin line)
 /* Return a pointer to a particular patch line. */
 
 char *
-pfetch (lin line)
+pfetch (idx_t line)
 {
     return p_line[line];
 }
@@ -2284,7 +2290,7 @@ pfetch (lin line)
 /* Output a patch line.  */
 
 bool
-pch_write_line (lin line, FILE *file)
+pch_write_line (idx_t line, FILE *file)
 {
   bool after_newline =
     (p_len[line] > 0) && (p_line[line][p_len[line] - 1] == '\n');
@@ -2503,8 +2509,8 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 void
 pch_normalize (enum diff format)
 {
-  lin old = 1;
-  lin new = p_ptrn_lines + 1;
+  idx_t old = 1;
+  idx_t new = p_ptrn_lines + 1;
 
   while (p_Char[new] == '=' || p_Char[new] == '\n')
     new++;

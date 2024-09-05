@@ -51,6 +51,15 @@
 
 /* typedefs */
 
+/* A type for line numbers or (possibly negative) line number offsets
+   in input files.  It counts lines in files, so off_t should suffice.
+
+   When counting lines in main memory, such as the main memory used to
+   hold a patch, the code typically instead uses idx_t for nonnegative
+   counts and ptrdiff_t for offsets.  This is mostly for clarity.
+   Occasionally, though, the code uses 'lin' when a line count might
+   be of main memory and might be of file contents.  */
+
 typedef off_t lin;			/* must be signed */
 
 #define LINENUM_MIN TYPE_MINIMUM (lin)

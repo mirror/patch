@@ -18,7 +18,7 @@
 
 enum nametype { OLD, NEW, INDEX, NONE };
 
-lin pch_end (void) ATTRIBUTE_PURE;
+idx_t pch_end (void) ATTRIBUTE_PURE;
 lin pch_first (void) ATTRIBUTE_PURE;
 lin pch_hunk_beg (void) ATTRIBUTE_PURE;
 char const *pch_c_function (void) ATTRIBUTE_PURE;
@@ -26,18 +26,18 @@ bool pch_git_diff (void) ATTRIBUTE_PURE;
 char const * pch_timestr (bool which) ATTRIBUTE_PURE;
 mode_t pch_mode (bool which) ATTRIBUTE_PURE;
 lin pch_newfirst (void) ATTRIBUTE_PURE;
-lin pch_prefix_context (void) ATTRIBUTE_PURE;
-lin pch_ptrn_lines (void) ATTRIBUTE_PURE;
-lin pch_repl_lines (void) ATTRIBUTE_PURE;
-lin pch_suffix_context (void) ATTRIBUTE_PURE;
+idx_t pch_prefix_context (void) ATTRIBUTE_PURE;
+idx_t pch_ptrn_lines (void) ATTRIBUTE_PURE;
+idx_t pch_repl_lines (void) ATTRIBUTE_PURE;
+idx_t pch_suffix_context (void) ATTRIBUTE_PURE;
 void pch_swap (void);
-bool pch_write_line (lin, FILE *);
+bool pch_write_line (idx_t, FILE *);
 bool there_is_another_patch (bool, mode_t *);
-char *pfetch (lin) ATTRIBUTE_PURE;
-char pch_char (lin) ATTRIBUTE_PURE;
+char *pfetch (idx_t) ATTRIBUTE_PURE;
+char pch_char (idx_t) ATTRIBUTE_PURE;
 int another_hunk (enum diff, bool);
 int pch_says_nonexistent (bool) ATTRIBUTE_PURE;
-idx_t pch_line_len (lin) ATTRIBUTE_PURE;
+idx_t pch_line_len (idx_t) ATTRIBUTE_PURE;
 char *pch_name (enum nametype) ATTRIBUTE_PURE;
 bool pch_copy (void) ATTRIBUTE_PURE;
 bool pch_rename (void) ATTRIBUTE_PURE;
