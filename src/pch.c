@@ -165,12 +165,9 @@ open_patch_file (char const *filename)
 static void
 set_hunkmax (void)
 {
-    if (!p_line)
-	p_line = xmalloc (hunkmax * sizeof *p_line);
-    if (!p_len)
-	p_len = xmalloc (hunkmax * sizeof *p_len);
-    if (!p_Char)
-	p_Char = xmalloc (hunkmax * sizeof *p_Char);
+  p_line = xireallocarray (p_line, hunkmax, sizeof *p_line);
+  p_len = xireallocarray (p_len, hunkmax, sizeof *p_len);
+  p_Char = xireallocarray (p_Char, hunkmax, sizeof *p_Char);
 }
 
 /* Enlarge the arrays containing the current hunk of patch. */
@@ -178,17 +175,32 @@ set_hunkmax (void)
 static bool
 grow_hunkmax (void)
 {
-    hunkmax *= 2;
     assert (p_line && p_len && p_Char);
-    if ((p_line = realloc (p_line, hunkmax * sizeof (*p_line)))
-	&& (p_len = realloc (p_len, hunkmax * sizeof (*p_len)))
-	&& (p_Char = realloc (p_Char, hunkmax * sizeof (*p_Char))))
-      return true;
+    idx_t h;
+    if (! ckd_add (&h, hunkmax, hunkmax >> 1))
+      {
+	char **line = ireallocarray (p_line, hunkmax, sizeof *line);
+	if (line)
+	  {
+	    p_line = line;
+	    idx_t *len = ireallocarray (p_len, hunkmax, sizeof *len);
+	    if (len)
+	      {
+		p_len = len;
+		char *Char = ireallocarray (p_Char, hunkmax, sizeof *Char);
+		if (Char)
+		  {
+		    p_Char = Char;
+		    hunkmax = h;
+		    return true;
+		  }
+	      }
+	  }
+      }
     if (!using_plan_a)
       xalloc_die ();
     /* Don't free previous values of p_line etc.,
-       since some broken implementations free them for us.
-       Whatever is null will be allocated again from within plan_a (),
+       as they'd just be reallocated again from within plan_a,
        of all places.  */
     return false;
 }
