@@ -18,6 +18,7 @@
 
 #include <common.h>
 #include <argmatch.h>
+#include <closeout.h>
 #include <exitfail.h>
 #include <getopt.h>
 #include <inp.h>
@@ -169,6 +170,7 @@ main (int argc, char **argv)
     init_time ();
 
     setbuf(stderr, serrbuf);
+    atexit (close_stdout);
 
     patchbufsize = 8 * 1024;
     patchbuf = ximalloc (patchbufsize);
@@ -262,7 +264,7 @@ main (int argc, char **argv)
 
       if (rejfp)
 	{
-	  fclose (rejfp);
+	  Fclose (rejfp);
 	  rejfp = nullptr;
 	}
       if (0 <= outfd)
@@ -497,7 +499,7 @@ main (int argc, char **argv)
 		if (skip_rest_of_patch) {		/* just got decided */
 		  if (outstate.ofp && ! outfile)
 		    {
-		      fclose (outstate.ofp);
+		      Fclose (outstate.ofp);
 		      outstate.ofp = nullptr;
 		    }
 		}
@@ -549,7 +551,7 @@ main (int argc, char **argv)
 		say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
 		if (outstate.ofp)
 		  {
-		    fclose (outstate.ofp);
+		    Fclose (outstate.ofp);
 		    outstate.ofp = nullptr;
 		  }
 		continue;
@@ -676,8 +678,10 @@ main (int argc, char **argv)
 	struct stat rejst;
 
 	if (failed && ! skip_reject_file) {
-	    if (fstat (fileno (rejfp), &rejst) != 0 || fclose (rejfp) != 0)
+	    Fflush (rejfp);
+	    if (fstat (fileno (rejfp), &rejst) < 0)
 	      write_fatal ();
+	    Fclose (rejfp);
 	    rejfp = nullptr;
 	    somefailed = true;
 	    say ("%jd out of %jd hunk%s %s", failed, hunk, &"s"[hunk == 1],
@@ -732,8 +736,8 @@ main (int argc, char **argv)
       if (!dry_run)
 	unblock_signals ();
     }
-    if (outstate.ofp && (ferror (outstate.ofp) || fclose (outstate.ofp) != 0))
-      write_fatal ();
+    if (outstate.ofp)
+      Fclose (outstate.ofp);
     cleanup ();
     output_files (nullptr, true);
     delete_files ();
@@ -905,15 +909,15 @@ usage (FILE *stream, int status)
 
   if (status != 0)
     {
-      fprintf (stream, "%s: Try '%s --help' for more information.\n",
+      Fprintf (stream, "%s: Try '%s --help' for more information.\n",
 	       program_name, Argv[0]);
     }
   else
     {
-      fprintf (stream, "Usage: %s [OPTION]... [ORIGFILE [PATCHFILE]]\n\n",
+      Fprintf (stream, "Usage: %s [OPTION]... [ORIGFILE [PATCHFILE]]\n\n",
 	       Argv[0]);
       for (p = option_help;  *p;  p++)
-	fprintf (stream, "%s\n", *p);
+	Fprintf (stream, "%s\n", *p);
     }
 
   exit (status);
@@ -1140,7 +1144,7 @@ get_some_switches (void)
 	    patchname = xstrdup (Argv[optind++]);
 	    if (optind < Argc)
 	      {
-		fprintf (stderr, "%s: %s: extra operand\n",
+		Fprintf (stderr, "%s: %s: extra operand\n",
 			 program_name, quotearg (Argv[optind]));
 		usage (stderr, 2);
 	      }
@@ -1296,17 +1300,17 @@ print_unidiff_range (FILE *fp, lin start, idx_t count)
   switch (count)
     {
     case 0:
-      fprintf (fp, "%s,0", format_linenum (numbuf0, start - 1));
+      Fprintf (fp, "%s,0", format_linenum (numbuf0, start - 1));
       break;
 
     case 1:
-      fprintf (fp, "%s", format_linenum (numbuf0, start));
+      Fprintf (fp, "%s", format_linenum (numbuf0, start));
       break;
 
     default:
-      fprintf (fp, "%s,%s",
-              format_linenum (numbuf0, start),
-              format_linenum (numbuf1, count));
+      Fprintf (fp, "%s,%s",
+	       format_linenum (numbuf0, start),
+	       format_linenum (numbuf1, count));
       break;
     }
 }
@@ -1338,9 +1342,9 @@ abort_hunk_unified (bool header, bool reverse)
     }
 
   /* Add out_offset to guess the same as the previous successful hunk.  */
-  fputs ("@@ -", rejfp);
+  Fputs ("@@ -", rejfp);
   print_unidiff_range (rejfp, pch_first () + out_offset, lastline);
-  fputs (" +", rejfp);
+  Fputs (" +", rejfp);
   print_unidiff_range (rejfp, pch_newfirst () + out_offset, pch_repl_lines ());
   putline (rejfp, " @@", c_function, nullptr);
 
@@ -1354,12 +1358,12 @@ abort_hunk_unified (bool header, bool reverse)
     {
       for (;  pch_char (old) == '-';  old++)
 	{
-	  fputc ('-', rejfp);
+	  Fputc ('-', rejfp);
 	  pch_write_line (old, rejfp);
 	}
       for (;  pch_char (new) == '+';  new++)
 	{
-	  fputc ('+', rejfp);
+	  Fputc ('+', rejfp);
 	  pch_write_line (new, rejfp);
 	}
 
@@ -1369,7 +1373,7 @@ abort_hunk_unified (bool header, bool reverse)
       if (pch_char (new) != pch_char (old))
 	mangled_patch (old, new);
 
-      fputc (' ', rejfp);
+      Fputc (' ', rejfp);
       pch_write_line (old, rejfp);
     }
   if (pch_char (new) != '^')
@@ -1409,28 +1413,28 @@ abort_hunk_context (bool header, bool reverse)
 	switch (pch_char(i)) {
 	case '*':
 	    if (oldlast < oldfirst)
-		fprintf(rejfp, "*** 0%s\n", stars);
+		Fprintf (rejfp, "*** 0%s\n", stars);
 	    else if (oldlast == oldfirst)
-		fprintf (rejfp, "*** %s%s\n",
+		Fprintf (rejfp, "*** %s%s\n",
 			 format_linenum (numbuf0, oldfirst), stars);
 	    else
-		fprintf (rejfp, "*** %s,%s%s\n",
+		Fprintf (rejfp, "*** %s,%s%s\n",
 			 format_linenum (numbuf0, oldfirst),
 			 format_linenum (numbuf1, oldlast), stars);
 	    break;
 	case '=':
 	    if (newlast < newfirst)
-		fprintf(rejfp, "--- 0%s\n", minuses);
+		Fprintf (rejfp, "--- 0%s\n", minuses);
 	    else if (newlast == newfirst)
-		fprintf (rejfp, "--- %s%s\n",
+		Fprintf (rejfp, "--- %s%s\n",
 			 format_linenum (numbuf0, newfirst), minuses);
 	    else
-		fprintf (rejfp, "--- %s,%s%s\n",
+		Fprintf (rejfp, "--- %s,%s%s\n",
 			 format_linenum (numbuf0, newfirst),
 			 format_linenum (numbuf1, newlast), minuses);
 	    break;
 	case ' ': case '-': case '+': case '!':
-	    fprintf (rejfp, "%c ", pch_char (i));
+	    Fprintf (rejfp, "%c ", pch_char (i));
 	    FALLTHROUGH;
 	case '\n':
 	    pch_write_line (i, rejfp);
@@ -1486,7 +1490,7 @@ apply_hunk (struct outstate *outstate, lin where)
 		    def_state = IN_IFNDEF;
 		}
 		else if (def_state == IN_IFDEF) {
-		    fputs (outstate->after_newline + else_defined, fp);
+		    Fputs (outstate->after_newline + else_defined, fp);
 		    def_state = IN_ELSE;
 		}
 		if (ferror (fp))
@@ -1505,7 +1509,7 @@ apply_hunk (struct outstate *outstate, lin where)
 		return false;
 	    if (R_do_defines) {
 		if (def_state == IN_IFNDEF) {
-		    fputs (outstate->after_newline + else_defined, fp);
+		    Fputs (outstate->after_newline + else_defined, fp);
 		    def_state = IN_ELSE;
 		}
 		else if (def_state == OUTSIDE) {
@@ -1545,7 +1549,7 @@ apply_hunk (struct outstate *outstate, lin where)
 	    while (pch_char (old) == '!');
 
 	    if (R_do_defines) {
-		fputs (outstate->after_newline + else_defined, fp);
+		Fputs (outstate->after_newline + else_defined, fp);
 		if (ferror (fp))
 		  write_fatal ();
 		def_state = IN_ELSE;
@@ -1564,7 +1568,7 @@ apply_hunk (struct outstate *outstate, lin where)
 	    old++;
 	    new++;
 	    if (R_do_defines && def_state != OUTSIDE) {
-		fputs (outstate->after_newline + end_defined, fp);
+		Fputs (outstate->after_newline + end_defined, fp);
 		if (ferror (fp))
 		  write_fatal ();
 		outstate->after_newline = true;
@@ -1582,7 +1586,7 @@ apply_hunk (struct outstate *outstate, lin where)
 		def_state = IN_IFDEF;
 	    }
 	    else if (def_state == IN_IFNDEF) {
-		fputs (outstate->after_newline + else_defined, fp);
+		Fputs (outstate->after_newline + else_defined, fp);
 		def_state = IN_ELSE;
 	    }
 	    if (ferror (fp))
@@ -1592,8 +1596,8 @@ apply_hunk (struct outstate *outstate, lin where)
 
 	do
 	  {
-	    if (!outstate->after_newline && putc ('\n', fp) < 0)
-	      write_fatal ();
+	    if (!outstate->after_newline)
+	      Fputc ('\n', fp);
 	    outstate->after_newline = pch_write_line (new, fp);
 	    outstate->zero_output = false;
 	    new++;
@@ -1601,7 +1605,7 @@ apply_hunk (struct outstate *outstate, lin where)
 	while (new <= pat_end && pch_char (new) == '+');
     }
     if (R_do_defines && def_state != OUTSIDE) {
-	fputs (outstate->after_newline + end_defined, fp);
+	Fputs (outstate->after_newline + end_defined, fp);
 	if (ferror (fp))
 	  write_fatal ();
 	outstate->after_newline = true;
@@ -1693,9 +1697,9 @@ copy_till (struct outstate *outstate, lin lastline)
 	s = ifetch (++R_last_frozen_line, false, &size);
 	if (size)
 	  {
-	    if ((!outstate->after_newline && putc ('\n', fp) < 0)
-		|| fwrite (s, sizeof *s, size, fp) < size)
-	      write_fatal ();
+	    if (!outstate->after_newline)
+	      Fputc ('\n', fp);
+	    Fwrite (s, sizeof *s, size, fp);
 	    outstate->after_newline = s[size - 1] == '\n';
 	    outstate->zero_output = false;
 	  }
@@ -1724,10 +1728,10 @@ spew_output (struct outstate *outstate, struct stat *st)
 
     if (outstate->ofp && ! outfile)
       {
-	if (fflush (outstate->ofp) != 0
-	    || fstat (fileno (outstate->ofp), st) != 0
-	    || fclose (outstate->ofp) != 0)
+	Fflush (outstate->ofp);
+	if (fstat (fileno (outstate->ofp), st) < 0)
 	  write_fatal ();
+	Fclose (outstate->ofp);
 	outstate->ofp = 0;
       }
 

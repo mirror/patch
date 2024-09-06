@@ -59,7 +59,13 @@ bool version_get (char *, char const *, bool, bool, char const *, struct stat *)
 int create_file (struct outfile *, int, mode_t, bool);
 int systemic (char const *);
 char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
+void Fclose (FILE *);
+void Fflush (FILE *);
+void Fprintf (FILE *, char const *, ...) ATTRIBUTE_FORMAT ((printf, 2, 3));
+void Fputc (int, FILE *);
+void Fputs (char const *restrict, FILE *restrict);
 void Fseek (FILE *, file_offset, int);
+void Fwrite (void const *restrict, size_t, size_t, FILE *restrict);
 void copy_file (char *, struct stat const *,
 		struct outfile *, struct stat *, int, mode_t, bool);
 void append_to_file (char *, char *);

@@ -967,7 +967,7 @@ fatal (char const *format, ...)
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
-  putc ('\n', stderr);
+  fputc ('\n', stderr);
   fflush (stderr);
   fatal_exit (0);
 }
@@ -998,9 +998,9 @@ putline (FILE *fp, ...)
   va_list ap;
   va_start (ap, fp);
   for (char *arg; (arg = va_arg (ap, char *)); )
-    fputs (arg, fp);
+    Fputs (arg, fp);
   va_end (ap);
-  putc ('\n', fp);
+  Fputc ('\n', fp);
 }
 
 /* Say something from patch, something from the system, then silence . . . */
@@ -1015,7 +1015,7 @@ pfatal (char const *format, ...)
   va_start (args, format);
   vfprintf (stderr, format, args);
   va_end (args);
-  putline (stderr, " : ", strerror (errnum), nullptr);
+  fprintf (stderr, " : %s\n", strerror (errnum));
   fflush (stderr);
   fatal_exit (0);
 }
@@ -1026,8 +1026,9 @@ static void
 ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 1, 0))
 vsay (char const *format, va_list args)
 {
-  vfprintf (stdout, format, args);
-  fflush (stdout);
+  if (vfprintf (stdout, format, args) < 0)
+    write_fatal ();
+  Fflush (stdout);
 }
 
 void
@@ -1049,9 +1050,11 @@ ask (char const *format, ...)
   va_list args;
 
   va_start (args, format);
-  vfprintf (stdout, format, args);
+  int nout = vfprintf (stdout, format, args);
   va_end (args);
-  fflush (stdout);
+  if (nout < 0)
+    write_fatal ();
+  Fflush (stdout);
 
   if (ttyfd == -2)
     {
@@ -1069,7 +1072,7 @@ ask (char const *format, ...)
   if (ttyfd < 0)
     {
       /* No terminal at all -- default it.  */
-      printf ("\n");
+      Fputc ('\n', stdout);
       patchbuf[0] = '\n';
       patchbuf[1] = '\0';
     }
@@ -1088,7 +1091,7 @@ ask (char const *format, ...)
 	    xalloc_die ();
 	}
       if (r == 0)
-	printf ("EOF\n");
+	Fputs ("EOF\n", stdout);
       else if (r < 0)
 	{
 	  error (0, errno, "tty read failed");
@@ -1239,7 +1242,7 @@ systemic (char const *command)
 {
   if (debug & 8)
     say ("+ %s\n", command);
-  fflush (stdout);
+  Fflush (stdout);
   return system (command);
 }
 
@@ -1614,10 +1617,57 @@ parse_name (char const *s, intmax_t strip_leading, char const **endp)
 }
 
 void
+Fclose (FILE *stream)
+{
+  Fflush (stream);
+  if (fclose (stream) < 0)
+    write_fatal ();
+}
+
+void
+Fflush (FILE *stream)
+{
+  if (fflush (stream) < 0)
+    write_fatal ();
+}
+
+void
+Fprintf (FILE *stream, char const *format, ...)
+{
+  va_list args;
+  va_start (args, format);
+  int nout = vfprintf (stream, format, args);
+  va_end (args);
+  if (nout < 0)
+    write_fatal ();
+}
+
+void
+Fputc (int c, FILE *stream)
+{
+  if (fputc (c, stream) < 0)
+    write_fatal ();
+}
+
+void
+Fputs (char const *s, FILE *stream)
+{
+  if (fputs (s, stream) < 0)
+    write_fatal ();
+}
+
+void
 Fseek (FILE *stream, file_offset offset, int ptrname)
 {
   if (file_seek (stream, offset, ptrname) != 0)
     pfatal ("fseek");
+}
+
+void
+Fwrite (void const *ptr, size_t size, size_t nitems, FILE *stream)
+{
+  if (fwrite (ptr, size, nitems, stream) < nitems)
+    write_fatal ();
 }
 
 /* Name of default temporary directory; must not contain \n.  */

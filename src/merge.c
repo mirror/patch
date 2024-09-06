@@ -154,14 +154,12 @@ print_linerange (lin from, lin to)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];
   char numbuf1[LINENUM_LENGTH_BOUND + 1];
+  char *n0 = format_linenum (numbuf0, from);
 
   if (to <= from)
-    printf ("%s",
-	    format_linenum (numbuf0, from));
+    Fprintf (stdout, "%s", n0);
   else
-    printf ("%s-%s",
-	    format_linenum (numbuf0, from),
-	    format_linenum (numbuf1, to));
+    Fprintf (stdout, "%s-%s", n0, format_linenum (numbuf1, to));
 }
 
 static void
@@ -172,23 +170,24 @@ merge_result (bool *first_result, intmax_t hunk, char const *what,
 
   if (*first_result && what)
     {
-      printf ("Hunk #%jd %s at ", hunk, what);
+      Fprintf (stdout, "Hunk #%jd %s at ", hunk, what);
       last_what = what;
     }
   else if (! what)
     {
       if (! *first_result)
 	{
-	  fputs (".\n", stdout);
-	  fflush (stdout);
+	  Fputs (".\n", stdout);
+	  Fflush (stdout);
 	  last_what = 0;
 	}
       return;
     }
   else if (last_what == what)
-    fputs (",", stdout);
+    Fputc (',', stdout);
   else
-    printf (", %s at ", what);
+    Fprintf (stdout, ", %s at ", what);
+
   print_linerange (from + out_offset, to + out_offset);
   *first_result = false;
 }
@@ -240,38 +239,38 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
       char numbuf0[LINENUM_LENGTH_BOUND + 1];
       char numbuf1[LINENUM_LENGTH_BOUND + 1];
 
-      fputc ('\n', stderr);
+      Fputc ('\n', stderr);
       for (idx_t n = 0; n <= in + matched; n++)
 	{
-	  fprintf (stderr, "%s %c",
+	  Fprintf (stderr, "%s %c",
 		  format_linenum (numbuf0, n),
 		  oldin[n]);
 	  if (n == 0)
-	    fprintf(stderr, " %s,%s\n",
-		    format_linenum (numbuf0, pch_first()),
-		    format_linenum (numbuf1, pch_ptrn_lines()));
+	    Fprintf (stderr, " %s,%s\n",
+		     format_linenum (numbuf0, pch_first()),
+		     format_linenum (numbuf1, pch_ptrn_lines()));
 	  else if (n <= firstold)
 	    {
-	      fputs (" |", stderr);
-	      fwrite (pfetch (n), 1, pch_line_len (n), stderr);
+	      Fputs (" |", stderr);
+	      Fwrite (pfetch (n), 1, pch_line_len (n), stderr);
 	    }
 	  else if (n == in - 1)
-	    fprintf(stderr, " %s,%s\n",
-		    format_linenum (numbuf0, where),
-		    format_linenum (numbuf1, matched));
+	    Fprintf (stderr, " %s,%s\n",
+		     format_linenum (numbuf0, where),
+		     format_linenum (numbuf1, matched));
 	  else if (n >= in && n < in + matched)
 	    {
 	      idx_t size;
 	      const char *line;
 
 	      line = ifetch (where + n - in, false, &size);
-	      fputs (" |", stderr);
-	      fwrite (line, 1, size, stderr);
+	      Fputs (" |", stderr);
+	      Fwrite (line, 1, size, stderr);
 	    }
 	  else
-	    fputc('\n', stderr);
+	    Fputc ('\n', stderr);
 	}
-      fflush (stderr);
+      Fflush (stderr);
     }
 
   if (last_frozen_line < where - 1)
@@ -462,7 +461,7 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 			where, where + lines - 1);
 	  out_offset += lines - (in - firstin);
 
-	  fputs (&"\n<<<<<<<\n"[outstate->after_newline], fp);
+	  Fputs (&"\n<<<<<<<\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  if (firstin < in)
 	    {
@@ -473,7 +472,7 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 
 	  if (conflict_style == MERGE_DIFF3)
 	    {
-	      fputs (&"\n|||||||\n"[outstate->after_newline], fp);
+	      Fputs (&"\n|||||||\n"[outstate->after_newline], fp);
 	      outstate->after_newline = true;
 	      while (firstold < old)
 		{
@@ -482,14 +481,14 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 		}
 	    }
 
-	  fputs (&"\n=======\n"[outstate->after_newline], fp);
+	  Fputs (&"\n=======\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  while (firstnew < new)
 	    {
 	      outstate->after_newline = pch_write_line (firstnew, fp);
 	      firstnew++;
 	    }
-	  fputs (&"\n>>>>>>>\n"[outstate->after_newline], fp);
+	  Fputs (&"\n>>>>>>>\n"[outstate->after_newline], fp);
 	  outstate->after_newline = true;
 	  outstate->zero_output = false;
 	  if (ferror (fp))

@@ -146,13 +146,11 @@ open_patch_file (char const *filename)
 	for (st.st_size = 0;
 	     (charsread = fread (patchbuf, 1, patchbufsize, read_pfp)) != 0;
 	     st.st_size += charsread)
-	  if (fwrite (patchbuf, 1, charsread, pfp) != charsread)
-	    write_fatal ();
-	if (ferror (read_pfp) || fclose (read_pfp) != 0)
+	  Fwrite (patchbuf, 1, charsread, pfp);
+	if (ferror (read_pfp) || fclose (read_pfp) < 0)
 	  read_fatal ();
-	if (fflush (pfp) != 0
-	    || file_seek (pfp, (file_offset) 0, SEEK_SET) != 0)
-	  write_fatal ();
+	Fflush (pfp);
+	Fseek (pfp, 0, SEEK_SET);
       }
     p_filesize = st.st_size;
     if (p_filesize != (file_offset) p_filesize)
@@ -308,9 +306,9 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	    inerrno = stat_file (inname, &instat);
 	    if (inerrno)
 	      {
-		fputs (inname, stderr);
+		Fputs (inname, stderr);
 		putline (stderr, ": ", strerror (inerrno), nullptr);
-		fflush (stderr);
+		Fflush (stderr);
 		free (inname);
 		inname = nullptr;
 	      }
@@ -1124,13 +1122,13 @@ skip_to (file_offset file_pos, lin file_line)
 
 	while (file_tell (i) < file_pos)
 	  {
-	    putc ('|', o);
+	    Fputc ('|', o);
 	    do
 	      {
 		c = getc (i);
 		if (c < 0)
 		  read_fatal ();
-		putc (c, o);
+		Fputc (c, o);
 	      }
 	    while (c != '\n');
 	  }
@@ -1633,11 +1631,11 @@ another_hunk (enum diff difftype, bool rev)
 		fillsrc++;
 	      }
 	    if (debug & 64)
-	      printf ("fillsrc %s, filldst %s, rb %s, e+1 %s\n",
-		      format_linenum (numbuf0, fillsrc),
-		      format_linenum (numbuf1, filldst),
-		      format_linenum (numbuf2, repl_beginning),
-		      format_linenum (numbuf3, p_end + 1));
+	      Fprintf (stdout, "fillsrc %s, filldst %s, rb %s, e+1 %s\n",
+		       format_linenum (numbuf0, fillsrc),
+		       format_linenum (numbuf1, filldst),
+		       format_linenum (numbuf2, repl_beginning),
+		       format_linenum (numbuf3, p_end + 1));
 	    assert(fillsrc==p_end+1 || fillsrc==repl_beginning);
 	    assert(filldst==p_end+1 || filldst==repl_beginning);
 	}
@@ -1952,32 +1950,32 @@ another_hunk (enum diff difftype, bool rev)
     p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     if (debug & 2) {
 	for (idx_t i = 0; i <= p_end + 1; i++) {
-	    fputs (format_linenum (numbuf0, i), stderr);
+	    Fputs (format_linenum (numbuf0, i), stderr);
 	    if (p_Char[i] == '\n')
 	      {
-	        fputc('\n', stderr);
+	        Fputc ('\n', stderr);
 		continue;
 	      }
-	    fprintf (stderr, " %c",
+	    Fprintf (stderr, " %c",
 		     p_Char[i]);
 	    if (p_Char[i] == '*')
-	      fprintf (stderr, " %s,%s\n",
+	      Fprintf (stderr, " %s,%s\n",
 		       format_linenum (numbuf0, p_first),
 		       format_linenum (numbuf1, p_ptrn_lines));
 	    else if (p_Char[i] == '=')
-	      fprintf (stderr, " %s,%s\n",
+	      Fprintf (stderr, " %s,%s\n",
 		       format_linenum (numbuf0, p_newfirst),
 		       format_linenum (numbuf1, p_repl_lines));
 	    else if (p_Char[i] != '^')
 	      {
-		fputs(" |", stderr);
+		Fputs (" |", stderr);
 		if (! pch_write_line (i, stderr))
-		  fputc('\n', stderr);
+		  Fputc ('\n', stderr);
 	      }
 	    else
-	      fputc('\n', stderr);
+	      Fputc ('\n', stderr);
 	}
-	fflush (stderr);
+	Fflush (stderr);
     }
     return 1;
 }
@@ -2313,9 +2311,7 @@ pch_write_line (idx_t line, FILE *file)
   bool after_newline =
     (p_len[line] > 0) && (p_line[line][p_len[line] - 1] == '\n');
 
-  if (fwrite (p_line[line], sizeof (*p_line[line]), p_len[line], file)
-      < p_len[line])
-    write_fatal ();
+  Fwrite (p_line[line], sizeof (*p_line[line]), p_len[line], file);
   return after_newline;
 }
 
@@ -2457,15 +2453,12 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	ed_command_letter = get_ed_command_letter (patchbuf);
 	if (ed_command_letter) {
 	    if (tmpfp)
-		if (fwrite (patchbuf, 1, chars_read, tmpfp) < chars_read)
-		  write_fatal ();
+	      Fwrite (patchbuf, 1, chars_read, tmpfp);
 	    if (ed_command_letter != 'd' && ed_command_letter != 's') {
 	        p_pass_comments_through = true;
 		while ((chars_read = get_line ()) != 0) {
 		    if (tmpfp)
-			if (fwrite (patchbuf, 1, chars_read, tmpfp)
-			    < chars_read)
-			  write_fatal ();
+		      Fwrite (patchbuf, 1, chars_read, tmpfp);
 		    if (chars_read == 2  &&  strEQ (patchbuf, ".\n"))
 			break;
 		}
@@ -2480,18 +2473,17 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     if (!tmpfp)
       return;
     char const w_q[4] = "w\nq\n";
-    if (fwrite (w_q, 1, sizeof w_q, tmpfp) < sizeof w_q
-	|| fflush (tmpfp) != 0)
-      write_fatal ();
+    Fwrite (w_q, 1, sizeof w_q, tmpfp);
+    Fflush (tmpfp);
 
-    if (lseek (tmpfd, 0, SEEK_SET) == -1)
+    if (lseek (tmpfd, 0, SEEK_SET) < 0)
       pfatal ("Can't rewind to the beginning of file %s",
 	      quotearg (tmped.name));
 
     if (inerrno != ENOENT)
       copy_file (input_name, &instat, output, nullptr,
 		 output->exists ? 0 : O_EXCL, instat.st_mode, true);
-    fflush (stdout);
+    Fflush (stdout);
 
     if ((stdin_dup = dup (0)) == -1
 	|| dup2 (tmpfd, 0) == -1)
@@ -2508,7 +2500,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	|| close (stdin_dup) == -1)
       pfatal ("Failed to duplicate standard input");
 
-    fclose (tmpfp);
+    Fclose (tmpfp);
 
     if (ofp)
       {
@@ -2517,9 +2509,8 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	if (!ifp)
 	  pfatal ("can't open '%s'", output_name);
 	while (0 <= (c = getc (ifp)))
-	  if (putc (c, ofp) < 0)
-	    write_fatal ();
-	if (ferror (ifp) || fclose (ifp) != 0)
+	  Fputc (c, ofp);
+	if (ferror (ifp) || fclose (ifp) < 0)
 	  read_fatal ();
       }
 }

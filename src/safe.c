@@ -479,7 +479,7 @@ traverse_another_path (char **pathname, int keepfd)
     {
       idx_t full_pathlen = last - path;
       int pathlen = ckd_sub (&pathlen, full_pathlen, 0) ? -1 : pathlen;
-      printf ("Resolving path \"%.*s\"", pathlen, path);
+      Fprintf (stdout, "Resolving path \"%.*s\"", pathlen, path);
     }
 
   while (stack || path != last)
@@ -493,8 +493,8 @@ traverse_another_path (char **pathname, int keepfd)
 	{
 	  if (debug & 32)
 	    {
-	      printf (" (failed)\n");
-	      fflush (stdout);
+	      Fputs (" (failed)\n", stdout);
+	      Fflush (stdout);
 	    }
 	  goto fail;
 	}
@@ -540,10 +540,10 @@ traverse_another_path (char **pathname, int keepfd)
     {
       misses = dirfd_cache_misses - misses;
       if (! misses)
-	printf(" (cached)\n");
+	Fprintf (stdout, " (cached)\n");
       else
-	printf (" (%jd miss%s)\n", misses, misses == 1 ? "" : "es");
-      fflush (stdout);
+	Fprintf (stdout, " (%jd miss%s)\n", misses, misses == 1 ? "" : "es");
+      Fflush (stdout);
     }
   return put_path (dir);
 

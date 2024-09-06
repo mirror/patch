@@ -2,6 +2,7 @@
 
 #include <common.h>
 #include <version.h>
+#include <util.h>
 
 static char const copyright_string[] = "\
 Copyright 1989-2024 Free Software Foundation, Inc.\n\
@@ -18,6 +19,6 @@ Written by Larry Wall and Paul Eggert";
 void
 version (void)
 {
-  printf ("%s %s\n%s\n\n%s\n\n%s\n", PACKAGE_NAME, PACKAGE_VERSION,
-	  copyright_string, free_software_msgid, authorship_msgid);
+  Fprintf (stdout, "%s %s\n%s\n\n%s\n\n%s\n", PACKAGE_NAME, PACKAGE_VERSION,
+	   copyright_string, free_software_msgid, authorship_msgid);
 }
