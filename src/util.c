@@ -941,7 +941,7 @@ format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
   if (n < 0)
     {
       do
-	*--p = '0' - (int) (n % 10);
+	*--p = '0' - n % 10;
       while ((n /= 10) != 0);
 
       *--p = '-';
@@ -949,7 +949,7 @@ format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
   else
     {
       do
-	*--p = '0' + (int) (n % 10);
+	*--p = '0' + n % 10;
       while ((n /= 10) != 0);
     }
 

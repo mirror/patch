@@ -36,11 +36,11 @@
 /* Patch (diff listing) abstract type. */
 
 static FILE *pfp;			/* patch file pointer */
-static int p_says_nonexistent[2];	/* [0] for old file, [1] for new:
+static char p_says_nonexistent[2];	/* [0] for old file, [1] for new:
 		0 for existent and nonempty,
 		1 for existent and probably (but not necessarily) empty,
 		2 for nonexistent */
-static int p_rfc934_nesting;		/* RFC 934 nesting level */
+static idx_t p_rfc934_nesting;		/* RFC 934 nesting level */
 static char *p_name[3];			/* filenames in patch headers */
 static char const *invalid_names[2];
 static bool p_copy[2];			/* Does this patch create a copy? */
@@ -79,7 +79,7 @@ static bool p_git_diff;			/* true if this is a git style diff */
 static enum diff intuit_diff_type (bool, mode_t *);
 static enum nametype best_name (char * const *, int const *);
 static idx_t prefix_components (char *, bool);
-static ptrdiff_t pget_line (idx_t, int, bool, bool);
+static ptrdiff_t pget_line (idx_t, idx_t, bool, bool);
 static ptrdiff_t get_line (void);
 static bool incomplete_line (void);
 static bool grow_hunkmax (void);
@@ -367,8 +367,8 @@ get_sha1 (char const *start, char const *end)
   return xmemdup0 (start, end - start);
 }
 
-static int ATTRIBUTE_PURE
-sha1_says_nonexistent(char const *sha1)
+static char ATTRIBUTE_PURE
+sha1_says_nonexistent (char const *sha1)
 {
   char const *empty_sha1 = "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391";
   char const *s;
@@ -449,7 +449,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     enum nametype i;
     struct stat st[3];
     int stat_errno[3];
-    int version_controlled[3];
+    signed char version_controlled[3];
     enum diff retval;
     mode_t file_type;
     idx_t indent = 0;
@@ -1194,7 +1194,7 @@ scan_linenum (char *string, lin *linenum)
 /* 1 if there is more of the current diff listing to process;
    0 if not; -1 if ran out of memory. */
 
-int
+signed char
 another_hunk (enum diff difftype, bool rev)
 {
     char *s;
@@ -2000,7 +2000,7 @@ get_line (void)
    Return -1 if we ran out of memory.  */
 
 static ptrdiff_t
-pget_line (idx_t indent, int rfc934_nesting, bool strip_trailing_cr,
+pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	   bool pass_comments_through)
 {
   FILE *fp = pfp;
@@ -2195,7 +2195,7 @@ pch_swap (void)
 /* Return whether file WHICH (false = old, true = new) appears to nonexistent.
    Return 1 for empty, 2 for nonexistent.  */
 
-int
+char
 pch_says_nonexistent (bool which)
 {
   return p_says_nonexistent[which];

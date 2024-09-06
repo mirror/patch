@@ -66,12 +66,12 @@ idx_t patchbufsize;
 int binary_transput;
 #endif
 int inerrno;
-int invc;
 intmax_t patch_get;
 intmax_t strippath;
 lin in_offset;
 lin last_frozen_line;
 lin out_offset;
+signed char invc;
 struct stat instat;
 struct outfile tmped = { .temporary = true };
 struct outfile tmpin = { .temporary = true };
@@ -383,7 +383,7 @@ main (int argc, char **argv)
 	close (outfd);
 	outfd = -1;
       } else {
-	int got_hunk;
+	signed char got_hunk;
 	bool apply_anyway = merge;  /* don't try to reverse when merging */
 
 	if (! skip_rest_of_patch && diff_type == GIT_BINARY_DIFF) {
@@ -1159,26 +1159,24 @@ numeric_string (char const *string,
 {
   intmax_t value = 0;
   char const *p = string;
-  int sign = *p == '-' ? -1 : 1;
+  bool negative = *p == '-';
   bool overflow = false;
 
-  p += *p == '-' || *p == '+';
+  p += negative || *p == '+';
 
   do
     {
       if (!c_isdigit (*p))
 	fatal ("%s %s is not a number", argtype_msgid, quotearg (string));
-      int digit = *p - '0';
-      int signed_digit = sign * digit;
       overflow |= ckd_mul (&value, value, 10);
-      overflow |= ckd_add (&value, value, signed_digit);
+      overflow |= ckd_add (&value, value, negative ? '0' - *p : *p - '0');
     }
   while (*++p);
 
   if (value < 0 && ! negative_allowed)
     fatal ("%s %s is negative", argtype_msgid, quotearg (string));
 
-  return !overflow ? value : sign < 0 ? INTMAX_MIN : INTMAX_MAX;
+  return !overflow ? value : negative ? INTMAX_MIN : INTMAX_MAX;
 }
 
 /* Attempt to find the right place to apply this hunk of patch. */

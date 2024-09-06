@@ -91,7 +91,7 @@ extern bool using_plan_a;		/* try to keep everything in memory */
 extern char *inname;
 extern char *outfile;
 extern int inerrno;
-extern int invc;
+extern signed char invc;
 extern struct stat instat;
 extern bool dry_run;
 extern bool posixly_correct;
@@ -196,7 +196,7 @@ bool similar (char const *, idx_t, char const *, idx_t) ATTRIBUTE_PURE;
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
 extern enum conflict_style conflict_style;
 
-bool merge_hunk (int hunk, struct outstate *, lin where, bool *);
+bool merge_hunk (intmax_t hunk, struct outstate *, lin where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false
 #endif

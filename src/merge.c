@@ -165,13 +165,14 @@ print_linerange (lin from, lin to)
 }
 
 static void
-merge_result (bool *first_result, int hunk, char const *what, lin from, lin to)
+merge_result (bool *first_result, intmax_t hunk, char const *what,
+	      lin from, lin to)
 {
   static char const *last_what;
 
   if (*first_result && what)
     {
-      printf ("Hunk #%d %s at ", hunk, what);
+      printf ("Hunk #%jd %s at ", hunk, what);
       last_what = what;
     }
   else if (! what)
@@ -193,7 +194,8 @@ merge_result (bool *first_result, int hunk, char const *what, lin from, lin to)
 }
 
 bool
-merge_hunk (int hunk, struct outstate *outstate, lin where, bool *somefailed)
+merge_hunk (intmax_t hunk, struct outstate *outstate,
+	    lin where, bool *somefailed)
 {
   bool applies_cleanly;
   bool first_result = true;
