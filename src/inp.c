@@ -409,6 +409,8 @@ plan_b (char *filename)
 	}
     }
 
+  if (ferror (ifp))
+    read_fatal ();
   if (revision)
     report_revision (found_revision);
   Fseek (ifp, 0, SEEK_SET);		/* rewind file */

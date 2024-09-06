@@ -2099,8 +2099,13 @@ incomplete_line (void)
 
   if (getc (fp) == '\\')
     {
-      while ((c = getc (fp)) != '\n' && 0 <= c)
-	/* do nothing */ ;
+      while ((c = getc (fp)) != '\n')
+	if (c < 0)
+	  {
+	    if (ferror (fp))
+	      read_fatal ();
+	    break;
+	  }
       return true;
     }
   else
