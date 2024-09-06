@@ -376,7 +376,7 @@ plan_b (char *filename)
   found_revision = !rev;
   idx_t revlen = rev ? strlen (rev) : 0;
 
-  while ((c = getc (ifp)) != EOF)
+  while (0 <= (c = getc (ifp)))
     {
       /* Check against SIZE_MAX / 2 + 1 so that the stdc_bit_ceil
 	 below has defined behavior.  Check against IDX_MAX / 4 so
@@ -428,7 +428,8 @@ plan_b (char *filename)
       if (! (line % lines_per_buf))	/* new block */
 	if (write (tifd, tibuf[0], tibufsize) != tibufsize)
 	  write_fatal ();
-      if ((c = getc (ifp)) == EOF)
+      c = getc (ifp);
+      if (c < 0)
 	break;
 
       for (;;)
@@ -440,7 +441,8 @@ plan_b (char *filename)
 	      break;
 	    }
 
-	  if ((c = getc (ifp)) == EOF)
+	  c = getc (ifp);
+	  if (c < 0)
 	    {
 	      last_line_size = p - p0;
 	      line++;

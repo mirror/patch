@@ -1592,7 +1592,7 @@ apply_hunk (struct outstate *outstate, lin where)
 
 	do
 	  {
-	    if (! outstate->after_newline  &&  putc ('\n', fp) == EOF)
+	    if (!outstate->after_newline && putc ('\n', fp) < 0)
 	      write_fatal ();
 	    outstate->after_newline = pch_write_line (new, fp);
 	    outstate->zero_output = false;
@@ -1693,7 +1693,7 @@ copy_till (struct outstate *outstate, lin lastline)
 	s = ifetch (++R_last_frozen_line, false, &size);
 	if (size)
 	  {
-	    if ((! outstate->after_newline  &&  putc ('\n', fp) == EOF)
+	    if ((!outstate->after_newline && putc ('\n', fp) < 0)
 		|| fwrite (s, sizeof *s, size, fp) < size)
 	      write_fatal ();
 	    outstate->after_newline = s[size - 1] == '\n';

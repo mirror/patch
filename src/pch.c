@@ -1127,7 +1127,8 @@ skip_to (file_offset file_pos, lin file_line)
 	    putc ('|', o);
 	    do
 	      {
-		if ((c = getc (i)) == EOF)
+		c = getc (i);
+		if (c < 0)
 		  read_fatal ();
 		putc (c, o);
 	      }
@@ -2014,7 +2015,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
       for (;;)
 	{
 	  c = getc (fp);
-	  if (c == EOF)
+	  if (c < 0)
 	    {
 	      if (ferror (fp))
 		read_fatal ();
@@ -2036,7 +2037,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
       while (c == '-' && 0 <= --rfc934_nesting)
 	{
 	  c = getc (fp);
-	  if (c == EOF)
+	  if (c < 0)
 	    goto patch_ends_in_middle_of_line;
 	  if (c != ' ')
 	    {
@@ -2045,7 +2046,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	      break;
 	    }
 	  c = getc (fp);
-	  if (c == EOF)
+	  if (c < 0)
 	    goto patch_ends_in_middle_of_line;
 	}
 
@@ -2069,7 +2070,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	  if (c == '\n')
 	    break;
 	  c = getc (fp);
-	  if (c == EOF)
+	  if (c < 0)
 	    goto patch_ends_in_middle_of_line;
 	}
 
@@ -2098,7 +2099,7 @@ incomplete_line (void)
 
   if (getc (fp) == '\\')
     {
-      while ((c = getc (fp)) != '\n'  &&  c != EOF)
+      while ((c = getc (fp)) != '\n' && 0 <= c)
 	/* do nothing */ ;
       return true;
     }
@@ -2510,8 +2511,8 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	int c;
 	if (!ifp)
 	  pfatal ("can't open '%s'", output_name);
-	while ((c = getc (ifp)) != EOF)
-	  if (putc (c, ofp) == EOF)
+	while (0 <= (c = getc (ifp)))
+	  if (putc (c, ofp) < 0)
 	    write_fatal ();
 	if (ferror (ifp) || fclose (ifp) != 0)
 	  read_fatal ();
