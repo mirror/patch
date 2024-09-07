@@ -328,35 +328,66 @@ there_is_another_patch (bool need_header, mode_t *file_type)
     return true;
 }
 
+/* Scan a Git-style mode from STR, and return the corresponding mode_t
+   suitable for use on this platform.  Return 0 if the scan fails.  */
+
 static mode_t ATTRIBUTE_PURE
 fetchmode (char const *str)
 {
    const char *s;
-   mode_t mode;
+   int mode;
 
    while (c_isspace (*str))
      str++;
 
    for (s = str, mode = 0; s - str < 6; s++)
      {
-       if (*s >= '0' && *s <= '7')
-	mode = (mode << 3) + (*s - '0');
-       else
-	{
-	 mode = 0;
-	 break;
-	}
+       if (! ('0' <= *s && *s <= '7'))
+	 return 0;
+       mode = (mode << 3) + (*s - '0');
      }
    if (*s == '\r')
      s++;
    if (*s != '\n')
-     mode = 0;
+     return 0;
+
+   /* Check the file type.  Also, convert Git numbering for file types
+      to this platform's numbering; ordinarily they are the same, but
+      POSIX does not require this.  */
+   mode_t file_type;
+   switch (mode >> 9)
+     {
+     case 0100: file_type = S_IFREG; break;
+#ifdef S_IFLNK
+     case 0120: file_type = S_IFLNK; break;
+#endif
+     /* 'patch' can handle only files and symlinks, so fail with
+	other Git file types such as submodules.  */
+     default: return 0;
+     }
+
+   /* 'patch' can deal only with regular files and symlinks.  Because it
+      uses zero to indicate unknown or missing file types, S_IFLNK and
+      S_IFREG must be nonzero.  This is true on all known platforms
+      although POSIX does not require it; check here to be sure.  */
+   static_assert (S_IFLNK);
+   static_assert (S_IFREG);
+
+   mode_t m = file_type | (mode & S_IRWXUGO);
+   if (!m)
+     {
+       /* This can happen only on perverse platforms where, e.g.,
+	  S_IFREG == 0.  */
+       char numbuf[LINENUM_LENGTH_BOUND + 1];
+       fatal ("mode %.6s treated as missing at line %s: %s",
+	      str, format_linenum (numbuf, p_input_line), patchbuf);
+     }
 
     /* NOTE: The "diff --git" format always sets the file mode permission
        bits of symlinks to 0.  (On Linux, symlinks actually always have
        0777 permissions, so this is not even consistent.)  */
 
-   return mode;
+   return m;
 }
 
 static char *
