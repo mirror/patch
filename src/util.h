@@ -98,7 +98,7 @@ enum file_attributes {
   FA_XATTRS = 8
 };
 
-void set_file_attributes (char *, enum file_attributes, char const *,
+void set_file_attributes (char *, int, enum file_attributes, char const *, int,
 			  const struct stat *, mode_t, struct timespec *);
 
 int make_tempfile (struct outfile *, char, char const *, int, mode_t);

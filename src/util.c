@@ -24,6 +24,7 @@
 #include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
+#include <utimens.h>
 #include <xalloc.h>
 #include <xmemdup0.h>
 
@@ -180,6 +181,23 @@ contains_slash (const char *s)
   return false;
 }
 
+/* Assuming that a chown-like syscall using file descriptor FD (or a
+   filename-oriented syscall if FD < 0) failed with errno = ERR,
+   return true if the current process lacks appropriate privileges.  */
+
+static bool
+lacks_appropriate_privileges (int fd, int err)
+{
+  if (err == EPERM)
+    return true;
+#ifdef __linux__
+  /* Work around <https://bugs.gnu.org/65599>  */
+  if (0 <= fd && errno == EACCES)
+    return true;
+#endif
+  return false;
+}
+
 #if USE_XATTR
 
 static void ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
@@ -190,7 +208,21 @@ copy_attr_error (MAYBE_UNUSED struct error_context *ctx, char const *fmt, ...)
 
   if (err != ENOSYS && err != ENOTSUP && err != EPERM)
     {
-      /* use verror module to print error message */
+      va_start (ap, fmt);
+      verror (0, err, fmt, ap);
+      va_end (ap);
+    }
+}
+
+static void ATTRIBUTE_FORMAT ((_GL_ATTRIBUTE_SPEC_PRINTF_STANDARD, 2, 3))
+copy_fdattr_error (MAYBE_UNUSED struct error_context *ctx, char const *fmt, ...)
+{
+  int err = errno;
+  va_list ap;
+
+  if (err != ENOSYS && err != ENOTSUP
+      && !lacks_appropriate_privileges (err, 0))
+    {
       va_start (ap, fmt);
       verror (0, err, fmt, ap);
       va_end (ap);
@@ -218,10 +250,11 @@ copy_attr_check (const char *name, struct error_context *ctx)
 
 
 static int
-copy_attr (char const *src_path, char const *dst_path)
+copy_attr (char const *src_path, int src_fd,
+	   char const *dst_path, int dst_fd)
 {
   /* Pacify GCC through at least GCC 14, which otherwise complains about
-     the ".error = copy_attr_error".  */
+     the ".error = ...".  */
   #if 4 < __GNUC__ + (8 <= __GNUC_MINOR__)
   # pragma GCC diagnostic push
   # pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
@@ -229,7 +262,7 @@ copy_attr (char const *src_path, char const *dst_path)
 
   struct error_context ctx =
   {
-    .error = copy_attr_error,
+    .error = (src_fd < 0) | (dst_fd < 0) ? copy_attr_error : copy_fdattr_error,
     .quote = copy_attr_quote,
     .quote_free = copy_attr_free
   };
@@ -237,6 +270,10 @@ copy_attr (char const *src_path, char const *dst_path)
   #if 4 < __GNUC__ + (8 <= __GNUC_MINOR__)
   # pragma GCC diagnostic pop
   #endif
+
+  if (0 <= src_fd && 0 <= dst_fd)
+    return attr_copy_fd (src_path, src_fd, dst_path, dst_fd,
+			 copy_attr_check, &ctx);
 
   /* FIXME: We are copying between files we know we can safely access by
    * pathname. A safe_ version of attr_copy_file() might still be slightly
@@ -247,7 +284,8 @@ copy_attr (char const *src_path, char const *dst_path)
 #else  /* USE_XATTR */
 
 static int
-copy_attr (MAYBE_UNUSED char const *src_path, MAYBE_UNUSED char const *dst_path)
+copy_attr (MAYBE_UNUSED char const *src_path, MAYBE_UNUSED int src_fd,
+	   MAYBE_UNUSED char const *dst_path, MAYBE_UNUSED int dst_fd)
 {
   return 0;
 }
@@ -255,9 +293,9 @@ copy_attr (MAYBE_UNUSED char const *src_path, MAYBE_UNUSED char const *dst_path)
 #endif
 
 void
-set_file_attributes (char *to, enum file_attributes attr,
-		     char const *from, const struct stat *st, mode_t mode,
-		     struct timespec *new_time)
+set_file_attributes (char *to, int tofd, enum file_attributes attr,
+		     char const *from, int fromfd, const struct stat *st,
+		     mode_t mode, struct timespec *new_time)
 {
   if (attr & FA_TIMES)
     {
@@ -269,7 +307,10 @@ set_file_attributes (char *to, enum file_attributes attr,
 	  times[0] = get_stat_atime (st);
 	  times[1] = get_stat_mtime (st);
 	}
-      if (safe_lutimens (to, times) != 0)
+      int ok = (tofd < 0 ? -1
+		: 0 <= futimens (tofd, times) ? 1
+		: errno == ENOSYS ? -1 : 0);
+      if (!ok || (ok < 0 && safe_lutimens (to, times) < 0))
 	pfatal ("Failed to set the timestamps of %s %s",
 		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
@@ -294,30 +335,33 @@ set_file_attributes (char *to, enum file_attributes attr,
       /* May fail if we are not privileged to set the file owner, or we are
          not in group instat.st_gid.  Ignore those errors.  */
       if ((uid != uid_1 || gid != gid_1)
-	  && safe_lchown (to, uid, gid) != 0
-	  && (errno != EPERM
+	  && ((tofd < 0 ? safe_lchown (to, uid, gid) : fchown (tofd, uid, gid))
+	      < 0)
+	  && (!lacks_appropriate_privileges (tofd, errno)
 	      || (uid != uid_1
-		  && safe_lchown (to, (uid = uid_1), gid) != 0
-		  && errno != EPERM)))
+		  && (uid = -1,
+		      ((tofd < 0
+			? safe_lchown (to, uid, gid)
+			: fchown (tofd, uid, gid))
+		       < 0))
+		  && !lacks_appropriate_privileges (tofd, errno))))
 	pfatal ("Failed to set the %s of %s %s",
 		uid == uid_1 ? "owner" : "owning group",
 		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
   if (attr & FA_XATTRS)
-    if (copy_attr (from, to) != 0
-	&& errno != ENOSYS && errno != ENOTSUP && errno != EPERM)
+    if (copy_attr (from, fromfd, to, tofd) < 0
+	&& errno != ENOSYS && errno != ENOTSUP
+	&& lacks_appropriate_privileges (errno, tofd))
       fatal_exit (0);
   if (attr & FA_MODE)
     {
-#if 0 && defined HAVE_LCHMOD
       /* The "diff --git" format does not store the file permissions of
 	 symlinks, so don't try to set symlink file permissions even on
 	 systems where we could.  */
-      if (lchmod (to, mode))
-#else
-      if (! S_ISLNK (mode) && safe_chmod (to, mode) != 0)
-#endif
+      if (! S_ISLNK (mode)
+	  && (tofd < 0 ? safe_chmod (to, mode) : fchmod (tofd, mode)) < 0)
 	pfatal ("Failed to set the permissions of %s %s",
 		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
@@ -330,7 +374,7 @@ create_backup_copy (char *from, char *to, const struct stat *st,
 {
   copy_file (from, st, &(struct outfile) { .name = to },
 	     nullptr, 0, st->st_mode, to_dir_known_to_exist);
-  set_file_attributes (to, FA_TIMES | FA_IDS | FA_MODE, from,
+  set_file_attributes (to, -1, FA_TIMES | FA_IDS | FA_MODE, from, -1,
 		       st, st->st_mode, nullptr);
 }
 

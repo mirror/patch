@@ -642,14 +642,15 @@ main (int argc, char **argv)
 		        {
 			  if (set_mode)
 			    attr |= FA_MODE;
-			  set_file_attributes (tmpout.name, attr,
-					       nullptr, nullptr,
+			  set_file_attributes (tmpout.name, -1, attr,
+					       nullptr, -1, nullptr,
 					       mode, &new_time);
 			}
 		      else
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
-			  set_file_attributes (tmpout.name, attr, inname, &instat,
+			  set_file_attributes (tmpout.name, -1, attr,
+					       inname, -1, &instat,
 					       mode, &new_time);
 			}
 
