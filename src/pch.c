@@ -2486,7 +2486,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     Fflush (stdout);
 
     stdin_dup = dup (STDIN_FILENO);
-    if (stdin_dup < 0 || dup2 (tmpfd, 0) < 0)
+    if (stdin_dup < 0 || dup2 (tmpfd, STDIN_FILENO) < 0)
       pfatal ("Failed to duplicate standard input");
     assert (output_name[0] != '!' && output_name[0] != '-');
     status = execute (editor_program, editor_program,
@@ -2496,7 +2496,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 		      nullptr);
     if (status)
       fatal ("%s FAILED", editor_program);
-    if (dup2 (stdin_dup, 0) < 0 || close (stdin_dup) < 0)
+    if (dup2 (stdin_dup, STDIN_FILENO) < 0 || close (stdin_dup) < 0)
       pfatal ("Failed to duplicate standard input");
 
     Fclose (tmpfp);

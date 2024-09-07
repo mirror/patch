@@ -1649,13 +1649,13 @@ open_outfile (char *name)
     return create_output_file (&(struct outfile) { .name = name }, 0);
   else
     {
-      int stdout_dup = dup (fileno (stdout));
+      int stdout_dup = dup (STDOUT_FILENO);
       if (stdout_dup < 0)
 	pfatal ("Failed to duplicate standard output");
       FILE *ofp = fdopen (stdout_dup, "a");
       if (! ofp)
 	pfatal ("Failed to duplicate standard output");
-      if (dup2 (fileno (stderr), fileno (stdout)) < 0)
+      if (dup2 (STDERR_FILENO, STDOUT_FILENO) < 0)
 	pfatal ("Failed to redirect messages to standard error");
       /* FIXME: Do we need to switch stdout_dup into O_BINARY mode here? */
       return ofp;
