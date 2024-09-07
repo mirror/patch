@@ -26,6 +26,13 @@
 
 enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
+enum file_attributes {
+  FA_TIMES = 1,
+  FA_IDS = 2,
+  FA_MODE = 4,
+  FA_XATTRS = 8
+};
+
 extern enum backup_type backup_type;
 
 _GL_INLINE_HEADER_BEGIN
@@ -66,8 +73,8 @@ void Fputc (int, FILE *);
 void Fputs (char const *restrict, FILE *restrict);
 void Fseek (FILE *, file_offset, int);
 void Fwrite (void const *restrict, size_t, size_t, FILE *restrict);
-void copy_file (char *, struct stat const *,
-		struct outfile *, struct stat *, int, mode_t, bool);
+void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
+		int, mode_t, enum file_attributes, bool);
 void append_to_file (char *, char *);
 _Noreturn void exit_with_signal (int);
 void init_signals (void);
@@ -90,13 +97,6 @@ bool has_queued_output (struct stat const *);
 int stat_file (char *, struct stat *);
 bool filename_is_safe (char const *) ATTRIBUTE_PURE;
 bool cwd_is_root (char const *);
-
-enum file_attributes {
-  FA_TIMES = 1,
-  FA_IDS = 2,
-  FA_MODE = 4,
-  FA_XATTRS = 8
-};
 
 void set_file_attributes (char *, int, enum file_attributes, char const *, int,
 			  const struct stat *, mode_t, struct timespec *);

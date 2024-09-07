@@ -2482,7 +2482,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 
     if (inerrno != ENOENT)
       copy_file (input_name, &instat, output, nullptr,
-		 output->exists ? 0 : O_EXCL, instat.st_mode, true);
+		 output->exists ? 0 : O_EXCL, instat.st_mode, 0, true);
     Fflush (stdout);
 
     stdin_dup = dup (STDIN_FILENO);

@@ -707,7 +707,7 @@ main (int argc, char **argv)
 		      {
 			if (!outrej.exists)
 			  copy_file (tmprej.name, nullptr, &outrej, nullptr, 0,
-				     S_IFREG | 0666, true);
+				     S_IFREG | 0666, 0, true);
 			else
 			  append_to_file (tmprej.name, rejname);
 		      }

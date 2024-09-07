@@ -373,9 +373,8 @@ create_backup_copy (char *from, char *to, const struct stat *st,
 		    bool to_dir_known_to_exist)
 {
   copy_file (from, st, &(struct outfile) { .name = to },
-	     nullptr, 0, st->st_mode, to_dir_known_to_exist);
-  set_file_attributes (to, -1, FA_TIMES | FA_IDS | FA_MODE, from, -1,
-		       st, st->st_mode, nullptr);
+	     nullptr, 0, st->st_mode, FA_TIMES | FA_IDS | FA_MODE,
+	     to_dir_known_to_exist);
 }
 
 void
@@ -591,7 +590,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 			pfatal ("Can't remove file %s", quotearg (to));
 		    }
 		  copy_file (from, fromst, &(struct outfile) { .name = to },
-			     &tost, 0, mode, to_dir_known_to_exist);
+			     &tost, 0, mode, 0, to_dir_known_to_exist);
 		  insert_file_id (&tost, CREATED);
 		  return;
 		}
@@ -652,7 +651,7 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
   return fd;
 }
 
-static void
+static int
 copy_to_fd (char *from, int tofd)
 {
   int from_flags = O_RDONLY | O_BINARY | (follow_symlinks ? 0 : O_NOFOLLOW);
@@ -666,8 +665,7 @@ copy_to_fd (char *from, int tofd)
       if (full_write (tofd, patchbuf, i) != i)
 	write_fatal ();
     }
-  if (close (fromfd) != 0)
-    read_fatal ();
+  return fromfd;
 }
 
 /* Copy a file. */
@@ -675,9 +673,10 @@ copy_to_fd (char *from, int tofd)
 void
 copy_file (char *from, struct stat const *fromst,
 	   struct outfile *outto, struct stat *tost,
-	   int to_flags, mode_t mode, bool to_dir_known_to_exist)
+	   int to_flags, mode_t mode, enum file_attributes attr,
+	   bool to_dir_known_to_exist)
 {
-  int tofd;
+  int fromfd, tofd;
   char *to = outto->name;
 
   if (debug & 4)
@@ -708,6 +707,7 @@ copy_file (char *from, struct stat const *fromst,
       if (tost && safe_lstat (to, tost) != 0)
 	pfatal ("Can't get file attributes of %s %s", "symbolic link", to);
       free (buffer);
+      fromfd = tofd = -1;
     }
   else
     {
@@ -716,12 +716,16 @@ copy_file (char *from, struct stat const *fromst,
 	to_flags |= O_NOFOLLOW;
       tofd = create_file (outto, O_WRONLY | O_BINARY | to_flags, mode,
 			  to_dir_known_to_exist);
-      copy_to_fd (from, tofd);
+      fromfd = copy_to_fd (from, tofd);
       if (tost && fstat (tofd, tost) != 0)
 	pfatal ("Can't get file attributes of %s %s", "file", to);
-      if (close (tofd) != 0)
-	write_fatal ();
     }
+
+  set_file_attributes (to, tofd, attr, from, fromfd, fromst, mode, nullptr);
+  if (0 <= fromfd && close (fromfd) < 0)
+    read_fatal ();
+  if (0 <= tofd && close (tofd) < 0)
+    write_fatal ();
 }
 
 /* Append to file. */
@@ -729,15 +733,15 @@ copy_file (char *from, struct stat const *fromst,
 void
 append_to_file (char *from, char *to)
 {
-  int to_flags = O_WRONLY | O_APPEND | O_BINARY;
-  int tofd;
-
-  if (! follow_symlinks)
-    to_flags |= O_NOFOLLOW;
-  if ((tofd = safe_open (to, to_flags, 0)) < 0)
+  int to_flags = (O_WRONLY | O_APPEND | O_BINARY
+		  | (follow_symlinks ? 0 : O_NOFOLLOW));
+  int tofd = safe_open (to, to_flags, 0);
+  if (tofd < 0)
     pfatal ("Can't reopen file %s", quotearg (to));
-  copy_to_fd (from, tofd);
-  if (close (tofd) != 0)
+  int fromfd = copy_to_fd (from, tofd);
+  if (close (fromfd) < 0)
+    read_fatal ();
+  if (close (tofd) < 0)
     write_fatal ();
 }
 
