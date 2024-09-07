@@ -73,6 +73,8 @@ void Fputc (int, FILE *);
 void Fputs (char const *restrict, FILE *restrict);
 void Fseek (FILE *, file_offset, int);
 void Fwrite (void const *restrict, size_t, size_t, FILE *restrict);
+idx_t Read (int, void *, idx_t);
+void Write (int, void const *, idx_t);
 void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
 		int, mode_t, enum file_attributes, bool);
 void append_to_file (char *, char *);

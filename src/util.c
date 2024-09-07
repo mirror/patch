@@ -35,7 +35,6 @@
 #include <signal.h>
 #include <stdarg.h>
 
-#include <full-write.h>
 #include <tempname.h>
 
 #if USE_XATTR
@@ -44,6 +43,12 @@
 #endif
 
 #include <safe.h>
+
+/* Read or write at most IO_MAX bytes at a time.  POSIX says behavior
+   is implementation-defined for reads larger than SSIZE_MAX.  IO_MAX
+   is MIN (SSIZE_MAX, SIZE_MAX) truncated to a value that is surely
+   aligned well.  */
+static idx_t const IO_MAX = MIN (SSIZE_MAX, SIZE_MAX) >> 30 << 30;
 
 enum backup_type backup_type;
 
@@ -533,11 +538,10 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	  if (fd < 0)
 	    pfatal ("Can't reopen file %s", quotearg (from));
 
-	  ssize_t i;
 	  idx_t size = 0;
-	  while (0 < (i = read (fd, buffer + size, alloc - size)))
+	  for (idx_t i; 0 < (i = Read (fd, buffer + size, alloc - size)); )
 	    size += i;
-	  if (i != 0 || close (fd) != 0)
+	  if (close (fd) < 0)
 	    read_fatal ();
 	  if (size == alloc)
 	    fatal ("file %s grew", quotearg (from));
@@ -658,13 +662,8 @@ copy_to_fd (char *from, int tofd)
   int fromfd = safe_open (from, from_flags, 0);
   if (fromfd < 0)
     pfatal ("Can't reopen file %s", quotearg (from));
-  for (ssize_t i; (i = read (fromfd, patchbuf, patchbufsize)) != 0; )
-    {
-      if (i < 0)
-	read_fatal ();
-      if (full_write (tofd, patchbuf, i) != i)
-	write_fatal ();
-    }
+  for (idx_t i; 0 < (i = Read (fromfd, patchbuf, patchbufsize)); )
+    Write (tofd, patchbuf, i);
   return fromfd;
 }
 
@@ -1096,7 +1095,6 @@ void
 ask (char const *format, ...)
 {
   static int ttyfd = -2;
-  ssize_t r;
   va_list args;
 
   va_start (args, format);
@@ -1129,27 +1127,28 @@ ask (char const *format, ...)
   else
     {
       idx_t s = 0;
-      while (((r = read (ttyfd, patchbuf + s, patchbufsize - 1 - s))
-	      == patchbufsize - 1 - s)
-	     && patchbuf[patchbufsize - 2] != '\n')
+      while (true)
 	{
-	  s = patchbufsize - 1;
-	  if (ckd_add (&patchbufsize, patchbufsize, patchbufsize >> 1))
-	    xalloc_die ();
-	  patchbuf = irealloc (patchbuf, patchbufsize);
-	  if (!patchbuf)
-	    xalloc_die ();
+	  idx_t readsize = MIN (patchbufsize - 1 - s, IO_MAX);
+	  ssize_t r = read (ttyfd, patchbuf + s, readsize);
+	  if (r <= 0)
+	    {
+	      if (r == 0)
+		Fputs ("EOF\n", stdout);
+	      else
+		{
+		  error (0, errno, "tty read failed");
+		  ignore_value (close (ttyfd));
+		  ttyfd = -1;
+		}
+	      break;
+	    }
+	  s += r;
+	  if (r < readsize || patchbuf[s - 1] == '\n')
+	    break;
+	  patchbuf = xpalloc (patchbuf, &patchbufsize, 1, -1, 1);
 	}
-      if (r == 0)
-	Fputs ("EOF\n", stdout);
-      else if (r < 0)
-	{
-	  error (0, errno, "tty read failed");
-	  ignore_value (close (ttyfd));
-	  ttyfd = -1;
-	  r = 0;
-	}
-      patchbuf[s + r] = '\0';
+      patchbuf[s] = '\0';
     }
 }
 
@@ -1715,6 +1714,28 @@ Fwrite (void const *ptr, size_t size, size_t nitems, FILE *stream)
 {
   if (fwrite (ptr, size, nitems, stream) < nitems)
     write_fatal ();
+}
+
+idx_t
+Read (int filedes, void *buf, idx_t nbyte)
+{
+  ssize_t r = read (filedes, buf, MIN (nbyte, IO_MAX));
+  if (r < 0)
+    read_fatal ();
+  return r;
+}
+
+void
+Write (int filedes, void const *buf, idx_t nbyte)
+{
+  char const *b = buf, *blim = b + nbyte;
+  while (b < blim)
+    {
+      ssize_t w = write (filedes, b, MIN (blim - b, IO_MAX));
+      if (w < 0)
+	write_fatal ();
+      b += w;
+    }
 }
 
 /* Name of default temporary directory; must not contain \n.  */

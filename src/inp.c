@@ -248,20 +248,13 @@ plan_a (char *filename)
 
 	  while (size - buffered != 0)
 	    {
-	      ssize_t n = read (ifd, buffer + buffered, size - buffered);
+	      ssize_t n = Read (ifd, buffer + buffered, size - buffered);
 	      if (n == 0)
 		{
 		  /* Some non-POSIX hosts exaggerate st_size in text mode;
 		     or the file may have shrunk!  */
 		  size = buffered;
 		  break;
-		}
-	      if (n < 0)
-		{
-		  /* Perhaps size is too large for this host.  */
-		  close (ifd);
-		  free (buffer);
-		  return false;
 		}
 	      buffered += n;
 	    }
@@ -428,8 +421,7 @@ plan_b (char *filename)
       char *p = tibuf[0] + maxlen * (line % lines_per_buf);
       char const *p0 = p;
       if (! (line % lines_per_buf))	/* new block */
-	if (write (tifd, tibuf[0], tibufsize) != tibufsize)
-	  write_fatal ();
+	Write (tifd, tibuf[0], tibufsize);
       c = getc (ifp);
       if (c < 0)
 	break;
@@ -457,8 +449,7 @@ plan_b (char *filename)
     read_fatal ();
 
   if (line % lines_per_buf  !=  0)
-    if (write (tifd, tibuf[0], tibufsize) != tibufsize)
-      write_fatal ();
+    Write (tifd, tibuf[0], tibufsize);
   input_lines = line - 1;
 }
 
@@ -489,10 +480,14 @@ ifetch (lin line, bool whichbuf, idx_t *psize)
 	    whichbuf = true;
 	else {
 	    tiline[whichbuf] = baseline;
-	    if ((lseek (tifd, baseline/lines_per_buf * tibufsize, SEEK_SET)
-		 < 0)
-		|| read (tifd, tibuf[whichbuf], tibufsize) < 0)
+	    if (lseek (tifd, baseline/lines_per_buf * tibufsize, SEEK_SET) < 0)
 	      read_fatal ();
+	    idx_t s = 0;
+	    for (idx_t r;
+		 0 < (r = Read (tifd, tibuf[whichbuf] + s, tibufsize - s)); )
+	      s += r;
+	    if (s < tibufsize)
+	      fatal ("temp file unexpectedly shrank");
 	}
 	p = tibuf[whichbuf] + (tireclen*offline);
 	if (line == input_lines)
