@@ -276,29 +276,31 @@ set_file_attributes (char *to, enum file_attributes attr,
     }
   if (attr & FA_IDS)
     {
-      static uid_t euid = (uid_t)-1;
-      static gid_t egid = (gid_t)-1;
+      uid_t uid_1 = -1;
+      gid_t gid_1 = -1;
+      static uid_t euid = -1;
+      static gid_t egid = -1;
       uid_t uid;
       uid_t gid;
 
-      if (euid == -1)
+      if (euid == uid_1)
         {
 	  euid = geteuid ();
 	  egid = getegid ();
 	}
-      uid = (euid == st->st_uid) ? -1 : st->st_uid;
-      gid = (egid == st->st_gid) ? -1 : st->st_gid;
+      uid = euid == st->st_uid ? uid_1 : st->st_uid;
+      gid = egid == st->st_gid ? gid_1 : st->st_gid;
 
       /* May fail if we are not privileged to set the file owner, or we are
          not in group instat.st_gid.  Ignore those errors.  */
-      if ((uid != -1 || gid != -1)
+      if ((uid != uid_1 || gid != gid_1)
 	  && safe_lchown (to, uid, gid) != 0
 	  && (errno != EPERM
-	      || (uid != -1
-		  && safe_lchown (to, (uid = -1), gid) != 0
+	      || (uid != uid_1
+		  && safe_lchown (to, (uid = uid_1), gid) != 0
 		  && errno != EPERM)))
 	pfatal ("Failed to set the %s of %s %s",
-		(uid == -1) ? "owner" : "owning group",
+		uid == uid_1 ? "owner" : "owning group",
 		S_ISLNK (mode) ? "symbolic link" : "file",
 		quotearg (to));
     }
