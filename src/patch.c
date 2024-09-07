@@ -618,13 +618,13 @@ main (int argc, char **argv)
 		      mode_t mode = file_type |
 			  ((set_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
-		      if ((set_time | set_utc) && new_time.tv_sec != -1)
+		      if ((set_time | set_utc) && 0 <= new_time.tv_nsec)
 			{
 			  struct timespec old_time = p_timestamp[reverse_flag];
 
 			  if (! force && ! inerrno
 			      && pch_says_nonexistent (reverse_flag) != 2
-			      && old_time.tv_sec != -1
+			      && 0 <= old_time.tv_nsec
 			      && timespec_cmp (old_time,
 					       get_stat_mtime (&instat)))
 			    say ("Not setting time of file %s "

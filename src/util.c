@@ -1519,10 +1519,7 @@ fetchname (char const *at, intmax_t strip_leading, char **pname,
     char *name;
     const char *t;
     char *timestr = nullptr;
-    struct timespec stamp;
-
-    stamp.tv_sec = -1;
-    stamp.tv_nsec = 0;
+    struct timespec stamp = { .tv_sec = -1, .tv_nsec = -1 };
 
     while (c_isspace (*at))
 	at++;

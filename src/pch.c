@@ -488,6 +488,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     version_controlled[INDEX] = -1;
     p_rfc934_nesting = 0;
     p_timestamp[OLD].tv_sec = p_timestamp[NEW].tv_sec = -1;
+    p_timestamp[OLD].tv_nsec = p_timestamp[NEW].tv_nsec = -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
     Fseek (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
@@ -717,12 +718,11 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	      /* do nothing */ ;
 	    if (strnEQ (t, "---", 3) && c_isblank (t[3]))
 	      {
-		struct timespec timestamp;
-		timestamp.tv_sec = -1;
+		struct timespec timestamp = { .tv_sec = -1, .tv_nsec = -1 };
 		fetchname (t+4, strippath, &p_name[NEW], &p_timestr[NEW],
 			   &timestamp);
 		need_header = false;
-		if (timestamp.tv_sec != -1)
+		if (0 <= timestamp.tv_nsec)
 		  {
 		    p_timestamp[NEW] = timestamp;
 		    p_rfc934_nesting = (t - s) >> 1;
