@@ -146,7 +146,7 @@ get_input_file (char *filename, char const *outname, mode_t file_type)
     char *diffbuf;
     char *getbuf;
 
-    if (inerrno == -1)
+    if (inerrno < 0)
       inerrno = stat_file (filename, &instat);
 
     /* Perhaps look for RCS or SCCS versions.  */
@@ -366,7 +366,7 @@ plan_b (char *filename)
     {
       tifd = make_tempfile (&tmpin, 'i', nullptr, O_RDWR | O_BINARY,
 			    S_IRUSR | S_IWUSR);
-      if (tifd == -1)
+      if (tifd < 0)
 	pfatal ("Can't create temporary file %s", tmpin.name);
     }
   ptrdiff_t i = 0;
@@ -490,7 +490,7 @@ ifetch (lin line, bool whichbuf, idx_t *psize)
 	else {
 	    tiline[whichbuf] = baseline;
 	    if ((lseek (tifd, baseline/lines_per_buf * tibufsize, SEEK_SET)
-		 == -1)
+		 < 0)
 		|| read (tifd, tibuf[whichbuf], tibufsize) < 0)
 	      read_fatal ();
 	}

@@ -572,7 +572,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	      bool to_dir_known_to_exist = false;
 
 	      if (errno == ENOENT
-		  && (to_errno == -1 || to_errno == ENOENT))
+		  && (to_errno < 0 || to_errno == ENOENT))
 		{
 		  makedirs (to);
 		  to_dir_known_to_exist = true;

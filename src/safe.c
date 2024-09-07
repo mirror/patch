@@ -328,7 +328,7 @@ static struct symlink *read_symlink(int dirfd, const char *name)
     {
       char *end;
 
-      if (cwd_stat_errno == -1)
+      if (cwd_stat_errno < 0)
 	{
 	  cwd_stat_errno = stat (".", &cwd_stat) == 0 ? 0 : errno;
 	  if (cwd_stat_errno)
@@ -525,13 +525,13 @@ traverse_another_path (char **pathname, int keepfd)
 	{
 	  traversed_symlink->fd =
 	    entry->fd == AT_FDCWD ? AT_FDCWD : dup (entry->fd);
-	  if (traversed_symlink->fd != -1)
+	  if (traversed_symlink->fd < 0)
+	    free_cached_dirfd (traversed_symlink);
+	  else
 	    {
 	      insert_cached_dirfd (traversed_symlink, keepfd);
 	      list_add (&traversed_symlink->lru_link, &lru_list);
 	    }
-	  else
-	    free_cached_dirfd (traversed_symlink);
 	  traversed_symlink = nullptr;
 	}
     }

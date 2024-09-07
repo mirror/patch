@@ -311,7 +311,7 @@ main (int argc, char **argv)
 
 	  if (! strcmp (inname, outname))
 	    {
-	      if (inerrno == -1)
+	      if (inerrno < 0)
 		inerrno = stat_file (inname, &instat);
 	      outstat = instat;
 	      outerrno = inerrno;
@@ -360,7 +360,7 @@ main (int argc, char **argv)
       outfd = make_tempfile (&tmpout, 'o', outname,
 			     O_WRONLY | binary_transput,
 			     instat.st_mode & S_IRWXUGO);
-      if (outfd == -1)
+      if (outfd < 0)
 	{
 	  if (errno == ELOOP || errno == EXDEV)
 	    {
@@ -947,8 +947,7 @@ get_some_switches (void)
     outrej.exists = nullptr;
     if (optind == Argc)
 	return;
-    while ((optc = getopt_long (Argc, Argv, shortopts, longopts, nullptr))
-	   != -1) {
+    while (0 <= (optc = getopt_long (Argc, Argv, shortopts, longopts, nullptr)))
 	switch (optc) {
 	    case 'b':
 		make_backups = true;
@@ -1132,7 +1131,6 @@ get_some_switches (void)
 	    default:
 		usage (stderr, 2);
 	}
-    }
 
     /* Process any filename args.  */
     if (optind < Argc)
@@ -1652,12 +1650,12 @@ open_outfile (char *name)
   else
     {
       int stdout_dup = dup (fileno (stdout));
-      if (stdout_dup == -1)
+      if (stdout_dup < 0)
 	pfatal ("Failed to duplicate standard output");
       FILE *ofp = fdopen (stdout_dup, "a");
       if (! ofp)
 	pfatal ("Failed to duplicate standard output");
-      if (dup2 (fileno (stderr), fileno (stdout)) == -1)
+      if (dup2 (fileno (stderr), fileno (stdout)) < 0)
 	pfatal ("Failed to redirect messages to standard error");
       /* FIXME: Do we need to switch stdout_dup into O_BINARY mode here? */
       return ofp;
@@ -1671,7 +1669,7 @@ init_reject (char const *outname)
 {
   int fd;
   fd = make_tempfile (&tmprej, 'r', outname, O_WRONLY | binary_transput, 0666);
-  if (fd == -1)
+  if (fd < 0)
     pfatal ("Can't create temporary file %s", tmprej.name);
   rejfp = fdopen (fd, binary_transput ? "wb" : "w");
   if (! rejfp)
@@ -1931,7 +1929,7 @@ output_file_now (struct outfile *from,
     }
   else
     {
-      assert (from_st->st_size != -1);
+      assert (0 <= from_st->st_size);
       move_file (from, from_st, to, mode, backup);
     }
 }

@@ -130,7 +130,7 @@ open_patch_file (char const *filename)
 #endif
     if (fstat (fileno (pfp), &st) != 0)
       pfatal ("fstat");
-    if (S_ISREG (st.st_mode) && (pos = file_tell (pfp)) != -1)
+    if (S_ISREG (st.st_mode) && 0 <= (pos = file_tell (pfp)))
       file_pos = pos;
     else
       {
@@ -138,7 +138,7 @@ open_patch_file (char const *filename)
 	int fd;
 	FILE *read_pfp = pfp;
 	fd = make_tempfile (&tmppat, 'p', nullptr, O_RDWR | O_BINARY, 0);
-	if (fd == -1)
+	if (fd < 0)
 	  pfatal ("Can't create temporary file %s", tmppat.name);
 	pfp = fdopen (fd, "w+b");
 	if (! pfp)
@@ -284,7 +284,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	    say ("can't find file to patch at input line %s\n",
 		 format_linenum (numbuf, p_sline));
 	    if (diff_type != ED_DIFF && diff_type != NORMAL_DIFF)
-	      say (strippath == -1
+	      say (strippath < 0
 		   ? "Perhaps you should have used the -p or --strip option?\n"
 		   : "Perhaps you used the wrong -p or --strip option?\n");
 	  }
@@ -1213,7 +1213,7 @@ another_hunk (enum diff difftype, bool rev)
 	    free(p_line[p_end]);
 	p_end--;
     }
-    assert(p_end == -1);
+    assert (p_end < 0);
     p_efake = -1;
 
     if (p_c_function)
@@ -1350,7 +1350,7 @@ another_hunk (enum diff difftype, bool rev)
 	    case '-':
 		if (patchbuf[1] != '-')
 		  goto change_line;
-		if (ptrn_prefix_context == -1)
+		if (ptrn_prefix_context < 0)
 		  ptrn_prefix_context = context;
 		ptrn_suffix_context = context;
 		if (repl_beginning
@@ -1448,12 +1448,12 @@ another_hunk (enum diff difftype, bool rev)
 		}
 		if (! repl_beginning)
 		  {
-		    if (ptrn_prefix_context == -1)
+		    if (ptrn_prefix_context < 0)
 		      ptrn_prefix_context = context;
 		  }
 		else
 		  {
-		    if (repl_prefix_context == -1)
+		    if (repl_prefix_context < 0)
 		      repl_prefix_context = context;
 		  }
 		chars_read -=
@@ -1582,14 +1582,14 @@ another_hunk (enum diff difftype, bool rev)
 	    p_ptrn_lines = 0;
 	}
 
-	p_prefix_context = ((repl_prefix_context == -1
-			     || (ptrn_prefix_context != -1
+	p_prefix_context = ((repl_prefix_context < 0
+			     || (0 <= ptrn_prefix_context
 				 && ptrn_prefix_context < repl_prefix_context))
 			    ? ptrn_prefix_context : repl_prefix_context);
-	p_suffix_context = ((ptrn_suffix_context != -1
+	p_suffix_context = ((0 <= ptrn_suffix_context
 			     && ptrn_suffix_context < context)
 			    ? ptrn_suffix_context : context);
-	if (p_prefix_context == -1 || p_suffix_context == -1)
+	if (p_prefix_context < 0 || p_suffix_context < 0)
 	    fatal ("replacement text or line numbers mangled in hunk at line %s",
 		   format_linenum (numbuf0, p_hunk_beg));
 
@@ -1805,12 +1805,12 @@ another_hunk (enum diff difftype, bool rev)
 		malformed ();
 	    }
 	    if (ch != ' ') {
-		if (p_prefix_context == -1)
+		if (p_prefix_context < 0)
 		    p_prefix_context = context;
 		context = 0;
 	    }
 	}/* while */
-	if (p_prefix_context == -1)
+	if (p_prefix_context < 0)
 	  malformed ();
 	p_suffix_context = context;
     }
@@ -2435,7 +2435,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	   can lead to arbitrary command execution.  */
 
 	tmpfd = make_tempfile (&tmped, 'e', nullptr, O_RDWR | O_BINARY, 0);
-	if (tmpfd == -1)
+	if (tmpfd < 0)
 	  pfatal ("Can't create temporary file %s", quotearg (tmped.name));
 	tmpfp = fdopen (tmpfd, "w+b");
 	if (! tmpfp)
@@ -2485,8 +2485,8 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 		 output->exists ? 0 : O_EXCL, instat.st_mode, true);
     Fflush (stdout);
 
-    if ((stdin_dup = dup (0)) == -1
-	|| dup2 (tmpfd, 0) == -1)
+    stdin_dup = dup (STDIN_FILENO);
+    if (stdin_dup < 0 || dup2 (tmpfd, 0) < 0)
       pfatal ("Failed to duplicate standard input");
     assert (output_name[0] != '!' && output_name[0] != '-');
     status = execute (editor_program, editor_program,
@@ -2496,8 +2496,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 		      nullptr);
     if (status)
       fatal ("%s FAILED", editor_program);
-    if (dup2 (stdin_dup, 0) == -1
-	|| close (stdin_dup) == -1)
+    if (dup2 (stdin_dup, 0) < 0 || close (stdin_dup) < 0)
       pfatal ("Failed to duplicate standard input");
 
     Fclose (tmpfp);
