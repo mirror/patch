@@ -162,7 +162,6 @@ main (int argc, char **argv)
     bool skip_reject_file = false;
     bool apply_empty_patch = false;
     mode_t file_type;
-    int outfd = -1;
     bool have_git_diff = false;
 
     exit_failure = 2;
@@ -267,11 +266,6 @@ main (int argc, char **argv)
 	  Fclose (rejfp);
 	  rejfp = nullptr;
 	}
-      if (0 <= outfd)
-	{
-	  close (outfd);
-	  outfd = -1;
-	}
       remove_if_needed (&tmprej);
       remove_if_needed (&tmpout);
       remove_if_needed (&tmped);
@@ -357,9 +351,9 @@ main (int argc, char **argv)
 	}
 
       tmpoutst.st_size = -1;
-      outfd = make_tempfile (&tmpout, 'o', outname,
-			     O_WRONLY | binary_transput,
-			     instat.st_mode & S_IRWXUGO);
+      int outfd = make_tempfile (&tmpout, 'o', outname,
+				 O_WRONLY | binary_transput,
+				 instat.st_mode & S_IRWXUGO);
       if (outfd < 0)
 	{
 	  /* FIXME: Explain why ELOOP and EXDEV are special here.  */
@@ -372,6 +366,9 @@ main (int argc, char **argv)
 	  skip_reject_file = true;
 	  somefailed = true;
 	}
+      if (!outfile)
+	init_output (&outstate);
+
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
 	somefailed |= skip_rest_of_patch;
@@ -382,8 +379,6 @@ main (int argc, char **argv)
 	      pfatal ("%s", tmpout.name);
 	    outstate.zero_output = tmpoutst.st_size == 0;
 	  }
-	close (outfd);
-	outfd = -1;
       } else {
 	signed char got_hunk;
 	bool apply_anyway = merge;  /* don't try to reverse when merging */
@@ -397,12 +392,10 @@ main (int argc, char **argv)
 	/* initialize the patched file */
 	if (! skip_rest_of_patch && ! outfile)
 	  {
-	    init_output (&outstate);
 	    outstate.ofp = fdopen (outfd, binary_transput ? "wb" : "w");
 	    if (! outstate.ofp)
 	      pfatal ("%s", tmpout.name);
 	    /* outstate.ofp now owns the file descriptor */
-	    outfd = -1;
 	  }
 	else
 	  {
@@ -495,14 +488,6 @@ main (int argc, char **argv)
 		    }
 		} while (!skip_rest_of_patch && !where
 			 && (fuzz += incr_fuzz) <= mymaxfuzz);
-
-		if (skip_rest_of_patch) {		/* just got decided */
-		  if (outstate.ofp && ! outfile)
-		    {
-		      Fclose (outstate.ofp);
-		      outstate.ofp = nullptr;
-		    }
-		}
 	    }
 
 	    newwhere = (where ? where : pch_first()) + out_offset;
@@ -575,9 +560,10 @@ main (int argc, char **argv)
 	block_signals ();
 
       /* and put the output where desired */
+      bool replace_file = false, backup;
+      mode_t mode;
       if (! skip_rest_of_patch && ! outfile) {
-	  bool backup = make_backups
-			|| (backup_if_mismatch && (mismatch | failed));
+	  backup = make_backups || (backup_if_mismatch && (mismatch | failed));
 	  if (outstate.zero_output
 	      && (remove_empty_files
 		  || (pch_says_nonexistent (! reverse_flag) == 2
@@ -615,7 +601,7 @@ main (int argc, char **argv)
 		    {
 		      enum file_attributes attr = 0;
 		      struct timespec new_time = p_timestamp[! reverse_flag];
-		      mode_t mode = file_type |
+		      mode = file_type |
 			  ((set_mode ? new_mode : instat.st_mode) & S_IRWXUGO);
 
 		      if ((set_time | set_utc) && 0 <= new_time.tv_nsec)
@@ -642,24 +628,19 @@ main (int argc, char **argv)
 		        {
 			  if (set_mode)
 			    attr |= FA_MODE;
-			  set_file_attributes (tmpout.name, -1, attr,
+			  set_file_attributes (tmpout.name, outfd, attr,
 					       nullptr, -1, nullptr,
 					       mode, &new_time);
 			}
 		      else
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
-			  set_file_attributes (tmpout.name, -1, attr,
+			  set_file_attributes (tmpout.name, outfd, attr,
 					       inname, -1, &instat,
 					       mode, &new_time);
 			}
 
-		      output_file (&tmpout,
-				   &tmpoutst, outname, nullptr, mode, backup);
-
-		      if (pch_rename ())
-			output_file (nullptr, nullptr, inname, &instat,
-				     mode, backup);
+		      replace_file = true;
 		    }
 		  else if (backup)
 		    {
@@ -675,6 +656,25 @@ main (int argc, char **argv)
 		}
 	    }
       }
+
+      if (!outfile)
+	{
+	  if (outstate.ofp)
+	    {
+	      Fclose (outstate.ofp);
+	      outstate.ofp = nullptr;
+	    }
+	  else if (0 <= outfd && close (outfd) < 0)
+	    write_fatal ();
+	}
+
+      if (replace_file)
+	{
+	  output_file (&tmpout, &tmpoutst, outname, nullptr, mode, backup);
+	  if (pch_rename ())
+	    output_file (nullptr, nullptr, inname, &instat, mode, backup);
+	}
+
       if (diff_type != ED_DIFF) {
 	struct stat rejst;
 
@@ -1730,8 +1730,6 @@ spew_output (struct outstate *outstate, struct stat *st)
 	Fflush (outstate->ofp);
 	if (fstat (fileno (outstate->ofp), st) < 0)
 	  write_fatal ();
-	Fclose (outstate->ofp);
-	outstate->ofp = 0;
       }
 
     return true;
