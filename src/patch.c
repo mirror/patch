@@ -362,15 +362,15 @@ main (int argc, char **argv)
 			     instat.st_mode & S_IRWXUGO);
       if (outfd < 0)
 	{
-	  if (errno == ELOOP || errno == EXDEV)
-	    {
-	      say ("Invalid file name %s -- skipping patch\n", quotearg (outname));
-	      skip_rest_of_patch = true;
-	      skip_reject_file = true;
-	      somefailed = true;
-	    }
-	  else
+	  /* FIXME: Explain why ELOOP and EXDEV are special here.  */
+	  if (diff_type == ED_DIFF
+	      || ! (errno == ELOOP || errno == EXDEV))
 	    pfatal ("Can't create temporary file %s", tmpout.name);
+
+	  say ("Invalid file name %s -- skipping patch\n", quotearg (outname));
+	  skip_rest_of_patch = true;
+	  skip_reject_file = true;
+	  somefailed = true;
 	}
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
