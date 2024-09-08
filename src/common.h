@@ -122,16 +122,6 @@ extern char *revision;			/* prerequisite revision, if any */
 
 _Noreturn void fatal_exit (int);
 
-#if HAVE_FSEEKO
-  typedef off_t file_offset;
-# define file_seek fseeko
-# define file_tell ftello
-#else
-  typedef long file_offset;
-# define file_seek fseek
-# define file_tell ftell
-#endif
-
 #if ! (HAVE_GETEUID || defined geteuid)
 # if ! (HAVE_GETUID || defined getuid)
 #  define geteuid() (-1)

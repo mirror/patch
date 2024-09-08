@@ -1665,10 +1665,19 @@ Fputs (char const *s, FILE *stream)
 }
 
 void
-Fseek (FILE *stream, file_offset offset, int ptrname)
+Fseeko (FILE *stream, off_t offset, int ptrname)
 {
-  if (file_seek (stream, offset, ptrname) != 0)
-    pfatal ("fseek");
+  if (fseeko (stream, offset, ptrname) < 0)
+    pfatal ("fseeko");
+}
+
+off_t
+Ftello (FILE *stream)
+{
+  off_t off = ftello (stream);
+  if (off < 0)
+    pfatal ("ftello");
+  return off;
 }
 
 void

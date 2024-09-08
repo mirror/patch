@@ -64,9 +64,9 @@ static idx_t hunkmax = INITHUNKMAX;	/* size of above arrays */
 static idx_t p_indent;			/* indent to patch */
 static bool p_strip_trailing_cr;	/* true if stripping trailing \r */
 static bool p_pass_comments_through;	/* true if not ignoring # lines */
-static file_offset p_base;		/* where to intuit this time */
+static off_t p_base;			/* where to intuit this time */
 static idx_t p_bline;			/* line # of p_base */
-static file_offset p_start;		/* where intuit found a patch */
+static off_t p_start;			/* where intuit found a patch */
 static idx_t p_sline;			/* and the line number for it */
 static idx_t p_hunk_beg;		/* line number of current hunk */
 static ptrdiff_t p_efake = -1;		/* end of faked up lines--don't free */
@@ -82,8 +82,8 @@ static idx_t get_line (void);
 static bool incomplete_line (void);
 static void grow_hunkmax (void);
 static void malformed (void);
-static void next_intuit_at (file_offset, idx_t);
-static void skip_to (file_offset, idx_t);
+static void next_intuit_at (off_t, idx_t);
+static void skip_to (off_t, idx_t);
 static char get_ed_command_letter (char const *);
 
 /* Prepare to look for the next patch in the patch file. */
@@ -106,8 +106,8 @@ re_patch (void)
 void
 open_patch_file (char const *filename)
 {
-    file_offset file_pos = 0;
-    file_offset pos;
+    off_t file_pos = 0;
+    off_t pos;
     struct stat st;
 
     if (!filename || !*filename || strEQ (filename, "-"))
@@ -128,7 +128,7 @@ open_patch_file (char const *filename)
 #endif
     if (fstat (fileno (pfp), &st) != 0)
       pfatal ("fstat");
-    if (S_ISREG (st.st_mode) && 0 <= (pos = file_tell (pfp)))
+    if (S_ISREG (st.st_mode) && 0 <= (pos = ftello (pfp)))
       file_pos = pos;
     else
       {
@@ -148,11 +148,9 @@ open_patch_file (char const *filename)
 	if (ferror (read_pfp) || fclose (read_pfp) < 0)
 	  read_fatal ();
 	Fflush (pfp);
-	Fseek (pfp, 0, SEEK_SET);
+	Fseeko (pfp, 0, SEEK_SET);
       }
     p_filesize = st.st_size;
-    if (p_filesize != (file_offset) p_filesize)
-      fatal ("patch file is too long");
     next_intuit_at (file_pos, 1);
 }
 
@@ -228,7 +226,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
     }
     if (skip_rest_of_patch)
       {
-	Fseek (pfp, p_start, SEEK_SET);
+	Fseeko (pfp, p_start, SEEK_SET);
 	p_input_line = p_sline - 1;
 	return true;
       }
@@ -439,8 +437,8 @@ name_is_valid (char const *name)
 static enum diff
 intuit_diff_type (bool need_header, mode_t *p_file_type)
 {
-    file_offset this_line = 0;
-    file_offset first_command_line = -1;
+    off_t this_line = 0;
+    off_t first_command_line = -1;
     char first_ed_command_letter = 0;
     idx_t fcl_line = 0; /* Pacify 'gcc -W'.  */
     bool this_is_a_command = false;
@@ -492,12 +490,12 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     p_timestamp[OLD].tv_sec = p_timestamp[NEW].tv_sec = -1;
     p_timestamp[OLD].tv_nsec = p_timestamp[NEW].tv_nsec = -1;
     p_says_nonexistent[OLD] = p_says_nonexistent[NEW] = 0;
-    Fseek (pfp, p_base, SEEK_SET);
+    Fseeko (pfp, p_base, SEEK_SET);
     p_input_line = p_bline - 1;
     for (;;) {
 	char *s;
 	char *t;
-	file_offset previous_line = this_line;
+	off_t previous_line = this_line;
 	bool last_line_was_command = this_is_a_command;
 	bool stars_last_line = stars_this_line;
 	idx_t indent_last_line = indent;
@@ -505,7 +503,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	bool strip_trailing_cr;
 
 	indent = 0;
-	this_line = file_tell (pfp);
+	this_line = Ftello (pfp);
 	idx_t chars_read = pget_line (0, 0, false, false);
 	if (! chars_read) {
 	    if (first_ed_command_letter) {
@@ -796,9 +794,9 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    {
 	      /* Scan the first hunk to see whether the file contents
 		 appear to have been deleted.  */
-	      file_offset saved_p_base = p_base;
+	      off_t saved_p_base = p_base;
 	      idx_t saved_p_bline = p_bline;
-	      Fseek (pfp, previous_line, SEEK_SET);
+	      Fseeko (pfp, previous_line, SEEK_SET);
 	      p_input_line -= 2;
 	      if (another_hunk (retval, false)
 		  && ! p_repl_lines && p_newfirst == 1)
@@ -1091,7 +1089,7 @@ best_name (char *const *name, int const *ignore)
 /* Remember where this patch ends so we know where to start up again. */
 
 static void
-next_intuit_at (file_offset file_pos, idx_t file_line)
+next_intuit_at (off_t file_pos, idx_t file_line)
 {
     p_base = file_pos;
     p_bline = file_line;
@@ -1100,7 +1098,7 @@ next_intuit_at (file_offset file_pos, idx_t file_line)
 /* Basically a verbose fseek() to the actual diff listing. */
 
 static void
-skip_to (file_offset file_pos, idx_t file_line)
+skip_to (off_t file_pos, idx_t file_line)
 {
     FILE *i = pfp;
     FILE *o = stdout;
@@ -1108,10 +1106,10 @@ skip_to (file_offset file_pos, idx_t file_line)
 
     assert(p_base <= file_pos);
     if ((verbosity == VERBOSE || !inname) && p_base < file_pos) {
-	Fseek (i, p_base, SEEK_SET);
+	Fseeko (i, p_base, SEEK_SET);
 	say ("The text leading up to this was:\n--------------------------\n");
 
-	while (file_tell (i) < file_pos)
+	while (Ftello (i) < file_pos)
 	  {
 	    Fputc ('|', o);
 	    do
@@ -1127,7 +1125,7 @@ skip_to (file_offset file_pos, idx_t file_line)
 	say ("--------------------------\n");
     }
     else
-	Fseek (i, file_pos, SEEK_SET);
+	Fseeko (i, file_pos, SEEK_SET);
     p_input_line = file_line - 1;
 }
 
@@ -1205,7 +1203,7 @@ another_hunk (enum diff difftype, bool rev)
 
     p_max = hunkmax;			/* gets reduced when --- found */
     if (difftype == CONTEXT_DIFF || difftype == NEW_CONTEXT_DIFF) {
-	file_offset line_beginning = file_tell (pfp);
+	off_t line_beginning = Ftello (pfp);
 					/* file pos of the current line */
 	idx_t repl_beginning = 0;	/* index of --- line */
 	idx_t fillcnt = 0;	/* #lines of missing ptrn or repl */
@@ -1216,7 +1214,7 @@ another_hunk (enum diff difftype, bool rev)
 	bool repl_could_be_missing = true;
 	bool ptrn_missing = false;	/* The pattern was missing.  */
 	bool repl_missing = false;	/* Likewise for replacement.  */
-	file_offset repl_backtrack_position = 0;
+	off_t repl_backtrack_position = 0;
 					/* file pos of first repl line */
 	idx_t repl_patch_line;		/* input line number for same */
 	idx_t repl_context;		/* context for same */
@@ -1359,7 +1357,7 @@ another_hunk (enum diff difftype, bool rev)
 		      }
 		  }
 		repl_beginning = p_end;
-		repl_backtrack_position = file_tell (pfp);
+		repl_backtrack_position = Ftello (pfp);
 		repl_patch_line = p_input_line;
 		repl_context = context;
 		p_len[p_end] = strlen (patchbuf);
@@ -1505,7 +1503,7 @@ another_hunk (enum diff difftype, bool rev)
 	    context = repl_context;
 	    for (p_end--; p_end > repl_beginning; p_end--)
 		free(p_line[p_end]);
-	    Fseek (pfp, repl_backtrack_position, SEEK_SET);
+	    Fseeko (pfp, repl_backtrack_position, SEEK_SET);
 
 	    /* redundant 'new' context lines were omitted - set */
 	    /* up to fill them in from the old file context */
@@ -1590,7 +1588,8 @@ another_hunk (enum diff difftype, bool rev)
 	}
     }
     else if (difftype == UNI_DIFF) {
-	file_offset line_beginning = file_tell (pfp);  /* file pos of the current line */
+	off_t line_beginning = Ftello (pfp); /* file pos of the current line */
+
 	idx_t fillsrc;	/* index of old lines */
 	idx_t filldst;	/* index of new lines */
 	char ch = '\0';
@@ -1736,7 +1735,7 @@ another_hunk (enum diff difftype, bool rev)
     else {				/* normal diff--fake it up */
 	char hunk_type;
 	idx_t min, max;
-	file_offset line_beginning = file_tell (pfp);
+	off_t line_beginning = Ftello (pfp);
 
 	p_prefix_context = p_suffix_context = 0;
 	idx_t chars_read = get_line ();
@@ -1962,7 +1961,7 @@ incomplete_line (void)
 {
   FILE *fp = pfp;
   int c;
-  file_offset line_beginning = file_tell (fp);
+  off_t line_beginning = Ftello (fp);
 
   if (getc (fp) == '\\')
     {
@@ -1978,7 +1977,7 @@ incomplete_line (void)
   else
     {
       /* We don't trust ungetc.  */
-      Fseek (pfp, line_beginning, SEEK_SET);
+      Fseeko (pfp, line_beginning, SEEK_SET);
       return false;
     }
 }
@@ -2289,7 +2288,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     static char const editor_program[] = EDITOR_PROGRAM;
 
     char const *output_name = output->name;
-    file_offset beginning_of_this_line;
+    off_t beginning_of_this_line;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
     int stdin_dup, status;
@@ -2313,7 +2312,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 
     for (;;) {
 	char ed_command_letter;
-	beginning_of_this_line = file_tell (pfp);
+	beginning_of_this_line = Ftello (pfp);
 	idx_t chars_read = get_line ();
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);

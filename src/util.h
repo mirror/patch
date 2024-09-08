@@ -67,7 +67,8 @@ void Fflush (FILE *);
 void Fprintf (FILE *, char const *, ...) ATTRIBUTE_FORMAT ((printf, 2, 3));
 void Fputc (int, FILE *);
 void Fputs (char const *restrict, FILE *restrict);
-void Fseek (FILE *, file_offset, int);
+void Fseeko (FILE *, off_t, int);
+off_t Ftello (FILE *);
 void Fwrite (void const *restrict, size_t, size_t, FILE *restrict);
 idx_t Read (int, void *, idx_t);
 void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
