@@ -260,12 +260,9 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 		     format_linenum (numbuf1, matched));
 	  else if (n >= in && n < in + matched)
 	    {
-	      idx_t size;
-	      const char *line;
-
-	      line = ifetch (where + n - in, false, &size);
+	      struct iline line = ifetch (where + n - in, false);
 	      Fputs (" |", stderr);
-	      Fwrite (line, 1, size, stderr);
+	      Fwrite (line.ptr, 1, line.size, stderr);
 	    }
 	  else
 	    Fputc ('\n', stderr);
@@ -528,15 +525,12 @@ count_context_lines (void)
 static bool
 context_matches_file (idx_t old, lin where)
 {
-  idx_t size;
-  const char *line;
-
-  line = ifetch (where, false, &size);
-  return size &&
+  struct iline line = ifetch (where, false);
+  return line.size &&
 	 (canonicalize_ws ?
-	  similar (pfetch (old), pch_line_len (old), line, size) :
-	  (size == pch_line_len (old) &&
-	   memcmp (line, pfetch (old), size) == 0));
+	  similar (pfetch (old), pch_line_len (old), line.ptr, line.size) :
+	  (line.size == pch_line_len (old) &&
+	   memcmp (line.ptr, pfetch (old), line.size) == 0));
 }
 
 static void

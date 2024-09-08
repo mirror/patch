@@ -18,7 +18,11 @@
 
 extern lin input_lines;		/* how long is input file in lines */
 
-char const *ifetch (lin, bool, idx_t *);
+/* Description of an input line: a pointer to its start, and the
+   number of bytes in it (including any trailing newline).  */
+struct iline { char const *ptr; idx_t size; };
+
+struct iline ifetch (idx_t, bool);
 bool get_input_file (char *, char const *, mode_t);
 void re_input (void);
 void scan_input (char *, mode_t);

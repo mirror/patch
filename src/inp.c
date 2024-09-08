@@ -456,21 +456,14 @@ plan_b (char *filename)
 /* Fetch a line from the input file.
    WHICHBUF is ignored when the file is in memory.  */
 
-char const *
-ifetch (lin line, bool whichbuf, idx_t *psize)
+struct iline
+ifetch (idx_t line, bool whichbuf)
 {
-    char const *q;
-    char const *p;
+  if (! (1 <= line && line <= input_lines))
+    return (struct iline) { .ptr = "", .size = 0 };
 
-    if (line < 1 || line > input_lines) {
-	*psize = 0;
-	return "";
-    }
-    if (using_plan_a) {
-	p = i_ptr[line];
-	*psize = i_ptr[line + 1] - p;
-	return p;
-    } else {
+  if (!using_plan_a)
+    {
 	idx_t offline = line % lines_per_buf;
 	lin baseline = line - offline;
 
@@ -489,14 +482,20 @@ ifetch (lin line, bool whichbuf, idx_t *psize)
 	    if (s < tibufsize)
 	      fatal ("temp file unexpectedly shrank");
 	}
+	char const *p;
+	idx_t size, *psize = &size;
 	p = tibuf[whichbuf] + (tireclen*offline);
 	if (line == input_lines)
 	    *psize = last_line_size;
 	else {
+	    char const *q;
 	    for (q = p;  *q++ != '\n';  )
 		/* do nothing */ ;
 	    *psize = q - p;
 	}
-	return p;
+	return (struct iline) { .ptr = p, .size = size };
     }
+
+  char const *ptr = i_ptr[line];
+  return (struct iline) { .ptr = ptr, .size = i_ptr[line + 1] - ptr };
 }

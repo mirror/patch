@@ -1683,7 +1683,6 @@ copy_till (struct outstate *outstate, lin lastline)
 {
     lin R_last_frozen_line = last_frozen_line;
     FILE *fp = outstate->ofp;
-    char const *s;
 
     if (R_last_frozen_line > lastline)
       {
@@ -1692,14 +1691,14 @@ copy_till (struct outstate *outstate, lin lastline)
       }
     while (R_last_frozen_line < lastline)
       {
-	idx_t size;
-	s = ifetch (++R_last_frozen_line, false, &size);
-	if (size)
+	R_last_frozen_line++;
+	struct iline line = ifetch (R_last_frozen_line, false);
+	if (line.size)
 	  {
 	    if (!outstate->after_newline)
 	      Fputc ('\n', fp);
-	    Fwrite (s, sizeof *s, size, fp);
-	    outstate->after_newline = s[size - 1] == '\n';
+	    Fwrite (line.ptr, 1, line.size, fp);
+	    outstate->after_newline = line.ptr[line.size - 1] == '\n';
 	    outstate->zero_output = false;
 	  }
       }
@@ -1743,16 +1742,15 @@ patch_match (lin base, lin offset, idx_t prefix_fuzz, idx_t suffix_fuzz)
     idx_t pat_lines = pch_ptrn_lines () - suffix_fuzz;
 
     for (idx_t pline = 1 + prefix_fuzz; pline <= pat_lines; pline++) {
-	idx_t size;
-	char const *p = ifetch (pline - 1 + base + offset, 0 <= offset, &size);
+	struct iline line = ifetch (pline - 1 + base + offset, 0 <= offset);
 	if (canonicalize_ws) {
-	    if (!similar(p, size,
+	    if (!similar(line.ptr, line.size,
 			 pfetch(pline),
 			 pch_line_len(pline) ))
 		return false;
 	}
-	else if (size != pch_line_len (pline)
-		 || memcmp (p, pfetch (pline), size) != 0)
+	else if (line.size != pch_line_len (pline)
+		 || memcmp (line.ptr, pfetch (pline), line.size) != 0)
 	    return false;
     }
     return true;
@@ -1773,11 +1771,12 @@ check_line_endings (lin where)
     return false;
   if (where > input_lines)
     where = input_lines;
-  p = ifetch (where, false, &size);
-  if (! size)
+  struct iline line = ifetch (where, false);
+  if (! line.size)
     return false;
-  bool input_crlf = 2 <= size && p[size - 2] == '\r' && p[size - 1] == '\n';
-
+  bool input_crlf = (2 <= line.size
+		     && line.ptr[line.size - 2] == '\r'
+		     && line.ptr[line.size - 1] == '\n');
   return patch_crlf != input_crlf;
 }
 
