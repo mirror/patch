@@ -20,9 +20,9 @@
 #include <stat-time.h>
 #include <backupfile.h>
 
-/* An upper bound on the print length of a signed decimal line number.
-   Add one for the sign.  */
-#define LINENUM_LENGTH_BOUND (sizeof (lin) * CHAR_BIT / 3 + 1)
+/* An upper bound on the print length of a signed decimal line number
+   or line number offset.  */
+enum { LINENUM_LENGTH_BOUND = INT_STRLEN_BOUND (ptrdiff_t) };
 
 enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
@@ -59,13 +59,14 @@ _Noreturn void pfatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
 void fetchname (char const *, intmax_t, char **, char **, struct timespec *);
 char *parse_name (char const *, intmax_t, char const **);
-char *savebuf (char const *, idx_t);
-char *savestr (char const *);
+char *savebuf (char const *, idx_t)
+  ATTRIBUTE_MALLOC ATTRIBUTE_DEALLOC_FREE ATTRIBUTE_ALLOC_SIZE ((2))
+  ATTRIBUTE_RETURNS_NONNULL;
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
 bool version_get (char *, char const *, bool, bool, char const *, struct stat *);
 int create_file (struct outfile *, int, mode_t, bool);
 int systemic (char const *);
-char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], lin);
+char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], ptrdiff_t);
 void Fclose (FILE *);
 void Fflush (FILE *);
 void Fprintf (FILE *, char const *, ...) ATTRIBUTE_FORMAT ((printf, 2, 3));
@@ -74,7 +75,6 @@ void Fputs (char const *restrict, FILE *restrict);
 void Fseek (FILE *, file_offset, int);
 void Fwrite (void const *restrict, size_t, size_t, FILE *restrict);
 idx_t Read (int, void *, idx_t);
-void Write (int, void const *, idx_t);
 void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
 		int, mode_t, enum file_attributes, bool);
 void append_to_file (char *, char *);

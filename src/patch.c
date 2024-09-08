@@ -51,7 +51,6 @@ bool reverse_flag;
 bool set_time;
 bool set_utc;
 bool skip_rest_of_patch;
-bool using_plan_a;
 char *inname;
 char *outfile;
 char *patchbuf;
@@ -62,6 +61,7 @@ char const *origsuff;
 enum conflict_style conflict_style;
 enum diff diff_type;
 enum verbosity verbosity;
+idx_t last_frozen_line;
 idx_t patchbufsize;
 #ifndef binary_transput
 int binary_transput;
@@ -69,13 +69,11 @@ int binary_transput;
 int inerrno;
 intmax_t patch_get;
 intmax_t strippath;
-lin in_offset;
-lin last_frozen_line;
-lin out_offset;
+ptrdiff_t in_offset;
+ptrdiff_t out_offset;
 signed char invc;
 struct stat instat;
 struct outfile tmped = { .temporary = true };
-struct outfile tmpin = { .temporary = true };
 struct outfile tmppat = { .temporary = true };
 #ifndef debug
 unsigned short int debug;
@@ -84,10 +82,10 @@ unsigned short int debug;
 /* procedures */
 
 static FILE *create_output_file (struct outfile *, int);
-static lin locate_hunk (idx_t);
-static bool check_line_endings (lin);
-static bool apply_hunk (struct outstate *, lin);
-static bool patch_match (lin, lin, idx_t, idx_t);
+static idx_t locate_hunk (idx_t);
+static bool check_line_endings (idx_t);
+static bool apply_hunk (struct outstate *, idx_t);
+static bool patch_match (idx_t, idx_t, idx_t, idx_t);
 static bool spew_output (struct outstate *, struct stat *);
 static intmax_t numeric_string (char const *, bool, char const *);
 static void cleanup (void);
@@ -380,7 +378,6 @@ main (int argc, char **argv)
 	    outstate.zero_output = tmpoutst.st_size == 0;
 	  }
       } else {
-	signed char got_hunk;
 	bool apply_anyway = merge;  /* don't try to reverse when merging */
 
 	if (! skip_rest_of_patch && diff_type == GIT_BINARY_DIFF) {
@@ -424,19 +421,14 @@ main (int argc, char **argv)
 		       pch_copy () ? "copied" :
 		       (pch_rename () ? "renamed" : "read"),
 		       ! skip_rename ? inname : pch_name (! strcmp (inname, pch_name (OLD))));
-		if (verbosity == VERBOSE)
-		  say ("Using Plan %s...\n", using_plan_a ? "A" : "B");
 	      }
 	}
 
-	/* from here on, open no standard i/o files, because malloc */
-	/* might misfire and we can't catch it easily */
-
 	/* apply each hunk of patch */
-	while (0 < (got_hunk = another_hunk (diff_type, reverse_flag)))
+	while (another_hunk (diff_type, reverse_flag))
 	  {
-	    lin where = 0; /* Pacify 'gcc -Wall'.  */
-	    lin newwhere;
+	    idx_t where = 0; /* Pacify 'gcc -Wall'.  */
+	    idx_t newwhere;
 	    idx_t fuzz = 0;
 	    idx_t mymaxfuzz;
 
@@ -529,19 +521,6 @@ main (int argc, char **argv)
 
 	if (!skip_rest_of_patch)
 	  {
-	    if (got_hunk < 0  &&  using_plan_a)
-	      {
-		if (outfile)
-		  fatal ("out of memory using Plan A");
-		say ("\n\nRan out of memory using Plan A -- trying again...\n\n");
-		if (outstate.ofp)
-		  {
-		    Fclose (outstate.ofp);
-		    outstate.ofp = nullptr;
-		  }
-		continue;
-	      }
-
 	    /* Finish spewing out the new file.  */
 	    if (! spew_output (&outstate, &tmpoutst))
 	      {
@@ -1184,23 +1163,22 @@ numeric_string (char const *string,
 
 /* Attempt to find the right place to apply this hunk of patch. */
 
-static lin
+static idx_t
 locate_hunk (idx_t fuzz)
 {
-    lin first_guess = pch_first () + in_offset;
-    lin offset;
+    idx_t first_guess = pch_first () + in_offset;
     idx_t pat_lines = pch_ptrn_lines ();
     idx_t prefix_context = pch_prefix_context ();
     idx_t suffix_context = pch_suffix_context ();
     idx_t context = MAX (prefix_context, suffix_context);
     ptrdiff_t prefix_fuzz = fuzz + prefix_context - context;
     ptrdiff_t suffix_fuzz = fuzz + suffix_context - context;
-    lin max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
-    lin min_where = last_frozen_line + 1;
-    lin max_pos_offset = max_where - first_guess;
-    lin max_neg_offset = first_guess - min_where;
-    lin max_offset = MAX(max_pos_offset, max_neg_offset);
-    lin min_offset;
+    idx_t max_where = input_lines - (pat_lines - suffix_fuzz) + 1;
+    idx_t min_where = last_frozen_line + 1;
+    ptrdiff_t max_pos_offset = max_where - first_guess;
+    ptrdiff_t max_neg_offset = first_guess - min_where;
+    ptrdiff_t max_offset = MAX (max_pos_offset, max_neg_offset);
+    ptrdiff_t min_offset;
 
     if (!pat_lines)			/* null range matches always */
 	return first_guess;
@@ -1218,7 +1196,7 @@ locate_hunk (idx_t fuzz)
 	  if (pat_lines != input_lines || prefix_context < last_frozen_line)
 	    return 0;
 
-	offset = 1 - first_guess;
+	ptrdiff_t offset = 1 - first_guess;
 	if (last_frozen_line <= prefix_context
 	    && offset <= max_pos_offset
 	    && patch_match (first_guess, offset, 0, suffix_fuzz))
@@ -1235,7 +1213,7 @@ locate_hunk (idx_t fuzz)
     if (suffix_fuzz < 0)
       {
 	/* Can only match end of file.  */
-	offset = first_guess - (input_lines - pat_lines + 1);
+	ptrdiff_t offset = first_guess - (input_lines - pat_lines + 1);
 	if (offset <= max_neg_offset
 	    && patch_match (first_guess, -offset, prefix_fuzz, 0))
 	  {
@@ -1249,7 +1227,7 @@ locate_hunk (idx_t fuzz)
     min_offset = max_pos_offset < 0 ? first_guess - max_where
 	       : max_neg_offset < 0 ? first_guess - min_where
 	       : 0;
-    for (offset = min_offset;  offset <= max_offset;  offset++) {
+    for (ptrdiff_t offset = min_offset; offset <= max_offset; offset++) {
 	char numbuf0[LINENUM_LENGTH_BOUND + 1];
 	char numbuf1[LINENUM_LENGTH_BOUND + 1];
 	if (offset <= max_pos_offset
@@ -1291,7 +1269,7 @@ mangled_patch (idx_t old, idx_t new)
 /* Output a line number range in unified format.  */
 
 static void
-print_unidiff_range (FILE *fp, lin start, idx_t count)
+print_unidiff_range (FILE *fp, idx_t start, idx_t count)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];
   char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -1386,10 +1364,10 @@ abort_hunk_context (bool header, bool reverse)
 {
     idx_t pat_end = pch_end ();
     /* add in out_offset to guess the same as the previous successful hunk */
-    lin oldfirst = pch_first() + out_offset;
-    lin newfirst = pch_newfirst() + out_offset;
-    lin oldlast = oldfirst + pch_ptrn_lines() - 1;
-    lin newlast = newfirst + pch_repl_lines() - 1;
+    idx_t oldfirst = pch_first () + out_offset;
+    idx_t newfirst = pch_newfirst () + out_offset;
+    idx_t oldlast = oldfirst + pch_ptrn_lines () - 1;
+    idx_t newlast = newfirst + pch_repl_lines () - 1;
     char const *stars   = diff_type < NEW_CONTEXT_DIFF ? ""       : " ****";
     char const *minuses = diff_type < NEW_CONTEXT_DIFF ? " -----" : " ----";
     char const *c_function = pch_c_function();
@@ -1463,7 +1441,7 @@ abort_hunk (char const *outname, bool header, bool reverse)
 /* We found where to apply it (we hope), so do it. */
 
 static bool
-apply_hunk (struct outstate *outstate, lin where)
+apply_hunk (struct outstate *outstate, idx_t where)
 {
     idx_t old = 1;
     idx_t lastline = pch_ptrn_lines ();
@@ -1679,9 +1657,9 @@ init_reject (char const *outname)
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
 bool
-copy_till (struct outstate *outstate, lin lastline)
+copy_till (struct outstate *outstate, idx_t lastline)
 {
-    lin R_last_frozen_line = last_frozen_line;
+    idx_t R_last_frozen_line = last_frozen_line;
     FILE *fp = outstate->ofp;
 
     if (R_last_frozen_line > lastline)
@@ -1692,7 +1670,7 @@ copy_till (struct outstate *outstate, lin lastline)
     while (R_last_frozen_line < lastline)
       {
 	R_last_frozen_line++;
-	struct iline line = ifetch (R_last_frozen_line, false);
+	struct iline line = ifetch (R_last_frozen_line);
 	if (line.size)
 	  {
 	    if (!outstate->after_newline)
@@ -1737,12 +1715,12 @@ spew_output (struct outstate *outstate, struct stat *st)
 /* Does the patch pattern match at line base+offset? */
 
 static bool
-patch_match (lin base, lin offset, idx_t prefix_fuzz, idx_t suffix_fuzz)
+patch_match (idx_t base, ptrdiff_t offset, idx_t prefix_fuzz, idx_t suffix_fuzz)
 {
     idx_t pat_lines = pch_ptrn_lines () - suffix_fuzz;
 
     for (idx_t pline = 1 + prefix_fuzz; pline <= pat_lines; pline++) {
-	struct iline line = ifetch (pline - 1 + base + offset, 0 <= offset);
+	struct iline line = ifetch (pline - 1 + base + offset);
 	if (canonicalize_ws) {
 	    if (!similar(line.ptr, line.size,
 			 pfetch(pline),
@@ -1759,7 +1737,7 @@ patch_match (lin base, lin offset, idx_t prefix_fuzz, idx_t suffix_fuzz)
 /* Check if the line endings in the input file and in the patch differ. */
 
 static bool
-check_line_endings (lin where)
+check_line_endings (idx_t where)
 {
   char const *p = pfetch (1);
   idx_t size = pch_line_len (1);
@@ -1771,7 +1749,7 @@ check_line_endings (lin where)
     return false;
   if (where > input_lines)
     where = input_lines;
-  struct iline line = ifetch (where, false);
+  struct iline line = ifetch (where);
   if (! line.size)
     return false;
   bool input_crlf = (2 <= line.size
@@ -2061,7 +2039,6 @@ static void
 cleanup (void)
 {
   remove_if_needed (&tmped);
-  remove_if_needed (&tmpin);
   remove_if_needed (&tmpout);
   remove_if_needed (&tmppat);
   remove_if_needed (&tmprej);

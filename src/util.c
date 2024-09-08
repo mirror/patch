@@ -21,7 +21,6 @@
 #include <common.h>
 #include <dirname.h>
 #include <hash.h>
-#include <ialloc.h>
 #include <quotearg.h>
 #include <util.h>
 #include <utimens.h>
@@ -52,6 +51,7 @@ static idx_t const IO_MAX = MIN (SSIZE_MAX, SIZE_MAX) >> 30 << 30;
 enum backup_type backup_type;
 
 static void makedirs (char const *);
+static void Write (int, void const *, idx_t);
 
 typedef struct
 {
@@ -964,24 +964,11 @@ version_get (char *filename, char const *cs, bool exists, bool readonly,
 char *
 savebuf (char const *s, idx_t size)
 {
-  if (! size)
-    return nullptr;
-  char *rv = imalloc (size);
-  if (rv)
-    return memcpy (rv, s, size);
-  if (! using_plan_a)
-    xalloc_die ();
-  return rv;
+  return size ? xmemdup (s, size) : nullptr;
 }
 
 char *
-savestr (char const *s)
-{
-  return savebuf (s, strlen (s) + 1);
-}
-
-char *
-format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], lin n)
+format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], ptrdiff_t n)
 {
   char *p = numbuf + LINENUM_LENGTH_BOUND;
   *p = '\0';
@@ -1724,7 +1711,7 @@ Read (int filedes, void *buf, idx_t nbyte)
   return r;
 }
 
-void
+static void
 Write (int filedes, void const *buf, idx_t nbyte)
 {
   char const *b = buf, *blim = b + nbyte;

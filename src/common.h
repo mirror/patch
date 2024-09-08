@@ -51,20 +51,6 @@
 
 /* typedefs */
 
-/* A type for line numbers or (possibly negative) line number offsets
-   in input files.  It counts lines in files, so off_t should suffice.
-
-   When counting lines in main memory, such as the main memory used to
-   hold a patch, the code typically instead uses idx_t for nonnegative
-   counts and ptrdiff_t for offsets.  This is mostly for clarity.
-   Occasionally, though, the code uses 'lin' when a line count might
-   be of main memory and might be of file contents.  */
-
-typedef off_t lin;			/* must be signed */
-
-#define LINENUM_MIN TYPE_MINIMUM (lin)
-#define LINENUM_MAX TYPE_MAXIMUM (lin)
-
 /* A description of an output file.  It may be temporary.  */
 struct outfile
 {
@@ -86,8 +72,6 @@ struct outfile
 extern char *patchbuf;			/* general purpose buffer */
 extern idx_t patchbufsize;		/* allocated size of buf */
 
-extern bool using_plan_a;		/* try to keep everything in memory */
-
 extern char *inname;
 extern char *outfile;
 extern int inerrno;
@@ -101,7 +85,6 @@ extern char const *origbase;
 extern char const *origsuff;
 
 extern struct outfile tmped;
-extern struct outfile tmpin;
 extern struct outfile tmppat;
 
 #if DEBUGGING
@@ -183,20 +166,20 @@ struct outstate
 };
 
 /* offset in the input and output at which the previous hunk matched */
-extern lin in_offset;
-extern lin out_offset;
+extern ptrdiff_t in_offset;
+extern ptrdiff_t out_offset;
 
 /* how many input lines have been irretractably output */
-extern lin last_frozen_line;
+extern idx_t last_frozen_line;
 
-bool copy_till (struct outstate *, lin);
+bool copy_till (struct outstate *, idx_t);
 bool similar (char const *, idx_t, char const *, idx_t) ATTRIBUTE_PURE;
 
 #ifdef ENABLE_MERGE
 enum conflict_style { MERGE_MERGE, MERGE_DIFF3 };
 extern enum conflict_style conflict_style;
 
-bool merge_hunk (intmax_t hunk, struct outstate *, lin where, bool *);
+bool merge_hunk (intmax_t hunk, struct outstate *, idx_t where, bool *);
 #else
 # define merge_hunk(hunk, outstate, where, somefailed) false
 #endif

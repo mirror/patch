@@ -16,13 +16,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-extern lin input_lines;		/* how long is input file in lines */
+/* Number of lines in input file.  */
+extern idx_t input_lines;
 
 /* Description of an input line: a pointer to its start, and the
    number of bytes in it (including any trailing newline).  */
 struct iline { char const *ptr; idx_t size; };
 
-struct iline ifetch (idx_t, bool);
+struct iline ifetch (idx_t) ATTRIBUTE_PURE;
 bool get_input_file (char *, char const *, mode_t);
 void re_input (void);
 void scan_input (char *, mode_t);

@@ -23,15 +23,15 @@
 #include <util.h>
 
 static idx_t count_context_lines (void);
-static bool context_matches_file (idx_t, lin);
-static void compute_changes (idx_t, idx_t, lin, lin, char *, char *);
+static bool context_matches_file (idx_t, idx_t);
+static void compute_changes (idx_t, idx_t, idx_t, idx_t, char *, char *);
 
-#define OFFSET lin
+#define OFFSET ptrdiff_t
 #define EQUAL_IDX(x, y) (context_matches_file (x, y))
 #include "bestmatch.h"
 
 #define XVECREF_YVECREF_EQUAL(ctxt, x, y) (context_matches_file (x, y))
-#define OFFSET lin
+#define OFFSET ptrdiff_t
 #define EXTRA_CONTEXT_FIELDS \
 	char *xchar; \
 	char *ychar;
@@ -40,19 +40,18 @@ static void compute_changes (idx_t, idx_t, lin, lin, char *, char *);
 #define USE_HEURISTIC 1
 #include "diffseq.h"
 
-static lin
+static idx_t
 locate_merge (idx_t *matched)
 {
-    lin first_guess = pch_first () + in_offset;
+    idx_t first_guess = pch_first () + in_offset;
     idx_t pat_lines = pch_ptrn_lines ();
     idx_t context_lines = count_context_lines ();
-    lin max_where = input_lines - pat_lines + context_lines + 1;
-    lin min_where = last_frozen_line + 1;
-    lin max_pos_offset = max_where - first_guess;
-    lin max_neg_offset = first_guess - min_where;
-    lin max_offset = (max_pos_offset < max_neg_offset
-		      ? max_neg_offset : max_pos_offset);
-    lin where = first_guess;
+    idx_t max_where = input_lines - pat_lines + context_lines + 1;
+    idx_t min_where = last_frozen_line + 1;
+    ptrdiff_t max_pos_offset = max_where - first_guess;
+    ptrdiff_t max_neg_offset = first_guess - min_where;
+    ptrdiff_t max_offset = MAX (max_pos_offset, max_neg_offset);
+    idx_t where = first_guess;
     idx_t max_matched = 0;
     bool match_until_eof;
 
@@ -94,9 +93,7 @@ locate_merge (idx_t *matched)
       {
 	if (offset <= max_pos_offset)
 	  {
-	    lin guess = first_guess + offset;
-	    lin last;
-	    lin changes;
+	    idx_t guess = first_guess + offset, last, changes;
 
 	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
 				 match_until_eof ? input_lines - guess + 1 : min,
@@ -113,9 +110,7 @@ locate_merge (idx_t *matched)
 	  }
 	if (0 < offset && offset <= max_neg_offset)
 	  {
-	    lin guess = first_guess - offset;
-	    lin last;
-	    lin changes;
+	    idx_t guess = first_guess - offset, last, changes;
 
 	    changes = bestmatch (1, pat_lines + 1, guess, input_lines + 1,
 				 match_until_eof ? input_lines - guess + 1 : min,
@@ -150,7 +145,7 @@ locate_merge (idx_t *matched)
 }
 
 static void
-print_linerange (lin from, lin to)
+print_linerange (idx_t from, idx_t to)
 {
   char numbuf0[LINENUM_LENGTH_BOUND + 1];
   char numbuf1[LINENUM_LENGTH_BOUND + 1];
@@ -164,7 +159,7 @@ print_linerange (lin from, lin to)
 
 static void
 merge_result (bool *first_result, intmax_t hunk, char const *what,
-	      lin from, lin to)
+	      idx_t from, idx_t to)
 {
   static char const *last_what;
 
@@ -194,7 +189,7 @@ merge_result (bool *first_result, intmax_t hunk, char const *what,
 
 bool
 merge_hunk (intmax_t hunk, struct outstate *outstate,
-	    lin where, bool *somefailed)
+	    idx_t where, bool *somefailed)
 {
   bool applies_cleanly;
   bool first_result = true;
@@ -204,7 +199,7 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
   idx_t firstold = pch_ptrn_lines ();
   idx_t new = firstold + 1;
   char *oldin;
-  lin lastwhere;
+  idx_t lastwhere;
 
   /* Convert '!' markers into '-' and '+' to simplify things here.  */
   pch_normalize (UNI_DIFF);
@@ -260,7 +255,7 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 		     format_linenum (numbuf1, matched));
 	  else if (n >= in && n < in + matched)
 	    {
-	      struct iline line = ifetch (where + n - in, false);
+	      struct iline line = ifetch (where + n - in);
 	      Fputs (" |", stderr);
 	      Fwrite (line.ptr, 1, line.size, stderr);
 	    }
@@ -523,9 +518,9 @@ count_context_lines (void)
 }
 
 static bool
-context_matches_file (idx_t old, lin where)
+context_matches_file (idx_t old, idx_t where)
 {
-  struct iline line = ifetch (where, false);
+  struct iline line = ifetch (where);
   return line.size &&
 	 (canonicalize_ws ?
 	  similar (pfetch (old), pch_line_len (old), line.ptr, line.size) :
@@ -534,7 +529,7 @@ context_matches_file (idx_t old, lin where)
 }
 
 static void
-compute_changes (idx_t xmin, idx_t xmax, lin ymin, lin ymax,
+compute_changes (idx_t xmin, idx_t xmax, idx_t ymin, idx_t ymax,
 		 char *xchar, char *ychar)
 {
   struct context ctxt;
