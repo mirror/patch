@@ -1561,25 +1561,27 @@ fetchname (char const *at, intmax_t strip_leading, char **pname,
 	      return;
 	    }
 
-	  if (set_time | set_utc)
-	    parse_datetime (&stamp, t, &initial_time);
-	  else
-	    {
-	      /* The head says the file is nonexistent if the
-		 timestamp is the epoch; but the listed time is
-		 local time, not UTC, and POSIX.1 allows local
-		 time offset anywhere in the range -25:00 <
-		 offset < +26:00.  Match any time in that range.  */
-	      static struct timespec const lower = { .tv_sec = -25 * 60 * 60 },
-					   upper = { .tv_sec =  26 * 60 * 60 };
-	      if (parse_datetime (&stamp, t, &initial_time)
-		  && ! (TYPE_SIGNED (time_t)
-			&& timespec_cmp (stamp, lower) <= 0)
-		  && timespec_cmp (stamp, upper) < 0) {
-		      stamp.tv_sec = 0;
-		      stamp.tv_nsec = 0;
-	      }
-	    }
+	  /* The head says a file is nonexistent if its timestamp is the epoch;
+	     but when the listed time is local time not UTC, POSIX.1
+	     allows local time offset anywhere in the range
+	     -25:00 < offset < +26:00, so match any time in that range.
+	     The algorithm below can match a time when it is close to
+	     but not at the epoch if the time string has a timezone
+	     indication, but this bug would be a pain to fix and the
+	     situation is so rare that it is perhaps not worth fixing.  */
+
+	  if ((parse_datetime (&stamp, t, &initial_time)
+	       & ! (set_time | set_utc))
+	      && (!TYPE_SIGNED (time_t)
+		  || (timespec_cmp (((struct timespec)
+				     { .tv_sec = -25 * 60 * 60 }),
+				    stamp)
+		      < 0))
+	      && (timespec_cmp (stamp,
+				((struct timespec)
+				 { .tv_sec = 26 * 60 * 60 }))
+		  < 0))
+	    stamp = (struct timespec) {0};
 	}
 
     free (*pname);
