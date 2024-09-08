@@ -23,7 +23,6 @@
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
-#include <xmemdup0.h>
 #include <pch.h>
 #if HAVE_SETMODE_DOS
 # include <io.h>
@@ -302,7 +301,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	t = patchbuf + strlen (patchbuf);
 	if (t > patchbuf + 1 && *(t - 1) == '\n')
 	  {
-	    inname = xmemdup0 (patchbuf, t - patchbuf - 1);
+	    inname = ximemdup0 (patchbuf, t - patchbuf - 1);
 	    inerrno = stat_file (inname, &instat);
 	    if (inerrno)
 	      {
@@ -393,7 +392,7 @@ fetchmode (char const *str)
 static char *
 get_sha1 (char const *start, char const *end)
 {
-  return xmemdup0 (start, end - start);
+  return ximemdup0 (start, end - start);
 }
 
 static char ATTRIBUTE_PURE

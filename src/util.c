@@ -26,7 +26,6 @@
 #include <util.h>
 #include <utimens.h>
 #include <xalloc.h>
-#include <xmemdup0.h>
 
 #include <parse-datetime.h>
 #include "ignore-value.h"
@@ -1555,7 +1554,7 @@ fetchname (char const *at, intmax_t strip_leading, char **pname,
 		break;
 	      }
 	  }
-	name = xmemdup0 (at, t - at);
+	name = ximemdup0 (at, t - at);
       }
 
     /* If the name is "/dev/null", ignore the name and mark the file
@@ -1587,7 +1586,7 @@ fetchname (char const *at, intmax_t strip_leading, char **pname,
 	  u--;
 	if (u != t && *(u-1) == '\r')
 	  u--;
-	timestr = xmemdup0 (t, u - t);
+	timestr = ximemdup0 (t, u - t);
       }
 
       if (*t != '\n')
@@ -1650,7 +1649,7 @@ parse_name (char const *s, intmax_t strip_leading, char const **endp)
 
       for (t = s; *t && !c_isspace (*t); t++)
 	/* do nothing*/ ;
-      ret = xmemdup0 (s, t - s);
+      ret = ximemdup0 (s, t - s);
       if (endp)
 	*endp = t;
     }
