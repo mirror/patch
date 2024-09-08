@@ -70,13 +70,7 @@ locate_merge (idx_t *matched)
     idx_t min = pat_lines - context_lines;
 
     if (debug & 1)
-      {
-	char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	char numbuf1[LINENUM_LENGTH_BOUND + 1];
-	say ("locating merge: min=%s max=%s ",
-	     format_linenum (numbuf0, min),
-	     format_linenum (numbuf1, max));
-      }
+      say ("locating merge: min=%td max=%td ", min, max);
 
     /* Hunks from the start or end of the file have less context. Anchor them
        to the start or end, trying to make up for this disadvantage.  */
@@ -127,15 +121,7 @@ locate_merge (idx_t *matched)
 	  }
       }
     if (debug & 1)
-      {
-	char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	char numbuf1[LINENUM_LENGTH_BOUND + 1];
-	char numbuf2[LINENUM_LENGTH_BOUND + 1];
-	say ("where=%s matched=%s changes=%s\n",
-	     format_linenum (numbuf0, where),
-	     format_linenum (numbuf1, max_matched),
-	     format_linenum (numbuf2, max + 1));
-      }
+      say ("where=%td matched=%td changes=%td\n", where, max_matched, max + 1);
 
   out:
     *matched = max_matched;
@@ -147,14 +133,10 @@ locate_merge (idx_t *matched)
 static void
 print_linerange (idx_t from, idx_t to)
 {
-  char numbuf0[LINENUM_LENGTH_BOUND + 1];
-  char numbuf1[LINENUM_LENGTH_BOUND + 1];
-  char *n0 = format_linenum (numbuf0, from);
-
   if (to <= from)
-    Fprintf (stdout, "%s", n0);
+    Fprintf (stdout, "%td", from);
   else
-    Fprintf (stdout, "%s-%s", n0, format_linenum (numbuf1, to));
+    Fprintf (stdout, "%td-%td", from, to);
 }
 
 static void
@@ -231,28 +213,19 @@ merge_hunk (intmax_t hunk, struct outstate *outstate,
 
   if (debug & 2)
     {
-      char numbuf0[LINENUM_LENGTH_BOUND + 1];
-      char numbuf1[LINENUM_LENGTH_BOUND + 1];
-
       Fputc ('\n', stderr);
       for (idx_t n = 0; n <= in + matched; n++)
 	{
-	  Fprintf (stderr, "%s %c",
-		  format_linenum (numbuf0, n),
-		  oldin[n]);
+	  Fprintf (stderr, "%td %c", n, oldin[n]);
 	  if (n == 0)
-	    Fprintf (stderr, " %s,%s\n",
-		     format_linenum (numbuf0, pch_first()),
-		     format_linenum (numbuf1, pch_ptrn_lines()));
+	    Fprintf (stderr, " %td,%td\n", pch_first (), pch_ptrn_lines ());
 	  else if (n <= firstold)
 	    {
 	      Fputs (" |", stderr);
 	      Fwrite (pfetch (n), 1, pch_line_len (n), stderr);
 	    }
 	  else if (n == in - 1)
-	    Fprintf (stderr, " %s,%s\n",
-		     format_linenum (numbuf0, where),
-		     format_linenum (numbuf1, matched));
+	    Fprintf (stderr, " %td,%td\n", where, matched);
 	  else if (n >= in && n < in + matched)
 	    {
 	      struct iline line = ifetch (where + n - in);

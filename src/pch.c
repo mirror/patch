@@ -254,9 +254,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	  say ("(Stripping trailing CRs from patch; use --binary to disable.)\n");
 	if (! inname)
 	  {
-	    char numbuf[LINENUM_LENGTH_BOUND + 1];
-	    say ("can't find file to patch at input line %s\n",
-		 format_linenum (numbuf, p_sline));
+	    say ("can't find file to patch at input line %td\n", p_sline);
 	    if (diff_type != ED_DIFF && diff_type != NORMAL_DIFF)
 	      say (strippath < 0
 		   ? "Perhaps you should have used the -p or --strip option?\n"
@@ -352,9 +350,8 @@ fetchmode (char const *str)
      {
        /* This can happen only on perverse platforms where, e.g.,
 	  S_IFREG == 0.  */
-       char numbuf[LINENUM_LENGTH_BOUND + 1];
-       fatal ("mode %.6s treated as missing at line %s: %s",
-	      str, format_linenum (numbuf, p_input_line), patchbuf);
+       fatal ("mode %.6s treated as missing at line %td: %s",
+	      str, p_input_line, patchbuf);
      }
 
     /* NOTE: The "diff --git" format always sets the file mode permission
@@ -595,11 +592,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		  for (u = t + 1; c_isspace (*u); u++)
 		    /* do nothing */ ;
 		  if (*u)
-		    {
-		      char numbuf[LINENUM_LENGTH_BOUND + 1];
-		      say ("Prereq: with multiple words at line %s of patch\n",
-			   format_linenum (numbuf, p_sline));
-		    }
+		    say ("Prereq: with multiple words at line %td of patch\n",
+			 p_sline);
 		  break;
 		}
 	    if (t == revision)
@@ -774,11 +768,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    if (! ((p_name[OLD] || ! p_timestamp[OLD].tv_sec)
 		   && (p_name[NEW] || ! p_timestamp[NEW].tv_sec))
 		&& ! p_name[INDEX] && need_header)
-	      {
-		char numbuf[LINENUM_LENGTH_BOUND + 1];
-		say ("missing header for unified diff at line %s of patch\n",
-		     format_linenum (numbuf, p_sline));
-	      }
+	      say ("missing header for unified diff at line %td of patch\n",
+		   p_sline);
 	    goto scan_exit;
 	}
 	stars_this_line = strnEQ(s, "********", 8);
@@ -818,11 +809,8 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 	    if (! ((p_name[OLD] || ! p_timestamp[OLD].tv_sec)
 		   && (p_name[NEW] || ! p_timestamp[NEW].tv_sec))
 		&& ! p_name[INDEX] && need_header)
-	      {
-		char numbuf[LINENUM_LENGTH_BOUND + 1];
-		say ("missing header for context diff at line %s of patch\n",
-		     format_linenum (numbuf, p_sline));
-	      }
+	      say ("missing header for context diff at line %td of patch\n",
+		   p_sline);
 	    goto scan_exit;
 	}
 	if ((diff_type == NO_DIFF || diff_type == NORMAL_DIFF) &&
@@ -1147,9 +1135,7 @@ skip_to (file_offset file_pos, idx_t file_line)
 static void
 malformed (void)
 {
-    char numbuf[LINENUM_LENGTH_BOUND + 1];
-    fatal ("malformed patch at line %s: %s",
-	   format_linenum (numbuf, p_input_line), patchbuf);
+  fatal ("malformed patch at line %td: %s", p_input_line, patchbuf);
 		/* about as informative as "Syntax error" in C */
 }
 
@@ -1162,7 +1148,6 @@ scan_linenum (char *string, idx_t *linenum)
   char *s0, *s;
   idx_t n = 0;
   bool overflow = false;
-  char numbuf[LINENUM_LENGTH_BOUND + 1];
 
   for (s0 = string; c_isblank (*s0); s0++)
     continue;
@@ -1174,15 +1159,13 @@ scan_linenum (char *string, idx_t *linenum)
     }
 
   if (s == s0)
-    fatal ("missing line number at line %s: %s",
-	   format_linenum (numbuf, p_input_line), patchbuf);
+    fatal ("missing line number at line %td: %s", p_input_line, patchbuf);
 
   if (overflow)
     {
       int s0len = ckd_add (&s0len, s - s0, 0) ? -1 : s0len;
-      fatal ("line number %.*s is too large at line %s: %s",
-	     s0len, s0, format_linenum (numbuf, p_input_line),
-	     patchbuf);
+      fatal ("line number %.*s is too large at line %td: %s",
+	     s0len, s0, p_input_line, patchbuf);
     }
 
   *linenum = n;
@@ -1201,10 +1184,6 @@ another_hunk (enum diff difftype, bool rev)
 {
     char *s;
     idx_t context = 0;
-    char numbuf0[LINENUM_LENGTH_BOUND + 1];
-    char numbuf1[LINENUM_LENGTH_BOUND + 1];
-    char numbuf2[LINENUM_LENGTH_BOUND + 1];
-    char numbuf3[LINENUM_LENGTH_BOUND + 1];
 
     set_hunkmax();
 
@@ -1285,9 +1264,9 @@ another_hunk (enum diff difftype, bool rev)
 	    }
 	    p_end++;
 	    if (p_end == hunkmax)
-	      fatal ("unterminated hunk starting at line %s; giving up at line %s: %s",
-		     format_linenum (numbuf0, pch_hunk_beg ()),
-		     format_linenum (numbuf1, p_input_line), patchbuf);
+	      fatal (("unterminated hunk starting at line %td;"
+		      " giving up at line %td: %s"),
+		     pch_hunk_beg (), p_input_line, patchbuf);
 	    assert(p_end < hunkmax);
 	    p_Char[p_end] = *patchbuf;
 	    p_len[p_end] = 0;
@@ -1300,16 +1279,16 @@ another_hunk (enum diff difftype, bool rev)
 			goto hunk_done;
 		    }
 		    else
-		      fatal ("unexpected end of hunk at line %s",
-			     format_linenum (numbuf0, p_input_line));
+		      fatal ("unexpected end of hunk at line %td",
+			     p_input_line);
 		}
 		if (p_end != 0) {
 		    if (repl_beginning && repl_could_be_missing) {
 			repl_missing = true;
 			goto hunk_done;
 		    }
-		    fatal ("unexpected '***' at line %s: %s",
-			   format_linenum (numbuf0, p_input_line), patchbuf);
+		    fatal ("unexpected '***' at line %td: %s",
+			   p_input_line, patchbuf);
 		}
 		context = 0;
 		p_len[p_end] = strlen (patchbuf);
@@ -1363,17 +1342,16 @@ another_hunk (enum diff difftype, bool rev)
 			fillcnt = p_ptrn_lines;
 		      }
 		    else if (! repl_beginning)
-		      fatal ("%s '---' at line %s; check line numbers at line %s",
+		      fatal (("%s '---' at line %td;"
+			      " check line numbers at line %td"),
 			     (p_end <= p_ptrn_lines
 			      ? "Premature"
 			      : "Overdue"),
-			     format_linenum (numbuf0, p_input_line),
-			     format_linenum (numbuf1, p_hunk_beg));
+			     p_input_line, p_hunk_beg);
 		    else if (! repl_could_be_missing)
-		      fatal ("duplicate '---' at line %s; check line numbers at line %s",
-			     format_linenum (numbuf0, p_input_line),
-			     format_linenum (numbuf1,
-					     p_hunk_beg + repl_beginning));
+		      fatal (("duplicate '---' at line %td;"
+			      " check line numbers at line %td"),
+			     p_input_line, p_hunk_beg + repl_beginning);
 		    else
 		      {
 			repl_missing = true;
@@ -1518,8 +1496,7 @@ another_hunk (enum diff difftype, bool rev)
 
     hunk_done:
 	if (p_end >=0 && !repl_beginning)
-	  fatal ("no '---' found in patch at line %s",
-		 format_linenum (numbuf0, pch_hunk_beg ()));
+	  fatal ("no '---' found in patch at line %td", pch_hunk_beg ());
 
 	if (repl_missing) {
 
@@ -1538,8 +1515,7 @@ another_hunk (enum diff difftype, bool rev)
 	    p_end = p_max;
 	}
 	else if (! ptrn_missing && ptrn_copiable != repl_copiable)
-	  fatal ("context mangled in hunk at line %s",
-		 format_linenum (numbuf0, p_hunk_beg));
+	  fatal ("context mangled in hunk at line %td", p_hunk_beg);
 	else if (!some_context && fillcnt == 1) {
 	    /* the first hunk was a null hunk with no context */
 	    /* and we were expecting one line -- fix it up. */
@@ -1566,8 +1542,8 @@ another_hunk (enum diff difftype, bool rev)
 			     && ptrn_suffix_context < context)
 			    ? ptrn_suffix_context : context);
 	if (p_prefix_context < 0 || p_suffix_context < 0)
-	    fatal ("replacement text or line numbers mangled in hunk at line %s",
-		   format_linenum (numbuf0, p_hunk_beg));
+	  fatal ("replacement text or line numbers mangled in hunk at line %td",
+		 p_hunk_beg);
 
 	if (difftype == CONTEXT_DIFF
 	    && (fillcnt
@@ -1590,10 +1566,9 @@ another_hunk (enum diff difftype, bool rev)
 		       && p_Char[fillsrc] != ' ')
 		    fillsrc++;
 		if (p_end < fillsrc || fillsrc == repl_beginning)
-		  {
-		    fatal ("replacement text or line numbers mangled in hunk at line %s",
-			   format_linenum (numbuf0, p_hunk_beg));
-		  }
+		  fatal (("replacement text or line numbers mangled"
+			  " in hunk at line %td"),
+			 p_hunk_beg);
 		p_line[filldst] = p_line[fillsrc];
 		p_Char[filldst] = p_Char[fillsrc];
 		p_len[filldst] = p_len[fillsrc];
@@ -1602,16 +1577,14 @@ another_hunk (enum diff difftype, bool rev)
 	    while (fillsrc <= p_end && fillsrc != repl_beginning)
 	      {
 		if (p_Char[fillsrc] == ' ')
-		  fatal ("replacement text or line numbers mangled in hunk at line %s",
-			 format_linenum (numbuf0, p_hunk_beg));
+		  fatal (("replacement text or line numbers mangled"
+			  " in hunk at line %td"),
+			 p_hunk_beg);
 		fillsrc++;
 	      }
 	    if (debug & 64)
-	      Fprintf (stdout, "fillsrc %s, filldst %s, rb %s, e+1 %s\n",
-		       format_linenum (numbuf0, fillsrc),
-		       format_linenum (numbuf1, filldst),
-		       format_linenum (numbuf2, repl_beginning),
-		       format_linenum (numbuf3, p_end + 1));
+	      Fprintf (stdout, "fillsrc %td, filldst %td, rb %td, e+1 %td\n",
+		       fillsrc, filldst, repl_beginning, p_end + 1);
 	    assert(fillsrc==p_end+1 || fillsrc==repl_beginning);
 	    assert(filldst==p_end+1 || filldst==repl_beginning);
 	}
@@ -1674,16 +1647,12 @@ another_hunk (enum diff difftype, bool rev)
 	fillsrc = 1;
 	filldst = fillsrc + p_ptrn_lines;
 	p_end = filldst + p_repl_lines;
-	sprintf (patchbuf, "*** %s,%s ****\n",
-		 format_linenum (numbuf0, p_first),
-		 format_linenum (numbuf1, p_first + p_ptrn_lines - 1));
-	p_len[0] = strlen (patchbuf);
+	p_len[0] = sprintf (patchbuf, "*** %td,%td ****\n",
+			    p_first, p_first + p_ptrn_lines - 1);
 	p_line[0] = xmemdup (patchbuf, p_len[0] + 1);
 	p_Char[0] = '*';
-	sprintf (patchbuf, "--- %s,%s ----\n",
-		 format_linenum (numbuf0, p_newfirst),
-		 format_linenum (numbuf1, p_newfirst + p_repl_lines - 1));
-	p_len[filldst] = strlen (patchbuf);
+	p_len[filldst] = sprintf (patchbuf, "--- %td,%td ----\n",
+				  p_newfirst, p_newfirst + p_repl_lines - 1);
 	p_line[filldst] = xmemdup (patchbuf, p_len[filldst] + 1);
 	p_Char[filldst++] = '=';
 	p_prefix_context = -1;
@@ -1811,10 +1780,8 @@ another_hunk (enum diff difftype, bool rev)
 	p_end = p_ptrn_lines + p_repl_lines + 1;
 	while (p_end + 1 >= hunkmax)
 	  grow_hunkmax ();
-	sprintf (patchbuf, "*** %s,%s\n",
-		 format_linenum (numbuf0, p_first),
-		 format_linenum (numbuf1, p_first + p_ptrn_lines - 1));
-	p_len[0] = strlen (patchbuf);
+	p_len[0] = sprintf (patchbuf, "*** %td,%td\n",
+			    p_first, p_first + p_ptrn_lines - 1);
 	p_line[0] = xmemdup (patchbuf, p_len[0] + 1);
 	p_Char[0] = '*';
 
@@ -1822,11 +1789,12 @@ another_hunk (enum diff difftype, bool rev)
 	for (i=1; i<=p_ptrn_lines; i++) {
 	    chars_read = get_line ();
 	    if (!chars_read)
-	      fatal ("unexpected end of file in patch at line %s",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal ("unexpected end of file in patch at line %td",
+		     p_input_line);
 	    if (! (patchbuf[0] == '<' && c_isblank (patchbuf[1])))
-	      fatal ("'<' followed by space or tab expected at line %s of patch",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal (("'<' followed by space or tab expected"
+		      " at line %td of patch"),
+		     p_input_line);
 	    chars_read -= 2 + (i == p_ptrn_lines && incomplete_line ());
 	    p_len[i] = chars_read;
 	    p_line[i] = savebuf (patchbuf + 2, chars_read);
@@ -1835,26 +1803,23 @@ another_hunk (enum diff difftype, bool rev)
 	if (hunk_type == 'c') {
 	    chars_read = get_line ();
 	    if (! chars_read)
-	      fatal ("unexpected end of file in patch at line %s",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal ("unexpected end of file in patch at line %td",
+		     p_input_line);
 	    if (*patchbuf != '-')
-	      fatal ("'---' expected at line %s of patch",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal ("'---' expected at line %td of patch", p_input_line);
 	}
-	sprintf (patchbuf, "--- %s,%s\n",
-		 format_linenum (numbuf0, min),
-		 format_linenum (numbuf1, max));
-	p_len[i] = strlen (patchbuf);
+	p_len[i] = sprintf (patchbuf, "--- %td,%td\n", min, max);
 	p_line[i] = xmemdup (patchbuf, p_len[i] + 1);
 	p_Char[i] = '=';
 	for (i++; i<=p_end; i++) {
 	    chars_read = get_line ();
 	    if (!chars_read)
-	      fatal ("unexpected end of file in patch at line %s",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal ("unexpected end of file in patch at line %td",
+		     p_input_line);
 	    if (! (patchbuf[0] == '>' && c_isblank (patchbuf[1])))
-	      fatal ("'>' followed by space or tab expected at line %s of patch",
-		     format_linenum (numbuf0, p_input_line));
+	      fatal (("'>' followed by space or tab expected"
+		      " at line %td of patch"),
+		     p_input_line);
 	    chars_read -= 2 + (i == p_end && incomplete_line ());
 	    p_len[i] = chars_read;
 	    p_line[i] = savebuf (patchbuf + 2, chars_read);
@@ -1867,22 +1832,16 @@ another_hunk (enum diff difftype, bool rev)
     p_Char[p_end + 1] = '^';  /* add a stopper for apply_hunk */
     if (debug & 2) {
 	for (idx_t i = 0; i <= p_end + 1; i++) {
-	    Fputs (format_linenum (numbuf0, i), stderr);
 	    if (p_Char[i] == '\n')
 	      {
-	        Fputc ('\n', stderr);
+		Fprintf (stderr, "%td\n", i);
 		continue;
 	      }
-	    Fprintf (stderr, " %c",
-		     p_Char[i]);
+	    Fprintf (stderr, "%td %c", i, p_Char[i]);
 	    if (p_Char[i] == '*')
-	      Fprintf (stderr, " %s,%s\n",
-		       format_linenum (numbuf0, p_first),
-		       format_linenum (numbuf1, p_ptrn_lines));
+	      Fprintf (stderr, " %td,%td\n", p_first, p_ptrn_lines);
 	    else if (p_Char[i] == '=')
-	      Fprintf (stderr, " %s,%s\n",
-		       format_linenum (numbuf0, p_newfirst),
-		       format_linenum (numbuf1, p_repl_lines));
+	      Fprintf (stderr, " %td,%td\n", p_newfirst, p_repl_lines);
 	    else if (p_Char[i] != '^')
 	      {
 		Fputs (" |", stderr);

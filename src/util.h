@@ -20,10 +20,6 @@
 #include <stat-time.h>
 #include <backupfile.h>
 
-/* An upper bound on the print length of a signed decimal line number
-   or line number offset.  */
-enum { LINENUM_LENGTH_BOUND = INT_STRLEN_BOUND (ptrdiff_t) };
-
 enum file_id_type { UNKNOWN, CREATED, DELETE_LATER, OVERWRITTEN };
 
 enum file_attributes {
@@ -66,7 +62,6 @@ char const *version_controller (char const *, bool, struct stat const *, char **
 bool version_get (char *, char const *, bool, bool, char const *, struct stat *);
 int create_file (struct outfile *, int, mode_t, bool);
 int systemic (char const *);
-char *format_linenum (char[LINENUM_LENGTH_BOUND + 1], ptrdiff_t);
 void Fclose (FILE *);
 void Fflush (FILE *);
 void Fprintf (FILE *, char const *, ...) ATTRIBUTE_FORMAT ((printf, 2, 3));

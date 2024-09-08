@@ -967,30 +967,6 @@ savebuf (char const *s, idx_t size)
   return size ? xmemdup (s, size) : nullptr;
 }
 
-char *
-format_linenum (char numbuf[LINENUM_LENGTH_BOUND + 1], ptrdiff_t n)
-{
-  char *p = numbuf + LINENUM_LENGTH_BOUND;
-  *p = '\0';
-
-  if (n < 0)
-    {
-      do
-	*--p = '0' - n % 10;
-      while ((n /= 10) != 0);
-
-      *--p = '-';
-    }
-  else
-    {
-      do
-	*--p = '0' + n % 10;
-      while ((n /= 10) != 0);
-    }
-
-  return p;
-}
-
 /* Terminal output, pun intended. */
 
 void

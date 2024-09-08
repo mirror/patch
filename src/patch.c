@@ -156,7 +156,6 @@ main (int argc, char **argv)
     bool somefailed = false;
     struct outstate outstate;
     struct stat tmpoutst;
-    char numbuf[LINENUM_LENGTH_BOUND + 1];
     bool skip_reject_file = false;
     bool apply_empty_patch = false;
     mode_t file_type;
@@ -497,9 +496,9 @@ main (int argc, char **argv)
 		failed++;
 		if (verbosity == VERBOSE ||
 		    (! skip_rest_of_patch && verbosity != SILENT))
-		  say ("Hunk #%jd %s at %s%s.\n", hunk,
+		  say ("Hunk #%jd %s at %td%s.\n", hunk,
 		       skip_rest_of_patch ? "ignored" : "FAILED",
-		       format_linenum (numbuf, newwhere),
+		       newwhere,
 		       ! skip_rest_of_patch && check_line_endings (newwhere)
 			 ?  " (different line endings)" : "");
 	      }
@@ -507,13 +506,11 @@ main (int argc, char **argv)
 		     (verbosity == VERBOSE
 		      || (verbosity != SILENT && (fuzz || in_offset))))
 	      {
-		say ("Hunk #%jd succeeded at %s", hunk,
-		     format_linenum (numbuf, newwhere));
+		say ("Hunk #%jd succeeded at %td", hunk, newwhere);
 		if (fuzz)
-		  say (" with fuzz %s", format_linenum (numbuf, fuzz));
+		  say (" with fuzz %td", fuzz);
 		if (in_offset)
-		  say (" (offset %s line%s)",
-		       format_linenum (numbuf, in_offset),
+		  say (" (offset %td line%s)", in_offset,
 		       &"s"[in_offset == 1]);
 		say (".\n");
 	      }
@@ -1228,23 +1225,19 @@ locate_hunk (idx_t fuzz)
 	       : max_neg_offset < 0 ? first_guess - min_where
 	       : 0;
     for (ptrdiff_t offset = min_offset; offset <= max_offset; offset++) {
-	char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	char numbuf1[LINENUM_LENGTH_BOUND + 1];
 	if (offset <= max_pos_offset
 	    && patch_match (first_guess, offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
-	      say ("Offset changing from %s to %s\n",
-		   format_linenum (numbuf0, in_offset),
-		   format_linenum (numbuf1, in_offset + offset));
+	      say ("Offset changing from %td to %td\n",
+		   in_offset, in_offset + offset);
 	    in_offset += offset;
 	    return first_guess+offset;
 	}
 	if (offset <= max_neg_offset
 	    && patch_match (first_guess, -offset, prefix_fuzz, suffix_fuzz)) {
 	    if (debug & 1)
-	      say ("Offset changing from %s to %s\n",
-		   format_linenum (numbuf0, in_offset),
-		   format_linenum (numbuf1, in_offset - offset));
+	      say ("Offset changing from %td to %td\n",
+		   in_offset, in_offset - offset);
 	    in_offset -= offset;
 	    return first_guess-offset;
 	}
@@ -1255,15 +1248,12 @@ locate_hunk (idx_t fuzz)
 static void
 mangled_patch (idx_t old, idx_t new)
 {
-  char numbuf0[LINENUM_LENGTH_BOUND + 1];
-  char numbuf1[LINENUM_LENGTH_BOUND + 1];
   if (debug & 1)
     say ("oldchar = '%c', newchar = '%c'\n",
         pch_char (old), pch_char (new));
-  fatal ("Out-of-sync patch, lines %s,%s -- mangled text or line numbers, "
-        "maybe?",
-        format_linenum (numbuf0, pch_hunk_beg () + old),
-        format_linenum (numbuf1, pch_hunk_beg () + new));
+  fatal (("Out-of-sync patch, lines %td,%td"
+	  " -- mangled text or line numbers, maybe?"),
+	 pch_hunk_beg () + old, pch_hunk_beg () + new);
 }
 
 /* Output a line number range in unified format.  */
@@ -1271,23 +1261,18 @@ mangled_patch (idx_t old, idx_t new)
 static void
 print_unidiff_range (FILE *fp, idx_t start, idx_t count)
 {
-  char numbuf0[LINENUM_LENGTH_BOUND + 1];
-  char numbuf1[LINENUM_LENGTH_BOUND + 1];
-
   switch (count)
     {
     case 0:
-      Fprintf (fp, "%s,0", format_linenum (numbuf0, start - 1));
+      Fprintf (fp, "%td,0", start - 1);
       break;
 
     case 1:
-      Fprintf (fp, "%s", format_linenum (numbuf0, start));
+      Fprintf (fp, "%td", start);
       break;
 
     default:
-      Fprintf (fp, "%s,%s",
-	       format_linenum (numbuf0, start),
-	       format_linenum (numbuf1, count));
+      Fprintf (fp, "%td,%td", start, count);
       break;
     }
 }
@@ -1385,30 +1370,22 @@ abort_hunk_context (bool header, bool reverse)
     putline (rejfp, "***************", c_function, nullptr);
 
     for (idx_t i = 0; i <= pat_end; i++) {
-	char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	char numbuf1[LINENUM_LENGTH_BOUND + 1];
 	switch (pch_char(i)) {
 	case '*':
 	    if (oldlast < oldfirst)
 		Fprintf (rejfp, "*** 0%s\n", stars);
 	    else if (oldlast == oldfirst)
-		Fprintf (rejfp, "*** %s%s\n",
-			 format_linenum (numbuf0, oldfirst), stars);
+		Fprintf (rejfp, "*** %td%s\n", oldfirst, stars);
 	    else
-		Fprintf (rejfp, "*** %s,%s%s\n",
-			 format_linenum (numbuf0, oldfirst),
-			 format_linenum (numbuf1, oldlast), stars);
+		Fprintf (rejfp, "*** %td,%td%s\n", oldfirst, oldlast, stars);
 	    break;
 	case '=':
 	    if (newlast < newfirst)
 		Fprintf (rejfp, "--- 0%s\n", minuses);
 	    else if (newlast == newfirst)
-		Fprintf (rejfp, "--- %s%s\n",
-			 format_linenum (numbuf0, newfirst), minuses);
+		Fprintf (rejfp, "--- %td%s\n", newfirst, minuses);
 	    else
-		Fprintf (rejfp, "--- %s,%s%s\n",
-			 format_linenum (numbuf0, newfirst),
-			 format_linenum (numbuf1, newlast), minuses);
+		Fprintf (rejfp, "--- %td,%td%s\n", newfirst, newlast, minuses);
 	    break;
 	case ' ': case '-': case '+': case '!':
 	    Fprintf (rejfp, "%c ", pch_char (i));
@@ -1690,13 +1667,7 @@ static bool
 spew_output (struct outstate *outstate, struct stat *st)
 {
     if (debug & 256)
-      {
-	char numbuf0[LINENUM_LENGTH_BOUND + 1];
-	char numbuf1[LINENUM_LENGTH_BOUND + 1];
-	say ("il=%s lfl=%s\n",
-	     format_linenum (numbuf0, input_lines),
-	     format_linenum (numbuf1, last_frozen_line));
-      }
+      say ("il=%td lfl=%td\n", input_lines, last_frozen_line);
 
     if (last_frozen_line < input_lines)
       if (! copy_till (outstate, input_lines))
