@@ -598,7 +598,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 		    {
 		      char numbuf[LINENUM_LENGTH_BOUND + 1];
 		      say ("Prereq: with multiple words at line %s of patch\n",
-			   format_linenum (numbuf, this_line));
+			   format_linenum (numbuf, p_sline));
 		    }
 		  break;
 		}
