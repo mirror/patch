@@ -317,7 +317,10 @@ static struct symlink *read_symlink(int dirfd, const char *name)
       errno = saved_errno;
       return nullptr;
     }
-  symlink = xmalloc (sizeof (*symlink) + st.st_size + 1);
+  idx_t symlinksize;
+  if (ckd_add (&symlinksize, st.st_size, 1 + sizeof *symlink))
+    xalloc_die ();
+  symlink = ximalloc (symlinksize);
   buffer = (char *)(symlink + 1);
   ret = readlinkat (dirfd, name, buffer, st.st_size);
   if (ret <= 0)
