@@ -762,13 +762,8 @@ safe_readlink (char *pathname, char *buf, size_t bufsiz)
 int
 safe_access (char *pathname, int mode)
 {
-  int dirfd;
-
-  if (unsafe)
-    return access (pathname, mode);
-
-  dirfd = traverse_path (&pathname);
+  int dirfd = unsafe ? AT_FDCWD : traverse_path (&pathname);
   if (dirfd == DIRFD_INVALID)
     return -1;
-  return faccessat (dirfd, pathname, mode, 0);
+  return faccessat (dirfd, pathname, mode, AT_EACCESS);
 }
