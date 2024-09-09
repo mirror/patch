@@ -365,6 +365,7 @@ main (int argc, char **argv)
 	}
       if (!outfile)
 	init_output (&outstate);
+      FILE *ifp = nullptr;
 
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
@@ -403,7 +404,17 @@ main (int argc, char **argv)
 
 	/* find out where all the lines are */
 	if (!skip_rest_of_patch) {
-	    scan_input (inname, file_type);
+	    if (S_ISREG (file_type) && instat.st_size != 0)
+	      {
+		int oflags = (O_RDONLY | binary_transput
+			      | (follow_symlinks ? 0 : O_NOFOLLOW));
+		int ifd = safe_open (inname, oflags, 0);
+		if (ifd < 0
+		    || !(ifp = fdopen (ifd, binary_transput ? "rb" : "r")))
+		  pfatal ("Can't open file %s", quotearg (inname));
+	      }
+
+	    scan_input (inname, file_type, ifp);
 
 	    if (verbosity != SILENT)
 	      {
@@ -612,8 +623,8 @@ main (int argc, char **argv)
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
 			  set_file_attributes (tmpout.name, outfd, attr,
-					       inname, -1, &instat,
-					       mode, &new_time);
+					       inname, ifp ? fileno (ifp) : -1,
+					       &instat, mode, &new_time);
 			}
 
 		      replace_file = true;
@@ -632,6 +643,9 @@ main (int argc, char **argv)
 		}
 	    }
       }
+
+      if (ifp)
+	Fclose (ifp);
 
       if (!outfile)
 	{

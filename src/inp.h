@@ -26,4 +26,4 @@ struct iline { char const *ptr; idx_t size; };
 struct iline ifetch (idx_t) ATTRIBUTE_PURE;
 bool get_input_file (char *, char const *, mode_t);
 void re_input (void);
-void scan_input (char *, mode_t);
+void scan_input (char *, mode_t, FILE *);

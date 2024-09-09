@@ -159,7 +159,7 @@ get_input_file (char *filename, char const *outname, mode_t file_type)
 /* Read input and build its line index.  */
 
 void
-scan_input (char *filename, MAYBE_UNUSED mode_t file_type)
+scan_input (char *filename, mode_t file_type, FILE *ifp)
 {
   /* Fail if the file size doesn't fit,
      or if storage isn't available.  */
@@ -172,17 +172,10 @@ scan_input (char *filename, MAYBE_UNUSED mode_t file_type)
      When creating files, the files do not actually exist.  */
   if (size)
     {
-      if (S_ISREG (instat.st_mode))
+      if (S_ISREG (file_type))
         {
-	  int flags = O_RDONLY | binary_transput;
+	  int ifd = fileno (ifp);
 	  idx_t buffered = 0;
-	  int ifd;
-
-	  if (! follow_symlinks)
-	    flags |= O_NOFOLLOW;
-	  ifd = safe_open (filename, flags, 0);
-	  if (ifd < 0)
-	    pfatal ("can't open file %s", quotearg (filename));
 
 	  while (size - buffered != 0)
 	    {
@@ -196,9 +189,6 @@ scan_input (char *filename, MAYBE_UNUSED mode_t file_type)
 		}
 	      buffered += n;
 	    }
-
-	  if (close (ifd) != 0)
-	    read_fatal ();
 	}
       else
 	{
