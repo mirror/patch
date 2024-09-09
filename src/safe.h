@@ -18,6 +18,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+/* A constant that cannot be successfully passed as a directory file
+   descriptor to openat etc.  Its value is negative but does not equal
+   AT_FDCWD.  Normally the value is -1, but it is -2 on perverse
+   platforms where AT_FDCWD == -1.  */
+
+enum { DIRFD_INVALID = -1 - (AT_FDCWD == -1) };
+
 extern bool unsafe;
 
 int safe_stat (char *pathname, struct stat *buf);

@@ -456,7 +456,7 @@ traverse_another_path (char **pathname, int keepfd)
   if (steps > MAX_PATH_COMPONENTS)
     {
       errno = ELOOP;
-      return -1;
+      return DIRFD_INVALID;
     }
 
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
@@ -505,7 +505,7 @@ traverse_another_path (char **pathname, int keepfd)
 	  while (*p && ! ISSLASH (*p))
 	    p++;
 	  char *name = ximemdup0 (prev, p - prev);
-	  traversed_symlink = new_cached_dirfd (dir, name, -1);
+	  traversed_symlink = new_cached_dirfd (dir, name, DIRFD_INVALID);
 	}
       if (stack && ! *stack->path)
 	pop_symlink (&stack);
@@ -553,14 +553,14 @@ fail:
   put_path (dir);
   while (stack)
     pop_symlink (&stack);
-  return -1;
+  return DIRFD_INVALID;
 }
 
 /* Just traverse PATHNAME; see traverse_another_path(). */
 static int
 traverse_path (char **pathname)
 {
-  return traverse_another_path (pathname, -1);
+  return traverse_another_path (pathname, DIRFD_INVALID);
 }
 
 static int
@@ -572,8 +572,8 @@ safe_xstat (char *pathname, struct stat *buf, int flags)
     return fstatat (AT_FDCWD, pathname, buf, flags);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return fstatat (dirfd, pathname, buf, flags);
 }
 
@@ -601,8 +601,8 @@ safe_open (char *pathname, int flags, mode_t mode)
     return open (pathname, flags, mode);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return openat (dirfd, pathname, flags, mode);
 }
 
@@ -617,12 +617,12 @@ safe_rename (char *oldpath, char *newpath)
     return rename (oldpath, newpath);
 
   olddirfd = traverse_path (&oldpath);
-  if (olddirfd < 0 && olddirfd != AT_FDCWD)
-    return olddirfd;
+  if (olddirfd == DIRFD_INVALID)
+    return -1;
 
   newdirfd = traverse_another_path (&newpath, olddirfd);
-  if (newdirfd < 0 && newdirfd != AT_FDCWD)
-    return newdirfd;
+  if (newdirfd == DIRFD_INVALID)
+    return -1;
 
   ret = renameat (olddirfd, oldpath, newdirfd, newpath);
   if (! ret)
@@ -643,8 +643,8 @@ safe_mkdir (char *pathname, mode_t mode)
     return mkdir (pathname, mode);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return mkdirat (dirfd, pathname, mode);
 }
 
@@ -659,8 +659,8 @@ safe_rmdir (char *pathname)
     return rmdir (pathname);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
 
   ret = unlinkat (dirfd, pathname, AT_REMOVEDIR);
   if (! ret)
@@ -678,8 +678,8 @@ safe_unlink (char *pathname)
     return unlink (pathname);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return unlinkat (dirfd, pathname, 0);
 }
 
@@ -693,8 +693,8 @@ safe_symlink (char const *target, char *linkpath)
     return symlink (target, linkpath);
 
   dirfd = traverse_path (&linkpath);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return symlinkat (target, dirfd, linkpath);
 }
 
@@ -708,8 +708,8 @@ safe_chmod (char *pathname, mode_t mode)
     return chmod (pathname, mode);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return fchmodat (dirfd, pathname, mode, 0);
 }
 
@@ -723,8 +723,8 @@ safe_lchown (char *pathname, uid_t owner, gid_t group)
     return lchown (pathname, owner, group);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return fchownat (dirfd, pathname, owner, group, AT_SYMLINK_NOFOLLOW);
 }
 
@@ -738,8 +738,8 @@ safe_lutimens (char *pathname, struct timespec const times[2])
     return utimensat (AT_FDCWD, pathname, times, AT_SYMLINK_NOFOLLOW);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return utimensat (dirfd, pathname, times, AT_SYMLINK_NOFOLLOW);
 }
 
@@ -753,8 +753,8 @@ safe_readlink (char *pathname, char *buf, size_t bufsiz)
     return readlink (pathname, buf, bufsiz);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return readlinkat (dirfd, pathname, buf, bufsiz);
 }
 
@@ -768,7 +768,7 @@ safe_access (char *pathname, int mode)
     return access (pathname, mode);
 
   dirfd = traverse_path (&pathname);
-  if (dirfd < 0 && dirfd != AT_FDCWD)
-    return dirfd;
+  if (dirfd == DIRFD_INVALID)
+    return -1;
   return faccessat (dirfd, pathname, mode, 0);
 }
