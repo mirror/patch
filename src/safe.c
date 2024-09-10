@@ -30,6 +30,7 @@
 #include <string.h>
 #include <safe.h>
 
+#include <basename-lgpl.h>
 #include <hash.h>
 #include <filename.h>
 #include <xalloc.h>
@@ -448,7 +449,7 @@ traverse_another_path (char **pathname, int keepfd)
   };
 
   intmax_t misses = dirfd_cache_misses;
-  char *path = *pathname, *last;
+  char *path = *pathname;
   struct cached_dirfd *dir = &cwd;
   struct symlink *stack = nullptr;
   idx_t steps = count_path_components (path);
@@ -465,16 +466,7 @@ traverse_another_path (char **pathname, int keepfd)
   if (! *path || IS_ABSOLUTE_FILE_NAME (path))
     return AT_FDCWD;
 
-  /* Find the last pathname component */
-  last = strrchr (path, 0) - 1;
-  if (ISSLASH (*last))
-    {
-      while (last != path)
-	if (! ISSLASH (*--last))
-	  break;
-    }
-  while (last != path && ! ISSLASH (*(last - 1)))
-    last--;
+  char *last = last_component (path);
   if (last == path)
     return AT_FDCWD;
 
