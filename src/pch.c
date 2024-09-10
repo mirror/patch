@@ -17,7 +17,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <common.h>
-#include <dirname.h>
+#include <basename-lgpl.h>
+#include <filename.h>
 #include <inp.h>
 #include <quotearg.h>
 #include <util.h>
@@ -1062,7 +1063,7 @@ best_name (char *const *name, int const *ignore)
 	components_min = components[i];
 
 	/* Of those, take the names with the shortest basename.  */
-	basename_len[i] = base_len (name[i]);
+	basename_len[i] = strlen (last_component (name[i]));
 	if (basename_len_min < basename_len[i])
 	  continue;
 	basename_len_min = basename_len[i];

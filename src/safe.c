@@ -29,9 +29,9 @@
 #include <errno.h>
 #include <string.h>
 #include <safe.h>
-#include "dirname.h"
 
 #include <hash.h>
+#include <filename.h>
 #include <xalloc.h>
 
 #include "common.h"

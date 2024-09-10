@@ -19,7 +19,8 @@
 #define UTIL_INLINE _GL_EXTERN_INLINE
 
 #include <common.h>
-#include <dirname.h>
+#include <basename-lgpl.h>
+#include <filename.h>
 #include <hash.h>
 #include <quotearg.h>
 #include <util.h>
@@ -796,21 +797,20 @@ trystat (char *trybuf, struct stat *st, char *dirend,
    FILESTAT describes FILENAME's status or is 0 if FILENAME does not exist.
    If successful and if GETBUF is nonzero, set *GETBUF to a command
    that gets the file; similarly for DIFFBUF and a command to diff the file
-   (but set *DIFFBUF to 0 if the diff operation is meaningless).
+   (but set *DIFFBUF to a null pointer if the diff operation is meaningless).
    *GETBUF and *DIFFBUF must be freed by the caller.  */
 char const *
 version_controller (char const *filename, bool readonly,
 		    struct stat const *filestat, char **getbuf, char **diffbuf)
 {
   struct stat cstat;
-  char *dir = dir_name (filename);
-  char *filebase = base_name (filename);
+  char const *filebase = last_component (filename);
   char const *dotslash = *filename == '-' ? "./" : "";
-  idx_t dirlen = strlen (dir);
+  idx_t dirlen = filebase - filename;
   idx_t filebaselen = strlen (filebase);
   idx_t maxfixlen = sizeof "SCCS/" - 1 + sizeof SCCSPREFIX - 1;
-  idx_t maxtrysize = dirlen + 1 + filebaselen + maxfixlen + 1;
-  idx_t quotelen = quote_system_arg (0, dir) + quote_system_arg (0, filebase);
+  idx_t maxtrysize = dirlen + filebaselen + maxfixlen + 1;
+  idx_t quotelen = quote_system_arg (0, filename);
   idx_t maxgetsize = sizeof CLEARTOOL_CO + quotelen + maxfixlen;
   idx_t maxdiffsize =
     (sizeof SCCSDIFF1 + sizeof SCCSDIFF2 + sizeof DEV_NULL - 1
@@ -818,8 +818,7 @@ version_controller (char const *filename, bool readonly,
   char *trybuf = ximalloc (maxtrysize);
   char const *r = 0;
 
-  char *dirend = mempcpy (trybuf, dir, dirlen);
-  *dirend++ = '/';
+  char *dirend = mempcpy (trybuf, filename, dirlen);
 
   /* Check that RCS file is not working file.
      Some hosts don't report file name length errors.  */
@@ -834,8 +833,7 @@ version_controller (char const *filename, bool readonly,
       if (getbuf)
 	{
 	  char *p = *getbuf = xmalloc (maxgetsize);
-	  sprintf (p, readonly ? CHECKOUT : CHECKOUT_LOCKED, dotslash);
-	  p += strlen (p);
+	  p += sprintf (p, readonly ? CHECKOUT : CHECKOUT_LOCKED, dotslash);
 	  p += quote_system_arg (p, filename);
 	  *p = '\0';
 	}
@@ -843,8 +841,7 @@ version_controller (char const *filename, bool readonly,
       if (diffbuf)
 	{
 	  char *p = *diffbuf = xmalloc (maxdiffsize);
-	  sprintf (p, RCSDIFF1, dotslash);
-	  p += strlen (p);
+	  p += sprintf (p, RCSDIFF1, dotslash);
 	  p += quote_system_arg (p, filename);
 	  *p++ = '>';
 	  strcpy (p, DEV_NULL);
@@ -859,8 +856,7 @@ version_controller (char const *filename, bool readonly,
       if (getbuf)
 	{
 	  char *p = *getbuf = xmalloc (maxgetsize);
-	  sprintf (p, readonly ? GET : GET_LOCKED);
-	  p += strlen (p);
+	  p += sprintf (p, readonly ? GET : GET_LOCKED);
 	  p += quote_system_arg (p, trybuf);
 	  *p = '\0';
 	}
@@ -871,8 +867,7 @@ version_controller (char const *filename, bool readonly,
 	  strcpy (p, SCCSDIFF1);
 	  p += sizeof SCCSDIFF1 - 1;
 	  p += quote_system_arg (p, trybuf);
-	  sprintf (p, SCCSDIFF2, dotslash);
-	  p += strlen (p);
+	  p += sprintf (p, SCCSDIFF2, dotslash);
 	  p += quote_system_arg (p, filename);
 	  *p++ = '>';
 	  strcpy (p, DEV_NULL);
@@ -917,8 +912,6 @@ version_controller (char const *filename, bool readonly,
     }
 
   free (trybuf);
-  free (filebase);
-  free (dir);
   return r;
 }
 
@@ -1760,17 +1753,9 @@ make_tempfile (struct outfile *out, char letter, char const *real_name,
 
   if (real_name && ! dry_run)
     {
-      char *dirname = dir_name (real_name);
-      char *basename = base_name (real_name);
-      idx_t dirnamelen = strlen (dirname);
-      idx_t basenamelen = strlen (basename);
-
-      template = ximalloc (dirnamelen + 1 + basenamelen + 9);
-      char *p = mempcpy (template, dirname, dirnamelen);
-      *p++ = '/';
-      sprintf (mempcpy (p, basename, basenamelen), ".%cXXXXXX", letter);
-      free (dirname);
-      free (basename);
+      idx_t namelen = strlen (real_name);
+      template = ximalloc (namelen + sizeof ".cXXXXXX");
+      sprintf (mempcpy (template, real_name, namelen), ".%cXXXXXX", letter);
     }
   else
     {
