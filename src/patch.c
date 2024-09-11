@@ -570,6 +570,11 @@ main (int argc, char **argv)
 	  }
       }
 
+      /* Block signals because fatal_exit would otherwise have
+	 undefined behavior when called from a signal handler that was
+	 invoked while the following code was being run.
+	 FIXME: The following code does an unbounded amount of work
+	 while signals are blocked, which is a bad thing.  */
       if (!dry_run)
 	block_signals ();
 
