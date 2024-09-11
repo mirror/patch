@@ -570,8 +570,12 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	    say ("Renaming file %s to %s\n",
 		 quotearg_n (0, from), quotearg_n (1, to));
 
+	  if (outfrom->temporary)
+	    block_signals ();
 	  if (safe_rename (from, to) != 0)
 	    {
+	      if (outfrom->temporary)
+		unblock_signals ();
 	      bool to_dir_known_to_exist = false;
 
 	      if (errno == ENOENT
@@ -579,8 +583,12 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 		{
 		  makedirs (to);
 		  to_dir_known_to_exist = true;
+		  if (outfrom->temporary)
+		    block_signals ();
 		  if (safe_rename (from, to) == 0)
 		    goto rename_succeeded;
+		  if (outfrom->temporary)
+		    unblock_signals ();
 		}
 
 	      if (errno == EXDEV)
@@ -604,13 +612,16 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	    }
 
 	rename_succeeded:
-	  insert_file_id (fromst, CREATED);
 	  /* Do not clear outfrom->exists if it's possible that the
 	     rename returned zero because FROM and TO are hard links to
 	     the same file.  */
 	  if (outfrom && (0 < to_errno
 			  || (to_errno == 0 && to_st.st_nlink <= 1)))
 	    outfrom->exists = nullptr;
+	  if (outfrom->temporary)
+	    unblock_signals ();
+
+	  insert_file_id (fromst, CREATED);
 	}
     }
   else if (! backup)
