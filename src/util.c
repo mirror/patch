@@ -614,9 +614,12 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	rename_succeeded:
 	  /* Do not clear outfrom->exists if it's possible that the
 	     rename returned zero because FROM and TO are hard links to
-	     the same file.  */
-	  if (outfrom && (0 < to_errno
-			  || (to_errno == 0 && to_st.st_nlink <= 1)))
+	     the same file.  This possibility can't occur if the
+	     source is a temporary file that we just created,
+	     or if the destination doesn't exist, or if the
+	     destination's link count is 1 (or zero!).  */
+	  if (outfrom->temporary || 0 < to_errno
+	      || (to_errno == 0 && to_st.st_nlink <= 1))
 	    outfrom->exists = nullptr;
 	  if (outfrom->temporary)
 	    unblock_signals ();
