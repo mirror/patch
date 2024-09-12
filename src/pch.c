@@ -2363,7 +2363,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 		       { editor_program, "-", output_name, nullptr }),
                       nullptr, false, false, false, false, true, false,
 		      nullptr);
-    if (status)
+    if (status != EXIT_SUCCESS)
       fatal ("%s FAILED", editor_program);
     if (dup2 (stdin_dup, STDIN_FILENO) < 0 || close (stdin_dup) < 0)
       pfatal ("Failed to duplicate standard input");

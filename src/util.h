@@ -29,6 +29,9 @@ enum file_attributes {
   FA_XATTRS = 8
 };
 
+/* Exit status for trouble, such as write failure.  */
+enum { EXIT_TROUBLE = 2 };
+
 extern enum backup_type backup_type;
 
 _GL_INLINE_HEADER_BEGIN

@@ -160,7 +160,7 @@ main (int argc, char **argv)
     mode_t file_type;
     bool have_git_diff = false;
 
-    exit_failure = 2;
+    exit_failure = EXIT_TROUBLE;
     set_program_name (argv[0]);
     init_time ();
 
@@ -741,9 +741,7 @@ main (int argc, char **argv)
     unblock_signals ();
 
     delete_files ();
-    if (somefailed)
-      exit (1);
-    return 0;
+    return somefailed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 /* Prepare to find the next patch to do in the patch file. */
@@ -907,7 +905,7 @@ usage (FILE *stream, int status)
 {
   char const * const *p;
 
-  if (status != 0)
+  if (status != EXIT_SUCCESS)
     {
       Fprintf (stream, "%s: Try '%s --help' for more information.\n",
 	       program_name, Argv[0]);
@@ -1010,7 +1008,7 @@ get_some_switches (void)
 		    else if (! strcmp (optarg, "diff3"))
 		      conflict_style = MERGE_DIFF3;
 		    else
-		      usage (stderr, 2);
+		      usage (stderr, EXIT_TROUBLE);
 		  }
 		else
 		  conflict_style = MERGE_MERGE;
@@ -1051,7 +1049,7 @@ get_some_switches (void)
 		break;
 	    case 'v':
 		version();
-		exit (0);
+		exit (EXIT_SUCCESS);
 		break;
 	    case 'V':
 		version_control = optarg;
@@ -1085,7 +1083,7 @@ get_some_switches (void)
 #endif
 		break;
 	    case CHAR_MAX + 4:
-		usage (stdout, 0);
+		usage (stdout, EXIT_SUCCESS);
 	    case CHAR_MAX + 5:
 		backup_if_mismatch = true;
 		break;
@@ -1101,7 +1099,7 @@ get_some_switches (void)
 		  if (i < 0)
 		    {
 		      invalid_arg ("quoting style", optarg, i);
-		      usage (stderr, 2);
+		      usage (stderr, EXIT_TROUBLE);
 		    }
 		  set_quoting_style (nullptr, i);
 		}
@@ -1112,7 +1110,7 @@ get_some_switches (void)
 		else if (strcmp (optarg, "unified") == 0)
 		  reject_format = UNI_DIFF;
 		else
-		  usage (stderr, 2);
+		  usage (stderr, EXIT_TROUBLE);
 		break;
 	    case CHAR_MAX + 10:
 		if (strcmp (optarg, "ignore") == 0)
@@ -1122,13 +1120,13 @@ get_some_switches (void)
 		else if (strcmp (optarg, "fail") == 0)
 		  read_only_behavior = RO_FAIL;
 		else
-		  usage (stderr, 2);
+		  usage (stderr, EXIT_TROUBLE);
 		break;
 	    case CHAR_MAX + 11:
 		follow_symlinks = true;
 		break;
 	    default:
-		usage (stderr, 2);
+		usage (stderr, EXIT_TROUBLE);
 	}
 
     /* Process any filename args.  */
@@ -1144,7 +1142,7 @@ get_some_switches (void)
 	      {
 		Fprintf (stderr, "%s: %s: extra operand\n",
 			 program_name, quotearg (Argv[optind]));
-		usage (stderr, 2);
+		usage (stderr, EXIT_TROUBLE);
 	      }
 	  }
       }
@@ -2026,7 +2024,7 @@ fatal_exit (int sig)
   output_files (nullptr, sig ? -1 : 1);
   if (sig)
     exit_with_signal (sig);
-  exit (2);
+  exit (EXIT_TROUBLE);
 }
 
 static void

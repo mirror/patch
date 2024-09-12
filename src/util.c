@@ -1252,7 +1252,7 @@ exit_with_signal (int sig)
   sigaddset (&s, sig);
   sigprocmask (SIG_UNBLOCK, &s, nullptr);
   raise (sig);
-  exit (2);
+  exit (EXIT_TROUBLE);
 }
 
 int
