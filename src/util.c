@@ -1206,8 +1206,10 @@ static intmax_t signal_blocking_level;
 void
 block_signals (void)
 {
-  sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
-  signal_blocking_level++;
+  intmax_t s = signal_blocking_level;
+  if (!s)
+    sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
+  signal_blocking_level = s + 1;
 }
 
 void
