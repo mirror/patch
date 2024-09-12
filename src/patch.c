@@ -105,9 +105,8 @@ static void output_file (struct outfile *, const struct stat *, char *,
 			 const struct stat *, mode_t, bool);
 
 static void init_files_to_delete (void);
-static void init_files_to_output (void);
 static void delete_files (void);
-static void output_files (struct stat const *, bool);
+static void output_files (struct stat const *, int);
 
 #ifdef ENABLE_MERGE
 static bool merge;
@@ -195,7 +194,6 @@ main (int argc, char **argv)
 
     init_backup_hash_table ();
     init_files_to_delete ();
-    init_files_to_output ();
 
     /* parse switches */
     Argc = argc;
@@ -252,7 +250,9 @@ main (int argc, char **argv)
 	{
 	  if (have_git_diff)
 	    {
-	      output_files (nullptr, false);
+	      block_signals ();
+	      output_files (nullptr, 0);
+	      unblock_signals ();
 	      inerrno = -1;
 	    }
 	  have_git_diff = ! have_git_diff;
@@ -263,9 +263,12 @@ main (int argc, char **argv)
 	  Fclose (rejfp);
 	  rejfp = nullptr;
 	}
+
+      block_signals ();
       remove_if_needed (&tmprej);
       remove_if_needed (&tmpout);
       remove_if_needed (&tmped);
+      unblock_signals ();
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -314,7 +317,9 @@ main (int argc, char **argv)
 	    {
 	      if (has_queued_output (&outstat))
 		{
-		  output_files (&outstat, false);
+		  block_signals ();
+		  output_files (&outstat, 0);
+		  unblock_signals ();
 		  outerrno = stat_file (outname, &outstat);
 		  inerrno = -1;
 		}
@@ -729,8 +734,12 @@ main (int argc, char **argv)
     }
     if (outstate.ofp)
       Fclose (outstate.ofp);
+
+    block_signals ();
     cleanup ();
-    output_files (nullptr, true);
+    output_files (nullptr, 1);
+    unblock_signals ();
+
     delete_files ();
     if (somefailed)
       exit (1);
@@ -1852,14 +1861,17 @@ delete_files (void)
 /* Putting output files into place and removing them. */
 
 struct file_to_output {
-  char *from;
+  char volatile *volatile from;
   struct stat from_st;
-  char *to;
+  char *volatile to;
   mode_t mode;
   bool backup;
+  struct file_to_output *volatile next;
 };
 
-static gl_list_t files_to_output;
+static struct file_to_output *volatile files_to_output;
+static struct file_to_output *volatile *files_to_output_tail =
+  &files_to_output;
 
 static void
 output_file_later (struct outfile *from, const struct stat *from_st,
@@ -1868,12 +1880,14 @@ output_file_later (struct outfile *from, const struct stat *from_st,
   struct file_to_output *file_to_output;
 
   file_to_output = xmalloc (sizeof *file_to_output);
-  file_to_output->from = xstrdup (from->name);
+  file_to_output->from = volatilize (xstrdup (from->name));
   file_to_output->from_st = *from_st;
   file_to_output->to = to ? xstrdup (to) : nullptr;
   file_to_output->mode = mode;
   file_to_output->backup = backup;
-  gl_list_add_last (files_to_output, file_to_output);
+  file_to_output->next = nullptr;
+  *files_to_output_tail = file_to_output;
+  files_to_output_tail = &file_to_output->next;
   from->exists = nullptr;
 }
 
@@ -1929,70 +1943,72 @@ output_file (struct outfile *from,
     output_file_now (from, from_st, to, mode, backup);
 }
 
+/* Output files that were delayed until now.
+   If ST, output only files up to and including ST.
+
+   EXITING == 0 is the typical case.
+   If EXITING != 0, we are about to exit so freeing memory is optional.
+   If EXITING < 0, we are in a signal handler so ignore ST, remove temporaries
+   in an async-signal-safe way, and do not attempt to free memory.
+
+   This function assumes signals are blocked, either because we are
+   in a signal handler, or because the caller has created a critical
+   section by invoking block_signals first.
+
+   FIXME: This function does an unbounded amount of work while signals
+   are blocked, which is a bad thing.  */
 static void
-dispose_file_to_output (const void *elt)
+output_files (struct stat const *st, int exiting)
 {
-  const struct file_to_output *file_to_output = elt;
-
-  free (file_to_output->from);
-  free (file_to_output->to);
-}
-
-static void
-init_files_to_output (void)
-{
-  files_to_output = gl_list_create_empty (GL_LINKED_LIST, nullptr, nullptr,
-					  dispose_file_to_output, true);
-}
-
-static void
-gl_list_clear (gl_list_t list)
-{
-  while (gl_list_size (list) > 0)
-    gl_list_remove_at (list, 0);
-}
-
-static void
-output_files (struct stat const *st, bool exiting)
-{
-  gl_list_iterator_t iter;
-  const void *elt;
-
-  iter = gl_list_iterator (files_to_output);
-  while (gl_list_iterator_next (&iter, &elt, nullptr))
+  while (files_to_output)
     {
-      const struct file_to_output *file_to_output = elt;
-      struct stat const *from_st = &file_to_output->from_st;
-      char *name = file_to_output->from;
-      struct outfile from = { .name = name, .exists = volatilize (name) };
+      char *name = devolatilize (files_to_output->from);
+      char *to = files_to_output->to;
+      bool early_return;
 
-      output_file_now (&from, from_st, file_to_output->to,
-		       file_to_output->mode, file_to_output->backup);
-      if (file_to_output->to)
+      if (exiting < 0)
 	{
-	  char volatile *exists = from.exists;
-	  if (exists)
-	    safe_unlink (devolatilize (exists));
+	  /* Do not call 'safe_unlink' as it is not async-signal-safe.
+	     'unlink' should be good enough here, as we already
+	     checked the file's parent directory.  */
+	  if (to)
+	    unlink (name);
+	  early_return = false;
 	}
-
-      if (st && st->st_dev == from_st->st_dev && st->st_ino == from_st->st_ino)
+      else
 	{
-	  /* Free the list up to here. */
-	  for (;;)
+	  struct stat const *from_st = &files_to_output->from_st;
+	  struct outfile from = { .name = name, .exists = volatilize (name) };
+
+	  output_file_now (&from, from_st, to,
+			   files_to_output->mode, files_to_output->backup);
+	  if (to)
 	    {
-	      const void *elt2 = gl_list_get_at (files_to_output, 0);
-	      gl_list_remove_at (files_to_output, 0);
-	      if (elt == elt2)
-		break;
+	      char volatile *exists = from.exists;
+	      if (exists)
+		safe_unlink (devolatilize (exists));
 	    }
-	  gl_list_iterator_free (&iter);
-	  return;
+
+	  early_return = (st
+			  && st->st_dev == from_st->st_dev
+			  && st->st_ino == from_st->st_ino);
 	}
-    }
-  if (FREE_BEFORE_EXIT || !exiting)
-    {
-      gl_list_iterator_free (&iter);
-      gl_list_clear (files_to_output);
+
+      struct file_to_output *next = files_to_output->next;
+
+      if (FREE_BEFORE_EXIT ? 0 <= exiting : !exiting)
+	{
+	  free (name);
+	  free (to);
+	  free (files_to_output);
+	}
+
+      files_to_output = next;
+      if (!next)
+	files_to_output_tail = &files_to_output;
+
+      if (early_return)
+	return;
     }
 }
 
@@ -2001,11 +2017,15 @@ output_files (struct stat const *st, bool exiting)
 void
 fatal_exit (int sig)
 {
+  /* Block signals until program exit.  However, there is no need to
+     block in a signal handler, as it has already blocked signals.  */
+  if (!sig)
+    block_signals ();
+
   cleanup ();
+  output_files (nullptr, sig ? -1 : 1);
   if (sig)
     exit_with_signal (sig);
-
-  output_files (nullptr, true);
   exit (2);
 }
 
