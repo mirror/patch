@@ -1190,7 +1190,7 @@ enum { NUM_SIGS = sizeof sigs / sizeof *sigs };
 
 /* How to handle signals.  fatal_act.sa_mask lists signals to be
    blocked when handling signals or in a critical section.  */
-static struct sigaction fatal_act;
+static struct sigaction fatal_act = { .sa_handler = fatal_exit };
 
 void
 init_signals (void)
@@ -1202,7 +1202,6 @@ init_signals (void)
   if (sigprocmask (SIG_BLOCK, nullptr, &initial_signal_mask) < 0)
     return;
 
-  fatal_act.sa_handler = fatal_exit;
   sigemptyset (&fatal_act.sa_mask);
   for (int i = 0; i < NUM_SIGS; i++)
     {
