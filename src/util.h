@@ -61,7 +61,7 @@ devolatilize (char volatile *s)
 }
 
 bool ok_to_reverse (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
-void ask (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
+char *ask (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 void say (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 
 _Noreturn void fatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));

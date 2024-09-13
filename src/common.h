@@ -69,9 +69,6 @@ struct outfile
 
 /* globals */
 
-extern char *patchbuf;			/* general purpose buffer */
-extern idx_t patchbufsize;		/* allocated size of buf */
-
 extern char *inname;
 extern char *outfile;
 extern int inerrno;

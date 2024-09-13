@@ -18,6 +18,13 @@
 
 enum nametype { OLD, NEW, INDEX, NONE };
 
+/* General purpose buffer.  */
+extern char *patchbuf;
+
+/* Allocated size of buf.  It is at least IO_BUFSIZE.  */
+extern idx_t patchbufsize;
+
+void grow_patchbuf (void);
 idx_t pch_end (void) ATTRIBUTE_PURE;
 idx_t pch_first (void) ATTRIBUTE_PURE;
 idx_t pch_hunk_beg (void) ATTRIBUTE_PURE;

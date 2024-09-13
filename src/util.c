@@ -41,6 +41,7 @@
 # include <attr/libattr.h>
 #endif
 
+#include <pch.h>
 #include <safe.h>
 
 enum backup_type backup_type;
@@ -934,9 +935,9 @@ version_get (char *filename, char const *cs, bool exists, bool readonly,
 {
   if (patch_get < 0)
     {
-      ask ("Get file %s from %s%s? [y] ",
-	   quotearg (filename), cs, readonly ? "" : " with lock");
-      if (*patchbuf == 'n')
+      if (*ask ("Get file %s from %s%s? [y] ",
+		quotearg (filename), cs, readonly ? "" : " with lock")
+	  == 'n')
 	return 0;
     }
 
@@ -1054,7 +1055,7 @@ say (char const *format, ...)
 
 /* Get a response from the user, somehow or other. */
 
-void
+char *
 ask (char const *format, ...)
 {
   static int ttyfd = -2;
@@ -1109,10 +1110,13 @@ ask (char const *format, ...)
 	  s += r;
 	  if (r < readsize || patchbuf[s - 1] == '\n')
 	    break;
-	  patchbuf = xpalloc (patchbuf, &patchbufsize, 1, -1, 1);
+	  if (s == patchbufsize - 1)
+	    grow_patchbuf ();
 	}
       patchbuf[s] = '\0';
     }
+
+  return patchbuf;
 }
 
 /* Return nonzero if it OK to reverse a patch.  */
@@ -1147,12 +1151,11 @@ ok_to_reverse (char const *format, ...)
     }
   else
     {
-      ask (reverse_flag ? "  Ignore -R? [n] " : "  Assume -R? [n] ");
-      r = *patchbuf == 'y';
+      r = (*ask (reverse_flag ? "  Ignore -R? [n] " : "  Assume -R? [n] ")
+	   == 'y');
       if (! r)
 	{
-	  ask ("Apply anyway? [n] ");
-	  if (*patchbuf != 'y')
+	  if (*ask ("Apply anyway? [n] ") != 'y')
 	    {
 	      if (verbosity != SILENT)
 		say ("Skipping patch.\n");

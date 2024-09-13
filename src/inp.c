@@ -71,9 +71,10 @@ report_revision (bool found_revision)
 	   rev);
   else
     {
-      ask ("This file doesn't appear to be the %s version -- patch anyway? [n] ",
-	   rev);
-      if (*patchbuf != 'y')
+      if (*ask (("This file doesn't appear to be the %s version"
+		 " -- patch anyway? [n] "),
+		rev)
+	  != 'y')
 	fatal ("aborted");
     }
 }

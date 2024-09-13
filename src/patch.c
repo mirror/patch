@@ -53,7 +53,6 @@ bool set_utc;
 bool skip_rest_of_patch;
 char *inname;
 char *outfile;
-char *patchbuf;
 char *revision;
 char const *origbase;
 char const *origprae;
@@ -62,7 +61,6 @@ enum conflict_style conflict_style;
 enum diff diff_type;
 enum verbosity verbosity;
 idx_t last_frozen_line;
-idx_t patchbufsize = IO_BUFSIZE;
 #ifndef binary_transput
 int binary_transput;
 #endif
@@ -166,8 +164,6 @@ main (int argc, char **argv)
 
     setbuf(stderr, serrbuf);
     atexit (close_stdout);
-
-    patchbuf = ximalloc (patchbufsize);
 
     strippath = -1;
 

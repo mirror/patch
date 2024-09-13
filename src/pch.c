@@ -87,6 +87,19 @@ static void next_intuit_at (off_t, idx_t);
 static void skip_to (off_t, idx_t);
 static char get_ed_command_letter (char const *);
 
+static char initial_patchbuf[IO_BUFSIZE];
+char *patchbuf = initial_patchbuf;
+idx_t patchbufsize = IO_BUFSIZE;
+
+void
+grow_patchbuf (void)
+{
+  bool onheap = patchbufsize != IO_BUFSIZE;
+  patchbuf = xpalloc (onheap ? patchbuf : nullptr, &patchbufsize, 1, -1, 1);
+  if (!onheap)
+    memcpy (patchbuf, initial_patchbuf, IO_BUFSIZE);
+}
+
 /* Prepare to look for the next patch in the patch file. */
 
 void
@@ -263,17 +276,16 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 
     skip_to(p_start,p_sline);
     while (!inname) {
-	char *t;
 	if (force | batch) {
 	    say ("No file to patch.  Skipping patch.\n");
 	    skip_rest_of_patch = true;
 	    return true;
 	}
-	ask ("File to patch: ");
-	t = patchbuf + strlen (patchbuf);
-	if (t > patchbuf + 1 && *(t - 1) == '\n')
+	char *answer = ask ("File to patch: ");
+	idx_t answerlen = strlen (answer);
+	if (1 < answerlen && answer[answerlen - 1] == '\n')
 	  {
-	    inname = ximemdup0 (patchbuf, t - patchbuf - 1);
+	    inname = ximemdup0 (answer, answerlen - 1);
 	    inerrno = stat_file (inname, &instat);
 	    if (inerrno)
 	      {
@@ -287,8 +299,7 @@ there_is_another_patch (bool need_header, mode_t *file_type)
 	      invc = -1;
 	  }
 	if (!inname) {
-	    ask ("Skip this patch? [y] ");
-	    if (*patchbuf != 'n') {
+	    if (*ask ("Skip this patch? [y] ") != 'n') {
 		if (verbosity != SILENT)
 		    say ("Skipping patch.\n");
 		skip_rest_of_patch = true;
@@ -1929,9 +1940,9 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	{
 	  if (i == s - 1)
 	    {
-	      b = xpalloc (b, &s, 1, -1, 1);
-	      patchbuf = b;
-	      patchbufsize = s;
+	      grow_patchbuf ();
+	      b = patchbuf;
+	      s = patchbufsize;
 	    }
 	  b[i++] = c;
 	  if (c == '\n')
