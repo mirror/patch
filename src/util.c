@@ -1387,10 +1387,9 @@ parse_c_string (char const *str, char const **endp)
 	    goto fail;
 
 	  case '"':
-	    *v++ = 0;
-	    v = realloc (u, v - u);
-	    if (v)
-	      u = v;
+	    *v = '\0';
+	    /* 'u = xrealloc (u, v + 1 - u);' would save a bit of space here,
+	       but would likely be more trouble than it's worth.  */
 	    if (endp)
 	      *endp = s;
 	    return u;
