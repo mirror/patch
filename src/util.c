@@ -43,12 +43,6 @@
 
 #include <safe.h>
 
-/* Read or write at most IO_MAX bytes at a time.  POSIX says behavior
-   is implementation-defined for reads larger than SSIZE_MAX.  IO_MAX
-   is MIN (SSIZE_MAX, SIZE_MAX) truncated to a value that is surely
-   aligned well.  */
-static idx_t const IO_MAX = MIN (SSIZE_MAX, SIZE_MAX) >> 30 << 30;
-
 enum backup_type backup_type;
 
 static void makedirs (char const *);
@@ -1098,7 +1092,7 @@ ask (char const *format, ...)
       idx_t s = 0;
       while (true)
 	{
-	  idx_t readsize = MIN (patchbufsize - 1 - s, IO_MAX);
+	  idx_t readsize = MIN (patchbufsize - 1 - s, IO_BUFSIZE);
 	  ssize_t r = read (ttyfd, patchbuf + s, readsize);
 	  if (r <= 0)
 	    {
@@ -1698,7 +1692,7 @@ Fwrite (void const *ptr, size_t size, size_t nitems, FILE *stream)
 idx_t
 Read (int filedes, void *buf, idx_t nbyte)
 {
-  ssize_t r = read (filedes, buf, MIN (nbyte, IO_MAX));
+  ssize_t r = read (filedes, buf, MIN (nbyte, IO_BUFSIZE));
   if (r < 0)
     read_fatal ();
   return r;
@@ -1710,7 +1704,7 @@ Write (int filedes, void const *buf, idx_t nbyte)
   char const *b = buf, *blim = b + nbyte;
   while (b < blim)
     {
-      ssize_t w = write (filedes, b, MIN (blim - b, IO_MAX));
+      ssize_t w = write (filedes, b, MIN (blim - b, IO_BUFSIZE));
       if (w < 0)
 	write_fatal ();
       b += w;

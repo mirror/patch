@@ -62,7 +62,7 @@ enum conflict_style conflict_style;
 enum diff diff_type;
 enum verbosity verbosity;
 idx_t last_frozen_line;
-idx_t patchbufsize;
+idx_t patchbufsize = IO_BUFSIZE;
 #ifndef binary_transput
 int binary_transput;
 #endif
@@ -167,7 +167,6 @@ main (int argc, char **argv)
     setbuf(stderr, serrbuf);
     atexit (close_stdout);
 
-    patchbufsize = 8 * 1024;
     patchbuf = ximalloc (patchbufsize);
 
     strippath = -1;

@@ -32,6 +32,17 @@ enum file_attributes {
 /* Exit status for trouble, such as write failure.  */
 enum { EXIT_TROUBLE = 2 };
 
+/* Read or write at most IO_BUFSIZE bytes at a time.
+   In 2024 256 KiB was determined to be the best blocksize
+   to minimize system call overhead across most systems
+   when copying files.  See coreutils/src/ioblksize.h.  */
+enum { IO_BUFSIZE = 256 * 1024 };
+
+/* POSIX says behavior is implementation-defined for I/O requests
+   larger than SSIZE_MAX.  IO_BUFSIZE is OK on all known platforms.
+   Check it to be sure.  */
+static_assert (IO_BUFSIZE <= SSIZE_MAX);
+
 extern enum backup_type backup_type;
 
 _GL_INLINE_HEADER_BEGIN
