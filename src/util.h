@@ -90,8 +90,8 @@ void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
 void append_to_file (char *, char *);
 _Noreturn void exit_with_signal (int);
 void init_signals (void);
-void block_signals (void);
-void unblock_signals (void);
+void defer_signals (void);
+void undefer_signals (void);
 void init_backup_hash_table (void);
 void init_time (void);
 _Noreturn void xalloc_die (void);

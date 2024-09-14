@@ -245,9 +245,9 @@ main (int argc, char **argv)
 	{
 	  if (have_git_diff)
 	    {
-	      block_signals ();
+	      defer_signals ();
 	      output_files (nullptr, 0);
-	      unblock_signals ();
+	      undefer_signals ();
 	      inerrno = -1;
 	    }
 	  have_git_diff = ! have_git_diff;
@@ -259,11 +259,11 @@ main (int argc, char **argv)
 	  rejfp = nullptr;
 	}
 
-      block_signals ();
+      defer_signals ();
       remove_if_needed (&tmprej);
       remove_if_needed (&tmpout);
       remove_if_needed (&tmped);
-      unblock_signals ();
+      undefer_signals ();
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -312,9 +312,9 @@ main (int argc, char **argv)
 	    {
 	      if (has_queued_output (&outstat))
 		{
-		  block_signals ();
+		  defer_signals ();
 		  output_files (&outstat, 0);
-		  unblock_signals ();
+		  undefer_signals ();
 		  outerrno = stat_file (outname, &outstat);
 		  inerrno = -1;
 		}
@@ -538,13 +538,13 @@ main (int argc, char **argv)
 	  }
       }
 
-      /* Block signals because fatal_exit would otherwise have
-	 undefined behavior when called from a signal handler that was
-	 invoked while the following code was being run.
+      /* If not a dry run, defer signals.
+	 Otherwise, fatal_exit would misbehave when called from a
+	 signal handler invoked while the following code was being run.
 	 FIXME: The following code does an unbounded amount of work
-	 while signals are blocked, which is a bad thing.  */
+	 while signals are deferred, which is a bad thing.  */
       if (!dry_run)
-	block_signals ();
+	defer_signals ();
 
       /* and put the output where desired */
       bool replace_file = false, backup;
@@ -725,15 +725,15 @@ main (int argc, char **argv)
 	}
       }
       if (!dry_run)
-	unblock_signals ();
+	undefer_signals ();
     }
     if (outstate.ofp)
       Fclose (outstate.ofp);
 
-    block_signals ();
+    defer_signals ();
     cleanup ();
     output_files (nullptr, 1);
-    unblock_signals ();
+    undefer_signals ();
 
     delete_files ();
     return somefailed ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -1944,12 +1944,12 @@ output_file (struct outfile *from,
    If EXITING < 0, we are in a signal handler so ignore ST, remove temporaries
    in an async-signal-safe way, and do not attempt to free memory.
 
-   This function assumes signals are blocked, either because we are
-   in a signal handler, or because the caller has created a critical
-   section by invoking block_signals first.
+   This function assumes signals are either blocked because we are
+   in a signal handler, or deferred because the caller has created a critical
+   section by invoking defer_signals first.
 
    FIXME: This function does an unbounded amount of work while signals
-   are blocked, which is a bad thing.  */
+   are blocked or deferred, which is a bad thing.  */
 static void
 output_files (struct stat const *st, int exiting)
 {
@@ -2010,10 +2010,10 @@ output_files (struct stat const *st, int exiting)
 void
 fatal_exit (int sig)
 {
-  /* Block signals until program exit.  However, there is no need to
-     block in a signal handler, as it has already blocked signals.  */
+  /* Defer signals until program exit.  However, there is no need to
+     defer in a signal handler, as it has already blocked signals.  */
   if (!sig)
-    block_signals ();
+    defer_signals ();
 
   cleanup ();
   output_files (nullptr, sig ? -1 : 1);

@@ -566,11 +566,11 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 		 quotearg_n (0, from), quotearg_n (1, to));
 
 	  if (outfrom->temporary)
-	    block_signals ();
+	    defer_signals ();
 	  if (safe_rename (from, to) != 0)
 	    {
 	      if (outfrom->temporary)
-		unblock_signals ();
+		undefer_signals ();
 	      bool to_dir_known_to_exist = false;
 
 	      if (errno == ENOENT
@@ -579,11 +579,11 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 		  makedirs (to);
 		  to_dir_known_to_exist = true;
 		  if (outfrom->temporary)
-		    block_signals ();
+		    defer_signals ();
 		  if (safe_rename (from, to) == 0)
 		    goto rename_succeeded;
 		  if (outfrom->temporary)
-		    unblock_signals ();
+		    undefer_signals ();
 		}
 
 	      if (errno == EXDEV)
@@ -617,7 +617,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	      || (to_errno == 0 && to_st.st_nlink <= 1))
 	    outfrom->exists = nullptr;
 	  if (outfrom->temporary)
-	    unblock_signals ();
+	    undefer_signals ();
 
 	  insert_file_id (fromst, CREATED);
 	}
@@ -642,22 +642,22 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
   mode |= S_IRUSR | S_IWUSR;
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
   if (out->temporary)
-    block_signals ();
+    defer_signals ();
   int fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
   out->exists = fd < 0 ? nullptr : volatilize (file);
   if (out->temporary)
-    unblock_signals ();
+    undefer_signals ();
   if (fd < 0 && !to_dir_known_to_exist && errno == ENOENT)
     {
       char *f = xstrdup (file);
       makedirs (f);
       free (f);
       if (out->temporary)
-	block_signals ();
+	defer_signals ();
       fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
       out->exists = fd < 0 ? nullptr : file;
       if (out->temporary)
-	unblock_signals ();
+	undefer_signals ();
     }
   if (fd < 0)
     pfatal ("Can't create file %s", quotearg (file));
@@ -706,10 +706,10 @@ copy_file (char *from, struct stat const *fromst,
 	fatal ("symbolic link %s grew", quotearg (from));
       buffer[r] = '\0';
       if (outto->temporary)
-	block_signals ();
+	defer_signals ();
       outto->exists = safe_symlink (buffer, to) < 0 ? nullptr : volatilize (to);
       if (outto->temporary)
-	unblock_signals ();
+	undefer_signals ();
       if (!outto->exists)
 	pfatal ("Can't create %s %s", "symbolic link", to);
       if (tost && safe_lstat (to, tost) != 0)
@@ -1216,22 +1216,22 @@ init_signals (void)
 
 /* How to handle certain events when in a critical region. */
 
-static intmax_t signal_blocking_level;
+static intmax_t signal_deferring_level;
 
 void
-block_signals (void)
+defer_signals (void)
 {
-  intmax_t s = signal_blocking_level;
+  intmax_t s = signal_deferring_level;
   if (!s)
     sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
-  signal_blocking_level = s + 1;
+  signal_deferring_level = s + 1;
 }
 
 void
-unblock_signals (void)
+undefer_signals (void)
 {
-  signal_blocking_level--;
-  if (!signal_blocking_level)
+  signal_deferring_level--;
+  if (!signal_deferring_level)
     {
       int e = errno;
       sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, nullptr);
@@ -1732,18 +1732,18 @@ try_safe_open (char *template, void *vargs)
   struct outfile *out = args->out;
   int flags = O_CREAT | O_EXCL | args->flags;
   mode_t mode = args->mode;
-  block_signals ();
+  defer_signals ();
   int fd = safe_open (template, flags, mode);
   out->exists = fd < 0 ? nullptr : volatilize (template);
-  unblock_signals ();
+  undefer_signals ();
   if (0 <= fd || errno != ENOENT)
     return fd;
   makedirs (template);
-  block_signals ();
+  defer_signals ();
   fd = safe_open (template, flags, mode);
   out->exists = fd < 0 ? nullptr : volatilize (template);
   int err = errno;
-  unblock_signals ();
+  undefer_signals ();
   errno = err;
   return fd;
 }
