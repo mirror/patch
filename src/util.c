@@ -1173,6 +1173,33 @@ ok_to_reverse (char const *format, ...)
    blocked when handling signals or in a critical section.  */
 static struct sigaction fatal_act = { .sa_handler = fatal_exit };
 
+/* Whether signals should be deferred, and if so how deep the
+   nesting level of deferring is.  */
+static intmax_t signal_deferring_level;
+
+/* Defer incoming signals until later.  */
+void
+defer_signals (void)
+{
+  intmax_t s = signal_deferring_level;
+  if (!s)
+    sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
+  signal_deferring_level = s + 1;
+}
+
+/* Handle any signals that have arrived, and stop deferring them.  */
+void
+undefer_signals (void)
+{
+  signal_deferring_level--;
+  if (!signal_deferring_level)
+    {
+      int e = errno;
+      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, nullptr);
+      errno = e;
+    }
+}
+
 void
 init_signals (void)
 {
@@ -1213,31 +1240,6 @@ init_signals (void)
   for (int i = 0; i < NUM_SIGS; i++)
     if (sigismember (&fatal_act.sa_mask, sigs[i]))
       sigaction (sigs[i], &fatal_act, nullptr);
-}
-
-/* How to handle certain events when in a critical region. */
-
-static intmax_t signal_deferring_level;
-
-void
-defer_signals (void)
-{
-  intmax_t s = signal_deferring_level;
-  if (!s)
-    sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
-  signal_deferring_level = s + 1;
-}
-
-void
-undefer_signals (void)
-{
-  signal_deferring_level--;
-  if (!signal_deferring_level)
-    {
-      int e = errno;
-      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, nullptr);
-      errno = e;
-    }
 }
 
 void
