@@ -1872,17 +1872,16 @@ static void
 output_file_later (struct outfile *from, const struct stat *from_st,
 		   char const *to, mode_t mode, bool backup)
 {
-  struct file_to_output *file_to_output;
-
-  file_to_output = xmalloc (sizeof *file_to_output);
-  file_to_output->from = volatilize (xstrdup (from->name));
-  file_to_output->from_st = *from_st;
-  file_to_output->to = to ? xstrdup (to) : nullptr;
-  file_to_output->mode = mode;
-  file_to_output->backup = backup;
-  file_to_output->next = nullptr;
-  *files_to_output_tail = file_to_output;
-  files_to_output_tail = &file_to_output->next;
+  idx_t tosize = to ? strlen (to) + 1 : 0;
+  struct file_to_output *f = ximalloc (sizeof *f + tosize);
+  f->from = volatilize (xstrdup (from->name));
+  f->from_st = *from_st;
+  f->to = to ? memcpy (f + 1, to, tosize) : nullptr;
+  f->mode = mode;
+  f->backup = backup;
+  f->next = nullptr;
+  *files_to_output_tail = f;
+  files_to_output_tail = &f->next;
   from->exists = nullptr;
 }
 
@@ -1994,7 +1993,6 @@ output_files (struct stat const *st, int exiting)
       if (FREE_BEFORE_EXIT ? 0 <= exiting : !exiting)
 	{
 	  free (name);
-	  free (to);
 	  free (files_to_output);
 	}
 
