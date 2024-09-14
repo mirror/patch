@@ -27,6 +27,7 @@
 #include <util.h>
 #include <version.h>
 #include <xalloc.h>
+#include <xstdopen.h>
 #include <gl_linked_list.h>
 #include <gl_xlist.h>
 #include <safe.h>
@@ -162,6 +163,7 @@ main (int argc, char **argv)
     set_program_name (argv[0]);
     init_time ();
 
+    xstdopen ();
     setbuf(stderr, serrbuf);
     atexit (close_stdout);
 
