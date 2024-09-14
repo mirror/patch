@@ -1167,23 +1167,7 @@ ok_to_reverse (char const *format, ...)
   return r;
 }
 
-/* How to handle certain events when not in a critical region. */
-
-static int const sigs[] = {
-       SIGHUP,
-       SIGPIPE,
-#ifdef SIGTERM
-       SIGTERM,
-#endif
-#ifdef SIGXCPU
-       SIGXCPU,
-#endif
-#ifdef SIGXFSZ
-       SIGXFSZ,
-#endif
-       SIGINT
-};
-enum { NUM_SIGS = sizeof sigs / sizeof *sigs };
+/* Critical sections and signals.  */
 
 /* How to handle signals.  fatal_act.sa_mask lists signals to be
    blocked when handling signals or in a critical section.  */
@@ -1192,6 +1176,23 @@ static struct sigaction fatal_act = { .sa_handler = fatal_exit };
 void
 init_signals (void)
 {
+  static int const sigs[] =
+    {
+      SIGHUP,
+      SIGINT,
+      SIGPIPE,
+#ifdef SIGTERM
+      SIGTERM,
+#endif
+#ifdef SIGXCPU
+      SIGXCPU,
+#endif
+#ifdef SIGXFSZ
+      SIGXFSZ,
+#endif
+    };
+  enum { NUM_SIGS = sizeof sigs / sizeof *sigs };
+
   /* System V fork+wait does not work if SIGCHLD is ignored.  */
   signal (SIGCHLD, SIG_DFL);
 
