@@ -354,7 +354,7 @@ set_file_attributes (char *to, int tofd, enum file_attributes attr,
     if (copy_attr (from, fromfd, to, tofd) < 0
 	&& errno != ENOSYS && errno != ENOTSUP
 	&& lacks_appropriate_privileges (errno, tofd))
-      fatal_exit (0);
+      fatal_exit ();
   if (attr & FA_MODE)
     {
       /* The "diff --git" format does not store the file permissions of
@@ -982,7 +982,7 @@ fatal (char const *format, ...)
   va_end (args);
   fputc ('\n', stderr);
   fflush (stderr);
-  fatal_exit (0);
+  fatal_exit ();
 }
 
 void
@@ -1030,7 +1030,7 @@ pfatal (char const *format, ...)
   va_end (args);
   fprintf (stderr, " : %s\n", strerror (errnum));
   fflush (stderr);
-  fatal_exit (0);
+  fatal_exit ();
 }
 
 /* Tell the user something.  */
@@ -1169,34 +1169,69 @@ ok_to_reverse (char const *format, ...)
 
 /* Critical sections and signals.  */
 
-/* How to handle signals.  fatal_act.sa_mask lists signals to be
-   blocked when handling signals or in a critical section.  */
-static struct sigaction fatal_act = { .sa_handler = fatal_exit };
+/* If nonzero, the corresponding signal was the first one received.
+   Otherwise, no signal has been received.  */
+static sig_atomic_t volatile signal_received;
 
 /* Whether signals should be deferred, and if so how deep the
    nesting level of deferring is.  */
-static intmax_t signal_deferring_level;
+static sig_atomic_t signal_deferring_level;
+
+/* Signal SIG has arrived and can be acted on now.
+   Clean up and arrange to terminate.
+   This function is async-signal-safe.  */
+static void
+fatal_cleanup_and_terminate (int sig)
+{
+  fatal_cleanup ();
+
+  /* Cause the program to terminate with signal SIG.  Termination occurs now
+     if not in a signal handler, otherwise when the signal handler returns.  */
+  signal (sig, SIG_DFL);
+  raise (sig);
+}
+
+/* Handle a delivered signal.  While this function is running,
+   all signals that 'patch' cares about are blocked.
+   This function is async-signal-safe.  */
+static void
+handle_signal (int sig)
+{
+#if ! (HAVE_SIGACTION && HAVE_SIGFILLSET)
+  /* Cater to non-POSIX systems that lack sigaction and reset to SIG_DFL.  */
+  signal (sig, SIG_IGN);
+#endif
+
+  /* If multiple signals arrive, handle just the first one.
+     That's good enough, as 'patch' is about to exit.  */
+  if (signal_received)
+    return;
+  signal_received = sig;
+
+  if (!signal_deferring_level)
+    {
+      signal_deferring_level = 1;	/* Avoid infinite recursion.  */
+      fatal_cleanup_and_terminate (sig);
+    }
+}
 
 /* Defer incoming signals until later.  */
 void
 defer_signals (void)
 {
-  intmax_t s = signal_deferring_level;
-  if (!s)
-    sigprocmask (SIG_BLOCK, &fatal_act.sa_mask, nullptr);
-  signal_deferring_level = s + 1;
+  signal_deferring_level++;
 }
 
 /* Handle any signals that have arrived, and stop deferring them.  */
 void
 undefer_signals (void)
 {
-  signal_deferring_level--;
-  if (!signal_deferring_level)
+  assert (0 < signal_deferring_level);
+  if (!--signal_deferring_level)
     {
-      int e = errno;
-      sigprocmask (SIG_UNBLOCK, &fatal_act.sa_mask, nullptr);
-      errno = e;
+      int sig = signal_received;
+      if (sig)
+	fatal_cleanup_and_terminate (sig);
     }
 }
 
@@ -1207,7 +1242,9 @@ init_signals (void)
     {
       SIGHUP,
       SIGINT,
+#ifdef SIGPIPE
       SIGPIPE,
+#endif
 #ifdef SIGTERM
       SIGTERM,
 #endif
@@ -1223,35 +1260,21 @@ init_signals (void)
   /* System V fork+wait does not work if SIGCHLD is ignored.  */
   signal (SIGCHLD, SIG_DFL);
 
-  sigset_t initial_signal_mask;
-  if (sigprocmask (SIG_BLOCK, nullptr, &initial_signal_mask) < 0)
-    return;
-
-  sigemptyset (&fatal_act.sa_mask);
+#if HAVE_SIGACTION && HAVE_SIGFILLSET
+  struct sigaction fatal_act = { .sa_handler = handle_signal };
+  sigfillset (&fatal_act.sa_mask);
   for (int i = 0; i < NUM_SIGS; i++)
     {
       struct sigaction initial_act;
-      if (!sigismember (&initial_signal_mask, sigs[i])
-	  && sigaction (sigs[i], nullptr, &initial_act) == 0
+      if (sigaction (sigs[i], nullptr, &initial_act) == 0
 	  && initial_act.sa_handler != SIG_IGN)
-	sigaddset (&fatal_act.sa_mask, sigs[i]);
+	sigaction (sigs[i], &fatal_act, nullptr);
     }
-
+#else
   for (int i = 0; i < NUM_SIGS; i++)
-    if (sigismember (&fatal_act.sa_mask, sigs[i]))
-      sigaction (sigs[i], &fatal_act, nullptr);
-}
-
-void
-exit_with_signal (int sig)
-{
-  sigset_t s;
-  signal (sig, SIG_DFL);
-  sigemptyset (&s);
-  sigaddset (&s, sig);
-  sigprocmask (SIG_UNBLOCK, &s, nullptr);
-  raise (sig);
-  exit (EXIT_TROUBLE);
+    if (signal (sigs[i], SIG_IGN) != SIG_IGN)
+      signal (sigs[i], handle_signal);
+#endif
 }
 
 int

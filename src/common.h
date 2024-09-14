@@ -117,7 +117,8 @@ extern enum diff diff_type;
 
 extern char *revision;			/* prerequisite revision, if any */
 
-_Noreturn void fatal_exit (int);
+void fatal_cleanup (void);
+_Noreturn void fatal_exit (void);
 
 #if ! (HAVE_GETEUID || defined geteuid)
 # if ! (HAVE_GETUID || defined getuid)

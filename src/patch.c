@@ -541,7 +541,7 @@ main (int argc, char **argv)
       }
 
       /* If not a dry run, defer signals.
-	 Otherwise, fatal_exit would misbehave when called from a
+	 Otherwise, fatal_cleanup would misbehave when called from a
 	 signal handler invoked while the following code was being run.
 	 FIXME: The following code does an unbounded amount of work
 	 while signals are deferred, which is a bad thing.  */
@@ -2005,20 +2005,23 @@ output_files (struct stat const *st, int exiting)
     }
 }
 
-/* Fatal exit with cleanup.  If SIG, this is in response to the signal SIG.  */
+/* Clean up temp files after a signal.  This function is async-signal-safe.  */
 
 void
-fatal_exit (int sig)
+fatal_cleanup (void)
 {
-  /* Defer signals until program exit.  However, there is no need to
-     defer in a signal handler, as it has already blocked signals.  */
-  if (!sig)
-    defer_signals ();
-
   cleanup ();
-  output_files (nullptr, sig ? -1 : 1);
-  if (sig)
-    exit_with_signal (sig);
+  output_files (nullptr, -1);
+}
+
+/* Clean up temp files and exit after a fatal error.  */
+
+void
+fatal_exit (void)
+{
+  defer_signals ();
+  cleanup ();
+  output_files (nullptr, 1);
   exit (EXIT_TROUBLE);
 }
 

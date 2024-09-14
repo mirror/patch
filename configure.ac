@@ -111,7 +111,7 @@ AC_TYPE_OFF_T
 
 gl_FUNC_XATTR
 
-AC_CHECK_FUNCS_ONCE([geteuid getuid])
+AC_CHECK_FUNCS_ONCE([geteuid getuid sigaction sigfillset])
 AC_FUNC_SETMODE_DOS
 
 AC_PATH_PROG([ED], [ed], [ed])

@@ -89,7 +89,6 @@ void copy_file (char *, struct stat const *, struct outfile *, struct stat *,
 		int, mode_t, enum file_attributes, bool);
 void append_to_file (char *, char *);
 idx_t quote_system_arg (char *, char const *);
-_Noreturn void exit_with_signal (int);
 void init_signals (void);
 void defer_signals (void);
 void undefer_signals (void);
