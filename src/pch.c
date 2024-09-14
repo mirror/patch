@@ -28,7 +28,6 @@
 # include <io.h>
 #endif
 #include <safe.h>
-#include "execute.h"
 
 #define INITHUNKMAX 125			/* initial dynamic allocation size */
 
@@ -2297,14 +2296,10 @@ get_ed_command_letter (char const *line)
 void
 do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 {
-    static char const editor_program[] = EDITOR_PROGRAM;
-
     char const *output_name = output->name;
     off_t beginning_of_this_line;
     FILE *tmpfp = 0;
     int tmpfd = -1; /* placate gcc's -Wmaybe-uninitialized */
-    int stdin_dup, status;
-
 
     if (! dry_run && ! skip_rest_of_patch)
       {
@@ -2365,17 +2360,20 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 		 output->exists ? 0 : O_EXCL, instat.st_mode, 0, true);
     Fflush (stdout);
 
-    stdin_dup = dup (STDIN_FILENO);
+    int stdin_dup = dup (STDIN_FILENO);
     if (stdin_dup < 0 || dup2 (tmpfd, STDIN_FILENO) < 0)
       pfatal ("Failed to duplicate standard input");
     assert (output_name[0] != '!' && output_name[0] != '-');
-    status = execute (editor_program, editor_program,
-		      ((char const *[])
-		       { editor_program, "-", output_name, nullptr }),
-                      nullptr, false, false, false, false, true, false,
-		      nullptr);
+    idx_t output_namelen = quote_system_arg (nullptr, output_name);
+    char *command = ximalloc (sizeof (EDITOR_PROGRAM " - ") + output_namelen);
+    char *p = command;
+    p = stpcpy (p, EDITOR_PROGRAM " - ");
+    p += quote_system_arg (p, output_name);
+    *p = '\0';
+    int status = systemic (command);
+    free (command);
     if (status != EXIT_SUCCESS)
-      fatal ("%s FAILED", editor_program);
+      fatal ("%s FAILED", EDITOR_PROGRAM);
     if (dup2 (stdin_dup, STDIN_FILENO) < 0 || close (stdin_dup) < 0)
       pfatal ("Failed to duplicate standard input");
 

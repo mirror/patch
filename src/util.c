@@ -770,7 +770,7 @@ static char const CLEARTOOL_CO[] = "cleartool co -unr -nc ";
 
 static char const PERFORCE_CO[] = "p4 edit ";
 
-static idx_t
+idx_t
 quote_system_arg (char *quoted, char const *arg)
 {
   char *q = quotearg_style (shell_quoting_style, arg);
