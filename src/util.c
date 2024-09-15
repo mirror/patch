@@ -1162,9 +1162,9 @@ ok_to_reverse (char const *format, ...)
    Otherwise, no signal has been received.  */
 static sig_atomic_t volatile signal_received;
 
-/* Whether signals should be deferred, and if so how deep the
-   nesting level of deferring is.  */
-static sig_atomic_t signal_deferring_level;
+/* Whether we are in a critical section, so that signals are deferred
+   until the next call to undefer_signal.  */
+static sig_atomic_t signals_are_deferred;
 
 /* Signal SIG has arrived and can be acted on now.
    Clean up and arrange to terminate.
@@ -1197,9 +1197,9 @@ handle_signal (int sig)
     return;
   signal_received = sig;
 
-  if (!signal_deferring_level)
+  if (!signals_are_deferred)
     {
-      signal_deferring_level = 1;	/* Avoid infinite recursion.  */
+      signals_are_deferred = 1;	/* Avoid infinite recursion.  */
       fatal_cleanup_and_terminate (sig);
     }
 }
@@ -1208,20 +1208,17 @@ handle_signal (int sig)
 void
 defer_signals (void)
 {
-  signal_deferring_level++;
+  signals_are_deferred = 1;
 }
 
 /* Handle any signals that have arrived, and stop deferring them.  */
 void
 undefer_signals (void)
 {
-  assert (0 < signal_deferring_level);
-  if (!--signal_deferring_level)
-    {
-      int sig = signal_received;
-      if (sig)
-	fatal_cleanup_and_terminate (sig);
-    }
+  signals_are_deferred = 0;
+  int sig = signal_received;
+  if (sig)
+    fatal_cleanup_and_terminate (sig);
 }
 
 void
