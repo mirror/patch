@@ -565,12 +565,10 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	    say ("Renaming file %s to %s\n",
 		 quotearg_n (0, from), quotearg_n (1, to));
 
-	  if (outfrom->temporary)
-	    defer_signals ();
+	  defer_signals ();
 	  if (safe_rename (from, to) != 0)
 	    {
-	      if (outfrom->temporary)
-		undefer_signals ();
+	      undefer_signals ();
 	      bool to_dir_known_to_exist = false;
 
 	      if (errno == ENOENT
@@ -578,12 +576,10 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 		{
 		  makedirs (to);
 		  to_dir_known_to_exist = true;
-		  if (outfrom->temporary)
-		    defer_signals ();
+		  defer_signals ();
 		  if (safe_rename (from, to) == 0)
 		    goto rename_succeeded;
-		  if (outfrom->temporary)
-		    undefer_signals ();
+		  undefer_signals ();
 		}
 
 	      if (errno == EXDEV)
@@ -616,8 +612,7 @@ move_file (struct outfile *outfrom, struct stat const *fromst,
 	  if (outfrom->temporary || 0 < to_errno
 	      || (to_errno == 0 && to_st.st_nlink <= 1))
 	    outfrom->exists = nullptr;
-	  if (outfrom->temporary)
-	    undefer_signals ();
+	  undefer_signals ();
 
 	  insert_file_id (fromst, CREATED);
 	}
@@ -641,23 +636,19 @@ create_file (struct outfile *out, int open_flags, mode_t mode,
   char *file = out->name;
   mode |= S_IRUSR | S_IWUSR;
   mode &= ~ (S_IXUSR | S_IXGRP | S_IXOTH);
-  if (out->temporary)
-    defer_signals ();
+  defer_signals ();
   int fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
   out->exists = fd < 0 ? nullptr : volatilize (file);
-  if (out->temporary)
-    undefer_signals ();
+  undefer_signals ();
   if (fd < 0 && !to_dir_known_to_exist && errno == ENOENT)
     {
       char *f = xstrdup (file);
       makedirs (f);
       free (f);
-      if (out->temporary)
-	defer_signals ();
+      defer_signals ();
       fd = safe_open (file, O_CREAT | O_TRUNC | open_flags, mode);
       out->exists = fd < 0 ? nullptr : file;
-      if (out->temporary)
-	undefer_signals ();
+      undefer_signals ();
     }
   if (fd < 0)
     pfatal ("Can't create file %s", quotearg (file));
@@ -705,11 +696,9 @@ copy_file (char *from, struct stat const *fromst,
       if (r == alloc)
 	fatal ("symbolic link %s grew", quotearg (from));
       buffer[r] = '\0';
-      if (outto->temporary)
-	defer_signals ();
+      defer_signals ();
       outto->exists = safe_symlink (buffer, to) < 0 ? nullptr : volatilize (to);
-      if (outto->temporary)
-	undefer_signals ();
+      undefer_signals ();
       if (!outto->exists)
 	pfatal ("Can't create %s %s", "symbolic link", to);
       if (tost && safe_lstat (to, tost) != 0)
