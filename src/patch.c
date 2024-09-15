@@ -247,9 +247,7 @@ main (int argc, char **argv)
 	{
 	  if (have_git_diff)
 	    {
-	      defer_signals ();
 	      output_files (nullptr, 0);
-	      undefer_signals ();
 	      inerrno = -1;
 	    }
 	  have_git_diff = ! have_git_diff;
@@ -314,9 +312,7 @@ main (int argc, char **argv)
 	    {
 	      if (has_queued_output (&outstat))
 		{
-		  defer_signals ();
 		  output_files (&outstat, 0);
-		  undefer_signals ();
 		  outerrno = stat_file (outname, &outstat);
 		  inerrno = -1;
 		}
@@ -540,14 +536,6 @@ main (int argc, char **argv)
 	  }
       }
 
-      /* If not a dry run, defer signals.
-	 Otherwise, fatal_cleanup would misbehave when called from a
-	 signal handler invoked while the following code was being run.
-	 FIXME: The following code does an unbounded amount of work
-	 while signals are deferred, which is a bad thing.  */
-      if (!dry_run)
-	defer_signals ();
-
       /* and put the output where desired */
       bool replace_file = false, backup;
       mode_t mode;
@@ -726,17 +714,15 @@ main (int argc, char **argv)
 	      say ("\n");
 	}
       }
-      if (!dry_run)
-	undefer_signals ();
     }
     if (outstate.ofp)
       Fclose (outstate.ofp);
 
     defer_signals ();
     cleanup ();
-    output_files (nullptr, 1);
     undefer_signals ();
 
+    output_files (nullptr, 1);
     delete_files ();
     return somefailed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
@@ -1856,7 +1842,7 @@ delete_files (void)
 /* Putting output files into place and removing them. */
 
 struct file_to_output {
-  char volatile *volatile from;
+  struct outfile from;
   struct stat from_st;
   char *volatile to;
   mode_t mode;
@@ -1874,15 +1860,22 @@ output_file_later (struct outfile *from, const struct stat *from_st,
 {
   idx_t tosize = to ? strlen (to) + 1 : 0;
   struct file_to_output *f = ximalloc (sizeof *f + tosize);
-  f->from = volatilize (xstrdup (from->name));
+  f->from.name = xstrdup (from->name);
+  f->from.exists = from->exists ? volatilize (f->from.name) : nullptr;
+  f->from.temporary = from->temporary;
   f->from_st = *from_st;
   f->to = to ? memcpy (f + 1, to, tosize) : nullptr;
   f->mode = mode;
   f->backup = backup;
   f->next = nullptr;
+
+  /* In a critical section, transfer ownership from FROM to F->from.  */
+  defer_signals ();
   *files_to_output_tail = f;
-  files_to_output_tail = &f->next;
   from->exists = nullptr;
+  undefer_signals ();
+
+  files_to_output_tail = &f->next;
 }
 
 static void
@@ -1942,22 +1935,19 @@ output_file (struct outfile *from,
 
    EXITING == 0 is the typical case.
    If EXITING != 0, we are about to exit so freeing memory is optional.
-   If EXITING < 0, we are in a signal handler so ignore ST, remove temporaries
-   in an async-signal-safe way, and do not attempt to free memory.
+   If EXITING < 0, we are in a signal handler (and in a critical section);
+   so ignore ST, remove temporaries in an async-signal-safe way,
+   and of course do not attempt to free memory.  */
 
-   This function assumes signals are either blocked because we are
-   in a signal handler, or deferred because the caller has created a critical
-   section by invoking defer_signals first.
-
-   FIXME: This function does an unbounded amount of work while signals
-   are blocked or deferred, which is a bad thing.  */
 static void
 output_files (struct stat const *st, int exiting)
 {
-  while (files_to_output)
+  struct file_to_output *next;
+  for (struct file_to_output *f = files_to_output; f; f = next)
     {
-      char *name = devolatilize (files_to_output->from);
-      char *to = files_to_output->to;
+      char *name = f->from.name;
+      char *to = f->to;
+      next = f->next;
       bool early_return;
 
       if (exiting < 0)
@@ -1966,29 +1956,33 @@ output_files (struct stat const *st, int exiting)
 	     'unlink' should be good enough here, as we already
 	     checked the file's parent directory.  */
 	  if (to)
-	    unlink (name);
+	    {
+	      char volatile *exists = f->from.exists;
+	      if (exists)
+		unlink (devolatilize (exists));
+	    }
 	  early_return = false;
 	}
       else
 	{
-	  struct stat const *from_st = &files_to_output->from_st;
-	  struct outfile from = { .name = name, .exists = volatilize (name) };
+	  struct stat const *from_st = &f->from_st;
 
-	  output_file_now (&from, from_st, to,
-			   files_to_output->mode, files_to_output->backup);
+	  output_file_now (&f->from, from_st, to, f->mode, f->backup);
+
+	  defer_signals ();
 	  if (to)
 	    {
-	      char volatile *exists = from.exists;
+	      char volatile *exists = f->from.exists;
 	      if (exists)
 		safe_unlink (devolatilize (exists));
 	    }
+	  files_to_output = next;
+	  undefer_signals ();
 
 	  early_return = (st
 			  && st->st_dev == from_st->st_dev
 			  && st->st_ino == from_st->st_ino);
 	}
-
-      struct file_to_output *next = files_to_output->next;
 
       if (FREE_BEFORE_EXIT ? 0 <= exiting : !exiting)
 	{
@@ -1996,7 +1990,6 @@ output_files (struct stat const *st, int exiting)
 	  free (files_to_output);
 	}
 
-      files_to_output = next;
       if (!next)
 	files_to_output_tail = &files_to_output;
 
@@ -2021,6 +2014,7 @@ fatal_exit (void)
 {
   defer_signals ();
   cleanup ();
+  undefer_signals ();
   output_files (nullptr, 1);
   exit (EXIT_TROUBLE);
 }
@@ -2036,6 +2030,8 @@ remove_if_needed (struct outfile *tmp)
     }
 }
 
+/* Clean up temporaries.
+   This function should be called only in critical sections.  */
 static void
 cleanup (void)
 {
