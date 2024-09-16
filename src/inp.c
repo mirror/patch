@@ -18,8 +18,6 @@
 
 #include <common.h>
 
-#include <stdbit.h>
-
 #include <quotearg.h>
 #include <util.h>
 #include <xalloc.h>
