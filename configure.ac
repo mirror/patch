@@ -53,7 +53,8 @@ AC_ARG_ENABLE([gcc-warnings],
      no|yes|expensive) ;;
      *)      AC_MSG_ERROR([bad value $enableval for gcc-warnings option]) ;;
    esac
-   gl_gcc_warnings=$enableval]
+   gl_gcc_warnings=$enableval],
+  [gl_gcc_warnings=no]
 )
 
 if test $gl_gcc_warnings != no; then
