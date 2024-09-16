@@ -1064,7 +1064,7 @@ ask (char const *format, ...)
 	 since it's unlikely that stdout will be seen by the tty user.
 	 The isatty test also works around a bug in GNU Emacs 19.34 under Linux
 	 which makes a call-process 'patch' hang when it reads from /dev/tty.
-	 POSIX.1-2001 XCU line 26599 requires that we read /dev/tty,
+	 POSIX.1-2024 line 109671 requires that we read /dev/tty,
 	 though.  */
       ttyfd = (posixly_correct || isatty (STDOUT_FILENO)
 	       ? open (TTY_DEVICE, O_RDONLY)

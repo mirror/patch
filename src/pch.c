@@ -854,7 +854,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
     *p_file_type = file_type;
 
     /* To intuit 'inname', the name of the file to patch,
-       use the algorithm specified by POSIX 1003.1-2001 XCU lines 25680-26599
+       use the algorithm specified by POSIX 1003.1-2024 lines 109651-109671
        (with some modifications if posixly_correct is zero):
 
        - Take the old and new names from the context header if present,

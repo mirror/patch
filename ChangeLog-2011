@@ -2030,7 +2030,7 @@
 
 	* util.c (move_file): Don't assume that ENOENT is reported when both
 	ENOENT and EXDEV apply; this isn't true with DJGPP, and
-	Posix doesn't require it.
+	POSIX doesn't require it.
 
 	* pch.c (there_is_another_patch):
 	Suggest -p when we can't intuit a file.
