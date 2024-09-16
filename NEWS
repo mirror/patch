@@ -9,8 +9,11 @@ Unreleased changes:
   and in other places where POSIX requires support for these sequences.
 * --enable-gcc-warnings no longer uses expensive static checking.
   Use --enable-gcc-warnings=expensive if you still want it.
-* Fix undefined or ill-defined behavior in unusual cases,
-  such as signals arriving at inopportune moments.
+* Fix undefined or ill-defined behavior in unusual cases, such as very
+  large sizes, possible stack overflow, I/O errors, memory exhaustion,
+  races with other processes, and signals arriving at inopportune moments.
+* Remove old "Plan B" code, designed for machines with 16-bit pointers.
+* Assume C99 or later; previously it assumed C89 or later.
 * Port to current GCC, Autoconf, Gnulib, etc.
 
 Changes in version 2.7.6:
