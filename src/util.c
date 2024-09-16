@@ -260,9 +260,10 @@ copy_attr (char const *src_path, int src_fd,
   # pragma GCC diagnostic ignored "-Wsuggest-attribute=format"
   #endif
 
+  bool copy_with_names = (src_fd < 0) | (dst_fd < 0);
   struct error_context ctx =
   {
-    .error = (src_fd < 0) | (dst_fd < 0) ? copy_attr_error : copy_fdattr_error,
+    .error = copy_with_names ? copy_attr_error : copy_fdattr_error,
     .quote = copy_attr_quote,
     .quote_free = copy_attr_free
   };
