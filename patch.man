@@ -4,8 +4,6 @@
 .if t .sp .3
 .if n .sp
 ..
-.ds ue ue
-.if \n(.g .if c \(:u .ds ue \(:u
 .ds Cw CW
 .if \n(.g .if f CR .ds Cw CR
 .ds fC \f(\*(Cw
@@ -1146,4 +1144,4 @@ setting file times, and deleting files;
 and made it conform better to \s-1POSIX\s0.
 Other contributors include Wayne Davison, who added unidiff support,
 and David MacKenzie, who added configuration and backup support.
-Andreas Gr\*(uenbacher added support for merging.
+Andreas Gruenbacher added support for merging.
