@@ -131,15 +131,16 @@ open_patch_file (char const *filename)
 	if (!pfp)
 	  pfatal ("Can't open patch file %s", quotearg (filename));
       }
+    int pfd = fileno (pfp);
 #if HAVE_SETMODE_DOS
     if (binary_transput)
       {
-	if (isatty (fileno (pfp)))
+	if (isatty (pfd))
 	  fatal ("cannot read binary data from tty on this platform");
-	setmode (fileno (pfp), O_BINARY);
+	setmode (pfd, O_BINARY);
       }
 #endif
-    if (fstat (fileno (pfp), &st) != 0)
+    if (fstat (pfd, &st) < 0)
       pfatal ("fstat");
     if (S_ISREG (st.st_mode) && 0 <= (pos = ftello (pfp)))
       file_pos = pos;
@@ -155,10 +156,10 @@ open_patch_file (char const *filename)
 	if (! pfp)
 	  pfatal ("Can't open stream for file %s", quotearg (tmppat.name));
 	for (st.st_size = 0;
-	     (charsread = fread (patchbuf, 1, patchbufsize, read_pfp)) != 0;
+	     (charsread = Read (pfd, patchbuf, patchbufsize)) != 0;
 	     st.st_size += charsread)
 	  Fwrite (patchbuf, 1, charsread, pfp);
-	if (ferror (read_pfp) || fclose (read_pfp) < 0)
+	if (fclose (read_pfp) < 0)
 	  read_fatal ();
 	Fflush (pfp);
 	Fseeko (pfp, 0, SEEK_SET);
