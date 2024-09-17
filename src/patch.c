@@ -28,8 +28,6 @@
 #include <version.h>
 #include <xalloc.h>
 #include <xstdopen.h>
-#include <gl_linked_list.h>
-#include <gl_xlist.h>
 #include <safe.h>
 
 #ifdef __SANITIZE_ADDRESS__
@@ -103,7 +101,6 @@ static void abort_hunk_unified (bool, bool);
 static void output_file (struct outfile *, const struct stat *, char *,
 			 const struct stat *, mode_t, bool);
 
-static void init_files_to_delete (void);
 static void delete_files (void);
 static void output_files (struct stat const *, int);
 
@@ -190,7 +187,6 @@ main (int argc, char **argv)
       version_control_context = "$VERSION_CONTROL";
 
     init_backup_hash_table ();
-    init_files_to_delete ();
 
     /* parse switches */
     Argc = argc;
@@ -1770,26 +1766,11 @@ struct file_to_delete {
   char *name;
   struct stat st;
   bool backup;
+  struct file_to_delete *next;
 };
 
-static gl_list_t files_to_delete;
-
-#if FREE_BEFORE_EXIT
-static void
-dispose_file_to_delete (void const *elt)
-{
-  free ((void *) elt);
-}
-#else
-# define dispose_file_to_delete nullptr
-#endif
-
-static void
-init_files_to_delete (void)
-{
-  files_to_delete = gl_list_create_empty (GL_LINKED_LIST, nullptr, nullptr,
-					  dispose_file_to_delete, true);
-}
+static struct file_to_delete *files_to_delete;
+static struct file_to_delete **files_to_delete_tail = &files_to_delete;
 
 static void
 delete_file_later (char *name, const struct stat *st, bool backup)
@@ -1807,35 +1788,33 @@ delete_file_later (char *name, const struct stat *st, bool backup)
   file_to_delete->name = xstrdup (name);
   file_to_delete->st = *st;
   file_to_delete->backup = backup;
-  gl_list_add_last (files_to_delete, file_to_delete);
+  file_to_delete->next = nullptr;
+  *files_to_delete_tail = file_to_delete;
+  files_to_delete_tail = &file_to_delete->next;
   insert_file_id (st, DELETE_LATER);
 }
 
 static void
 delete_files (void)
 {
-  gl_list_iterator_t iter;
-  const void *elt;
-
-  iter = gl_list_iterator (files_to_delete);
-  while (gl_list_iterator_next (&iter, &elt, nullptr))
+  struct file_to_delete *next;
+  for (struct file_to_delete *f = files_to_delete; f; f = next)
     {
-      const struct file_to_delete *file_to_delete = elt;
-
-      if (lookup_file_id (&file_to_delete->st) == DELETE_LATER)
+      if (lookup_file_id (&f->st) == DELETE_LATER)
 	{
-	  mode_t mode = file_to_delete->st.st_mode;
+	  mode_t mode = f->st.st_mode;
 
 	  if (verbosity == VERBOSE)
 	    say ("Removing %s %s\n",
 		 S_ISLNK (mode) ? "symbolic link" : "file",
-		 quotearg (file_to_delete->name));
-	  move_file (nullptr, nullptr, file_to_delete->name, mode,
-		     file_to_delete->backup);
-	  removedirs (file_to_delete->name);
+		 quotearg (f->name));
+	  move_file (nullptr, nullptr, f->name, mode, f->backup);
+	  removedirs (f->name);
 	}
+      next = f->next;
+      if (FREE_BEFORE_EXIT)
+	free (f);
     }
-  gl_list_iterator_free (&iter);
 }
 
 /* Putting output files into place and removing them. */
