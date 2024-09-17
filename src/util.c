@@ -28,8 +28,8 @@
 #include <xalloc.h>
 
 #include <parse-datetime.h>
-#include "ignore-value.h"
-#include "error.h"
+#include <ignore-value.h>
+#include <error.h>
 
 #include <signal.h>
 #include <stdarg.h>
