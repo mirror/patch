@@ -9,7 +9,6 @@
 . $srcdir/test-lib.sh
 
 require cat
-require gnu_diff
 use_local_patch
 use_tmpdir
 
@@ -33,7 +32,23 @@ EOF
 
 preserve_trailing_blank=
 
-diff -p -c -L a -L b a b > ab.diff
+cat > ab.diff <<EOF
+*** a
+--- b
+*************** int foo()
+*** 2,6 ****
+    {
+      /* waste a line */
+  $preserve_trailing_blank
+!     return 1;
+    }
+--- 2,6 ----
+    {
+      /* waste a line */
+  $preserve_trailing_blank
+!     return 2;
+    }
+EOF
 touch c
 check 'patch c < ab.diff || cat c.rej' <<EOF
 patching file c

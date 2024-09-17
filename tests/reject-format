@@ -10,9 +10,10 @@
 
 require cat
 require sed
-require gnu_diff
 use_local_patch
 use_tmpdir
+
+preserve_trailing_blank=
 
 # ==============================================================
 
@@ -27,7 +28,26 @@ a() {
 EOF
 
 sed -e 's/5/5a/' f.orig > f
-diff -p -c -L f.orig -L f f.orig f > f.diff
+
+cat > f.diff <<EOF
+*** f.orig
+--- f
+*************** a() {
+*** 2,7 ****
+  2
+  3
+  $preserve_trailing_blank
+! 5
+  6
+  }
+--- 2,7 ----
+  2
+  3
+  $preserve_trailing_blank
+! 5a
+  6
+  }
+EOF
 
 check 'patch -f -F0 --no-backup-if-mismatch --dry-run f < f.diff || echo "Status: $?"' <<EOF
 checking file f
@@ -42,8 +62,6 @@ Hunk #1 FAILED at 2.
 1 out of 1 hunk FAILED -- saving rejects to file f.rej
 Status: 1
 EOF
-
-preserve_trailing_blank=
 
 check 'cat f.rej' <<EOF
 *** f.orig
@@ -67,8 +85,20 @@ EOF
 
 # --------------------------------------------------------------
 
-( echo "Index: f"; diff -p -u -L f.orig -L f f.orig f ) > f.diff
-check 'patch -f -F0 --no-backup-if-mismatch f < f.diff || echo "Status: $?"' <<EOF
+cat > f1.diff <<EOF
+Index: f
+--- f.orig
++++ f
+@@ -2,6 +2,6 @@ a() {
+ 2
+ 3
+ $preserve_trailing_blank
+-5
++5a
+ 6
+ }
+EOF
+check 'patch -f -F0 --no-backup-if-mismatch f < f1.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.
 1 out of 1 hunk FAILED -- saving rejects to file f.rej
@@ -91,7 +121,6 @@ EOF
 
 # --------------------------------------------------------------
 
-diff -p -c -L f.orig -L f f.orig f > f.diff
 check 'patch -f -F0 --no-backup-if-mismatch --reject-format=unified f < f.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.
@@ -114,8 +143,7 @@ EOF
 
 # --------------------------------------------------------------
 
-( echo "Index: f"; diff -p -u -L f.orig -L f f.orig f ) > f.diff
-check 'patch -f -F0 --no-backup-if-mismatch --reject-format=context f < f.diff || echo "Status: $?"' <<EOF
+check 'patch -f -F0 --no-backup-if-mismatch --reject-format=context f < f1.diff || echo "Status: $?"' <<EOF
 patching file f
 Hunk #1 FAILED at 2.
 1 out of 1 hunk FAILED -- saving rejects to file f.rej
