@@ -2348,7 +2348,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     }
     if (!tmpfp)
       return;
-    char const w_q[] = { 'w', '\n', 'q', '\n' };
+    static char const w_q[] = { 'w', '\n', 'q', '\n' };
     Fwrite (w_q, 1, sizeof w_q, tmpfp);
     Fflush (tmpfp);
 
