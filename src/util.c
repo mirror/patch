@@ -1439,6 +1439,8 @@ parse_c_string (char const *str, char const **endp)
 	      if (c < '0' || c > '7')
 	        goto fail;
 	      acc |= (c - '0');
+	      if (!acc)
+		goto fail;
 	      c = acc;
 	      break;
 	    }

@@ -31,3 +31,25 @@ ncheck 'patch -s -p0 < d.diff'
 check 'cat "	  "' <<EOF
 two
 EOF
+
+cat > e.diff <<\EOF
+*** /dev/null	Sat Sep 14 08:47:53 2024
+--- "f\000g"	Tue Sep 17 10:21:17 2024
+***************
+*** 0 ****
+--- 1 ----
++
+EOF
+
+check 'patch -f < e.diff; echo status: $?' <<EOF
+can't find file to patch at input line 3
+Perhaps you should have used the -p or --strip option?
+The text leading up to this was:
+--------------------------
+|*** /dev/null	Sat Sep 14 08:47:53 2024
+|--- "f\000g"	Tue Sep 17 10:21:17 2024
+--------------------------
+No file to patch.  Skipping patch.
+1 out of 1 hunk ignored
+status: 1
+EOF
