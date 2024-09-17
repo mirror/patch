@@ -153,7 +153,7 @@ Changes in version 2.5.6:
 
 * File names in context patches may now contain spaces, so long
   as the context patch headers use a tab to separate the file name
-  from the time stamp.
+  from the timestamp.
 * Perforce is now supported.
 * Patch lines beginning with "#" are comments and are ignored.
 

@@ -336,7 +336,7 @@ script.
 Remove output files that are empty after the patches have been applied.
 Normally this option is unnecessary, since
 .B patch
-can examine the time stamps on the header to determine whether a file
+can examine the timestamps on the header to determine whether a file
 should exist after patching.
 However, if the input is not a context diff or if
 .B patch
@@ -615,15 +615,15 @@ in the patch; and assume that patches are reversed if they look like
 they are.
 .TP
 \fB\-T\fP  or  \fB\*=set\-time\fP
-Set the modification and access times of patched files from time stamps
-given in context diff headers.  Unless specified in the time stamps,
+Set the modification and access times of patched files from timestamps
+given in context diff headers.  Unless specified in the timestamps,
 assume that the context diff headers use local time.
 .Sp
-Use of this option with time stamps that do not include time zones is
+Use of this option with timestamps that do not include time zones is
 not recommended, because patches using local time cannot easily be used
-by people in other time zones, and because local time stamps are
+by people in other time zones, and because local timestamps are
 ambiguous when local clocks move backwards during daylight-saving time
-adjustments.  Make sure that time stamps include time zones, or generate
+adjustments.  Make sure that timestamps include time zones, or generate
 patches with \s-1UTC\s0 and use the
 .B \-Z
 or
@@ -750,8 +750,8 @@ is
 .BR src/patch/util.c- .
 .TP
 \fB\-Z\fP  or  \fB\*=set\-utc\fP
-Set the modification and access times of patched files from time stamps
-given in context diff headers. Unless specified in the time stamps,
+Set the modification and access times of patched files from timestamps
+given in context diff headers. Unless specified in the timestamps,
 assume that the context diff headers use Coordinated Universal Time
 (\s-1UTC\s0, often known as \s-1GMT\s0).  Also see the
 .B \-T
@@ -865,7 +865,7 @@ and
 .I new
 should not contain any slashes.
 .PP
-If the patch should communicate file time stamps as well as file contents, its
+If the patch should communicate file timestamps as well as file contents, its
 .B diff
 commands' headers should have dates
 and times in Universal Time using traditional Unix format,

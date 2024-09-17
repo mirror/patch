@@ -2185,7 +2185,7 @@
 	verbosity.
 	(fetchname): Change argument head_says_nonexistent to pstamp, and
 	store header timestamp into *pstamp.
-	If -T or -Z option is given, match time stamps more precisely.
+	If -T or -Z option is given, match timestamps more precisely.
 	(ask): Remove unnecessary close of ttyfd.
 	When there is no terminal at all, output a newline to make the
 	output look nicer.  After reporting EOF, flush stdout;
