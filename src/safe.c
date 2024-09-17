@@ -144,7 +144,7 @@ static void remove_cached_dirfd (struct cached_dirfd *entry)
     {
       struct cached_dirfd *child =
 	list_entry (entry->children.next,
-		    offsetof (struct cached_dirfd, children_link));;
+		    offsetof (struct cached_dirfd, children_link));
       list_del_init (&child->children_link);
       /* assert (list_empty (&child->children_link)); */
       hash_remove (cached_dirfds, child);  /* noop when not hashed */
