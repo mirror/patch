@@ -158,7 +158,7 @@ get_input_file (char *filename, char const *outname, mode_t file_type)
 /* Read input and build its line index.  */
 
 void
-scan_input (char *filename, mode_t file_type, FILE *ifp)
+scan_input (char *filename, mode_t file_type, int ifd)
 {
   /* Fail if the file size doesn't fit,
      or if storage isn't available.  */
@@ -173,7 +173,6 @@ scan_input (char *filename, mode_t file_type, FILE *ifp)
     {
       if (S_ISREG (file_type))
         {
-	  int ifd = fileno (ifp);
 	  idx_t buffered = 0;
 
 	  while (size - buffered != 0)

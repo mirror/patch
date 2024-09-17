@@ -363,7 +363,7 @@ main (int argc, char **argv)
 	}
       if (!outfile)
 	init_output (&outstate);
-      FILE *ifp = nullptr;
+      int ifd = -1;
 
       if (diff_type == ED_DIFF) {
 	outstate.zero_output = false;
@@ -406,13 +406,12 @@ main (int argc, char **argv)
 	      {
 		int oflags = (O_RDONLY | binary_transput
 			      | (follow_symlinks ? 0 : O_NOFOLLOW));
-		int ifd = safe_open (inname, oflags, 0);
-		if (ifd < 0
-		    || !(ifp = fdopen (ifd, binary_transput ? "rb" : "r")))
+		ifd = safe_open (inname, oflags, 0);
+		if (ifd < 0)
 		  pfatal ("Can't open file %s", quotearg (inname));
 	      }
 
-	    scan_input (inname, file_type, ifp);
+	    scan_input (inname, file_type, ifd);
 
 	    if (verbosity != SILENT)
 	      {
@@ -613,7 +612,7 @@ main (int argc, char **argv)
 			{
 			  attr |= FA_IDS | FA_MODE | FA_XATTRS;
 			  set_file_attributes (tmpout.name, outfd, attr,
-					       inname, ifp ? fileno (ifp) : -1,
+					       inname, ifd,
 					       &instat, mode, &new_time);
 			}
 
@@ -634,8 +633,8 @@ main (int argc, char **argv)
 	    }
       }
 
-      if (ifp)
-	Fclose (ifp);
+      if (0 <= ifd && close (ifd) < 0)
+	read_fatal ();
 
       if (!outfile)
 	{
