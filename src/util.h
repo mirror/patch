@@ -70,8 +70,7 @@ _Noreturn void pfatal (char const *, ...) ATTRIBUTE_FORMAT ((printf, 1, 2));
 void fetchname (char const *, intmax_t, char **, char **, struct timespec *);
 char *parse_name (char const *, intmax_t, char const **);
 char *savebuf (char const *, idx_t)
-  ATTRIBUTE_MALLOC ATTRIBUTE_DEALLOC_FREE ATTRIBUTE_ALLOC_SIZE ((2))
-  ATTRIBUTE_RETURNS_NONNULL;
+  ATTRIBUTE_MALLOC ATTRIBUTE_DEALLOC_FREE ATTRIBUTE_ALLOC_SIZE ((2));
 char const *version_controller (char const *, bool, struct stat const *, char **, char **);
 bool version_get (char *, char const *, bool, bool, char const *, struct stat *);
 int create_file (struct outfile *, int, mode_t, bool);
