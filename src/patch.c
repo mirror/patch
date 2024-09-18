@@ -916,12 +916,6 @@ static void
 get_some_switches (void)
 {
     int optc;
-
-    free (outrej.name);
-    outrej.name = nullptr;
-    outrej.exists = nullptr;
-    if (optind == Argc)
-	return;
     while (0 <= (optc = getopt_long (Argc, Argv, shortopts, longopts, nullptr)))
 	switch (optc) {
 	    case 'b':
