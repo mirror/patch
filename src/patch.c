@@ -86,7 +86,7 @@ static bool patch_match (idx_t, idx_t, idx_t, idx_t);
 static bool spew_output (struct outstate *, struct stat *);
 static intmax_t numeric_string (char const *, bool, char const *);
 static void cleanup (void);
-static void get_some_switches (void);
+static void get_some_switches (int, char **);
 static void init_output (struct outstate *);
 static FILE *open_outfile (char *);
 static void init_reject (char const *);
@@ -127,9 +127,6 @@ static char const if_defined[] = "\n#ifdef ";
 static char const not_defined[] = "\n#ifndef ";
 static char const else_defined[] = "\n#else\n";
 static char const end_defined[] = "\n#endif\n";
-
-static int Argc;
-static char **Argv;
 
 static FILE *rejfp;  /* reject file pointer */
 
@@ -189,9 +186,7 @@ main (int argc, char **argv)
     init_backup_hash_table ();
 
     /* parse switches */
-    Argc = argc;
-    Argv = argv;
-    get_some_switches();
+    get_some_switches (argc, argv);
 
     /* Make get_date() assume that context diff headers use UTC. */
     if (set_utc && setenv ("TZ", "UTC0", 1) < 0)
@@ -886,12 +881,12 @@ usage (FILE *stream, int status)
   if (status != EXIT_SUCCESS)
     {
       Fprintf (stream, "%s: Try '%s --help' for more information.\n",
-	       program_name, Argv[0]);
+	       program_name, program_name);
     }
   else
     {
       Fprintf (stream, "Usage: %s [OPTION]... [ORIGFILE [PATCHFILE]]\n\n",
-	       Argv[0]);
+	       program_name);
       for (p = option_help;  *p;  p++)
 	Fprintf (stream, "%s\n", *p);
     }
@@ -913,23 +908,23 @@ backup_file_name_option (char const *option_type)
 /* Process switches and filenames.  */
 
 static void
-get_some_switches (void)
+get_some_switches (int argc, char **argv)
 {
     int optc;
-    while (0 <= (optc = getopt_long (Argc, Argv, shortopts, longopts, nullptr)))
+    while (0 <= (optc = getopt_long (argc, argv, shortopts, longopts, nullptr)))
 	switch (optc) {
 	    case 'b':
 		make_backups = true;
 		 /* Special hack for backward compatibility with CVS 1.9.
 		    If the last 4 args are '-b SUFFIX ORIGFILE PATCHFILE',
 		    treat '-b' as if it were '-b -z'.  */
-		if (Argc - optind == 3
-		    && strcmp (Argv[optind - 1], "-b") == 0
-		    && ! (Argv[optind + 0][0] == '-' && Argv[optind + 0][1])
-		    && ! (Argv[optind + 1][0] == '-' && Argv[optind + 1][1])
-		    && ! (Argv[optind + 2][0] == '-' && Argv[optind + 2][1]))
+		if (argc - optind == 3
+		    && strcmp (argv[optind - 1], "-b") == 0
+		    && ! (argv[optind + 0][0] == '-' && argv[optind + 0][1])
+		    && ! (argv[optind + 1][0] == '-' && argv[optind + 1][1])
+		    && ! (argv[optind + 2][0] == '-' && argv[optind + 2][1]))
 		  {
-		    optarg = Argv[optind++];
+		    optarg = argv[optind++];
 		    if (verbosity != SILENT)
 		      say ("warning: the '-b %s' option is obsolete; use '-b -z %s' instead\n",
 			   optarg, optarg);
@@ -1102,18 +1097,18 @@ get_some_switches (void)
 	}
 
     /* Process any filename args.  */
-    if (optind < Argc)
+    if (optind < argc)
       {
-	inname = xstrdup (Argv[optind++]);
+	inname = xstrdup (argv[optind++]);
 	explicit_inname = true;
 	invc = -1;
-	if (optind < Argc)
+	if (optind < argc)
 	  {
-	    patchname = xstrdup (Argv[optind++]);
-	    if (optind < Argc)
+	    patchname = xstrdup (argv[optind++]);
+	    if (optind < argc)
 	      {
 		Fprintf (stderr, "%s: %s: extra operand\n",
-			 program_name, quotearg (Argv[optind]));
+			 program_name, quotearg (argv[optind]));
 		usage (stderr, EXIT_TROUBLE);
 	      }
 	  }
