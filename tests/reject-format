@@ -175,7 +175,13 @@ EOF
 
 echo one > a
 echo two > b
-diff -u -L "a	label of a" -L "b	label of b" a b > ab.diff
+cat > ab.diff <<EOF
+--- a	label of a
++++ b	label of b
+@@ -1 +1 @@
+-one
++two
+EOF
 mv b a
 
 check 'patch -f < ab.diff || echo "Status: $?"' <<EOF
