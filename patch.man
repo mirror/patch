@@ -1062,7 +1062,7 @@ When intuiting the name of the file to be patched from the patch header,
 .B patch
 uses a complicated method
 that is optionally \s-1POSIX\s0-conforming.
-The method is equivalant to \s-1POSIX\s0 if the
+The method is equivalent to \s-1POSIX\s0 if the
 file names in the context diff header and the
 .B Index:\&
 line are all identical after prefix-stripping.

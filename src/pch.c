@@ -1221,7 +1221,7 @@ another_hunk (enum diff difftype, bool rev)
 	idx_t fillcnt = 0;	/* #lines of missing ptrn or repl */
 	idx_t fillsrc;		/* index of first line to copy */
 	idx_t filldst;		/* index of first missing line */
-	bool ptrn_spaces_eaten = false;	/* ptrn was slightly misformed */
+	bool ptrn_spaces_eaten = false;	/* ptrn was slightly malformed */
 	bool some_context = false;	/* (perhaps internal) context seen */
 	bool repl_could_be_missing = true;
 	bool ptrn_missing = false;	/* The pattern was missing.  */
