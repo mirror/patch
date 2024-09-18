@@ -5,18 +5,6 @@
 # in any medium, are permitted without royalty provided the copyright
 # notice and this notice are preserved.
 
-# FIXME: Requires a version of diff that understands "-u".
-
-require_gnu_diff() {
-    case "`diff --version 2> /dev/null`" in
-    *GNU*)
-	;;
-    *)
-	echo "This test requires GNU diff" >&2
-	exit 77
-    esac
-}
-
 require() {
     utility="$1"
     if type require_${utility} > /dev/null 2> /dev/null; then
