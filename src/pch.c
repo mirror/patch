@@ -77,8 +77,8 @@ static bool p_git_diff;			/* true if this is a git style diff */
 static enum diff intuit_diff_type (bool, mode_t *);
 static enum nametype best_name (char * const *, int const *);
 static idx_t prefix_components (char *, bool);
-static idx_t pget_line (idx_t, idx_t, bool, bool);
-static idx_t get_line (void);
+static idx_t pget_line (idx_t, idx_t, bool, bool, bool);
+static idx_t get_line (bool);
 static bool incomplete_line (void);
 static void grow_hunkmax (void);
 static void malformed (void);
@@ -516,7 +516,7 @@ intuit_diff_type (bool need_header, mode_t *p_file_type)
 
 	indent = 0;
 	this_line = Ftello (pfp);
-	idx_t chars_read = pget_line (0, 0, false, false);
+	idx_t chars_read = pget_line (0, 0, false, false, false);
 	if (! chars_read) {
 	    if (first_ed_command_letter) {
 					/* nothing but deletes!? */
@@ -1240,7 +1240,7 @@ another_hunk (enum diff difftype, bool rev)
 	/* Pacify 'gcc -Wall'.  */
 	fillsrc = filldst = repl_patch_line = repl_context = 0;
 
-	idx_t chars_read = get_line ();
+	idx_t chars_read = get_line (false);
 	if (chars_read <= 8
 	    || strncmp (patchbuf, "********", 8) != 0) {
 	    next_intuit_at(line_beginning,p_input_line);
@@ -1258,7 +1258,7 @@ another_hunk (enum diff difftype, bool rev)
 	  }
 	p_hunk_beg = p_input_line + 1;
 	while (p_end < p_max) {
-	    chars_read = get_line ();
+	    chars_read = get_line (true);
 	    if (!chars_read) {
 		if (repl_beginning && repl_could_be_missing) {
 		    repl_missing = true;
@@ -1606,7 +1606,7 @@ another_hunk (enum diff difftype, bool rev)
 	idx_t filldst;	/* index of new lines */
 	char ch = '\0';
 
-	if (get_line () <= 4
+	if (get_line (false) <= 4
 	    || strncmp (patchbuf, "@@ -", 4) != 0) {
 	    next_intuit_at(line_beginning,p_input_line);
 	    return false;
@@ -1669,7 +1669,7 @@ another_hunk (enum diff difftype, bool rev)
 	p_prefix_context = -1;
 	p_hunk_beg = p_input_line + 1;
 	while (fillsrc <= p_ptrn_lines || filldst <= p_end) {
-	    idx_t chars_read = get_line ();
+	    idx_t chars_read = get_line (true);
 	    if (!chars_read) {
 		if (p_max - filldst < 3) {
 		    /* Assume blank lines got chopped.  */
@@ -1750,7 +1750,7 @@ another_hunk (enum diff difftype, bool rev)
 	off_t line_beginning = Ftello (pfp);
 
 	p_prefix_context = p_suffix_context = 0;
-	idx_t chars_read = get_line ();
+	idx_t chars_read = get_line (false);
 	bool invalid_line = chars_read <= 0;
 	if (!invalid_line)
 	  for (s = patchbuf; c_isblank (*s); s++)
@@ -1798,7 +1798,7 @@ another_hunk (enum diff difftype, bool rev)
 
 	idx_t i;
 	for (i=1; i<=p_ptrn_lines; i++) {
-	    chars_read = get_line ();
+	    chars_read = get_line (true);
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %td",
 		     p_input_line);
@@ -1812,7 +1812,7 @@ another_hunk (enum diff difftype, bool rev)
 	    p_Char[i] = '-';
 	}
 	if (hunk_type == 'c') {
-	    chars_read = get_line ();
+	    chars_read = get_line (true);
 	    if (! chars_read)
 	      fatal ("unexpected end of file in patch at line %td",
 		     p_input_line);
@@ -1823,7 +1823,7 @@ another_hunk (enum diff difftype, bool rev)
 	p_line[i] = xmemdup (patchbuf, p_len[i] + 1);
 	p_Char[i] = '=';
 	for (i++; i<=p_end; i++) {
-	    chars_read = get_line ();
+	    chars_read = get_line (true);
 	    if (!chars_read)
 	      fatal ("unexpected end of file in patch at line %td",
 		     p_input_line);
@@ -1868,10 +1868,10 @@ another_hunk (enum diff difftype, bool rev)
 }
 
 static idx_t
-get_line (void)
+get_line (bool allow_nul)
 {
    return pget_line (p_indent, p_rfc934_nesting, p_strip_trailing_cr,
-		     p_pass_comments_through);
+		     p_pass_comments_through, allow_nul);
 }
 
 /* Input a line from the patch file, worrying about indentation.
@@ -1880,18 +1880,21 @@ get_line (void)
    If STRIP_TRAILING_CR is true, remove any trailing carriage-return.
    Unless PASS_COMMENTS_THROUGH is true, ignore any resulting lines
    that begin with '#'; they're comments.
+   If ALLOW_NUL, allow null bytes in the line; otherwise diagnose and fail.
    Ignore any partial lines at end of input, but warn about them.
    Succeed if a line was read; it is terminated by "\n\0" for convenience.
    Return the number of characters read, including '\n' but not '\0'.  */
 
 static idx_t
 pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
-	   bool pass_comments_through)
+	   bool pass_comments_through, bool allow_nul)
 {
   FILE *fp = pfp;
   int c;
   idx_t i;
   char *b;
+  int invalid_byte = allow_nul ? -1 : 0;
+  bool got_invalid_byte = false;
 
   do
     {
@@ -1912,7 +1915,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	  else if (c == '\t')
 	    i = (i + 8) & ~7;
 	  else
-	    break;
+	    got_invalid_byte |= c == invalid_byte;
 	}
 
       i = 0;
@@ -1927,6 +1930,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	    {
 	      i = 1;
 	      b[0] = '-';
+	      got_invalid_byte |= c == invalid_byte;
 	      break;
 	    }
 	  c = getc (fp);
@@ -1947,6 +1951,7 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
 	  b[i++] = c;
 	  if (c == '\n')
 	    break;
+	  got_invalid_byte |= c == invalid_byte;
 	  c = getc (fp);
 	  if (c < 0)
 	    goto patch_ends_in_middle_of_line;
@@ -1955,6 +1960,9 @@ pget_line (idx_t indent, ptrdiff_t rfc934_nesting, bool strip_trailing_cr,
       p_input_line++;
     }
   while (*b == '#' && !pass_comments_through);
+
+  if (got_invalid_byte)
+    fatal ("patch line %td contains NUL byte", p_input_line);
 
   if (strip_trailing_cr && 2 <= i && b[i - 2] == '\r')
     b[i-- - 2] = '\n';
@@ -2321,7 +2329,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
     for (;;) {
 	char ed_command_letter;
 	beginning_of_this_line = Ftello (pfp);
-	idx_t chars_read = get_line ();
+	idx_t chars_read = get_line (false);
 	if (! chars_read) {
 	    next_intuit_at(beginning_of_this_line,p_input_line);
 	    break;
@@ -2332,7 +2340,7 @@ do_ed_script (char *input_name, struct outfile *output, FILE *ofp)
 	      Fwrite (patchbuf, 1, chars_read, tmpfp);
 	    if (ed_command_letter != 'd' && ed_command_letter != 's') {
 	        p_pass_comments_through = true;
-		while ((chars_read = get_line ()) != 0) {
+		while ((chars_read = get_line (true)) != 0) {
 		    if (tmpfp)
 		      Fwrite (patchbuf, 1, chars_read, tmpfp);
 		    if (chars_read == 2  &&  strEQ (patchbuf, ".\n"))

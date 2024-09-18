@@ -146,6 +146,17 @@ $PATCH: **** output file name contains newline
 status: 2
 EOF
 
+emit_patch_with_NUL()
+{
+  printf '%s\n' '--- /dev/null'
+  printf '+++ a\0b\n'
+  printf '%s\n' '@@ -0,0 +1 @@' '+x'
+}
+check 'emit_patch_with_NUL | patch; echo status: $?' <<EOF
+$PATCH: **** patch line 2 contains NUL byte
+status: 2
+EOF
+
 mkdir d
 cd d
 cat > d.diff <<EOF
