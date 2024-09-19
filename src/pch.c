@@ -1732,6 +1732,7 @@ another_hunk (enum diff difftype, bool rev)
 		break;
 	    default:
 		p_end = filldst;
+		free (s);
 		malformed ();
 	    }
 	    if (ch != ' ') {
