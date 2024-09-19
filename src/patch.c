@@ -30,10 +30,14 @@
 #include <xstdopen.h>
 #include <safe.h>
 
-#ifdef __SANITIZE_ADDRESS__
-# define FREE_BEFORE_EXIT true
+#ifndef __has_feature
+# define __has_feature(a) false
+#endif
+
+#if defined __SANITIZE_ADDRESS__ || __has_feature (address_sanitizer)
+# define SANITIZE_ADDRESS true
 #else
-# define FREE_BEFORE_EXIT false
+# define SANITIZE_ADDRESS false
 #endif
 
 /* See common.h for the declarations of these variables.  */
@@ -1801,7 +1805,7 @@ delete_files (void)
 	  removedirs (f->name);
 	}
       next = f->next;
-      if (FREE_BEFORE_EXIT)
+      if (SANITIZE_ADDRESS)
 	free (f);
     }
 }
@@ -1951,7 +1955,7 @@ output_files (struct stat const *st, int exiting)
 			  && st->st_ino == from_st->st_ino);
 	}
 
-      if (FREE_BEFORE_EXIT ? 0 <= exiting : !exiting)
+      if (SANITIZE_ADDRESS ? 0 <= exiting : !exiting)
 	{
 	  free (name);
 	  free (files_to_output);
