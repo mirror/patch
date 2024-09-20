@@ -1809,7 +1809,7 @@ make_tempfile (struct outfile *out, char letter, char const *real_name,
       sprintf (mempcpy (template, tmpdir, tmpdirlen), "/p%cXXXXXX", letter);
     }
   fd = try_tempname (template, 0, &args, try_safe_open);
-  out->name = template;
+  out->name = out->alloc = template;
   return fd;
 }
 

@@ -57,10 +57,14 @@ struct outfile
   /* Name of the file.  */
   char *name;
 
-  /* If the file exists, equal to NAME; otherwise a null pointer.
+  /* Equal to NAME if the file exists; otherwise a null pointer.
      When non-null, the storage it points to is safe to access in
      a signal handler.  */
   char volatile *volatile exists;
+
+  /* Equal to NAME if NAME should be freed when this structure is
+     freed or reused; otherwise, a null pointer.  */
+  char *alloc;
 
   /* Whether the file is intended to be temporary, and therefore
      should be cleaned up before exit, if it exists.  */

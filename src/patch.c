@@ -89,13 +89,14 @@ static bool apply_hunk (struct outstate *, idx_t);
 static bool patch_match (idx_t, idx_t, idx_t, idx_t);
 static bool spew_output (struct outstate *, struct stat *);
 static intmax_t numeric_string (char const *, bool, char const *);
-static void cleanup (void);
+static void perfile_cleanup_remove (void);
+static void cleanup_remove (void);
+static void perfile_cleanup_free (void);
 static void get_some_switches (int, char **);
 static void init_output (struct outstate *);
 static FILE *open_outfile (char *);
 static void init_reject (char const *);
 static void reinitialize_almost_everything (void);
-static void remove_if_needed (struct outfile *);
 _Noreturn static void usage (FILE *, int);
 
 static void abort_hunk (char const *, bool, bool);
@@ -255,10 +256,9 @@ main (int argc, char **argv)
 	}
 
       defer_signals ();
-      remove_if_needed (&tmprej);
-      remove_if_needed (&tmpout);
-      remove_if_needed (&tmped);
+      perfile_cleanup_remove ();
       undefer_signals ();
+      perfile_cleanup_free ();
 
       if (! skip_rest_of_patch && ! file_type)
 	{
@@ -713,7 +713,7 @@ main (int argc, char **argv)
       Fclose (outstate.ofp);
 
     defer_signals ();
-    cleanup ();
+    cleanup_remove ();
     undefer_signals ();
 
     output_files (nullptr, 1);
@@ -1001,6 +1001,7 @@ get_some_switches (int argc, char **argv)
 		break;
 	    case 'r':
 		outrej.name = xstrdup (optarg);
+		/* No need to set outrej.alloc, as outrej is never freed.  */
 		break;
 	    case 'R':
 		reverse_flag = true;
@@ -1805,8 +1806,6 @@ delete_files (void)
 	  removedirs (f->name);
 	}
       next = f->next;
-      if (SANITIZE_ADDRESS)
-	free (f);
     }
 }
 
@@ -1831,8 +1830,11 @@ output_file_later (struct outfile *from, const struct stat *from_st,
 {
   idx_t tosize = to ? strlen (to) + 1 : 0;
   struct file_to_output *f = ximalloc (sizeof *f + tosize);
-  f->from.name = xstrdup (from->name);
-  f->from.exists = from->exists ? volatilize (f->from.name) : nullptr;
+  char *alloc = from->alloc;
+  f->from.name = f->from.alloc = alloc ? alloc : xstrdup (from->name);
+  if (alloc)
+    from->alloc = nullptr;
+  f->from.exists = alloc ? from->exists : volatilize (f->from.alloc);
   f->from.temporary = from->temporary;
   f->from_st = *from_st;
   f->to = to ? memcpy (f + 1, to, tosize) : nullptr;
@@ -1901,6 +1903,13 @@ output_file (struct outfile *from,
     output_file_now (from, from_st, to, mode, backup);
 }
 
+/* A root to pacify -fsanitize=address if it is being used.  */
+#if SANITIZE_ADDRESS
+extern struct file_to_output *volatile files_to_output_root;
+struct file_to_output *volatile files_to_output_root
+  ATTRIBUTE_EXTERNALLY_VISIBLE;
+#endif
+
 /* Output files that were delayed until now.
    If ST, output only files up to and including ST.
 
@@ -1914,9 +1923,12 @@ static void
 output_files (struct stat const *st, int exiting)
 {
   struct file_to_output *next;
-  for (struct file_to_output *f = files_to_output; f; f = next)
+  struct file_to_output *f = files_to_output;
+#if SANITIZE_ADDRESS
+  files_to_output_root = f;
+#endif
+  for (; f; f = next)
     {
-      char *name = f->from.name;
       char *to = f->to;
       next = f->next;
       bool early_return;
@@ -1955,10 +1967,10 @@ output_files (struct stat const *st, int exiting)
 			  && st->st_ino == from_st->st_ino);
 	}
 
-      if (SANITIZE_ADDRESS ? 0 <= exiting : !exiting)
+      if (!exiting)
 	{
-	  free (name);
-	  free (files_to_output);
+	  free (f->from.alloc);
+	  free (f);
 	}
 
       if (!next)
@@ -1974,7 +1986,7 @@ output_files (struct stat const *st, int exiting)
 void
 fatal_cleanup (void)
 {
-  cleanup ();
+  cleanup_remove ();
   output_files (nullptr, -1);
 }
 
@@ -1984,12 +1996,14 @@ void
 fatal_exit (void)
 {
   defer_signals ();
-  cleanup ();
+  cleanup_remove ();
   undefer_signals ();
   output_files (nullptr, 1);
   exit (EXIT_TROUBLE);
 }
 
+/* Remove TMP's file if it exists.
+   This function is async-signal-safe.  */
 static void
 remove_if_needed (struct outfile *tmp)
 {
@@ -2001,13 +2015,38 @@ remove_if_needed (struct outfile *tmp)
     }
 }
 
-/* Clean up temporaries.
-   This function should be called only in critical sections.  */
+/* Remove per-file temporary files.
+   This function is async-signal-safe.  */
 static void
-cleanup (void)
+perfile_cleanup_remove (void)
 {
   remove_if_needed (&tmped);
   remove_if_needed (&tmpout);
-  remove_if_needed (&tmppat);
   remove_if_needed (&tmprej);
+}
+
+/* Remove all temporary files.
+   This function is async-signal-safe.  */
+static void
+cleanup_remove (void)
+{
+  remove_if_needed (&tmppat);
+  perfile_cleanup_remove ();
+}
+
+/* Free any storage associated with an output file.  */
+static void
+free_outfile_name (struct outfile *f)
+{
+  free (f->alloc);
+  f->name = f->alloc = nullptr;
+}
+
+/* Free storage associated with per-file temporaries.  */
+static void
+perfile_cleanup_free (void)
+{
+  free_outfile_name (&tmped);
+  free_outfile_name (&tmpout);
+  free_outfile_name (&tmprej);
 }
